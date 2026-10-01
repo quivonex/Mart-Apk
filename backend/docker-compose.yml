@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: django_mysql_db
+    restart: always
+    volumes:
+      - mysql_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootsecurepassword
+      - MYSQL_DATABASE=djangodb
+      - MYSQL_USER=djangouser
+      - MYSQL_PASSWORD=securepassword
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootsecurepassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    container_name: django_web_app
+    restart: always
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:16000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=1
+      - DB_HOST=db
+      - DB_NAME=djangodb
+      - DB_USER=djangouser
+      - DB_PASSWORD=securepassword
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mysql_data:

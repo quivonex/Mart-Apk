@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Agreement</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm 1.5cm;
+        }
+
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #000000;
+        }
+
+        /* ===== STAMP HEADER ===== */
+        .stamp-box {
+            border: 3px solid #000000;
+            padding: 6px 8px 4px 8px;
+            text-align: center;
+            margin-bottom: 15px;
+            background: #fefcf8;
+        }
+
+        .stamp-box table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .stamp-box table td {
+            text-align: center;
+            padding: 1px 0;
+        }
+
+        .stamp-line1 {
+            font-size: 11px;
+            letter-spacing: 3px;
+            font-weight: normal;
+        }
+
+        .stamp-line2 {
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 5px;
+        }
+
+        .stamp-line3 {
+            font-size: 22px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .stamp-line4 {
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .stamp-line5 {
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 8px;
+        }
+
+        .stamp-line6 {
+            font-size: 9px;
+            letter-spacing: 3px;
+            border-top: 1px solid #000000;
+            padding-top: 3px;
+            margin-top: 2px;
+        }
+
+        .stamp-line6 span {
+            margin: 0 5px;
+        }
+
+        /* ===== TITLE ===== */
+        .agreement-title {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin: 8px 0 4px 0;
+        }
+
+        .agreement-number {
+            text-align: right;
+            font-size: 11px;
+            margin-bottom: 10px;
+        }
+
+        /* ===== SECTIONS ===== */
+        .section-title {
+            font-weight: bold;
+            font-size: 13px;
+            margin-top: 12px;
+            margin-bottom: 3px;
+            border-bottom: 1px solid #cccccc;
+            padding-bottom: 2px;
+        }
+
+        .field-row {
+            margin-bottom: 1px;
+            padding: 1px 0;
+        }
+
+        .field-label {
+            font-weight: bold;
+            display: inline-block;
+            width: 160px;
+        }
+
+        .field-value {
+            display: inline-block;
+        }
+
+        /* ===== STATUS ===== */
+        .status-box {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 1px 14px;
+            font-weight: bold;
+            font-size: 11px;
+            text-transform: uppercase;
+            border-radius: 10px;
+        }
+
+        .status-pending {
+            background: #fbbf24;
+            color: #000000;
+        }
+        .status-approved {
+            background: #22c55e;
+            color: #ffffff;
+        }
+        .status-rejected {
+            background: #ef4444;
+            color: #ffffff;
+        }
+
+        /* ===== SIGNATURES ===== */
+        .signature-box {
+            margin-top: 25px;
+            border-top: 1px dashed #aaaaaa;
+            padding-top: 12px;
+        }
+
+        .signature-left {
+            display: inline-block;
+            width: 45%;
+            vertical-align: top;
+        }
+
+        .signature-right {
+            display: inline-block;
+            width: 45%;
+            vertical-align: top;
+            margin-left: 15px;
+        }
+
+        .signature-label {
+            font-weight: bold;
+            border-bottom: 1px solid #000000;
+            padding-bottom: 2px;
+            margin-bottom: 4px;
+            font-size: 12px;
+        }
+
+        .signature-img {
+            max-width: 140px;
+            max-height: 45px;
+            border: 1px dashed #bbbbbb;
+            padding: 2px;
+            background: #fafafa;
+            margin: 3px 0;
+        }
+
+        .signature-empty {
+            color: #888888;
+            font-style: italic;
+            font-size: 11px;
+        }
+
+        .signature-date {
+            font-size: 10px;
+            color: #666666;
+        }
+
+        /* ===== OTHER ===== */
+        .terms-box {
+            background: #f9f7f4;
+            padding: 6px 10px;
+            border-left: 3px solid #8b7a62;
+            margin: 3px 0;
+        }
+
+        .remarks-box {
+            background: #f3f0eb;
+            padding: 5px 10px;
+            border-radius: 3px;
+            margin: 3px 0;
+        }
+
+        .pdf-link-box {
+            margin-top: 12px;
+            padding: 6px 10px;
+            background: #f0f4f0;
+            border: 1px solid #b3c9b3;
+        }
+
+        .images-box {
+            margin-top: 15px;
+            border-top: 1px dashed #aaaaaa;
+            padding-top: 10px;
+        }
+
+        .images-box .img-label {
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .images-box img {
+            max-width: 130px;
+            max-height: 90px;
+            border: 1px solid #dddddd;
+            padding: 2px;
+            margin: 3px 10px 3px 0;
+        }
+
+        .images-box .img-item {
+            display: inline-block;
+            margin-right: 15px;
+            vertical-align: top;
+        }
+
+        .images-box .img-item .name {
+            font-size: 10px;
+            color: #555555;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 9px;
+            text-align: center;
+            border-top: 1px solid #999999;
+            padding-top: 6px;
+            color: #555555;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .mt-5 { margin-top: 5px; }
+        .mb-5 { margin-bottom: 5px; }
+        
+        /* ===== STAMP WATERMARK TEXT ===== */
+        .watermark-text {
+            font-size: 50px;
+            font-weight: bold;
+            color: #e8e4dc;
+            letter-spacing: 8px;
+            text-align: center;
+            margin: 20px 0;
+            padding: 10px 0;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- ===== STAMP HEADER - EXACT MATCH WITH IMAGE ===== -->
+<!-- ============================================================ -->
+<div class="stamp-box">
+    <table>
+        <tr><td class="stamp-line1">भारतीय गैर न्यायिक</td></tr>
+        <tr><td class="stamp-line2">भारत</td></tr>
+        <tr><td class="stamp-line3">Rs. 100</td></tr>
+        <tr><td class="stamp-line4">ONE HUNDRED RUPEES</td></tr>
+        <tr><td class="stamp-line5">INDIA</td></tr>
+        <tr>
+            <td class="stamp-line6">
+                <span>INDIA</span>
+                <span>NON JUDICIAL</span>
+                <span>Government of India</span>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- ============================================================ -->
+<!-- ===== WATERMARK ===== -->
+<!-- ============================================================ -->
+<div class="watermark-text">NON JUDICIAL</div>
+
+<!-- ============================================================ -->
+<!-- ===== AGREEMENT TITLE ===== -->
+<!-- ============================================================ -->
+<div class="agreement-title">Agreement</div>
+
+<div class="agreement-number">
+    <strong>Agreement No.:</strong> {{ agreement.agreement_number }}
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>Date:</strong> {{ agreement.created_at|date:"d M Y" }}
+</div>
+
+<!-- ============================================================ -->
+<!-- ===== STATUS ===== -->
+<!-- ============================================================ -->
+<div class="status-box">
+    <span class="status-badge status-{{ agreement.status }}">
+        {{ agreement.get_status_display }}
+    </span>
+    {% if agreement.approved_at %}
+        <span style="font-size:10px; margin-left:8px;">
+            ✅ Approved: {{ agreement.approved_at|date:"d M Y, h:i A" }}
+        </span>
+    {% endif %}
+    {% if agreement.rejection_reason %}
+        <div style="color:#b91c1c; font-size:11px; margin-top:3px; background:#fee; padding:2px 8px;">
+            ⚠️ {{ agreement.rejection_reason }}
+        </div>
+    {% endif %}
+</div>
+
+<!-- ============================================================ -->
+<!-- ===== 1. PARTIES ===== -->
+<!-- ============================================================ -->
+<div class="section-title">1. Parties to the Agreement</div>
+<div class="field-row">
+    <span class="field-label">Company :</span>
+    <span class="field-value">{{ company_name|default:"—" }}</span>
+</div>
+<div class="field-row">
+    <span class="field-label">Marketing Partner :</span>
+    <span class="field-value">{{ marketing_partner_name|default:"—" }}</span>
+</div>
+<div class="field-row">
+    <span class="field-label">Agreement Role :</span>
+    <span class="field-value">{{ agreement.agreement_role|default:"—" }}</span>
+</div>
+
+<!-- ============================================================ -->
+<!-- ===== 2. TERM ===== -->
+<!-- ============================================================ -->
+<div class="section-title">2. Term</div>
+<div class="field-row">
+    <span class="field-label">Start Date :</span>
+    <span class="field-value">{{ agreement.agreement_start_date|date:"d M Y" }}</span>
+</div>
+<div class="field-row">
+    <span class="field-label">End Date :</span>
+    <span class="field-value">{{ agreement.agreement_end_date|date:"d M Y" }}</span>
+</div>
+
+<!-- ============================================================ -->
+<!-- ===== 3. COMPANY DETAILS ===== -->
+<!-- ============================================================ -->
+<div class="section-title">3. Company Details</div>
+<div class="field-row">
+    <span class="field-label">Owner Name :</span>
+    <span class="field-value">{{ agreement.company_owner_name|default:"—" }}</span>
+</div>
+<div class="field-row">
+    <span class="field-label">Address :</span>
+    <span class="field-value">{{ agreement.company_address|linebreaksbr|default:"—" }}</span>
+</div>
+<div class="field-row">
+    <span class="field-label">Seller Aadhaar :</span>
+    <span class="field-value">{{ agreement.seller_adhar_number|default:"—" }}</span>
+</div>
+<div class="field-row">
+    <span class="field-label">Owner Aadhaar :</span>
+    <span class="field-value">{{ agreement.owner_adhar_number|default:"—" }}</span>
+</div>
+<div class="field-row">
+    <span class="field-label">Seller PAN :</span>
+    <span class="field-value">{{ agreement.seller_pan_number|default:"—" }}</span>
+</div>
+<div class="field-row">
+    <span class="field-label">Owner PAN :</span>
+    <span class="field-value">{{ agreement.owner_pan_number|default:"—" }}</span>
+</div>
+
+<!-- ============================================================ -->
+<!-- ===== 4. FINANCIAL TERMS ===== -->
+<!-- ============================================================ -->
+<div class="section-title">4. Financial Terms</div>
+<div class="field-row">
+    <span class="field-label">Global Profit :</span>
+    <span class="field-value">{{ agreement.global_profit|default:"—" }} %</span>
+</div>
+<div class="field-row">
+    <span class="field-label">Profit Share (%) :</span>
+    <span class="field-value">{{ agreement.profit_share_percentage }} %</span>
+</div>
+<div class="field-row">
+    <span class="field-label">Selling Commission (%) :</span>
+    <span class="field-value">{{ agreement.selling_commission_percentage }} %</span>
+</div>
+<div class="field-row">
+    <span class="field-label">Apply on :</span>
+    <span class="field-value">
+        {% if agreement.apply_on_all_products %}
+            ✅ All Products
+        {% else %}
+            ⚠️ Selected Products
+        {% endif %}
+    </span>
+</div>
+
+<!-- ============================================================ -->
+<!-- ===== 5. ADDITIONAL TERMS ===== -->
+<!-- ============================================================ -->
+{% if agreement.additional_points %}
+<div class="section-title">5. Additional Terms &amp; Conditions</div>
+<div class="terms-box">{{ agreement.additional_points|linebreaksbr }}</div>
+{% endif %}
+
+<!-- ============================================================ -->
+<!-- ===== 6. REMARKS ===== -->
+<!-- ============================================================ -->
+{% if agreement.remarks %}
+<div class="section-title">6. Remarks</div>
+<div class="remarks-box">{{ agreement.remarks|linebreaksbr }}</div>
+{% endif %}
+
+<!-- ============================================================ -->
+<!-- ===== 7. REPRESENTATIVE ===== -->
+<!-- ============================================================ -->
+<div class="section-title">7. QNX Mart Representative</div>
+<div class="field-row">
+    <span class="field-label">Representative :</span>
+    <span class="field-value">{{ agreement.qnx_mart_representative|default:"—" }}</span>
+</div>
+
+<!-- ============================================================ -->
+<!-- ===== 8. SIGNATURES ===== -->
+<!-- ============================================================ -->
+<div class="signature-box">
+    <div class="signature-left">
+        <div class="signature-label">QNX Mart Signature</div>
+        {% if qnx_sign_url %}
+            <img src="{{ qnx_sign_url }}" alt="QNX Sign" class="signature-img">
+        {% else %}
+            <div class="signature-empty">(Not signed yet)</div>
+        {% endif %}
+        <div class="signature-date">Date: {{ agreement.updated_at|date:"d M Y" }}</div>
+    </div>
+    <div class="signature-right">
+        <div class="signature-label">Company Signature</div>
+        {% if company_sign_url %}
+            <img src="{{ company_sign_url }}" alt="Company Sign" class="signature-img">
+        {% else %}
+            <div class="signature-empty">(Not signed yet)</div>
+        {% endif %}
+        <div class="signature-date">Date: {{ agreement.updated_at|date:"d M Y" }}</div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ===== 9. ATTACHED IMAGES ===== -->
+<!-- ============================================================ -->
+{% if qnx_photo_url or company_photo_url %}
+<div class="images-box">
+    <div class="img-label">📎 Attached Images</div>
+    <div style="margin-top:4px;">
+        {% if qnx_photo_url %}
+        <div class="img-item">
+            <div class="name">QNX Mart Picture</div>
+            <img src="{{ qnx_photo_url }}" alt="QNX Photo">
+        </div>
+        {% endif %}
+        {% if company_photo_url %}
+        <div class="img-item">
+            <div class="name">Company Picture</div>
+            <img src="{{ company_photo_url }}" alt="Company Photo">
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- ============================================================ -->
+<!-- ===== 10. UPLOADED PDF ===== -->
+<!-- ============================================================ -->
+{% if agreement.uploaded_agreement_pdf_s3_key %}
+<div class="pdf-link-box">
+    📄 <strong>Uploaded Agreement PDF :</strong>
+    <a href="https://{{ aws_bucket_name }}.s3.amazonaws.com/{{ agreement.uploaded_agreement_pdf_s3_key }}" 
+       target="_blank" style="color:#1a5e1a;">
+        View / Download
+    </a>
+</div>
+{% endif %}
+
+<!-- ============================================================ -->
+<!-- ===== FOOTER ===== -->
+<!-- ============================================================ -->
+<div class="footer">
+    This is a system-generated agreement document.
+    <br>
+    Created by: {{ created_by_name|default:created_by_email|default:"—" }}
+    &nbsp;·&nbsp; Approved by: {{ approved_by_name|default:approved_by_email|default:"Pending" }}
+    &nbsp;·&nbsp; Generated: {% now "d M Y, h:i A" %}
+</div>
+
+</body>
+</html>

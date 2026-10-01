@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Rejected</title>
+</head>
+<body style="margin:0;padding:0;background:#f5f7fb;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f7fb;padding:30px 0;">
+        <tr>
+            <td align="center">
+                <!-- Main Container -->
+                <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.08),0 4px 12px rgba(0,0,0,0.04);margin:0 auto;">
+                    
+                    <!-- Header with Glossy Gradient (Red) -->
+                    <tr>
+                        <td style="background:linear-gradient(135deg,#ef4444 0%,#b91c1c 100%);padding:40px 30px 35px;text-align:center;position:relative;">
+                            <!-- Glossy overlay effect -->
+                            <div style="position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.25) 0%,rgba(255,255,255,0) 100%);border-radius:16px 16px 0 0;"></div>
+                            
+                            <!-- Error Icon -->
+                            <div style="font-size:64px;line-height:1;margin-bottom:12px;display:block;">❌</div>
+                            
+                            <!-- Title -->
+                            <h1 style="margin:0;padding:0;color:#ffffff;font-size:28px;font-weight:700;letter-spacing:-0.5px;text-shadow:0 2px 4px rgba(0,0,0,0.1);">
+                                Product Rejected
+                            </h1>
+                            
+                            <!-- Subtitle -->
+                            <p style="margin:8px 0 0;padding:0;color:rgba(255,255,255,0.92);font-size:16px;font-weight:400;letter-spacing:0.3px;">
+                                Action Required
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Body Content -->
+                    <tr>
+                        <td style="padding:35px 35px 25px;">
+                            
+                            <!-- Greeting -->
+                            <p style="margin:0 0 6px;padding:0;font-size:16px;color:#1e293b;font-weight:600;">
+                                Dear <span style="color:#2563eb;">{{ user_name }}</span>,
+                            </p>
+                            
+                            <!-- Main Message -->
+                            <p style="margin:16px 0 0;padding:0;font-size:15px;line-height:1.6;color:#334155;">
+                                Thank you for submitting your product to 
+                                <strong style="color:#2563eb;">Quivonex</strong>.
+                            </p>
+                            
+                            <p style="margin:14px 0 0;padding:0;font-size:15px;line-height:1.6;color:#334155;">
+                                After reviewing your submission, we found that your product 
+                                <strong style="color:#ef4444;">{{ product_name }}</strong> 
+                                does not currently meet our approval requirements.
+                            </p>
+                            
+                            <!-- Product Info Card -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0 0;background:linear-gradient(135deg,#fef2f2 0%,#fefce8 100%);border-radius:12px;border-left:4px solid #ef4444;padding:0;">
+                                <tr>
+                                    <td style="padding:18px 22px;">
+                                        <table width="100%" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td style="padding:4px 0;font-size:14px;color:#1e293b;">
+                                                    <span style="display:inline-block;width:24px;">📦</span> 
+                                                    <strong>Product:</strong> {{ product_name }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding:4px 0;font-size:14px;color:#1e293b;">
+                                                    <span style="display:inline-block;width:24px;">🏢</span> 
+                                                    <strong>Company:</strong> {{ company_name }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding:4px 0;font-size:14px;color:#1e293b;">
+                                                    <span style="display:inline-block;width:24px;">⛔</span> 
+                                                    <strong>Status:</strong> 
+                                                    <span style="color:#ef4444;font-weight:700;">Rejected</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Reject Reason Box -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0 0;background:#fef2f2;border-radius:12px;border-left:5px solid #dc2626;padding:0;">
+                                <tr>
+                                    <td style="padding:18px 22px;">
+                                        <p style="margin:0 0 8px;padding:0;font-size:14px;font-weight:700;color:#dc2626;">
+                                            ⚠️ Reason for Rejection
+                                        </p>
+                                        <p style="margin:0;padding:0;font-size:14px;line-height:1.6;color:#475569;">
+                                            {{ reject_reason }}
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <p style="margin:20px 0 0;padding:0;font-size:15px;line-height:1.6;color:#334155;">
+                                Please review the above reason, make the necessary corrections, 
+                                and submit your product again for approval.
+                            </p>
+                            
+                            <!-- Call to Action Button (Red) -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin:30px 0 0;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{ dashboard_url }}" style="display:inline-block;padding:14px 45px;background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%);color:#ffffff;font-size:16px;font-weight:600;text-decoration:none;border-radius:50px;box-shadow:0 4px 14px rgba(239,68,68,0.35);border:1px solid rgba(255,255,255,0.15);transition:all 0.3s ease;letter-spacing:0.3px;">
+                                            Update Product
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Support Message -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0 0;background:#f8fafc;border-radius:12px;padding:0;">
+                                <tr>
+                                    <td style="padding:18px 22px;text-align:center;">
+                                        <p style="margin:0;padding:0;font-size:14px;line-height:1.6;color:#475569;">
+                                            💡 If you have any questions, feel free to contact our 
+                                            <a href="mailto:support@quivonex.com" style="color:#2563eb;text-decoration:none;font-weight:600;">support team</a>.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Sign-off -->
+                            <p style="margin:24px 0 0;padding:0;font-size:15px;color:#1e293b;">
+                                Regards,<br>
+                                <strong style="color:#2563eb;">Team Quivonex</strong>
+                            </p>
+                            
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background:#f8fafc;padding:28px 30px 20px;border-top:1px solid #e9edf4;">
+                            
+                            <!-- Company Info -->
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td style="text-align:center;font-size:14px;color:#1e293b;font-weight:600;padding-bottom:4px;">
+                                        Team Quivonex
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align:center;font-size:13px;color:#64748b;padding-bottom:2px;">
+                                        <a href="mailto:support@quivonex.com" style="color:#2563eb;text-decoration:none;">support@quivonex.com</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align:center;font-size:13px;color:#64748b;padding-bottom:10px;">
+                                        <a href="https://www.quivonex.com" style="color:#2563eb;text-decoration:none;">www.quivonex.com</a>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Social Media Icons with Links -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin:10px 0 12px;">
+                                <tr>
+                                    <td align="center">
+                                        <table cellpadding="0" cellspacing="0" style="display:inline-block;">
+                                            <tr>
+                                                <!-- Facebook -->
+                                                <td style="padding:0 5px;">
+                                                    <a href="https://www.facebook.com/quivonex" style="display:inline-block;width:38px;height:38px;background:linear-gradient(135deg,#16a34a 0%,#2563eb 100%);border-radius:50%;text-align:center;line-height:38px;font-size:18px;color:#ffffff;text-decoration:none;font-weight:700;box-shadow:0 2px 8px rgba(22,163,74,0.25);">
+                                                        f
+                                                    </a>
+                                                </td>
+                                                <!-- LinkedIn -->
+                                                <td style="padding:0 5px;">
+                                                    <a href="https://www.linkedin.com/company/quivonex" style="display:inline-block;width:38px;height:38px;background:linear-gradient(135deg,#16a34a 0%,#2563eb 100%);border-radius:50%;text-align:center;line-height:38px;font-size:18px;color:#ffffff;text-decoration:none;font-weight:700;box-shadow:0 2px 8px rgba(22,163,74,0.25);">
+                                                        in
+                                                    </a>
+                                                </td>
+                                                <!-- Instagram -->
+                                                <td style="padding:0 5px;">
+                                                    <a href="https://www.instagram.com/quivonex" style="display:inline-block;width:38px;height:38px;background:linear-gradient(135deg,#16a34a 0%,#2563eb 100%);border-radius:50%;text-align:center;line-height:38px;font-size:18px;color:#ffffff;text-decoration:none;font-weight:700;box-shadow:0 2px 8px rgba(22,163,74,0.25);">
+                                                        ig
+                                                    </a>
+                                                </td>
+                                                <!-- YouTube -->
+                                                <td style="padding:0 5px;">
+                                                    <a href="https://www.youtube.com/quivonex" style="display:inline-block;width:38px;height:38px;background:linear-gradient(135deg,#16a34a 0%,#2563eb 100%);border-radius:50%;text-align:center;line-height:38px;font-size:18px;color:#ffffff;text-decoration:none;font-weight:700;box-shadow:0 2px 8px rgba(22,163,74,0.25);">
+                                                        yt
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Copyright -->
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td style="text-align:center;font-size:12px;color:#94a3b8;padding-top:6px;border-top:1px solid #e9edf4;">
+                                        &copy; 2026 Quivonex. All Rights Reserved.
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                        </td>
+                    </tr>
+                    
+                </table>
+                <!-- End Main Container -->
+                
+                <!-- Footer Note -->
+                <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;margin:18px auto 0;">
+                    <tr>
+                        <td style="text-align:center;font-size:11px;color:#94a3b8;padding:8px;">
+                            This is a system-generated notification. Please do not reply to this email.
+                        </td>
+                    </tr>
+                </table>
+                
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
