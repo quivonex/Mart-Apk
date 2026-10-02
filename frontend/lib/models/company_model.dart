@@ -254,38 +254,64 @@ class CompanyActionResponse {
 }
 
 // ============ Payment Order Response ============
+//
+// Backend returns:
+// { "status": true, "order_id": "order_xxx", "amount": "999.00",
+//   "amount_in_paise": 99900, "key": "rzp_...", "company_id": 5 }
+//
+// NOTE: "amount" is a STRING in rupees, so the old int.tryParse() returned
+// null. Use amountInPaise for Razorpay.
 
 class CompanyPaymentOrderResponse {
   final bool status;
   final String? message;
   final String? key;
-  final int? amount;
+  final String amount; // rupees, e.g. "999.00"
+  final int amountInPaise; // e.g. 99900
   final String? orderId;
-  final String? currency;
+  final String currency;
+  final int? companyId;
 
   CompanyPaymentOrderResponse({
     required this.status,
     this.message,
     this.key,
-    this.amount,
+    this.amount = '0',
+    this.amountInPaise = 0,
     this.orderId,
-    this.currency,
+    this.currency = 'INR',
+    this.companyId,
   });
 
   factory CompanyPaymentOrderResponse.fromJson(Map<String, dynamic> json) {
+    final rupees = json['amount']?.toString() ?? '0';
+    int paise = json['amount_in_paise'] is int
+        ? json['amount_in_paise']
+        : int.tryParse(json['amount_in_paise']?.toString() ?? '') ?? 0;
+    if (paise == 0) {
+      paise = ((double.tryParse(rupees) ?? 0) * 100).round();
+    }
     return CompanyPaymentOrderResponse(
       status: json['status'] == true,
       message: json['message']?.toString(),
       key: json['key']?.toString(),
-      amount: json['amount'] is int
-          ? json['amount']
-          : int.tryParse(json['amount']?.toString() ?? '0'),
+      amount: rupees,
+      amountInPaise: paise,
       orderId: json['order_id']?.toString(),
-      currency: json['currency']?.toString(),
+      currency: json['currency']?.toString() ?? 'INR',
+      companyId: json['company_id'] is int
+          ? json['company_id']
+          : int.tryParse(json['company_id']?.toString() ?? ''),
     );
   }
 
-  bool get isSuccess => status;
+  bool get isSuccess =>
+      status && (orderId?.isNotEmpty ?? false) && (key?.isNotEmpty ?? false);
+
+  String get amountLabel {
+    final v = double.tryParse(amount) ?? amountInPaise / 100;
+    return v == v.roundToDouble() ? '₹${v.toInt()}' : '₹${v.toStringAsFixed(2)}';
+  }
 }
 
 // ============ Payment Verify Response ============
@@ -305,6 +331,41 @@ class CompanyPaymentVerifyResponse {
       message: json['message']?.toString(),
     );
   }
+
+  bool get isSuccess => status;
+}
+
+// ============ Company Detail Response ============
+// POST /company/company/single-retrieve/  body: { "company_id": 5 }
+
+class CompanyDetailResponse {
+  final bool status;
+  final String? message;
+  final Company? data;
+
+  CompanyDetailResponse({required this.status, this.message, this.data});
+
+  factory CompanyDetailResponse.fromJson(Map<String, dynamic> json) {
+    return CompanyDetailResponse(
+      status: json['status'] == true,
+      message: json['message']?.toString(),
+      data: json['data'] is Map
+          ? Company.fromJson(Map<String, dynamic>.from(json['data']))
+          : null,
+    );
+  }
+
+  bool get isSuccess => status && data != null;
+}
+
+// ============ Simple Response (soft-delete / restore) ============
+// Backend returns { "message": "..."} on success, { "error": "..." } on failure.
+
+class CompanySimpleResponse {
+  final bool status;
+  final String message;
+
+  CompanySimpleResponse({required this.status, required this.message});
 
   bool get isSuccess => status;
 }

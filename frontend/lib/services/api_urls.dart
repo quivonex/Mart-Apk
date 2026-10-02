@@ -2,7 +2,7 @@ class ApiUrls {
   // Base URL - Change this to your actual server IP
 
   static const String baseUrl = 'http://192.168.31.247:16000';
- // static const String baseUrl = "https://api.qnxmartb2b.com";
+  // static const String baseUrl = "https://api.qnxmartb2b.com";
 
   // Auth Endpoints
   static const String login = '/accounts/login/';
@@ -58,6 +58,22 @@ class ApiUrls {
   static const String companyUpdate = '/company/company/update/';
   static const String companyPaymentOrder = '/company/create-company-payment-order/';
   static const String companyVerifyPayment = '/company/verify-payment/';
+  static const String companyDetail = '/company/company/single-retrieve/';
+  static const String companySoftDelete = '/company/company/soft-delete/';
+  static const String companyRestore = '/company/company/restore/';
+  static const String companyStock = '/company/company/stock/';
+  static const String companyLowStock = '/company/company/low-stock/';
+
+  // ✅ Supplier Endpoints (NEW)
+  static const String supplierList = '/company/suppliers/list/';
+  static const String supplierCreate = '/company/suppliers/create/';
+  static const String supplierUpdate = '/company/suppliers/update/';
+  static const String supplierDelete = '/company/supplier/delete/';
+
+  // ✅ S3 bucket for raw *_s3_key values (e.g. low-stock thumbnails).
+  // Set this to your AWS_S3_CUSTOM_DOMAIN from backend settings.py:
+  //   https://<AWS_STORAGE_BUCKET_NAME>.s3.amazonaws.com
+  static const String s3BaseUrl = 'https://YOUR_BUCKET_NAME.s3.amazonaws.com';
 
   // ✅ Company Product Endpoints (NEW)
   static const String companyProductsList = '/product/company/products-list/';
@@ -142,6 +158,15 @@ class ApiUrls {
   static String get companyUpdateUrl => '$baseUrl$companyUpdate';
   static String get companyPaymentOrderUrl => '$baseUrl$companyPaymentOrder';
   static String get companyVerifyPaymentUrl => '$baseUrl$companyVerifyPayment';
+  static String get companyDetailUrl => '$baseUrl$companyDetail';
+  static String get companySoftDeleteUrl => '$baseUrl$companySoftDelete';
+  static String get companyRestoreUrl => '$baseUrl$companyRestore';
+  static String get companyStockUrl => '$baseUrl$companyStock';
+  static String get companyLowStockUrl => '$baseUrl$companyLowStock';
+  static String get supplierListUrl => '$baseUrl$supplierList';
+  static String get supplierCreateUrl => '$baseUrl$supplierCreate';
+  static String get supplierUpdateUrl => '$baseUrl$supplierUpdate';
+  static String get supplierDeleteUrl => '$baseUrl$supplierDelete';
   static String get companyProductsListUrl => '$baseUrl$companyProductsList';
   static String get companyProductCreateUrl => '$baseUrl$companyProductCreate';
   static String get companyProductUpdateUrl => '$baseUrl$companyProductUpdate';

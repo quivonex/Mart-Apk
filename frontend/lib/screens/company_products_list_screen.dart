@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_constants.dart';
 import '../models/company_product_model.dart';
 import '../services/company_product_service.dart';
-import '../services/company_product_service.dart';
+import '../screens/product_create_screen.dart';
 
 class CompanyProductsListScreen extends StatefulWidget {
   final int? companyId;
@@ -50,9 +50,13 @@ class _CompanyProductsListScreenState
   }
 
   void _openCreate() async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Add Product feature coming soon')),
+    final created = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProductCreateScreen(companyId: widget.companyId),
+      ),
     );
+    if (created == true && mounted) _load();
   }
 
   void _openEdit(CompanyProduct p) async {

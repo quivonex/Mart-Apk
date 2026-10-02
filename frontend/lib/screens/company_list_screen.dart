@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../constants/design_tokens.dart';
 import '../models/company_model.dart';
 import '../services/company_service.dart';
+import '../utils/company_payment_helper.dart';
 import 'company_create_edit_screen.dart';
+import 'company_detail_screen.dart';
 
 // Colours used only on this screen (the rest come from DT).
 class _C {
@@ -113,24 +115,17 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
     if (result == true) _load();
   }
 
-  void _onPay(Company company) {
-    // TODO: start Razorpay checkout for this company.
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            'Online payment is not set up yet (Razorpay integration required)',
-            style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white),
-          ),
-          backgroundColor: DT.onyx900,
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(DT.rMd),
-          ),
-        ),
-      );
+  Future<void> _openDetail(Company company) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => CompanyDetailScreen(company: company)),
+    );
+    _load(); // detail screen can pay / edit / deactivate
+  }
+
+  Future<void> _onPay(Company company) async {
+    final paid = await CompanyPaymentHelper.pay(context, company);
+    if (paid) _load();
   }
 
   // =================================================================
@@ -273,6 +268,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
               _CompanyCard(
                 company: c,
                 isPaid: _isPaid(c),
+                onOpen: () => _openDetail(c),
                 onEdit: () => _openEdit(c),
                 onPay: () => _onPay(c),
               ),
@@ -609,12 +605,14 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
 class _CompanyCard extends StatelessWidget {
   final Company company;
   final bool isPaid;
+  final VoidCallback onOpen;
   final VoidCallback onEdit;
   final VoidCallback onPay;
 
   const _CompanyCard({
     required this.company,
     required this.isPaid,
+    required this.onOpen,
     required this.onEdit,
     required this.onPay,
   });
@@ -635,7 +633,7 @@ class _CompanyCard extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: onEdit,
+        onTap: onOpen,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
