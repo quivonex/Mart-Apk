@@ -4,11 +4,12 @@
 // CategoryFormScreen   - create / edit, optional branch. Pops with the saved CatalogCategory.
 
 import 'package:flutter/material.dart';
-import '../../constants/design_tokens.dart';
-import '../../models/catalog_models.dart';
-import '../../services/catalog_service.dart';
-import '../../widgets/catalog_widgets.dart';
-import '../../widgets/company_ui.dart';
+import '../constants/design_tokens.dart';
+import '../models/catalog_models.dart';
+import '../services/catalog_service.dart';
+import '../widgets/catalog_widgets.dart';
+import '../widgets/company_ui.dart';
+import '../widgets/product_ui.dart';
 import 'subcategory_screens.dart';
 
 class CategoryManageScreen extends StatefulWidget {
@@ -156,6 +157,8 @@ class _CategoryManageScreenState extends State<CategoryManageScreen> {
 }
 
 // ===========================================================================
+// Category Form (Add / Edit) — redesigned to match the app
+// ===========================================================================
 class CategoryFormScreen extends StatefulWidget {
   final int companyId;
   final String companyName;
@@ -184,6 +187,8 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
   bool _loadingBranches = true;
   String? _branchError;
   bool _saving = false;
+
+  static const _brand = Color(0xFF1A68FA);
 
   bool get _isEdit => widget.existing != null;
 
@@ -243,45 +248,319 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return CatalogFormScaffold(
-      title: _isEdit ? 'Edit category' : 'Add category',
-      subtitle: widget.companyName,
-      formKey: _formKey,
-      saving: _saving,
-      saveLabel: _isEdit ? 'Save changes' : 'Add category',
-      onSave: _save,
-      children: [
-        CatalogTextField(
-          controller: _name,
-          label: 'Category name *',
-          hint: 'e.g. Batteries',
-          icon: Icons.category_outlined,
-          capitalization: TextCapitalization.words,
-          validator: (v) => (v ?? '').trim().length < 2 ? 'Enter the category name' : null,
+    return Scaffold(
+      backgroundColor: DT.background,
+      appBar: _appBar(),
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.translucent,
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+            children: [
+              _infoCard(
+                icon: Icons.category_outlined,
+                title: _isEdit ? 'Edit category' : 'New category',
+                subtitle:
+                'Categories group your products, e.g. Batteries, Inverters',
+              ),
+              const SizedBox(height: 16),
+              _sectionCard(
+                icon: Icons.info_outline,
+                title: 'Category information',
+                subtitle: 'Name and a short description',
+                children: [
+                  PxLabel('Category name', required: true),
+                  TextFormField(
+                    controller: _name,
+                    textCapitalization: TextCapitalization.words,
+                    style: DT.text(
+                        size: 14, weight: FontWeight.w600, color: DT.onyx900),
+                    decoration: pxInputDecoration(
+                      hint: 'e.g. Batteries',
+                      icon: Icons.category_outlined,
+                      iconColor: _brand,
+                    ),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Category name is required';
+                      }
+                      if (v.trim().length < 2) return 'Minimum 2 characters';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  PxLabel('Description', optional: true),
+                  TextFormField(
+                    controller: _desc,
+                    maxLines: 3,
+                    minLines: 3,
+                    textCapitalization: TextCapitalization.sentences,
+                    style: DT.text(
+                        size: 14, weight: FontWeight.w500, color: DT.onyx900),
+                    decoration: pxInputDecoration(
+                      hint: 'Enter a short description (optional)',
+                      icon: Icons.notes_outlined,
+                      iconColor: _brand,
+                      tinted: true,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _sectionCard(
+                icon: Icons.store_mall_directory_outlined,
+                title: 'Branch',
+                subtitle: 'Optional. Leave empty to use company-wide',
+                children: [
+                  CatalogPickerField<CatalogBranch>(
+                    label: 'Assign to branch',
+                    icon: Icons.store_mall_directory_outlined,
+                    items: _branches,
+                    selected: _branch,
+                    loading: _loadingBranches,
+                    error: _branchError,
+                    onRetry: _loadBranches,
+                    onChanged: (b) => setState(() => _branch = b),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Leave empty to use this category for the whole company.',
+                    style: DT.text(size: 11.5, color: DT.slate500),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 12),
-        CatalogTextField(
-          controller: _desc,
-          label: 'Description',
-          icon: Icons.notes_outlined,
-          maxLines: 3,
-          capitalization: TextCapitalization.sentences,
+      ),
+      bottomNavigationBar: _bottomBar(),
+    );
+  }
+
+  // ── App bar ─────────────────────────────────────────────
+  PreferredSizeWidget _appBar() {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(64),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(bottom: BorderSide(color: DT.slate200)),
+          boxShadow: [
+            BoxShadow(
+                color: Color(0x0D0F172A), blurRadius: 2, offset: Offset(0, 1)),
+          ],
         ),
-        const SizedBox(height: 16),
-        CatalogPickerField<CatalogBranch>(
-          label: 'Branch',
-          icon: Icons.store_mall_directory_outlined,
-          items: _branches,
-          selected: _branch,
-          loading: _loadingBranches,
-          error: _branchError,
-          onRetry: _loadBranches,
-          onChanged: (b) => setState(() => _branch = b),
+        child: SafeArea(
+          bottom: false,
+          child: SizedBox(
+            height: 64,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Back',
+                    onPressed: () => Navigator.maybePop(context),
+                    icon: const Icon(Icons.arrow_back_rounded,
+                        color: DT.onyx900, size: 24),
+                  ),
+                  const SizedBox(width: 2),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _isEdit ? 'Edit category' : 'Add category',
+                          style: DT.text(
+                              size: 18,
+                              weight: FontWeight.w700,
+                              color: DT.onyx900,
+                              letterSpacing: -0.3),
+                        ),
+                        Text(
+                          widget.companyName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: DT.text(
+                              size: 12,
+                              weight: FontWeight.w500,
+                              color: DT.slate500),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
-        const SizedBox(height: 6),
-        Text('Leave empty to use this category for the whole company.',
-            style: DT.text(size: 11.5, color: DT.slate500)),
-      ],
+      ),
+    );
+  }
+
+  // ── Info banner ─────────────────────────────────────────
+  Widget _infoCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: DT.blue50,
+        borderRadius: BorderRadius.circular(DT.rLg),
+        border: Border.all(color: DT.blue200),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: const BoxDecoration(
+                color: Colors.white, shape: BoxShape.circle),
+            child: Icon(icon, color: _brand, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: DT.text(
+                        size: 14,
+                        weight: FontWeight.w800,
+                        color: DT.onyx900)),
+                const SizedBox(height: 2),
+                Text(subtitle,
+                    style:
+                    DT.text(size: 11.5, color: DT.slate500, height: 1.4)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Section card ────────────────────────────────────────
+  Widget _sectionCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required List<Widget> children,
+  }) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(DT.rLg),
+        border: Border.all(color: DT.slate200),
+        boxShadow: PX.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.only(bottom: 14),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: DT.slate100)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: DT.blue50,
+                    borderRadius: BorderRadius.circular(DT.rMd),
+                  ),
+                  child: Icon(icon, size: 20, color: _brand),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title,
+                          style: DT.text(
+                              size: 14,
+                              weight: FontWeight.w700,
+                              color: DT.onyx900,
+                              height: 1.2)),
+                      const SizedBox(height: 2),
+                      Text(subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: DT.text(size: 11.5, color: DT.slate500)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  // ── Sticky bottom bar ───────────────────────────────────
+  Widget _bottomBar() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: DT.slate200)),
+        boxShadow: [
+          BoxShadow(
+              color: Color(0x0F0F172A), blurRadius: 12, offset: Offset(0, -4)),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: SizedBox(
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _saving ? null : _save,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _brand,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: _brand.withValues(alpha: 0.55),
+                elevation: 2,
+                shadowColor: const Color(0x401A68FA),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(DT.rMd)),
+              ),
+              child: _saving
+                  ? const SizedBox(
+                height: 22,
+                width: 22,
+                child: CircularProgressIndicator(
+                    color: Colors.white, strokeWidth: 2.5),
+              )
+                  : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.check_rounded, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    _isEdit ? 'Save changes' : 'Add category',
+                    style: DT.text(
+                        size: 15,
+                        weight: FontWeight.w700,
+                        color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

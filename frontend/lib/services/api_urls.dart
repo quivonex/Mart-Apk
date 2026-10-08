@@ -1,7 +1,7 @@
 class ApiUrls {
   // Base URL - Change this to your actual server IP
 
-  static const String baseUrl = 'http://192.168.31.247:16000';
+  static const String baseUrl = 'http://192.168.31.248:16000';
   // static const String baseUrl = "https://api.qnxmartb2b.com";
 
   // Auth Endpoints

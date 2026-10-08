@@ -3,6 +3,7 @@ import '../constants/app_constants.dart';
 import '../models/order_model.dart';
 import '../services/order_service.dart';
 import 'order_detail_screen.dart';
+import '../utils/order_payment_helper.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
@@ -19,6 +20,17 @@ class _OrdersScreenState extends State<OrdersScreen> {
     'Processing',
     'Shipped',
     'Delivered',
+    'Cancelled / Returns',
+  ];
+
+  /// Backend statuses shown under each tab (every status belongs to one tab).
+  static const List<Set<String>> _tabStatuses = [
+    {},
+    {'PENDING'},
+    {'CONFIRMED', 'PACKED'},
+    {'SHIPPED', 'OUT_FOR_DELIVERY'},
+    {'DELIVERED'},
+    {'CANCELLED', 'RETURN_REQUESTED', 'RETURN_PICKUP', 'RETURN_IN_TRANSIT', 'RETURNED', 'REFUNDED'},
   ];
 
   List<OrderData> _orders = [];
@@ -51,30 +63,25 @@ class _OrdersScreenState extends State<OrdersScreen> {
     }
   }
 
-  String? _getStatusForTab(int tabIndex) {
-    switch (tabIndex) {
-      case 1:
-        return 'PENDING';
-      case 2:
-        return 'CONFIRMED';
-      case 3:
-        return 'SHIPPED';
-      case 4:
-        return 'DELIVERED';
-      default:
-        return null;
-    }
+  List<OrderData> get _filteredOrders {
+    if (_selectedTab == 0) return _orders;
+    final wanted = _tabStatuses[_selectedTab];
+    return _orders.where((o) => wanted.contains(o.status.toUpperCase())).toList();
   }
 
-  List<OrderData> get _filteredOrders {
-    if (_selectedTab == 0) {
-      return _orders;
+  Future<void> _payNow(OrderData order) async {
+    final r = await OrderPaymentHelper.pay(
+      context,
+      shipOrderId: order.orderId,
+      description: 'Order ${order.orderNumber}',
+    );
+    if (!mounted) return;
+    if (r == OrderPayOutcome.paid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Payment received for ${order.orderNumber}. Your order is confirmed.')),
+      );
+      _loadOrders();
     }
-    final status = _getStatusForTab(_selectedTab);
-    if (status == null) return _orders;
-    return _orders
-        .where((order) => order.status.toUpperCase() == status)
-        .toList();
   }
 
   @override
@@ -134,7 +141,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     color: isSelected
                         ? Colors.white
                         : AppConstants.textSecondary,
-                    fontFamily: 'Inter',
                   ),
                 ),
               ),
@@ -193,7 +199,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
             style: const TextStyle(
               fontSize: 16,
               color: AppConstants.textSecondary,
-              fontFamily: 'Inter',
             ),
           ),
           const SizedBox(height: 16),
@@ -233,7 +238,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: AppConstants.error,
-                fontFamily: 'Inter',
               ),
             ),
             const SizedBox(height: 6),
@@ -242,7 +246,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
               style: const TextStyle(
                 fontSize: 13,
                 color: AppConstants.textSecondary,
-                fontFamily: 'Inter',
               ),
               textAlign: TextAlign.center,
             ),
@@ -263,7 +266,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
-                  fontFamily: 'Inter',
                 ),
               ),
             ),
@@ -274,7 +276,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
   }
 
   Widget _buildOrderCard(OrderData order) {
-    final Color statusColor = Color(order.statusColorValue);
+    final Color statusColor =
+    order.awaitingPayment ? const Color(0xFFF59E0B) : Color(order.statusColorValue);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -306,7 +309,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: AppConstants.textPrimary,
-                        fontFamily: 'Inter',
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -315,7 +317,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppConstants.textSecondary,
-                        fontFamily: 'Inter',
                       ),
                     ),
                   ],
@@ -329,12 +330,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  order.status,
+                  order.statusLabel,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: statusColor,
-                    fontFamily: 'Inter',
                   ),
                 ),
               ),
@@ -376,7 +376,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: AppConstants.textPrimary,
-                        fontFamily: 'Inter',
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -387,7 +386,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppConstants.textSecondary,
-                        fontFamily: 'Inter',
                       ),
                     ),
                   ],
@@ -406,7 +404,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 style: TextStyle(
                   fontSize: 13,
                   color: AppConstants.textSecondary,
-                  fontFamily: 'Inter',
                 ),
               ),
               Text(
@@ -415,11 +412,42 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                   color: AppConstants.primary,
-                  fontFamily: 'Inter',
                 ),
               ),
             ],
           ),
+          if (order.awaitingPayment) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.schedule_rounded, color: Color(0xFFB45309), size: 20),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Online payment not completed. Pay to confirm this order.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF92400E), height: 1.35),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () => _payNow(order),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(0, 38),
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                    ),
+                    child: const Text('Pay now'),
+                  ),
+                ],
+              ),
+            ),
+          ],
 
           const SizedBox(height: 12),
 
@@ -451,7 +479,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: AppConstants.primary,
-                      fontFamily: 'Inter',
                     ),
                   ),
                 ),
@@ -480,7 +507,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
-                      fontFamily: 'Inter',
                     ),
                   ),
                 ),

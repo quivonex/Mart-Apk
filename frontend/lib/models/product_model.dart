@@ -18,6 +18,12 @@ class Product {
   final String discountValue;
   final dynamic appliedOffer;
 
+  // Present in product/approved-list/ (full ProductSerializer). Optional so
+  // every existing Product(...) call keeps working.
+  final int? stockQuantity;
+  final String unitName;
+  final List<String> videos; // full S3 URLs of product videos
+
   Product({
     required this.id,
     required this.name,
@@ -35,6 +41,9 @@ class Product {
     required this.discountType,
     required this.discountValue,
     required this.appliedOffer,
+    this.stockQuantity,
+    this.unitName = '',
+    this.videos = const [],
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -65,6 +74,17 @@ class Product {
       discountType: json['discount_type'] ?? '',
       discountValue: json['discount_value']?.toString() ?? '0',
       appliedOffer: json['applied_offer'],
+      stockQuantity: json['stock_quantity'] is int
+          ? json['stock_quantity']
+          : int.tryParse(json['stock_quantity']?.toString() ?? ''),
+      unitName: json['unit_name']?.toString() ?? '',
+      videos: (json['videos'] is List)
+          ? (json['videos'] as List)
+          .whereType<Map>()
+          .map((v) => (v['video_s3_key'] ?? '').toString())
+          .where((u) => u.startsWith('http'))
+          .toList()
+          : const [],
     );
   }
 
@@ -86,6 +106,9 @@ class Product {
       'discount_type': discountType,
       'discount_value': discountValue,
       'applied_offer': appliedOffer,
+      'stock_quantity': stockQuantity,
+      'unit_name': unitName,
+      'videos': [for (final v in videos) {'video_s3_key': v}],
     };
   }
 }

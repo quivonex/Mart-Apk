@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 import '../constants/design_tokens.dart';
 import '../models/catalog_models.dart';
 import 'company_ui.dart';
+import 'product_ui.dart';
 
 // ===========================================================================
 // PICKER FIELD
@@ -70,34 +71,26 @@ class CatalogPickerField<T extends CatalogOption> extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text(required ? '$label *' : label,
-                style: DT.text(size: 12, weight: FontWeight.w600, color: DT.onyx600)),
-            if (!required) ...[
-              const SizedBox(width: 4),
-              Text('(optional)', style: DT.text(size: 11, color: DT.slate400)),
-            ],
-            const Spacer(),
-            if (onManage != null && enabled)
-              GestureDetector(
-                onTap: onManage,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  child: Text('Manage',
-                      style: DT.text(size: 11.5, weight: FontWeight.w700, color: DT.blue800)),
-                ),
-              ),
-          ],
+        PxLabel(
+          label,
+          required: required,
+          optional: !required,
+          trailing: (onManage != null && enabled)
+              ? PxLinkButton(
+            label: 'Manage',
+            icon: Icons.open_in_new_rounded,
+            iconAfter: true,
+            onTap: onManage,
+          )
+              : null,
         ),
-        const SizedBox(height: 6),
         Material(
           color: enabled ? Colors.white : DT.slate100,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(DT.rMd),
             side: BorderSide(
-              color: hasError ? DT.error : (selected != null ? DT.blue800 : DT.border),
-              width: selected != null ? 1.3 : 1,
+              color: hasError ? DT.error : (selected != null ? PX.royal600 : DT.slate200),
+              width: selected != null ? 1.4 : 1,
             ),
           ),
           child: InkWell(
@@ -107,7 +100,11 @@ class CatalogPickerField<T extends CatalogOption> extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
               child: Row(
                 children: [
-                  Icon(icon, size: 19, color: enabled ? DT.blue800 : DT.slate400),
+                  Icon(icon,
+                      size: 19,
+                      color: !enabled
+                          ? DT.slate300
+                          : (required || selected != null ? PX.royal600 : DT.slate400)),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -116,7 +113,7 @@ class CatalogPickerField<T extends CatalogOption> extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(
                         size: 13.5,
-                        weight: selected != null ? FontWeight.w600 : FontWeight.w500,
+                        weight: FontWeight.w500,
                         color: selected != null
                             ? DT.onyx900
                             : (enabled ? DT.slate400 : DT.slate400),
@@ -127,7 +124,7 @@ class CatalogPickerField<T extends CatalogOption> extends StatelessWidget {
                     const SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: DT.blue800))
+                        child: CircularProgressIndicator(strokeWidth: 2, color: PX.royal600))
                   else if (selected != null && !required)
                     GestureDetector(
                       onTap: () => onChanged(null),

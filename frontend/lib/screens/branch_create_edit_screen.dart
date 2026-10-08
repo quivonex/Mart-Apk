@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../constants/app_constants.dart';
+import '../constants/design_tokens.dart';
 import '../models/branch_model.dart';
 import '../services/branch_service.dart';
+import '../widgets/product_ui.dart';
 
 class BranchCreateEditScreen extends StatefulWidget {
   final Branch? existing;
@@ -11,12 +11,10 @@ class BranchCreateEditScreen extends StatefulWidget {
   const BranchCreateEditScreen({super.key, this.existing});
 
   @override
-  State<BranchCreateEditScreen> createState() =>
-      _BranchCreateEditScreenState();
+  State<BranchCreateEditScreen> createState() => _BranchCreateEditScreenState();
 }
 
-class _BranchCreateEditScreenState
-    extends State<BranchCreateEditScreen> {
+class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final _nameCtrl = TextEditingController();
@@ -28,6 +26,8 @@ class _BranchCreateEditScreenState
   int? _selectedCompanyId;
   bool _isLoadingCompanies = true;
   bool _isSubmitting = false;
+
+  static const _brand = Color(0xFF1A68FA);
 
   bool get _isEdit => widget.existing != null;
 
@@ -55,16 +55,11 @@ class _BranchCreateEditScreenState
 
   Future<void> _loadCompanies() async {
     setState(() => _isLoadingCompanies = true);
-
     final res = await BranchService.getCompanyNames();
-
     if (!mounted) return;
-
     setState(() {
       _isLoadingCompanies = false;
-      if (res.isSuccess) {
-        _companies = res.data;
-      }
+      if (res.isSuccess) _companies = res.data;
     });
   }
 
@@ -102,184 +97,212 @@ class _BranchCreateEditScreenState
     setState(() => _isSubmitting = false);
 
     _snack(res.displayMessage, isError: !res.isSuccess);
-
-    if (res.isSuccess) {
-      Navigator.pop(context, true);
-    }
+    if (res.isSuccess) Navigator.pop(context, true);
   }
 
   void _snack(String msg, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor:
-        isError ? const Color(0xFFD32F2F) : Colors.green,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 3),
-        margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(msg,
+              style: DT.text(
+                  size: 13, weight: FontWeight.w600, color: Colors.white)),
+          backgroundColor: isError ? DT.error : const Color(0xFF059669),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(DT.rMd)),
         ),
-      ),
-    );
+      );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppConstants.surfaceColor,
-      appBar: AppBar(
-        backgroundColor: AppConstants.primary,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: Text(
-          _isEdit ? 'Edit Branch' : 'Add Branch',
-          style: GoogleFonts.inter(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
+      backgroundColor: DT.background,
+      appBar: _appBar(),
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.translucent,
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+            children: [
+              _infoCard(
+                icon: Icons.storefront_outlined,
+                title: _isEdit ? 'Edit branch' : 'New branch',
+                subtitle:
+                'Branches let you sell from more than one location',
+              ),
+              const SizedBox(height: 16),
+              _sectionCard(
+                icon: Icons.business_outlined,
+                title: 'Company',
+                subtitle: 'Branch will belong to this company',
+                children: [_companyDropdown()],
+              ),
+              const SizedBox(height: 16),
+              _sectionCard(
+                icon: Icons.info_outline,
+                title: 'Branch information',
+                subtitle: 'Contact details for this location',
+                children: [
+                  _field(
+                    _nameCtrl,
+                    'Branch name',
+                    'e.g. Mumbai HQ',
+                    Icons.store_outlined,
+                    required: true,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Branch name is required'
+                        : null,
+                  ),
+                  const SizedBox(height: 14),
+                  _field(
+                    _phoneCtrl,
+                    'Phone number',
+                    '10-digit mobile number',
+                    Icons.phone_outlined,
+                    required: true,
+                    keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Phone is required';
+                      }
+                      if (v.trim().length != 10) {
+                        return 'Enter valid 10-digit number';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  _field(
+                    _emailCtrl,
+                    'Email',
+                    'branch@example.com',
+                    Icons.email_outlined,
+                    required: true,
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Email is required';
+                      }
+                      final re =
+                      RegExp(r'^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$');
+                      if (!re.hasMatch(v.trim())) return 'Invalid email';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  _field(
+                    _addressCtrl,
+                    'Address',
+                    'Street, area, city',
+                    Icons.home_outlined,
+                    required: true,
+                    maxLines: 2,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Address is required'
+                        : null,
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _sectionTitle('Branch Information'),
-              const SizedBox(height: 12),
+      bottomNavigationBar: _bottomBar(),
+    );
+  }
 
-              // Company Dropdown
-              _buildCompanyDropdown(),
-              const SizedBox(height: 14),
-
-              _field(
-                _nameCtrl,
-                'Branch Name *',
-                'e.g. Mumbai HQ',
-                Icons.store_outlined,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Branch name is required';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 14),
-
-              _field(
-                _phoneCtrl,
-                'Phone Number *',
-                '10-digit mobile number',
-                Icons.phone_outlined,
-                keyboardType: TextInputType.phone,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(10),
+  // ── App bar ─────────────────────────────────────────────
+  PreferredSizeWidget _appBar() {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(64),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(bottom: BorderSide(color: DT.slate200)),
+          boxShadow: [
+            BoxShadow(
+                color: Color(0x0D0F172A), blurRadius: 2, offset: Offset(0, 1)),
+          ],
+        ),
+        child: SafeArea(
+          bottom: false,
+          child: SizedBox(
+            height: 64,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Back',
+                    onPressed: () => Navigator.maybePop(context),
+                    icon: const Icon(Icons.arrow_back_rounded,
+                        color: DT.onyx900, size: 24),
+                  ),
+                  const SizedBox(width: 2),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _isEdit ? 'Edit branch' : 'Add branch',
+                          style: DT.text(
+                              size: 18,
+                              weight: FontWeight.w700,
+                              color: DT.onyx900,
+                              letterSpacing: -0.3),
+                        ),
+                        Text(
+                          'Manage branch details',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: DT.text(
+                              size: 12,
+                              weight: FontWeight.w500,
+                              color: DT.slate500),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Phone is required';
-                  }
-                  if (v.trim().length != 10) {
-                    return 'Enter valid 10-digit number';
-                  }
-                  return null;
-                },
               ),
-              const SizedBox(height: 14),
-
-              _field(
-                _emailCtrl,
-                'Email *',
-                'branch@example.com',
-                Icons.email_outlined,
-                keyboardType: TextInputType.emailAddress,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Email is required';
-                  }
-                  final re = RegExp(r'^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$');
-                  if (!re.hasMatch(v.trim())) return 'Invalid email';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 14),
-
-              _field(
-                _addressCtrl,
-                'Address *',
-                'Street, area, city',
-                Icons.home_outlined,
-                maxLines: 2,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Address is required';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 28),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isSubmitting ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppConstants.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: _isSubmitting
-                      ? const SizedBox(
-                    height: 22,
-                    width: 22,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2.5,
-                    ),
-                  )
-                      : Text(
-                    _isEdit ? 'Update Branch' : 'Create Branch',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildCompanyDropdown() {
+  // ── Company dropdown ─────────────────────────────────────
+  Widget _companyDropdown() {
     if (_isLoadingCompanies) {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
+          color: DT.slate50,
+          borderRadius: BorderRadius.circular(DT.rMd),
+          border: Border.all(color: DT.slate200),
         ),
         child: Row(
           children: const [
             SizedBox(
               height: 18,
               width: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
+              child:
+              CircularProgressIndicator(strokeWidth: 2, color: _brand),
             ),
             SizedBox(width: 10),
-            Text('Loading companies...'),
+            Text('Loading companies…'),
           ],
         ),
       );
@@ -289,23 +312,18 @@ class _BranchCreateEditScreenState
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppConstants.error.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppConstants.error.withOpacity(0.3),
-          ),
+          color: DT.errorBg,
+          borderRadius: BorderRadius.circular(DT.rMd),
+          border: Border.all(color: DT.errorBorder),
         ),
         child: Row(
           children: [
-            Icon(Icons.error_outline, color: AppConstants.error, size: 18),
+            const Icon(Icons.error_outline, color: DT.error, size: 18),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 'No companies found. Please create a company first.',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: AppConstants.error,
-                ),
+                style: DT.text(size: 12, color: DT.error),
               ),
             ),
           ],
@@ -315,14 +333,23 @@ class _BranchCreateEditScreenState
 
     return DropdownButtonFormField<int>(
       value: _selectedCompanyId,
-      decoration: _inputDecoration(
-        label: 'Company *',
+      isExpanded: true,
+      icon: const Icon(Icons.expand_more, color: DT.slate500),
+      style: DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
+      decoration: pxInputDecoration(
+        hint: 'Select company',
         icon: Icons.business_outlined,
+        iconColor: _brand,
       ),
+      hint: Text('Select company',
+          style: DT.text(size: 13.5, color: DT.slate400)),
       items: _companies.map((c) {
         return DropdownMenuItem<int>(
           value: c.id,
-          child: Text(c.name),
+          child: Text(c.name,
+              overflow: TextOverflow.ellipsis,
+              style: DT.text(
+                  size: 14, weight: FontWeight.w600, color: DT.onyx900)),
         );
       }).toList(),
       onChanged: (v) => setState(() => _selectedCompanyId = v),
@@ -330,70 +357,202 @@ class _BranchCreateEditScreenState
     );
   }
 
-  Widget _sectionTitle(String title) {
-    return Text(
-      title,
-      style: GoogleFonts.inter(
-        fontSize: 15,
-        fontWeight: FontWeight.w700,
-        color: AppConstants.textPrimary,
-      ),
-    );
-  }
-
-  InputDecoration _inputDecoration({
-    required String label,
+  // ── Info banner ──────────────────────────────────────────
+  Widget _infoCard({
     required IconData icon,
+    required String title,
+    required String subtitle,
   }) {
-    return InputDecoration(
-      labelText: label,
-      prefixIcon: Icon(icon, color: AppConstants.primary),
-      filled: true,
-      fillColor: Colors.white,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade200),
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: DT.blue50,
+        borderRadius: BorderRadius.circular(DT.rLg),
+        border: Border.all(color: DT.blue200),
       ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade200),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: const BoxDecoration(
+                color: Colors.white, shape: BoxShape.circle),
+            child: Icon(icon, color: _brand, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: DT.text(
+                        size: 14,
+                        weight: FontWeight.w800,
+                        color: DT.onyx900)),
+                const SizedBox(height: 2),
+                Text(subtitle,
+                    style:
+                    DT.text(size: 11.5, color: DT.slate500, height: 1.4)),
+              ],
+            ),
+          ),
+        ],
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide:
-        const BorderSide(color: AppConstants.primary, width: 2),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.red, width: 1),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.red, width: 2),
-      ),
-      contentPadding:
-      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );
   }
 
+  // ── Section card ─────────────────────────────────────────
+  Widget _sectionCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required List<Widget> children,
+  }) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(DT.rLg),
+        border: Border.all(color: DT.slate200),
+        boxShadow: PX.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.only(bottom: 14),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: DT.slate100)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: DT.blue50,
+                    borderRadius: BorderRadius.circular(DT.rMd),
+                  ),
+                  child: Icon(icon, size: 20, color: _brand),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title,
+                          style: DT.text(
+                              size: 14,
+                              weight: FontWeight.w700,
+                              color: DT.onyx900,
+                              height: 1.2)),
+                      const SizedBox(height: 2),
+                      Text(subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: DT.text(size: 11.5, color: DT.slate500)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  // ── Field helper ─────────────────────────────────────────
   Widget _field(
       TextEditingController ctrl,
       String label,
       String hint,
       IconData icon, {
+        bool required = false,
         TextInputType? keyboardType,
         List<TextInputFormatter>? inputFormatters,
         String? Function(String?)? validator,
         int maxLines = 1,
       }) {
-    return TextFormField(
-      controller: ctrl,
-      keyboardType: keyboardType,
-      inputFormatters: inputFormatters,
-      validator: validator,
-      maxLines: maxLines,
-      decoration: _inputDecoration(label: label, icon: icon)
-          .copyWith(hintText: hint),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        PxLabel(label, required: required, optional: !required),
+        TextFormField(
+          controller: ctrl,
+          keyboardType:
+          maxLines > 1 ? TextInputType.multiline : keyboardType,
+          inputFormatters: inputFormatters,
+          validator: validator,
+          minLines: maxLines > 1 ? maxLines : null,
+          maxLines: maxLines,
+          style: DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
+          decoration: pxInputDecoration(
+            hint: hint,
+            icon: icon,
+            iconColor: _brand,
+            tinted: maxLines > 1,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Sticky bottom bar ────────────────────────────────────
+  Widget _bottomBar() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: DT.slate200)),
+        boxShadow: [
+          BoxShadow(
+              color: Color(0x0F0F172A), blurRadius: 12, offset: Offset(0, -4)),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: SizedBox(
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _isSubmitting ? null : _submit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _brand,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: _brand.withValues(alpha: 0.55),
+                elevation: 2,
+                shadowColor: const Color(0x401A68FA),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(DT.rMd)),
+              ),
+              child: _isSubmitting
+                  ? const SizedBox(
+                height: 22,
+                width: 22,
+                child: CircularProgressIndicator(
+                    color: Colors.white, strokeWidth: 2.5),
+              )
+                  : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.check_rounded, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    _isEdit ? 'Update branch' : 'Create branch',
+                    style: DT.text(
+                        size: 15,
+                        weight: FontWeight.w700,
+                        color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

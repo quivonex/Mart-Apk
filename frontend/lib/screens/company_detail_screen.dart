@@ -322,7 +322,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
   Widget _actions() {
     final tiles = <_ActionTile>[
       _ActionTile(Icons.inventory_2_outlined, 'Products',
-              () => _open(CompanyProductsListScreen(companyId: _c.id), reload: false)),
+              () => _open(CompanyProductsListScreen(companyId: _c.id, companyName: _c.name), reload: false)),
       _ActionTile(Icons.local_shipping_outlined, 'Suppliers',
               () => _open(SupplierListScreen(company: _c), reload: false)),
       _ActionTile(Icons.bar_chart_rounded, 'Stock',

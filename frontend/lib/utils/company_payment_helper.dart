@@ -47,6 +47,12 @@ class CompanyPaymentHelper {
     if (!context.mounted) return false;
     _hideLoader(context);
 
+    // Already paid, or a previous captured payment was recovered by the server.
+    if (order.status && order.alreadyPaid) {
+      await _showSuccess(context, company, order, order.paymentId ?? '');
+      return true;
+    }
+
     if (!order.isSuccess) {
       _snack(context, order.message ?? 'Could not start payment', error: true);
       return false;
@@ -264,7 +270,10 @@ class CompanyPaymentHelper {
             textAlign: TextAlign.center,
             style: DT.text(size: 18, weight: FontWeight.w800)),
         content: Text(
-          '${company.name} is now registered. ${order.amountLabel} paid.\n'
+          order.alreadyPaid
+              ? '${company.name} is registered.'
+              '${paymentId.isNotEmpty ? '\nReference: $paymentId' : ''}'
+              : '${company.name} is now registered. ${order.amountLabel} paid.\n'
               'Reference: $paymentId',
           textAlign: TextAlign.center,
           style: DT.text(size: 13, color: DT.onyx600, height: 1.5),

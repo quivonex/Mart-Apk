@@ -22,6 +22,9 @@
 //              product/unit/soft-delete/       {id}     product/unit/restore/ {id}
 // BRAND        product/brand/by-subcategory/   {subcategory_id}
 // PRODUCT      product/api/products/create/    multipart
+// MY PRODUCTS  product/company/products-list/  {company_id?, include_all: true}
+//              product/product-active-inactive/ {product_id, is_active}
+//              product/company/product/update-request/  multipart (admin approval)
 
 import 'dart:async';
 import 'dart:convert';
@@ -30,6 +33,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/catalog_models.dart';
+import '../models/my_product_model.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'api_urls.dart';
 
@@ -362,12 +366,12 @@ class CatalogService {
         })
         ..fields.addAll(fields);
 
-      req.files.add(await _imagePart('thumbnail', thumbnail));
+      req.files.add(await imagePart('thumbnail', thumbnail));
       for (final img in images) {
-        req.files.add(await _imagePart('images', img));
+        req.files.add(await imagePart('images', img));
       }
       for (final e in variantImages.entries) {
-        req.files.add(await _imagePart(e.key, e.value));
+        req.files.add(await imagePart(e.key, e.value));
       }
 
       final streamed = await req.send().timeout(_uploadTimeout);
@@ -388,7 +392,7 @@ class CatalogService {
   }
 
   /// Backend upload_file_to_s3 needs a filename with extension + content type.
-  static Future<http.MultipartFile> _imagePart(String field, XFile x) async {
+  static Future<http.MultipartFile> imagePart(String field, XFile x) async {
     final bytes = await x.readAsBytes();
     var name = x.name.isNotEmpty ? x.name : x.path.split('/').last;
     var mime = x.mimeType ?? '';
@@ -412,4 +416,90 @@ class CatalogService {
     return http.MultipartFile.fromBytes(field, bytes,
         filename: name, contentType: MediaType.parse(mime));
   }
+
+  // ───────────────────────────── MY PRODUCTS ─────────────────────────────
+  /// All of the seller's products incl. pending / rejected / inactive.
+  /// Needs the backend `include_all` patch (product/views.py).
+  static Future<MyProductsResponse> getMyProducts({int? companyId}) async {
+    try {
+      final (code, json) = await _post('/product/company/products-list/', {
+        if (companyId != null) 'company_id': companyId,
+        'include_all': true,
+      });
+      if (!_isOk(code, json)) {
+        return MyProductsResponse(ok: false, message: catalogErrorText(json));
+      }
+      return MyProductsResponse(
+        ok: true,
+        items: _list(json).map(MyProduct.fromJson).toList(),
+      );
+    } catch (e) {
+      return MyProductsResponse(ok: false, message: _netError(e));
+    }
+  }
+
+  /// Show / hide a product for buyers (no admin approval needed).
+  static Future<CatalogResult<void>> setProductActive(int productId, bool active) async {
+    try {
+      final (code, json) = await _post('/product/product-active-inactive/',
+          {'product_id': productId, 'is_active': active});
+      final ok = json['success'] == true || (code >= 200 && code < 300 && json['success'] != false);
+      return CatalogResult(
+        ok: ok,
+        message: (json['message'] ??
+            (ok ? (active ? 'Product activated' : 'Product hidden') : 'Request failed'))
+            .toString(),
+      );
+    } catch (e) {
+      return CatalogResult(ok: false, message: _netError(e));
+    }
+  }
+
+  /// Sends changes for admin approval. Only send fields that changed.
+  /// The backend allows ONE pending request per product.
+  static Future<CatalogResult<void>> requestProductUpdate({
+    required int productId,
+    Map<String, String> fields = const {},
+    XFile? thumbnail,
+    List<XFile> images = const [],
+    List<int> deleteImageIds = const [],
+  }) async {
+    try {
+      final token = await _token();
+      final req = http.MultipartRequest(
+          'POST', Uri.parse(_u('/product/company/product/update-request/')))
+        ..headers.addAll({
+          'Accept': 'application/json',
+          if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+        })
+        ..fields['product_id'] = productId.toString()
+        ..fields.addAll(fields);
+
+      // Django reads request.data.getlist('delete_images'). Map-based `fields`
+      // can't repeat a key, so each id goes in as its own filename-less part,
+      // which Django parses as a normal form field.
+      for (final id in deleteImageIds) {
+        req.files.add(http.MultipartFile.fromString('delete_images', id.toString()));
+      }
+      if (thumbnail != null) req.files.add(await imagePart('thumbnail', thumbnail));
+      for (final img in images) {
+        req.files.add(await imagePart('images', img));
+      }
+
+      final streamed = await req.send().timeout(_uploadTimeout);
+      final res = await http.Response.fromStream(streamed);
+      final json = _decode(res.body, res.statusCode);
+      if (!_isOk(res.statusCode, json)) {
+        return CatalogResult(ok: false, message: catalogErrorText(json));
+      }
+      return CatalogResult(
+          ok: true, message: (json['message'] ?? 'Update sent for approval').toString());
+    } catch (e) {
+      return CatalogResult(ok: false, message: _netError(e));
+    }
+  }
+
+  /// Restock = an update request with only the new stock quantity.
+  static Future<CatalogResult<void>> requestRestock(int productId, int newStock) =>
+      requestProductUpdate(productId: productId, fields: {'stock_quantity': '$newStock'});
 }

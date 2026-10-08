@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../utils/shared_preferences_helper.dart';
 import '../constants/app_constants.dart';
-import '../widgets/logo_widget.dart';
 import 'login_screen.dart';
 
 class AccountScreen extends StatefulWidget {
@@ -61,7 +59,7 @@ class _AccountScreenState extends State<AccountScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Profile Section
+            // ── Profile Section ──────────────────────────────
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -76,8 +74,14 @@ class _AccountScreenState extends State<AccountScreen> {
               ),
               child: Column(
                 children: [
-                  const LogoWidget(size: 40, showSubtitle: false, useImage: true),
-                  const SizedBox(height: 12),
+                  // QNX MART logo at the top of the profile card
+                  Image.asset(
+                    'lib/assets/images/qnx_mart_logo.png',
+                    height: 42,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
+                  const SizedBox(height: 14),
                   Text(
                     _username,
                     style: TextStyle(
@@ -97,7 +101,8 @@ class _AccountScreenState extends State<AccountScreen> {
                   ),
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
                       color: AppConstants.primary.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(20),
@@ -125,7 +130,7 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Business Profile Section
+            // ── Business Profile Section ─────────────────────
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -176,7 +181,7 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Account Settings
+            // ── Account Settings ─────────────────────────────
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -338,7 +343,8 @@ class _AccountScreenState extends State<AccountScreen> {
           fontFamily: 'Inter',
         ),
       ),
-      trailing: Icon(Icons.chevron_right, color: AppConstants.textLight, size: 20),
+      trailing:
+      Icon(Icons.chevron_right, color: AppConstants.textLight, size: 20),
       contentPadding: EdgeInsets.zero,
       visualDensity: const VisualDensity(vertical: -2),
       onTap: onTap,

@@ -32,21 +32,23 @@ class OrderResponse {
 }
 
 class OrderData {
-  final int orderId;              // ✅ ADDED
+  final int orderId;
   final String orderNumber;
   final String createdAt;
   final ProductInfo product;
   final double totalAmount;
   final String status;
+  final bool paymentStatus;       // ✅ ADDED
   final CompanyInfo company;
 
   OrderData({
-    required this.orderId,          // ✅ ADDED
+    required this.orderId,
     required this.orderNumber,
     required this.createdAt,
     required this.product,
     required this.totalAmount,
     required this.status,
+    required this.paymentStatus,  // ✅ ADDED
     required this.company,
   });
 
@@ -54,24 +56,26 @@ class OrderData {
     return OrderData(
       orderId: json['order_id'] is int
           ? json['order_id']
-          : int.tryParse(json['order_id']?.toString() ?? '0') ?? 0, // ✅ ADDED
+          : int.tryParse(json['order_id']?.toString() ?? '0') ?? 0,
       orderNumber: json['order_number'] ?? '',
       createdAt: json['created_at'] ?? '',
       product: ProductInfo.fromJson(json['product'] ?? {}),
       totalAmount: (json['total_amount'] as num?)?.toDouble() ?? 0.0,
       status: json['status'] ?? '',
+      paymentStatus: json['payment_status'] == true,   // ✅ ADDED
       company: CompanyInfo.fromJson(json['company'] ?? {}),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'order_id': orderId,          // ✅ ADDED
+      'order_id': orderId,
       'order_number': orderNumber,
       'created_at': createdAt,
       'product': product.toJson(),
       'total_amount': totalAmount,
       'status': status,
+      'payment_status': paymentStatus,   // ✅ ADDED
       'company': company.toJson(),
     };
   }
@@ -93,18 +97,69 @@ class OrderData {
     return '₹${totalAmount.toStringAsFixed(0)}';
   }
 
+  /// True when the order is pending but online payment is not done yet.
+  // ✅ ADDED
+  bool get awaitingPayment =>
+      status.toUpperCase() == 'PENDING' && !paymentStatus;
+
+  /// Human-readable status label for the badge.
+  // ✅ ADDED
+  String get statusLabel {
+    switch (status.toUpperCase()) {
+      case 'PENDING':
+        return awaitingPayment ? 'Payment pending' : 'Pending';
+      case 'CONFIRMED':
+        return 'Confirmed';
+      case 'PACKED':
+        return 'Packed';
+      case 'SHIPPED':
+        return 'Shipped';
+      case 'OUT_FOR_DELIVERY':
+        return 'Out for delivery';
+      case 'DELIVERED':
+        return 'Delivered';
+      case 'CANCELLED':
+        return 'Cancelled';
+      case 'RETURN_REQUESTED':
+        return 'Return requested';
+      case 'RETURN_PICKUP':
+        return 'Return pickup';
+      case 'RETURN_IN_TRANSIT':
+        return 'Return in transit';
+      case 'RETURNED':
+        return 'Returned';
+      case 'REFUNDED':
+        return 'Refunded';
+      default:
+        if (status.isEmpty) return '';
+        return status[0].toUpperCase() +
+            status.substring(1).toLowerCase().replaceAll('_', ' ');
+    }
+  }
+
   int get statusColorValue {
     switch (status.toUpperCase()) {
       case 'PENDING':
         return 0xFFFF9800;
       case 'CONFIRMED':
         return 0xFF2196F3;
+      case 'PACKED':
+        return 0xFF9C27B0;
       case 'SHIPPED':
         return 0xFF4CAF50;
+      case 'OUT_FOR_DELIVERY':
+        return 0xFF00BCD4;
       case 'DELIVERED':
         return 0xFF0D47A1;
       case 'CANCELLED':
         return 0xFFF44336;
+      case 'RETURN_REQUESTED':
+      case 'RETURN_PICKUP':
+      case 'RETURN_IN_TRANSIT':
+      case 'RETURNED':
+        return 0xFF795548;
+      case 'REFUNDED':
+        return 0xFF009688;
       default:
         return 0xFF9E9E9E;
     }

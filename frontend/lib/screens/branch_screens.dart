@@ -2,14 +2,16 @@
 //
 // BranchManageScreen  - list a company's branches (active / inactive), add, edit, (de)activate
 // BranchFormScreen    - create / edit. Pops with the saved CatalogBranch.
+// Redesigned to match the app (brand blue #1A68FA, white cards, slate borders).
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../constants/design_tokens.dart';
-import '../../models/catalog_models.dart';
-import '../../services/catalog_service.dart';
-import '../../widgets/catalog_widgets.dart';
-import '../../widgets/company_ui.dart';
+import '../constants/design_tokens.dart';
+import '../models/catalog_models.dart';
+import '../services/catalog_service.dart';
+import '../widgets/catalog_widgets.dart';
+import '../widgets/company_ui.dart';
+import '../widgets/product_ui.dart';
 
 class BranchManageScreen extends StatefulWidget {
   final int companyId;
@@ -115,6 +117,8 @@ class _BranchManageScreenState extends State<BranchManageScreen> {
 }
 
 // ===========================================================================
+// Branch Form (Add / Edit) — redesigned
+// ===========================================================================
 class BranchFormScreen extends StatefulWidget {
   final int companyId;
   final String companyName;
@@ -138,6 +142,8 @@ class _BranchFormScreenState extends State<BranchFormScreen> {
   late final _email = TextEditingController(text: widget.existing?.email ?? '');
   late final _address = TextEditingController(text: widget.existing?.address ?? '');
   bool _saving = false;
+
+  static const _brand = Color(0xFF1A68FA);
 
   bool get _isEdit => widget.existing != null;
 
@@ -182,60 +188,336 @@ class _BranchFormScreenState extends State<BranchFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return CatalogFormScaffold(
-      title: _isEdit ? 'Edit branch' : 'Add branch',
-      subtitle: widget.companyName,
-      formKey: _formKey,
-      saving: _saving,
-      saveLabel: _isEdit ? 'Save changes' : 'Add branch',
-      onSave: _save,
-      children: [
-        CatalogTextField(
-          controller: _name,
-          label: 'Branch name *',
-          hint: 'e.g. Pune Main Store',
-          icon: Icons.store_outlined,
-          capitalization: TextCapitalization.words,
-          validator: (v) => (v ?? '').trim().length < 2 ? 'Enter the branch name' : null,
+    return Scaffold(
+      backgroundColor: DT.background,
+      appBar: _appBar(),
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.translucent,
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+            children: [
+              _infoCard(
+                icon: Icons.storefront_outlined,
+                title: _isEdit ? 'Edit branch' : 'New branch',
+                subtitle:
+                'Branches let you sell from more than one location',
+              ),
+              const SizedBox(height: 16),
+              _sectionCard(
+                icon: Icons.info_outline,
+                title: 'Branch information',
+                subtitle: 'Contact details for this location',
+                children: [
+                  PxLabel('Branch name', required: true),
+                  TextFormField(
+                    controller: _name,
+                    textCapitalization: TextCapitalization.words,
+                    style: DT.text(
+                        size: 14, weight: FontWeight.w600, color: DT.onyx900),
+                    decoration: pxInputDecoration(
+                      hint: 'e.g. Mumbai HQ',
+                      icon: Icons.store_outlined,
+                      iconColor: _brand,
+                    ),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Branch name is required';
+                      }
+                      if (v.trim().length < 2) return 'Minimum 2 characters';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  PxLabel('Phone number', optional: true),
+                  TextFormField(
+                    controller: _phone,
+                    keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
+                    style: DT.text(
+                        size: 14, weight: FontWeight.w600, color: DT.onyx900),
+                    decoration: pxInputDecoration(
+                      hint: '10-digit mobile number',
+                      icon: Icons.phone_outlined,
+                      iconColor: _brand,
+                    ),
+                    validator: (v) {
+                      final t = (v ?? '').trim();
+                      if (t.isEmpty) return null;
+                      return RegExp(r'^[6-9]\d{9}$').hasMatch(t)
+                          ? null
+                          : 'Enter a valid 10-digit number';
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  PxLabel('Email', optional: true),
+                  TextFormField(
+                    controller: _email,
+                    keyboardType: TextInputType.emailAddress,
+                    style: DT.text(
+                        size: 14, weight: FontWeight.w600, color: DT.onyx900),
+                    decoration: pxInputDecoration(
+                      hint: 'branch@example.com',
+                      icon: Icons.mail_outline_rounded,
+                      iconColor: _brand,
+                    ),
+                    validator: (v) {
+                      final t = (v ?? '').trim();
+                      if (t.isEmpty) return null;
+                      return RegExp(r'^[\w.+-]+@[\w-]+\.[\w.-]+$').hasMatch(t)
+                          ? null
+                          : 'Invalid email';
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  PxLabel('Address', optional: true),
+                  TextFormField(
+                    controller: _address,
+                    maxLines: 3,
+                    minLines: 3,
+                    textCapitalization: TextCapitalization.sentences,
+                    style: DT.text(
+                        size: 14, weight: FontWeight.w500, color: DT.onyx900),
+                    decoration: pxInputDecoration(
+                      hint: 'Street, area, city',
+                      icon: Icons.location_on_outlined,
+                      iconColor: _brand,
+                      tinted: true,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 12),
-        CatalogTextField(
-          controller: _phone,
-          label: 'Phone',
-          hint: '10-digit mobile',
-          icon: Icons.phone_outlined,
-          keyboardType: TextInputType.phone,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(10),
+      ),
+      bottomNavigationBar: _bottomBar(),
+    );
+  }
+
+  PreferredSizeWidget _appBar() {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(64),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(bottom: BorderSide(color: DT.slate200)),
+          boxShadow: [
+            BoxShadow(
+                color: Color(0x0D0F172A), blurRadius: 2, offset: Offset(0, 1)),
           ],
-          validator: (v) {
-            final t = (v ?? '').trim();
-            if (t.isEmpty) return null;
-            return RegExp(r'^[6-9]\d{9}$').hasMatch(t) ? null : 'Enter a valid 10-digit number';
-          },
         ),
-        const SizedBox(height: 12),
-        CatalogTextField(
-          controller: _email,
-          label: 'Email',
-          icon: Icons.mail_outline_rounded,
-          keyboardType: TextInputType.emailAddress,
-          validator: (v) {
-            final t = (v ?? '').trim();
-            if (t.isEmpty) return null;
-            return RegExp(r'^[\w.+-]+@[\w-]+\.[\w.-]+$').hasMatch(t) ? null : 'Invalid email';
-          },
+        child: SafeArea(
+          bottom: false,
+          child: SizedBox(
+            height: 64,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Back',
+                    onPressed: () => Navigator.maybePop(context),
+                    icon: const Icon(Icons.arrow_back_rounded,
+                        color: DT.onyx900, size: 24),
+                  ),
+                  const SizedBox(width: 2),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _isEdit ? 'Edit branch' : 'Add branch',
+                          style: DT.text(
+                              size: 18,
+                              weight: FontWeight.w700,
+                              color: DT.onyx900,
+                              letterSpacing: -0.3),
+                        ),
+                        Text(
+                          widget.companyName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: DT.text(
+                              size: 12,
+                              weight: FontWeight.w500,
+                              color: DT.slate500),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
-        const SizedBox(height: 12),
-        CatalogTextField(
-          controller: _address,
-          label: 'Address',
-          icon: Icons.location_on_outlined,
-          maxLines: 3,
-          capitalization: TextCapitalization.sentences,
+      ),
+    );
+  }
+
+  Widget _infoCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: DT.blue50,
+        borderRadius: BorderRadius.circular(DT.rLg),
+        border: Border.all(color: DT.blue200),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: const BoxDecoration(
+                color: Colors.white, shape: BoxShape.circle),
+            child: Icon(icon, color: _brand, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: DT.text(
+                        size: 14,
+                        weight: FontWeight.w800,
+                        color: DT.onyx900)),
+                const SizedBox(height: 2),
+                Text(subtitle,
+                    style:
+                    DT.text(size: 11.5, color: DT.slate500, height: 1.4)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required List<Widget> children,
+  }) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(DT.rLg),
+        border: Border.all(color: DT.slate200),
+        boxShadow: PX.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.only(bottom: 14),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: DT.slate100)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: DT.blue50,
+                    borderRadius: BorderRadius.circular(DT.rMd),
+                  ),
+                  child: Icon(icon, size: 20, color: _brand),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title,
+                          style: DT.text(
+                              size: 14,
+                              weight: FontWeight.w700,
+                              color: DT.onyx900,
+                              height: 1.2)),
+                      const SizedBox(height: 2),
+                      Text(subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: DT.text(size: 11.5, color: DT.slate500)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _bottomBar() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: DT.slate200)),
+        boxShadow: [
+          BoxShadow(
+              color: Color(0x0F0F172A), blurRadius: 12, offset: Offset(0, -4)),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: SizedBox(
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _saving ? null : _save,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _brand,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: _brand.withValues(alpha: 0.55),
+                elevation: 2,
+                shadowColor: const Color(0x401A68FA),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(DT.rMd)),
+              ),
+              child: _saving
+                  ? const SizedBox(
+                height: 22,
+                width: 22,
+                child: CircularProgressIndicator(
+                    color: Colors.white, strokeWidth: 2.5),
+              )
+                  : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.check_rounded, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    _isEdit ? 'Save changes' : 'Add branch',
+                    style: DT.text(
+                        size: 15,
+                        weight: FontWeight.w700,
+                        color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
-      ],
+      ),
     );
   }
 }

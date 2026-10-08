@@ -13,6 +13,9 @@
 //   Details form ──► POST /company/company/update/   (multipart, partial)
 //   If the company is still unpaid, a "Pay now" banner opens Step 2.
 //
+// Design: matches the home screen (brand blue #1A68FA, white section cards,
+// sticky footer) using DT tokens + widgets/product_ui.dart.
+//
 // Dependencies (pubspec.yaml):
 //   razorpay_flutter, image_picker, geolocator, http, http_parser, url_launcher, google_fonts
 //
@@ -25,17 +28,17 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../constants/app_constants.dart';
+import '../constants/design_tokens.dart';
 import '../models/company_locations_models.dart';
 import '../models/company_model.dart';
 import '../services/company_locations_service.dart';
 import '../services/company_service.dart';
+import '../widgets/product_ui.dart';
 import 'terms_conditions_screen.dart';
 
 enum _Step { details, payment, done }
@@ -755,7 +758,12 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
     if (!mounted) return;
     setState(() {
       _isCreatingOrder = false;
-      if (order.isSuccess) {
+      if (order.status && order.alreadyPaid) {
+        // Paid already (or previous captured payment recovered by server)
+        _order = order;
+        _paidPaymentId = order.paymentId;
+        _step = _Step.done;
+      } else if (order.isSuccess) {
         _order = order;
       } else {
         _paymentError = order.message ?? 'Could not start payment. Try again.';
@@ -898,93 +906,183 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
   // =====================================================================
   // BUILD
   // =====================================================================
+  static const _bg = Color(0xFFF5F7FB);
+
+  /// Anything typed on the details step (used to confirm before leaving).
+  bool get _hasInput =>
+      _nameCtrl.text.trim().isNotEmpty ||
+          _ownerCtrl.text.trim().isNotEmpty ||
+          _emailCtrl.text.trim().isNotEmpty ||
+          _phoneCtrl.text.trim().isNotEmpty ||
+          _addressCtrl.text.trim().isNotEmpty ||
+          _logoFile != null ||
+          _imageFiles.isNotEmpty;
+
   @override
   Widget build(BuildContext context) {
-    final title = switch (_step) {
-      _Step.details => _isEdit ? 'Edit Company' : 'Create Company',
-      _Step.payment => 'Registration Payment',
-      _Step.done => 'Registration Complete',
-    };
-
+    final onDetails = _step == _Step.details;
     return PopScope(
-      // Once a company exists (payment / done step), always return true so the
-      // list reloads. Block back while checkout or verification is running.
-      canPop: _step == _Step.details && !_isSubmitting,
-      onPopInvokedWithResult: (didPop, _) {
+      // Details: leave freely unless something was typed (create) — then confirm.
+      // Payment / done: a company now exists, so always return true (list reloads).
+      // Block back while checkout or verification is running.
+      canPop: onDetails && !_isSubmitting && (_isEdit || !_hasInput),
+      onPopInvokedWithResult: (didPop, _) async {
         if (didPop || _isCheckoutOpen || _isVerifying || _isSubmitting) return;
+        if (onDetails) {
+          final leave = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rLg)),
+              title: Text('Discard this company?', style: DT.text(size: 17, weight: FontWeight.w800)),
+              content: Text('The details you entered will be lost.',
+                  style: DT.text(size: 13.5, color: DT.onyx600, height: 1.5)),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: Text('Keep editing',
+                      style: DT.text(size: 13.5, weight: FontWeight.w700, color: DT.slate500)),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: DT.error,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
+                  ),
+                  child: Text('Discard', style: DT.text(size: 13.5, weight: FontWeight.w700, color: Colors.white)),
+                ),
+              ],
+            ),
+          );
+          if (leave == true && context.mounted) Navigator.pop(context);
+          return;
+        }
         Navigator.pop(context, true);
       },
       child: Scaffold(
-        backgroundColor: AppConstants.surfaceColor,
-        appBar: AppBar(
-          backgroundColor: AppConstants.primary,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          title: Text(title,
-              style: GoogleFonts.inter(
-                  fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white)),
-          bottom: _isEdit && _step == _Step.details
-              ? null
-              : PreferredSize(
-            preferredSize: const Size.fromHeight(44),
-            child: _buildStepper(),
-          ),
-        ),
+        backgroundColor: _bg,
+        appBar: _header(),
         body: switch (_step) {
           _Step.details => _buildForm(),
           _Step.payment => _buildPaymentStep(),
           _Step.done => _buildDoneStep(),
         },
+        bottomNavigationBar: onDetails ? _formFooter() : null,
       ),
     );
   }
 
-  // ─── Stepper (create mode) ─────────────────────────────
-  Widget _buildStepper() {
-    Widget dot(int n, String label, bool active, bool done) {
-      final color = done || active ? Colors.white : Colors.white54;
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 22,
-            height: 22,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: done ? AppConstants.accent : (active ? Colors.white : Colors.transparent),
-              shape: BoxShape.circle,
-              border: Border.all(color: color, width: 1.5),
-            ),
-            child: done
-                ? const Icon(Icons.check, size: 14, color: Colors.white)
-                : Text('$n',
-                style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: active ? AppConstants.primary : color)),
+  // ─── Header ─────────────────────────────────────────────
+  PreferredSizeWidget _header() {
+    final showSteps = !(_isEdit && _step == _Step.details);
+    final title = switch (_step) {
+      _Step.details => _isEdit ? 'Edit company' : 'Add company',
+      _Step.payment => 'Registration payment',
+      _Step.done => 'Registration complete',
+    };
+    final subtitle = switch (_step) {
+      _Step.details => _isEdit ? widget.existing!.name : 'Register your business on QNXMart B2B',
+      _Step.payment => _company?.name ?? '',
+      _Step.done => _company?.name ?? '',
+    };
+    return PreferredSize(
+      preferredSize: Size.fromHeight(showSteps ? 112 : 64),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(bottom: BorderSide(color: DT.slate200)),
+          boxShadow: [BoxShadow(color: Color(0x0D0F172A), blurRadius: 2, offset: Offset(0, 1))],
+        ),
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              SizedBox(
+                height: 64,
+                child: Row(
+                  children: [
+                    const SizedBox(width: 4),
+                    IconButton(
+                      tooltip: 'Back',
+                      onPressed: () => Navigator.maybePop(context),
+                      icon: const Icon(Icons.arrow_back_rounded, color: DT.onyx900),
+                    ),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(title, style: DT.text(size: 18, weight: FontWeight.w700, color: DT.onyx900)),
+                          if (subtitle.isNotEmpty)
+                            Text(subtitle,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: DT.text(size: 12, weight: FontWeight.w500, color: DT.slate500)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                  ],
+                ),
+              ),
+              if (showSteps) _buildStepper(),
+            ],
           ),
-          const SizedBox(width: 6),
-          Text(label,
-              style: GoogleFonts.inter(
-                  fontSize: 12.5, fontWeight: FontWeight.w600, color: color)),
-        ],
+        ),
+      ),
+    );
+  }
+
+  // ─── Stepper (create mode / payment) ────────────────────
+  Widget _buildStepper() {
+    final onPay = _step != _Step.details;
+    final done = _step == _Step.done;
+
+    Widget step(int n, String label, {required bool active, required bool complete}) {
+      return Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              height: 4,
+              decoration: BoxDecoration(
+                color: complete
+                    ? PX.emerald500
+                    : (active ? PX.royal600 : DT.slate200),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(
+                  complete ? Icons.check_circle_rounded : Icons.radio_button_checked_rounded,
+                  size: 14,
+                  color: complete ? PX.emerald600 : (active ? PX.royal600 : DT.slate300),
+                ),
+                const SizedBox(width: 4),
+                Text('Step $n · $label',
+                    style: DT.text(
+                        size: 11.5,
+                        weight: active || complete ? FontWeight.w700 : FontWeight.w500,
+                        color: active || complete ? DT.onyx800 : DT.slate400)),
+              ],
+            ),
+          ],
+        ),
       );
     }
 
-    final onPay = _step != _Step.details;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
       child: Row(
         children: [
-          dot(1, 'Company details', !onPay, onPay),
-          Expanded(
-            child: Container(
-              height: 1.5,
-              margin: const EdgeInsets.symmetric(horizontal: 10),
-              color: onPay ? AppConstants.accent : Colors.white38,
-            ),
-          ),
-          dot(2, 'Payment', _step == _Step.payment, _step == _Step.done),
+          step(1, 'Company details', active: !onPay, complete: onPay),
+          const SizedBox(width: 10),
+          step(2, 'Payment', active: onPay && !done, complete: done),
         ],
       ),
     );
@@ -993,413 +1091,127 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
   // =====================================================================
   // STEP 1 UI – FORM
   // =====================================================================
+  List<(String, bool)> get _requiredChecks => [
+    ('Logo', _logoFile != null || _existingLogoUrl.isNotEmpty),
+    ('Company name', _nameCtrl.text.trim().isNotEmpty),
+    ('Owner name', _ownerCtrl.text.trim().isNotEmpty),
+    ('Email', _emailCtrl.text.trim().contains('@')),
+    ('Phone', _phoneCtrl.text.trim().length == 10),
+    ('State', _selectedStateId != null),
+    ('District', _selectedDistrictId != null),
+    ('Taluka', _selectedTalukaId != null),
+    ('Village', _selectedVillageId != null),
+    ('Address', _addressCtrl.text.trim().isNotEmpty),
+    ('Pincode', _pincodeCtrl.text.trim().length == 6),
+    ('Pickup location', _pickupCtrl.text.trim().isNotEmpty),
+    if (!_isEdit) ('Terms', _acceptTerms),
+  ];
+
+  List<bool> get _recommendedChecks => [
+    _gstCtrl.text.trim().isNotEmpty,
+    _panCtrl.text.trim().isNotEmpty,
+    _shortDescCtrl.text.trim().isNotEmpty,
+    _imageFiles.isNotEmpty,
+    _latitudeCtrl.text.trim().isNotEmpty,
+    _websiteCtrl.text.trim().isNotEmpty || _facebookCtrl.text.trim().isNotEmpty,
+  ];
+
+  int get _requiredLeft => _requiredChecks.where((c) => !c.$2).length;
+
+  int get _completion {
+    final req = _requiredChecks;
+    final rec = _recommendedChecks;
+    final done = req.where((c) => c.$2).length * 2 + rec.where((c) => c).length;
+    return ((done / (req.length * 2 + rec.length)) * 100).round();
+  }
+
   Widget _buildForm() {
     final showPayBanner = _isEdit && widget.existing!.isPaymentPending;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       behavior: HitTestBehavior.translucent,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (showPayBanner) ...[_buildPendingPaymentBanner(), const SizedBox(height: 16)],
-
-              // ── LOGO ─────────────────────────────────
-              _sectionTitle(_isEdit ? 'Company Logo' : 'Company Logo *'),
-              const SizedBox(height: 10),
-              _buildLogoPicker(),
-              const SizedBox(height: 20),
-
-              // ── PHOTOS ───────────────────────────────
-              _sectionTitle(_isEdit ? 'Add More Photos (Optional)' : 'Company Photos (Optional)'),
-              const SizedBox(height: 4),
-              Text('Shop, warehouse or product photos · up to $_maxImages',
-                  style: GoogleFonts.inter(fontSize: 11.5, color: AppConstants.textSecondary)),
-              const SizedBox(height: 10),
-              _buildImagesPicker(),
-              const SizedBox(height: 20),
-
-              // ── BASIC ────────────────────────────────
-              _sectionTitle('Basic Information'),
-              const SizedBox(height: 12),
-              _field(_nameCtrl, 'Company Name *', 'e.g. ABC Pvt Ltd', Icons.business_outlined,
-                  textCapitalization: TextCapitalization.words,
-                  validator: (v) => _required(v, 'Company name')),
-              const SizedBox(height: 14),
-              _field(_sloganCtrl, 'Company Slogan', 'e.g. Quality First', Icons.campaign_outlined),
-              const SizedBox(height: 14),
-              _field(_ownerCtrl, 'Owner Name *', 'e.g. Rahul Patil', Icons.person_outline,
-                  textCapitalization: TextCapitalization.words, validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Owner name required';
-                    if (!RegExp(r'^[a-zA-Z.\s]+$').hasMatch(v.trim())) return 'Letters only';
-                    return null;
-                  }),
-              const SizedBox(height: 14),
-              _field(_emailCtrl, 'Email *', 'name@example.com', Icons.email_outlined,
-                  keyboardType: TextInputType.emailAddress, validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Email required';
-                    if (!RegExp(r'^[\w\-\.+]+@([\w\-]+\.)+[\w\-]{2,}$').hasMatch(v.trim())) {
-                      return 'Invalid email';
-                    }
-                    return null;
-                  }),
-              const SizedBox(height: 14),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _field(_phoneCtrl, 'Phone *', '10-digit', Icons.phone_outlined,
-                        keyboardType: TextInputType.phone,
-                        inputFormatters: _phoneFormatters,
-                        validator: (v) => _validatePhone(v, 'Phone')),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _field(_whatsappCtrl, 'WhatsApp', '10-digit', Icons.chat_outlined,
-                        keyboardType: TextInputType.phone,
-                        inputFormatters: _phoneFormatters, validator: (v) {
-                          if (v == null || v.trim().isEmpty) return null;
-                          return _validatePhone(v, 'WhatsApp');
-                        }),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              _field(_websiteCtrl, 'Website URL', 'example.com', Icons.language_outlined,
-                  keyboardType: TextInputType.url),
-              const SizedBox(height: 20),
-
-              // ── ADDRESS & LOCATION ───────────────────
-              _sectionTitle('Address & Location'),
-              const SizedBox(height: 12),
-              Text('Select in order: state, district, taluka, then village.',
-                  style: GoogleFonts.inter(fontSize: 11.5, color: AppConstants.textSecondary)),
-              const SizedBox(height: 12),
-              _locationPicker(
-                label: 'State',
-                icon: Icons.map_outlined,
-                items: _states,
-                selectedId: _selectedStateId,
-                loading: _isLoadingStates,
-                error: _statesError,
-                onRetry: _fetchStates,
-                onSelected: _onStateSelected,
-              ),
-              const SizedBox(height: 12),
-              _locationPicker(
-                label: 'District',
-                icon: Icons.location_city_outlined,
-                items: _districts,
-                selectedId: _selectedDistrictId,
-                loading: _isLoadingDistricts,
-                error: _districtsError,
-                enabled: _selectedStateId != null,
-                disabledHint: 'Select a state first',
-                onRetry: () => _fetchDistricts(_selectedStateId!),
-                onSelected: _onDistrictSelected,
-              ),
-              const SizedBox(height: 12),
-              _locationPicker(
-                label: 'Taluka',
-                icon: Icons.account_tree_outlined,
-                items: _talukas,
-                selectedId: _selectedTalukaId,
-                loading: _isLoadingTalukas,
-                error: _talukasError,
-                enabled: _selectedDistrictId != null,
-                disabledHint: 'Select a district first',
-                onRetry: () => _fetchTalukas(_selectedDistrictId!),
-                onSelected: _onTalukaSelected,
-              ),
-              const SizedBox(height: 12),
-              _locationPicker(
-                label: 'Village',
-                icon: Icons.holiday_village_outlined,
-                items: _villages,
-                selectedId: _selectedVillageId,
-                loading: _isLoadingVillages,
-                error: _villagesError,
-                enabled: _selectedTalukaId != null,
-                disabledHint: 'Select a taluka first',
-                onRetry: () => _fetchVillages(_selectedTalukaId!),
-                onSelected: _onVillageSelected,
-              ),
-              const SizedBox(height: 14),
-              _field(_addressCtrl, 'Address *', 'Street address', Icons.home_outlined,
-                  maxLines: 2, validator: (v) => _required(v, 'Address')),
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: _isFetchingLocation ? null : _getCurrentLocation,
-                  icon: _isFetchingLocation
-                      ? const SizedBox(
-                      width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.my_location),
-                  label: Text(_isFetchingLocation ? 'Fetching location...' : 'Get My Live Location'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppConstants.primary,
-                    side: const BorderSide(color: AppConstants.primary),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: _field(_latitudeCtrl, 'Latitude', 'Auto-filled', Icons.my_location,
-                        keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true, signed: true)),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _field(
-                        _longitudeCtrl, 'Longitude', 'Auto-filled', Icons.location_searching,
-                        keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true, signed: true)),
-                  ),
-                ],
-              ),
-              _buildLocationMapPreview(),
-              const SizedBox(height: 14),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _field(_pincodeCtrl, 'Pincode *', '6-digit', Icons.pin_drop_outlined,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(6),
-                        ], validator: (v) {
-                          if (v == null || v.trim().isEmpty) return 'Pincode required';
-                          if (v.trim().length != 6) return '6-digit pincode';
-                          return null;
-                        }),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _field(_pickupCtrl, 'Pickup Location *', 'Pickup address',
-                        Icons.local_shipping_outlined,
-                        validator: (v) => _required(v, 'Pickup location')),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // ── REGISTRATION ─────────────────────────
-              _sectionTitle('Registration Details'),
-              const SizedBox(height: 12),
-              _field(_gstCtrl, 'GST Number', 'e.g. 27ABCDE1234F1Z5', Icons.receipt_long_outlined,
-                  textCapitalization: TextCapitalization.characters,
-                  inputFormatters: [LengthLimitingTextInputFormatter(15)], validator: (v) {
-                    final t = (v ?? '').trim().toUpperCase();
-                    if (t.isEmpty) return null;
-                    if (!RegExp(r'^\d{2}[A-Z]{5}\d{4}[A-Z][A-Z\d]Z[A-Z\d]$').hasMatch(t)) {
-                      return 'Invalid GST number';
-                    }
-                    return null;
-                  }),
-              const SizedBox(height: 14),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _field(_panCtrl, 'PAN Number', 'ABCDE1234F', Icons.credit_card_outlined,
-                        textCapitalization: TextCapitalization.characters,
-                        inputFormatters: [LengthLimitingTextInputFormatter(10)], validator: (v) {
-                          final t = (v ?? '').trim().toUpperCase();
-                          if (t.isEmpty) return null;
-                          if (!RegExp(r'^[A-Z]{5}\d{4}[A-Z]$').hasMatch(t)) return 'Invalid PAN';
-                          return null;
-                        }),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _field(
-                        _regNoCtrl, 'Registration No.', 'REG123', Icons.assignment_outlined),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _field(_ianCtrl, 'IAN No.', 'IAN123', Icons.verified_outlined,
-                        inputFormatters: [LengthLimitingTextInputFormatter(25)]),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _field(_farmYearCtrl, 'Firm Reg. Year', 'e.g. 2020',
-                        Icons.calendar_today_outlined,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(4),
-                        ], validator: (v) {
-                          final t = (v ?? '').trim();
-                          if (t.isEmpty) return null;
-                          final y = int.tryParse(t) ?? 0;
-                          if (y < 1900 || y > DateTime.now().year) return 'Invalid year';
-                          return null;
-                        }),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // ── EXTRA CONTACTS ───────────────────────
-              _sectionTitle('Extra Emails / Contacts (Optional)'),
-              const SizedBox(height: 12),
-              _buildChipsEditor(
-                label: 'Email IDs',
-                hint: 'Enter email & tap +',
-                controller: _extraEmailCtrl,
-                items: _extraEmails,
-                keyboardType: TextInputType.emailAddress,
-                onSubmitted: _addEmail,
-                onRemove: (i) => setState(() => _extraEmails.removeAt(i)),
-              ),
-              const SizedBox(height: 14),
-              _buildChipsEditor(
-                label: 'Contact Numbers',
-                hint: 'Enter 10-digit & tap +',
-                controller: _extraContactCtrl,
-                items: _extraContacts,
-                keyboardType: TextInputType.phone,
-                inputFormatters: _phoneFormatters,
-                onSubmitted: _addContact,
-                onRemove: (i) => setState(() => _extraContacts.removeAt(i)),
-              ),
-              const SizedBox(height: 20),
-
-              // ── SOCIAL ───────────────────────────────
-              _sectionTitle('Social Media Links (Optional)'),
-              const SizedBox(height: 12),
-              _field(_facebookCtrl, 'Facebook', 'facebook.com/yourpage', Icons.facebook,
-                  keyboardType: TextInputType.url),
-              const SizedBox(height: 14),
-              _field(_linkedinCtrl, 'LinkedIn', 'linkedin.com/company/...',
-                  Icons.business_center_outlined,
-                  keyboardType: TextInputType.url),
-              const SizedBox(height: 14),
-              _field(_instagramCtrl, 'Instagram', 'instagram.com/...', Icons.camera_alt_outlined,
-                  keyboardType: TextInputType.url),
-              const SizedBox(height: 14),
-              _field(_youtubeCtrl, 'YouTube', 'youtube.com/@...', Icons.play_circle_outline,
-                  keyboardType: TextInputType.url),
-              const SizedBox(height: 20),
-
-              // ── LEGAL ────────────────────────────────
-              _sectionTitle('Legal URLs (Optional)'),
-              const SizedBox(height: 12),
-              _field(_privacyCtrl, 'Privacy Policy URL', 'https://...', Icons.privacy_tip_outlined,
-                  keyboardType: TextInputType.url),
-              const SizedBox(height: 14),
-              _field(_termsCtrl, 'Terms & Conditions URL', 'https://...',
-                  Icons.description_outlined,
-                  keyboardType: TextInputType.url),
-              const SizedBox(height: 20),
-
-              // ── DESCRIPTION ──────────────────────────
-              _sectionTitle('Description'),
-              const SizedBox(height: 12),
-              _field(_shortDescCtrl, 'Short Description', 'Max 160 chars',
-                  Icons.short_text_outlined,
-                  maxLines: 2, inputFormatters: [LengthLimitingTextInputFormatter(160)]),
-              const SizedBox(height: 14),
-              _field(_longDescCtrl, 'Long Description', 'Detailed description',
-                  Icons.notes_outlined,
-                  maxLines: 4),
-              const SizedBox(height: 20),
-
-              // ── CERTIFICATIONS ───────────────────────
-              _sectionTitle('Certifications & Features'),
-              const SizedBox(height: 8),
-              _switchTile('ISI Certified', _isiCertified, (v) => setState(() => _isiCertified = v)),
-              _switchTile('ISO Certified', _isoCertified, (v) => setState(() => _isoCertified = v)),
-              _switchTile('COD Available', _codAvailable, (v) => setState(() => _codAvailable = v)),
-              const SizedBox(height: 14),
-
-              // ── REFERRAL (create only) ───────────────
-              if (!_isEdit) ...[
-                _field(_referralCtrl, 'Referral Code (Optional)', 'Marketing partner code',
-                    Icons.card_giftcard_outlined,
-                    textCapitalization: TextCapitalization.characters),
-                const SizedBox(height: 20),
-              ],
-
-              // ── TERMS ────────────────────────────────
-              if (!_isEdit)
-                CheckboxListTile(
-                  value: _acceptTerms,
-                  onChanged: (v) => setState(() => _acceptTerms = v ?? false),
-                  activeColor: AppConstants.primary,
-                  contentPadding: EdgeInsets.zero,
-                  controlAffinity: ListTileControlAffinity.leading,
-                  title: GestureDetector(
-                    onTap: _openTerms,
-                    child: RichText(
-                      text: TextSpan(
-                        text: 'I accept the ',
-                        style: GoogleFonts.inter(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppConstants.textPrimary),
-                        children: [
-                          TextSpan(
-                            text: 'Terms & Conditions',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: AppConstants.info,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                          const TextSpan(text: ' *', style: TextStyle(color: Colors.red)),
-                        ],
-                      ),
-                    ),
-                  ),
-                  subtitle: Text('A one-time registration fee is charged after creation',
-                      style: GoogleFonts.inter(fontSize: 11, color: AppConstants.textSecondary)),
-                ),
-              const SizedBox(height: 20),
-
-              // ── SUBMIT ───────────────────────────────
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isSubmitting ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppConstants.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: _isSubmitting
-                      ? const SizedBox(
-                      height: 22,
-                      width: 22,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                      : Text(
-                    _isEdit ? 'Update Company' : 'Create & Continue to Payment',
-                    style: GoogleFonts.inter(
-                        fontSize: 15.5, fontWeight: FontWeight.w600, color: Colors.white),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 30),
+      child: Form(
+        key: _formKey,
+        // Rebuild on every keystroke so the completion card stays live.
+        onChanged: () => setState(() {}),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+          children: [
+            if (showPayBanner) ...[_buildPendingPaymentBanner(), const SizedBox(height: 12)],
+            _completionCard(),
+            const SizedBox(height: 16),
+            _brandSection(),
+            const SizedBox(height: 16),
+            _detailsSection(),
+            const SizedBox(height: 16),
+            _addressSection(),
+            const SizedBox(height: 16),
+            _registrationSection(),
+            const SizedBox(height: 16),
+            _contactsSection(),
+            const SizedBox(height: 16),
+            _onlineSection(),
+            const SizedBox(height: 16),
+            _aboutSection(),
+            const SizedBox(height: 16),
+            _featuresSection(),
+            if (!_isEdit) ...[
+              const SizedBox(height: 16),
+              _finishSection(),
             ],
-          ),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _completionCard() {
+    final pct = _completion;
+    final left = _requiredLeft;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(DT.rMd),
+        border: Border.all(color: DT.slate200),
+        boxShadow: PX.cardShadow,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(color: PX.royal50, shape: BoxShape.circle),
+            child: Text('$pct%', style: DT.text(size: 11, weight: FontWeight.w800, color: PX.royal600)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Profile completion', style: DT.text(size: 12.5, weight: FontWeight.w700)),
+                Text(
+                  left == 0 ? 'All required details added' : '$left required field${left == 1 ? '' : 's'} left',
+                  style: DT.text(size: 11.5, color: left == 0 ? PX.emerald600 : DT.slate500),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            width: 96,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: pct / 100,
+                minHeight: 8,
+                backgroundColor: DT.slate100,
+                color: left == 0 ? PX.emerald500 : PX.royal600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1408,32 +1220,998 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppConstants.accent.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppConstants.accent.withValues(alpha: 0.45)),
+        color: DT.amber50,
+        borderRadius: BorderRadius.circular(DT.rMd),
+        border: Border.all(color: DT.amber200),
       ),
       child: Row(
         children: [
-          const Icon(Icons.payments_outlined, color: AppConstants.accentDark),
+          const Icon(Icons.payments_outlined, color: DT.amber700),
           const SizedBox(width: 12),
           Expanded(
-            child: Text('Registration fee is pending for this company.',
-                style: GoogleFonts.inter(
-                    fontSize: 13, fontWeight: FontWeight.w600, color: AppConstants.textPrimary)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Registration fee pending', style: DT.text(size: 13.5, weight: FontWeight.w800, color: DT.amber900)),
+                Text('Pay to activate your admin panel and shipping pickup.',
+                    style: DT.text(size: 12, color: DT.amber800, height: 1.4)),
+              ],
+            ),
           ),
           const SizedBox(width: 8),
           ElevatedButton(
             onPressed: () => _goToPayment(widget.existing!),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppConstants.accent,
+              backgroundColor: DT.amber600,
               foregroundColor: Colors.white,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
             ),
-            child: Text('Pay now',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white)),
+            child: Text('Pay now', style: DT.text(size: 13, weight: FontWeight.w800, color: Colors.white)),
           ),
         ],
+      ),
+    );
+  }
+
+  // ── 1. Logo & photos ────────────────────────────────────
+  Widget _brandSection() {
+    final logoMissing = _submitAttempted && !_isEdit && _logoFile == null;
+    return PxSection(
+      title: 'Logo & photos',
+      subtitle: 'Your logo appears on every product and order',
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: DT.slate100,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: DT.slate200),
+        ),
+        child: Text('${_imageFiles.length} / $_maxImages photos',
+            style: DT.text(size: 11.5, weight: FontWeight.w600, color: DT.onyx700)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildLogoPicker(error: logoMissing),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Container(
+                  constraints: const BoxConstraints(minHeight: 112),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: DT.slate50,
+                    borderRadius: BorderRadius.circular(DT.rMd),
+                    border: Border.all(color: DT.borderSoft),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(top: 1),
+                        child: Icon(Icons.info_outline_rounded, size: 15, color: PX.royal600),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _isEdit
+                              ? 'Tap the logo to replace it. Square PNG or JPG, up to 2MB.'
+                              : 'Square PNG or JPG, up to 2MB. A clear logo on a plain background looks best.',
+                          style: DT.text(size: 12, color: DT.onyx600, height: 1.55),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (logoMissing)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text('Company logo is required', style: DT.text(size: 11.5, color: DT.error)),
+            ),
+          const SizedBox(height: 16),
+          PxLabel(_isEdit ? 'Add more photos' : 'Shop / warehouse photos', optional: true),
+          _buildImagesPicker(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLogoPicker({bool error = false}) {
+    final has = _logoBytes != null || _existingLogoUrl.isNotEmpty;
+    Widget content;
+    if (_logoBytes != null) {
+      content = Image.memory(_logoBytes!, fit: BoxFit.cover);
+    } else if (_existingLogoUrl.isNotEmpty) {
+      content = Image.network(_existingLogoUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _logoIcon());
+    } else {
+      content = _logoIcon();
+    }
+    return GestureDetector(
+      onTap: _pickLogo,
+      child: CustomPaint(
+        foregroundPainter: has
+            ? null
+            : _DashedRRectPainter(color: error ? DT.error : PX.royal600.withValues(alpha: 0.6), radius: DT.rLg),
+        child: Container(
+          width: 112,
+          height: 112,
+          decoration: BoxDecoration(
+            color: has ? Colors.white : PX.royal50.withValues(alpha: 0.6),
+            borderRadius: BorderRadius.circular(DT.rLg),
+            border: has ? Border.all(color: DT.slate200) : null,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              content,
+              if (has)
+                Positioned(
+                  left: 6,
+                  bottom: 6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: DT.onyx900.withValues(alpha: 0.75),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text('Change', style: DT.text(size: 10.5, weight: FontWeight.w700, color: Colors.white)),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _logoIcon() => Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(color: PX.royal600.withValues(alpha: 0.1), shape: BoxShape.circle),
+        child: const Icon(Icons.add_a_photo_outlined, color: PX.royal600, size: 20),
+      ),
+      const SizedBox(height: 6),
+      Text(_isEdit ? 'Logo' : 'Logo *', style: DT.text(size: 12, weight: FontWeight.w700, color: PX.royal600)),
+    ],
+  );
+
+  Widget _buildImagesPicker() {
+    return SizedBox(
+      height: 80,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: [
+          for (var i = 0; i < _imageBytes.length; i++)
+            Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(DT.rMd),
+                  border: Border.all(color: DT.slate200),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.memory(_imageBytes[i], fit: BoxFit.cover),
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: GestureDetector(
+                        onTap: () => _removeImage(i),
+                        child: Container(
+                          width: 20,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: DT.onyx900.withValues(alpha: 0.7),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.close_rounded, size: 12, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          if (_imageFiles.length < _maxImages)
+            GestureDetector(
+              onTap: _pickImages,
+              child: CustomPaint(
+                foregroundPainter: const _DashedRRectPainter(color: DT.slate300, radius: DT.rMd),
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(DT.rMd)),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.add_photo_alternate_outlined, color: DT.slate500, size: 22),
+                      const SizedBox(height: 3),
+                      Text('Add', style: DT.text(size: 10.5, weight: FontWeight.w600, color: DT.slate500)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ── 2. Company details ──────────────────────────────────
+  Widget _detailsSection() {
+    return PxSection(
+      title: 'Company details',
+      subtitle: 'Name, owner and how buyers can reach you',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const PxLabel('Company name', required: true),
+          PxTextField(
+            controller: _nameCtrl,
+            hint: 'e.g. ABC Industries Pvt Ltd',
+            icon: Icons.business_outlined,
+            iconColor: PX.royal600,
+            capitalization: TextCapitalization.words,
+            validator: (v) => _required(v, 'Company name'),
+          ),
+          const SizedBox(height: 14),
+          const PxLabel('Slogan', optional: true),
+          PxTextField(controller: _sloganCtrl, hint: 'e.g. Quality first', icon: Icons.campaign_outlined),
+          const SizedBox(height: 14),
+          const PxLabel('Owner name', required: true),
+          PxTextField(
+            controller: _ownerCtrl,
+            hint: 'e.g. Rahul Patil',
+            icon: Icons.person_outline_rounded,
+            iconColor: PX.royal600,
+            capitalization: TextCapitalization.words,
+            validator: (v) {
+              if (v == null || v.trim().isEmpty) return 'Owner name required';
+              if (!RegExp(r'^[a-zA-Z.\s]+$').hasMatch(v.trim())) return 'Letters only';
+              return null;
+            },
+          ),
+          const SizedBox(height: 14),
+          const PxLabel('Email', required: true),
+          PxTextField(
+            controller: _emailCtrl,
+            hint: 'name@company.com',
+            icon: Icons.mail_outline_rounded,
+            iconColor: PX.royal600,
+            keyboardType: TextInputType.emailAddress,
+            validator: (v) {
+              if (v == null || v.trim().isEmpty) return 'Email required';
+              if (!RegExp(r'^[\w\-\.+]+@([\w\-]+\.)+[\w\-]{2,}$').hasMatch(v.trim())) return 'Invalid email';
+              return null;
+            },
+          ),
+          const SizedBox(height: 14),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const PxLabel('Phone', required: true),
+                    PxTextField(
+                      controller: _phoneCtrl,
+                      hint: '10-digit',
+                      icon: Icons.phone_outlined,
+                      iconColor: PX.royal600,
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: _phoneFormatters,
+                      validator: (v) => _validatePhone(v, 'Phone'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const PxLabel('WhatsApp', optional: true),
+                    PxTextField(
+                      controller: _whatsappCtrl,
+                      hint: '10-digit',
+                      icon: Icons.chat_outlined,
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: _phoneFormatters,
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return null;
+                        return _validatePhone(v, 'WhatsApp');
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (_phoneCtrl.text.trim().length == 10 && _whatsappCtrl.text.trim().isEmpty)
+            Align(
+              alignment: Alignment.centerRight,
+              child: PxLinkButton(
+                label: 'Same as phone',
+                icon: Icons.content_copy_rounded,
+                onTap: () => setState(() => _whatsappCtrl.text = _phoneCtrl.text.trim()),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ── 3. Address & location ───────────────────────────────
+  Widget _addressSection() {
+    return PxSection(
+      title: 'Address & location',
+      subtitle: 'Used for your company page and shipping pickup',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _locationPicker(
+            label: 'State',
+            icon: Icons.map_outlined,
+            items: _states,
+            selectedId: _selectedStateId,
+            loading: _isLoadingStates,
+            error: _statesError,
+            onRetry: _fetchStates,
+            onSelected: _onStateSelected,
+          ),
+          const SizedBox(height: 12),
+          _locationPicker(
+            label: 'District',
+            icon: Icons.location_city_outlined,
+            items: _districts,
+            selectedId: _selectedDistrictId,
+            loading: _isLoadingDistricts,
+            error: _districtsError,
+            enabled: _selectedStateId != null,
+            disabledHint: 'Select a state first',
+            onRetry: () => _fetchDistricts(_selectedStateId!),
+            onSelected: _onDistrictSelected,
+          ),
+          const SizedBox(height: 12),
+          _locationPicker(
+            label: 'Taluka',
+            icon: Icons.account_tree_outlined,
+            items: _talukas,
+            selectedId: _selectedTalukaId,
+            loading: _isLoadingTalukas,
+            error: _talukasError,
+            enabled: _selectedDistrictId != null,
+            disabledHint: 'Select a district first',
+            onRetry: () => _fetchTalukas(_selectedDistrictId!),
+            onSelected: _onTalukaSelected,
+          ),
+          const SizedBox(height: 12),
+          _locationPicker(
+            label: 'Village',
+            icon: Icons.holiday_village_outlined,
+            items: _villages,
+            selectedId: _selectedVillageId,
+            loading: _isLoadingVillages,
+            error: _villagesError,
+            enabled: _selectedTalukaId != null,
+            disabledHint: 'Select a taluka first',
+            onRetry: () => _fetchVillages(_selectedTalukaId!),
+            onSelected: _onVillageSelected,
+          ),
+          const SizedBox(height: 16),
+          const PxLabel('Street address', required: true),
+          PxTextField(
+            controller: _addressCtrl,
+            hint: 'Building, street, landmark',
+            maxLines: 2,
+            tinted: true,
+            capitalization: TextCapitalization.sentences,
+            validator: (v) => _required(v, 'Address'),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const PxLabel('Pincode', required: true),
+                    PxTextField(
+                      controller: _pincodeCtrl,
+                      hint: '6-digit',
+                      icon: Icons.pin_drop_outlined,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(6),
+                      ],
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'Pincode required';
+                        if (v.trim().length != 6) return '6-digit pincode';
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const PxLabel('Pickup location', required: true),
+                    PxTextField(
+                      controller: _pickupCtrl,
+                      hint: 'Where couriers collect',
+                      icon: Icons.local_shipping_outlined,
+                      validator: (v) => _required(v, 'Pickup location'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (_addressCtrl.text.trim().isNotEmpty && _pickupCtrl.text.trim().isEmpty)
+            Align(
+              alignment: Alignment.centerRight,
+              child: PxLinkButton(
+                label: 'Use street address',
+                icon: Icons.content_copy_rounded,
+                onTap: () => setState(() => _pickupCtrl.text = _addressCtrl.text.trim()),
+              ),
+            ),
+          const SizedBox(height: 16),
+          // Live location box
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xB3F8FAFC),
+              borderRadius: BorderRadius.circular(DT.rMd),
+              border: Border.all(color: DT.slate200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Text('Map location', style: DT.text(size: 12, weight: FontWeight.w700, color: DT.onyx800)),
+                    const Spacer(),
+                    Text('Optional · helps buyers find you', style: DT.text(size: 11, color: DT.slate500)),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: _isFetchingLocation ? null : _getCurrentLocation,
+                  icon: _isFetchingLocation
+                      ? const SizedBox(
+                      width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: PX.royal600))
+                      : const Icon(Icons.my_location_rounded, size: 18),
+                  label: Text(_isFetchingLocation ? 'Getting your location…' : 'Use my current location',
+                      style: DT.text(size: 13.5, weight: FontWeight.w700, color: PX.royal600)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: PX.royal600,
+                    backgroundColor: Colors.white,
+                    side: const BorderSide(color: PX.royal200),
+                    minimumSize: const Size.fromHeight(44),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: PxTextField(
+                        controller: _latitudeCtrl,
+                        hint: 'Latitude',
+                        dense: true,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: PxTextField(
+                        controller: _longitudeCtrl,
+                        hint: 'Longitude',
+                        dense: true,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                      ),
+                    ),
+                  ],
+                ),
+                _buildLocationMapPreview(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── 4. Registration & tax ───────────────────────────────
+  Widget _registrationSection() {
+    return PxSection(
+      title: 'Registration & tax',
+      subtitle: 'Optional, but verified details build buyer trust',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const PxLabel('GST number', optional: true),
+          PxTextField(
+            controller: _gstCtrl,
+            hint: 'e.g. 27ABCDE1234F1Z5',
+            icon: Icons.receipt_long_outlined,
+            capitalization: TextCapitalization.characters,
+            inputFormatters: [LengthLimitingTextInputFormatter(15)],
+            validator: (v) {
+              final t = (v ?? '').trim().toUpperCase();
+              if (t.isEmpty) return null;
+              if (!RegExp(r'^\d{2}[A-Z]{5}\d{4}[A-Z][A-Z\d]Z[A-Z\d]$').hasMatch(t)) return 'Invalid GST number';
+              return null;
+            },
+          ),
+          const SizedBox(height: 14),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const PxLabel('PAN'),
+                    PxTextField(
+                      controller: _panCtrl,
+                      hint: 'ABCDE1234F',
+                      icon: Icons.credit_card_outlined,
+                      capitalization: TextCapitalization.characters,
+                      inputFormatters: [LengthLimitingTextInputFormatter(10)],
+                      validator: (v) {
+                        final t = (v ?? '').trim().toUpperCase();
+                        if (t.isEmpty) return null;
+                        if (!RegExp(r'^[A-Z]{5}\d{4}[A-Z]$').hasMatch(t)) return 'Invalid PAN';
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const PxLabel('Registration no.'),
+                    PxTextField(controller: _regNoCtrl, hint: 'REG123', icon: Icons.assignment_outlined),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const PxLabel('IAN no.'),
+                    PxTextField(
+                      controller: _ianCtrl,
+                      hint: 'IAN123',
+                      icon: Icons.verified_outlined,
+                      inputFormatters: [LengthLimitingTextInputFormatter(25)],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const PxLabel('Firm reg. year'),
+                    PxTextField(
+                      controller: _farmYearCtrl,
+                      hint: 'e.g. 2020',
+                      icon: Icons.calendar_today_outlined,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(4),
+                      ],
+                      validator: (v) {
+                        final t = (v ?? '').trim();
+                        if (t.isEmpty) return null;
+                        final y = int.tryParse(t) ?? 0;
+                        if (y < 1900 || y > DateTime.now().year) return 'Invalid year';
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── 5. Extra contacts ───────────────────────────────────
+  Widget _contactsSection() {
+    return PxSection(
+      title: 'Extra contacts',
+      subtitle: 'More emails or numbers for enquiries',
+      icon: Icons.contacts_outlined,
+      compact: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 6),
+          _buildChipsEditor(
+            label: 'Email IDs',
+            hint: 'Type an email and tap +',
+            controller: _extraEmailCtrl,
+            items: _extraEmails,
+            keyboardType: TextInputType.emailAddress,
+            icon: Icons.alternate_email_rounded,
+            onSubmitted: _addEmail,
+            onRemove: (i) => setState(() => _extraEmails.removeAt(i)),
+          ),
+          const SizedBox(height: 14),
+          _buildChipsEditor(
+            label: 'Contact numbers',
+            hint: '10-digit number, tap +',
+            controller: _extraContactCtrl,
+            items: _extraContacts,
+            keyboardType: TextInputType.phone,
+            inputFormatters: _phoneFormatters,
+            icon: Icons.phone_outlined,
+            onSubmitted: _addContact,
+            onRemove: (i) => setState(() => _extraContacts.removeAt(i)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChipsEditor({
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+    required List<String> items,
+    required VoidCallback onSubmitted,
+    required void Function(int) onRemove,
+    required IconData icon,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        PxLabel(label, optional: true),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => onSubmitted(),
+          style: DT.text(size: 13.5, weight: FontWeight.w500),
+          decoration: pxInputDecoration(
+            hint: hint,
+            icon: icon,
+            suffix: IconButton(
+              tooltip: 'Add',
+              icon: const Icon(Icons.add_circle_rounded, color: PX.royal600),
+              onPressed: onSubmitted,
+            ),
+          ),
+        ),
+        if (items.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (var i = 0; i < items.length; i++)
+                Container(
+                  padding: const EdgeInsets.fromLTRB(10, 5, 6, 5),
+                  decoration: BoxDecoration(color: DT.slate100, borderRadius: BorderRadius.circular(DT.rSm)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(items[i], style: DT.text(size: 12, weight: FontWeight.w500, color: DT.onyx700)),
+                      const SizedBox(width: 6),
+                      GestureDetector(
+                        onTap: () => onRemove(i),
+                        child: const Icon(Icons.cancel_rounded, size: 15, color: DT.slate400),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  // ── 6. Online presence ──────────────────────────────────
+  Widget _onlineSection() {
+    Widget link(TextEditingController c, String label, String hint, IconData icon) => Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          PxLabel(label, optional: true),
+          PxTextField(controller: c, hint: hint, icon: icon, keyboardType: TextInputType.url),
+        ],
+      ),
+    );
+    return PxSection(
+      title: 'Online presence',
+      subtitle: 'Website, social pages and policies',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          link(_websiteCtrl, 'Website', 'yourcompany.com', Icons.language_rounded),
+          link(_facebookCtrl, 'Facebook', 'facebook.com/yourpage', Icons.facebook_rounded),
+          link(_instagramCtrl, 'Instagram', 'instagram.com/yourpage', Icons.camera_alt_outlined),
+          link(_linkedinCtrl, 'LinkedIn', 'linkedin.com/company/…', Icons.work_outline_rounded),
+          link(_youtubeCtrl, 'YouTube', 'youtube.com/@yourchannel', Icons.smart_display_outlined),
+          const Divider(height: 20, color: DT.slate100),
+          link(_privacyCtrl, 'Privacy policy URL', 'https://…', Icons.privacy_tip_outlined),
+          link(_termsCtrl, 'Terms & conditions URL', 'https://…', Icons.gavel_outlined),
+          Text('Links without https:// are fixed automatically.',
+              style: DT.text(size: 11.5, color: DT.slate400)),
+        ],
+      ),
+    );
+  }
+
+  // ── 7. About ────────────────────────────────────────────
+  Widget _aboutSection() {
+    return PxSection(
+      title: 'About your company',
+      subtitle: 'Shown on your company page',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          PxLabel('Short description',
+              trailing: Text('${_shortDescCtrl.text.length}/160', style: DT.text(size: 11, color: DT.slate400))),
+          PxTextField(
+            controller: _shortDescCtrl,
+            hint: 'One line about what you do',
+            maxLines: 2,
+            tinted: true,
+            capitalization: TextCapitalization.sentences,
+            inputFormatters: [LengthLimitingTextInputFormatter(160)],
+          ),
+          const SizedBox(height: 14),
+          const PxLabel('Long description', optional: true),
+          PxTextField(
+            controller: _longDescCtrl,
+            hint: 'Products, experience, clients, certifications…',
+            maxLines: 5,
+            tinted: true,
+            capitalization: TextCapitalization.sentences,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── 8. Certifications & features ────────────────────────
+  Widget _featuresSection() {
+    return PxSection(
+      title: 'Certifications & features',
+      icon: Icons.workspace_premium_outlined,
+      compact: true,
+      child: Column(
+        children: [
+          const SizedBox(height: 4),
+          _switchTile('ISI certified', 'Bureau of Indian Standards mark', Icons.verified_rounded, _isiCertified,
+                  (v) => setState(() => _isiCertified = v)),
+          _switchTile('ISO certified', 'International quality standard', Icons.workspace_premium_rounded,
+              _isoCertified, (v) => setState(() => _isoCertified = v)),
+          _switchTile('Cash on delivery', 'Buyers can pay when the order arrives', Icons.payments_outlined,
+              _codAvailable, (v) => setState(() => _codAvailable = v)),
+        ],
+      ),
+    );
+  }
+
+  Widget _switchTile(String title, String subtitle, IconData icon, bool value, ValueChanged<bool> onChanged) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.fromLTRB(12, 8, 6, 8),
+      decoration: BoxDecoration(
+        color: value ? PX.royal50 : const Color(0x99F8FAFC),
+        borderRadius: BorderRadius.circular(DT.rMd),
+        border: Border.all(color: value ? PX.royal200 : DT.slate200),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: value ? PX.royal600 : DT.slate400),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: DT.text(size: 13, weight: FontWeight.w700, color: DT.onyx900)),
+                Text(subtitle, style: DT.text(size: 11, color: DT.slate500)),
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeThumbColor: Colors.white,
+            activeTrackColor: PX.royal600,
+            inactiveThumbColor: Colors.white,
+            inactiveTrackColor: DT.slate300,
+            trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── 9. Referral + terms (create only) ───────────────────
+  Widget _finishSection() {
+    final termsMissing = _submitAttempted && !_acceptTerms;
+    return PxSection(
+      title: 'Almost done',
+      subtitle: 'A one-time registration fee is charged after creation',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const PxLabel('Referral code', optional: true),
+          PxTextField(
+            controller: _referralCtrl,
+            hint: 'Marketing partner code',
+            icon: Icons.card_giftcard_outlined,
+            capitalization: TextCapitalization.characters,
+          ),
+          const SizedBox(height: 14),
+          InkWell(
+            borderRadius: BorderRadius.circular(DT.rMd),
+            onTap: () => setState(() => _acceptTerms = !_acceptTerms),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(6, 6, 12, 6),
+              decoration: BoxDecoration(
+                color: _acceptTerms ? PX.royal50 : Colors.white,
+                borderRadius: BorderRadius.circular(DT.rMd),
+                border: Border.all(color: termsMissing ? DT.error : (_acceptTerms ? PX.royal200 : DT.slate200)),
+              ),
+              child: Row(
+                children: [
+                  Checkbox(
+                    value: _acceptTerms,
+                    onChanged: (v) => setState(() => _acceptTerms = v ?? false),
+                    activeColor: PX.royal600,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                  ),
+                  Expanded(
+                    child: Text.rich(
+                      TextSpan(
+                        text: 'I accept the ',
+                        style: DT.text(size: 13, weight: FontWeight.w500, color: DT.onyx800),
+                        children: [
+                          WidgetSpan(
+                            alignment: PlaceholderAlignment.baseline,
+                            baseline: TextBaseline.alphabetic,
+                            child: GestureDetector(
+                              onTap: _openTerms,
+                              child: Text('Terms & Conditions',
+                                  style: DT.text(
+                                      size: 13,
+                                      weight: FontWeight.w700,
+                                      color: PX.royal600,
+                                      decoration: TextDecoration.underline)),
+                            ),
+                          ),
+                          TextSpan(text: ' *', style: DT.text(size: 13, color: PX.rose500)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (termsMissing)
+            Padding(
+              padding: const EdgeInsets.only(top: 6, left: 4),
+              child: Text('Please accept the terms to continue', style: DT.text(size: 11.5, color: DT.error)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ── Sticky footer ───────────────────────────────────────
+  Widget _formFooter() {
+    final left = _requiredLeft;
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: DT.slate200)),
+        boxShadow: PX.stickyShadow,
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _isSubmitting ? null : _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: PX.royal600,
+                    disabledBackgroundColor: PX.royal600.withValues(alpha: 0.55),
+                    foregroundColor: Colors.white,
+                    elevation: 2,
+                    shadowColor: const Color(0x401A68FA),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
+                  ),
+                  child: _isSubmitting
+                      ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white)),
+                      const SizedBox(width: 10),
+                      Text(_isEdit ? 'Saving…' : 'Creating company…',
+                          style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
+                    ],
+                  )
+                      : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(_isEdit ? Icons.check_rounded : Icons.arrow_forward_rounded, size: 20),
+                      const SizedBox(width: 8),
+                      Text(_isEdit ? 'Save changes' : 'Create & continue to payment',
+                          style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                left == 0
+                    ? 'All required details added · ${_completion}% complete'
+                    : '$left required field${left == 1 ? '' : 's'} left',
+                style: DT.text(size: 11, color: left == 0 ? PX.emerald600 : DT.slate400),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1448,9 +2226,9 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
     return Stack(
       children: [
         ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           children: [
-            // Created confirmation
+            // Company created
             Container(
               padding: const EdgeInsets.all(16),
               decoration: _cardDecoration(),
@@ -1462,25 +2240,19 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(children: [
-                          const Icon(Icons.check_circle, size: 16, color: AppConstants.success),
-                          const SizedBox(width: 5),
-                          Text(_isEdit ? 'Company registered' : 'Company created',
-                              style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppConstants.success)),
-                        ]),
-                        const SizedBox(height: 4),
+                        PxPill(
+                          text: _isEdit ? 'Company registered' : 'Company created',
+                          bg: PX.emerald100,
+                          fg: DT.emerald700,
+                          icon: Icons.check_rounded,
+                        ),
+                        const SizedBox(height: 6),
                         Text(company.name,
-                            style: GoogleFonts.inter(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w800,
-                                color: AppConstants.textPrimary)),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: DT.text(size: 17, weight: FontWeight.w800, color: DT.onyx900)),
                         if (company.ownerName.isNotEmpty)
-                          Text(company.ownerName,
-                              style: GoogleFonts.inter(
-                                  fontSize: 12.5, color: AppConstants.textSecondary)),
+                          Text(company.ownerName, style: DT.text(size: 12.5, color: DT.slate500)),
                       ],
                     ),
                   ),
@@ -1489,39 +2261,51 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             ),
             const SizedBox(height: 14),
 
-            // Fee card
+            // Fee
             Container(
-              padding: const EdgeInsets.all(18),
               decoration: _cardDecoration(),
+              clipBehavior: Clip.antiAlias,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('One-time registration fee',
-                      style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppConstants.textSecondary)),
-                  const SizedBox(height: 6),
-                  if (_isCreatingOrder)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10),
-                      child: LinearProgressIndicator(minHeight: 3),
-                    )
-                  else
-                    Text(order?.amountLabel ?? '—',
-                        style: GoogleFonts.inter(
-                            fontSize: 34,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -1,
-                            color: AppConstants.textPrimary)),
-                  const SizedBox(height: 14),
-                  const Divider(height: 1),
-                  const SizedBox(height: 14),
-                  _benefit(Icons.dashboard_customize_outlined,
-                      'Company admin panel access (login link sent to ${company.email.isEmpty ? 'your email' : company.email})'),
-                  _benefit(Icons.local_shipping_outlined,
-                      'Shipping pickup location set up for your orders'),
-                  _benefit(Icons.storefront_outlined, 'List products for B2B buyers'),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF0B2A5B), Color(0xFF1D4ED8)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('ONE-TIME REGISTRATION FEE',
+                            style: DT.text(size: 11, weight: FontWeight.w800, color: Colors.white70, letterSpacing: 0.8)),
+                        const SizedBox(height: 6),
+                        if (_isCreatingOrder)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 14),
+                            child: LinearProgressIndicator(minHeight: 3, color: Colors.white, backgroundColor: Colors.white24),
+                          )
+                        else
+                          Text(order?.amountLabel ?? '—',
+                              style: DT.text(size: 36, weight: FontWeight.w900, color: Colors.white, letterSpacing: -1)),
+                        Text('Paid once · no renewal', style: DT.text(size: 12, color: Colors.white70)),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 16, 18, 8),
+                    child: Column(
+                      children: [
+                        _benefit(Icons.dashboard_customize_outlined,
+                            'Company admin panel (login link sent to ${company.email.isEmpty ? 'your email' : company.email})'),
+                        _benefit(Icons.local_shipping_outlined, 'Shipping pickup set up for your orders'),
+                        _benefit(Icons.storefront_outlined, 'List products for B2B buyers'),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1531,19 +2315,17 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppConstants.error.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppConstants.error.withValues(alpha: 0.35)),
+                  color: DT.errorBg,
+                  borderRadius: BorderRadius.circular(DT.rMd),
+                  border: Border.all(color: DT.errorBorder),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.error_outline, color: AppConstants.error, size: 20),
+                    const Icon(Icons.error_outline_rounded, color: DT.error, size: 20),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Text(_paymentError!,
-                          style: GoogleFonts.inter(
-                              fontSize: 12.5, color: AppConstants.error, height: 1.45)),
+                      child: Text(_paymentError!, style: DT.text(size: 12.5, color: DT.error, height: 1.45)),
                     ),
                   ],
                 ),
@@ -1551,55 +2333,52 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
               const SizedBox(height: 14),
             ],
 
-            // Pay button
             SizedBox(
               height: 52,
               child: ElevatedButton.icon(
-                onPressed: _busy
-                    ? null
-                    : (order == null ? _createOrder : _openCheckout),
-                icon: Icon(order == null ? Icons.refresh : Icons.lock_outline, size: 18),
+                onPressed: _busy ? null : (order == null ? _createOrder : _openCheckout),
+                icon: Icon(order == null ? Icons.refresh_rounded : Icons.lock_outline_rounded, size: 18),
                 label: Text(
                   order == null
                       ? (_isCreatingOrder ? 'Preparing payment…' : 'Retry')
                       : 'Pay ${order.amountLabel} securely',
-                  style: GoogleFonts.inter(
-                      fontSize: 15.5, fontWeight: FontWeight.w700, color: Colors.white),
+                  style: DT.text(size: 15, weight: FontWeight.w800, color: Colors.white),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppConstants.accent,
-                  disabledBackgroundColor: AppConstants.accent.withValues(alpha: 0.45),
+                  backgroundColor: PX.royal600,
+                  disabledBackgroundColor: PX.royal600.withValues(alpha: 0.5),
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 2,
+                  shadowColor: const Color(0x401A68FA),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
                 ),
               ),
             ),
-            const SizedBox(height: 8),
-            Center(
-              child: Text(
-                  kIsWeb
-                      ? 'Razorpay checkout works in the Android app only'
-                      : 'UPI, cards, net banking and wallets via Razorpay',
-                  style: GoogleFonts.inter(fontSize: 11.5, color: AppConstants.textLight)),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.verified_user_outlined, size: 14, color: DT.slate400),
+                const SizedBox(width: 5),
+                Text(
+                  kIsWeb ? 'Razorpay checkout works in the Android app only' : 'Secured by Razorpay · UPI, cards, net banking',
+                  style: DT.text(size: 11.5, color: DT.slate400),
+                ),
+              ],
             ),
             const SizedBox(height: 18),
             Center(
               child: TextButton(
                 onPressed: _busy ? null : () => Navigator.pop(context, true),
-                child: Text('Pay later',
-                    style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppConstants.textSecondary)),
+                child: Text('Pay later', style: DT.text(size: 14, weight: FontWeight.w700, color: DT.slate500)),
               ),
             ),
             Center(
               child: Text('You can pay any time from My Companies.',
-                  style: GoogleFonts.inter(fontSize: 11.5, color: AppConstants.textLight)),
+                  style: DT.text(size: 11.5, color: DT.slate400)),
             ),
           ],
         ),
-
         if (_isVerifying)
           Positioned.fill(
             child: Container(
@@ -1607,16 +2386,14 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
               alignment: Alignment.center,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                decoration: BoxDecoration(
-                    color: Colors.white, borderRadius: BorderRadius.circular(14)),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(DT.rLg)),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const SizedBox(
-                        width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5)),
+                        width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: PX.royal600)),
                     const SizedBox(width: 16),
-                    Text('Confirming payment…',
-                        style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600)),
+                    Text('Confirming payment…', style: DT.text(size: 14, weight: FontWeight.w700)),
                   ],
                 ),
               ),
@@ -1627,16 +2404,22 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
   }
 
   Widget _benefit(IconData icon, String text) => Padding(
-    padding: const EdgeInsets.only(bottom: 10),
+    padding: const EdgeInsets.only(bottom: 12),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: AppConstants.secondary),
-        const SizedBox(width: 10),
+        Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(color: PX.royal50, borderRadius: BorderRadius.circular(DT.rSm)),
+          child: Icon(icon, size: 17, color: PX.royal600),
+        ),
+        const SizedBox(width: 12),
         Expanded(
-          child: Text(text,
-              style: GoogleFonts.inter(
-                  fontSize: 12.5, color: AppConstants.textPrimary, height: 1.4)),
+          child: Padding(
+            padding: const EdgeInsets.only(top: 5),
+            child: Text(text, style: DT.text(size: 13, color: DT.onyx800, height: 1.4)),
+          ),
         ),
       ],
     ),
@@ -1654,61 +2437,72 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 84,
-              height: 84,
+              width: 92,
+              height: 92,
               decoration: BoxDecoration(
-                color: AppConstants.success.withValues(alpha: 0.12),
+                color: PX.emerald100,
                 shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFA7F3D0), width: 6),
               ),
-              child: const Icon(Icons.check_rounded, size: 48, color: AppConstants.success),
+              child: const Icon(Icons.check_rounded, size: 50, color: DT.emerald700),
             ),
-            const SizedBox(height: 20),
-            Text('Payment successful',
-                style: GoogleFonts.inter(
-                    fontSize: 22, fontWeight: FontWeight.w800, color: AppConstants.textPrimary)),
+            const SizedBox(height: 22),
+            Text('Payment successful', style: DT.text(size: 22, weight: FontWeight.w800, color: DT.onyx900)),
             const SizedBox(height: 8),
             Text(
-              '${company.name} is now registered on QNX Mart B2B'
-                  '${_order != null ? ' · ${_order!.amountLabel} paid' : ''}.',
+              '${company.name} is now registered on QNXMart B2B'
+                  '${_order != null && !_order!.alreadyPaid ? ' · ${_order!.amountLabel} paid' : ''}.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                  fontSize: 14, color: AppConstants.textSecondary, height: 1.5),
+              style: DT.text(size: 14, color: DT.onyx600, height: 1.5),
             ),
             if (_paidPaymentId != null && _paidPaymentId!.isNotEmpty) ...[
-              const SizedBox(height: 14),
-              GestureDetector(
-                onTap: () {
-                  Clipboard.setData(ClipboardData(text: _paidPaymentId!));
-                  _snack('Payment reference copied');
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: AppConstants.surfaceLight,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('Ref: $_paidPaymentId',
-                          style: GoogleFonts.inter(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                              color: AppConstants.textPrimary)),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.copy_rounded, size: 15, color: AppConstants.textSecondary),
-                    ],
+              const SizedBox(height: 16),
+              Material(
+                color: DT.slate100,
+                borderRadius: BorderRadius.circular(999),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(999),
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: _paidPaymentId!));
+                    _snack('Payment reference copied');
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Ref: $_paidPaymentId',
+                            style: DT.text(size: 12.5, weight: FontWeight.w700, color: DT.onyx800)),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.copy_rounded, size: 15, color: DT.slate500),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ],
-            const SizedBox(height: 10),
-            Text(
-              company.email.isNotEmpty
-                  ? 'Admin panel login details were sent to ${company.email}.'
-                  : 'Admin panel login details were sent to your email.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(fontSize: 12.5, color: AppConstants.textLight),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: PX.royal50,
+                borderRadius: BorderRadius.circular(DT.rMd),
+                border: Border.all(color: PX.royal200),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.mark_email_read_outlined, color: PX.royal600, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      company.email.isNotEmpty
+                          ? 'Admin panel login details were sent to ${company.email}.'
+                          : 'Admin panel login details were sent to your email.',
+                      style: DT.text(size: 12.5, color: DT.blue900, height: 1.45),
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 28),
             SizedBox(
@@ -1717,13 +2511,13 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppConstants.primary,
+                  backgroundColor: PX.royal600,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
                 ),
                 child: Text('Go to My Companies',
-                    style: GoogleFonts.inter(
-                        fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+                    style: DT.text(size: 15, weight: FontWeight.w700, color: Colors.white)),
               ),
             ),
           ],
@@ -1733,37 +2527,39 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
   }
 
   // =====================================================================
-  // SUB-WIDGETS
+  // SHARED PIECES
   // =====================================================================
   BoxDecoration _cardDecoration() => BoxDecoration(
     color: Colors.white,
-    borderRadius: BorderRadius.circular(14),
-    border: Border.all(color: Colors.grey.shade200),
+    borderRadius: BorderRadius.circular(DT.rLg),
+    border: Border.all(color: DT.slate200),
+    boxShadow: PX.cardShadow,
   );
 
   Widget _companyAvatar(Company c) {
     Widget initials() => Container(
-      color: AppConstants.primary.withValues(alpha: 0.08),
+      color: PX.royal50,
       alignment: Alignment.center,
       child: Text(c.name.isEmpty ? '?' : c.name[0].toUpperCase(),
-          style: GoogleFonts.inter(
-              fontSize: 22, fontWeight: FontWeight.w800, color: AppConstants.primary)),
+          style: DT.text(size: 22, weight: FontWeight.w800, color: PX.royal600)),
     );
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: SizedBox(
-        width: 56,
-        height: 56,
-        child: _logoBytes != null
-            ? Image.memory(_logoBytes!, fit: BoxFit.cover)
-            : c.logo.isNotEmpty
-            ? Image.network(c.logo, fit: BoxFit.cover, errorBuilder: (_, __, ___) => initials())
-            : initials(),
+    return Container(
+      width: 58,
+      height: 58,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(DT.rMd),
+        border: Border.all(color: DT.slate200),
       ),
+      clipBehavior: Clip.antiAlias,
+      child: _logoBytes != null
+          ? Image.memory(_logoBytes!, fit: BoxFit.cover)
+          : c.logo.isNotEmpty
+          ? Image.network(c.logo, fit: BoxFit.cover, errorBuilder: (_, __, ___) => initials())
+          : initials(),
     );
   }
 
-  // ─── Location picker field ────────────────────────────
+  // ─── Location picker field + searchable sheet ───────────
   Widget _locationPicker({
     required String label,
     required IconData icon,
@@ -1783,10 +2579,6 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
     final missing = _submitAttempted && enabled && selected == null && !loading;
     final canOpen = enabled && !loading && items.isNotEmpty;
 
-    final borderColor = error != null || missing
-        ? AppConstants.error
-        : (selected != null ? AppConstants.primary : Colors.grey.shade300);
-
     String hint;
     if (!enabled) {
       hint = disabledHint ?? 'Select $label';
@@ -1795,24 +2587,24 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
     } else if (items.isEmpty) {
       hint = 'No ${label.toLowerCase()}s available';
     } else {
-      hint = 'Select $label (${items.length})';
+      hint = 'Select ${label.toLowerCase()}';
     }
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('$label *',
-            style: GoogleFonts.inter(
-                fontSize: 12, fontWeight: FontWeight.w600, color: AppConstants.textSecondary)),
-        const SizedBox(height: 6),
+        PxLabel(label, required: true),
         Material(
-          color: enabled ? Colors.white : Colors.grey.shade100,
+          color: enabled ? Colors.white : DT.slate100,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: borderColor, width: selected != null ? 1.4 : 1),
+            borderRadius: BorderRadius.circular(DT.rMd),
+            side: BorderSide(
+              color: error != null || missing ? DT.error : (selected != null ? PX.royal600 : DT.slate200),
+              width: selected != null ? 1.4 : 1,
+            ),
           ),
           child: InkWell(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(DT.rMd),
             onTap: canOpen
                 ? () async {
               FocusScope.of(context).unfocus();
@@ -1821,33 +2613,28 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             }
                 : null,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
               child: Row(
                 children: [
-                  Icon(icon,
-                      size: 20,
-                      color: enabled ? AppConstants.primary : Colors.grey.shade400),
-                  const SizedBox(width: 12),
+                  Icon(icon, size: 19, color: !enabled ? DT.slate300 : PX.royal600),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       selected?.name ?? hint,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: selected != null ? FontWeight.w600 : FontWeight.w400,
-                        color: selected != null
-                            ? AppConstants.textPrimary
-                            : (enabled ? AppConstants.textLight : Colors.grey.shade400),
+                      style: DT.text(
+                        size: 13.5,
+                        weight: FontWeight.w500,
+                        color: selected != null ? DT.onyx900 : DT.slate400,
                       ),
                     ),
                   ),
                   if (loading)
                     const SizedBox(
-                        width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                        width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: PX.royal600))
                   else
-                    Icon(Icons.keyboard_arrow_down_rounded,
-                        color: canOpen ? AppConstants.textSecondary : Colors.grey.shade400),
+                    Icon(Icons.expand_more_rounded, color: canOpen ? DT.slate500 : DT.slate300),
                 ],
               ),
             ),
@@ -1855,89 +2642,64 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
         ),
         if (error != null)
           Padding(
-            padding: const EdgeInsets.only(top: 6, left: 4),
+            padding: const EdgeInsets.only(top: 5, left: 2),
             child: Row(
               children: [
-                const Icon(Icons.error_outline, size: 14, color: AppConstants.error),
+                const Icon(Icons.error_outline_rounded, size: 14, color: DT.error),
                 const SizedBox(width: 4),
-                Expanded(
-                  child: Text(error,
-                      style: GoogleFonts.inter(fontSize: 11.5, color: AppConstants.error)),
-                ),
+                Expanded(child: Text(error, style: DT.text(size: 11.5, color: DT.error))),
                 GestureDetector(
                   onTap: onRetry,
-                  child: Text('Retry',
-                      style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: AppConstants.primary,
-                          decoration: TextDecoration.underline)),
+                  child: Text('Retry', style: DT.text(size: 11.5, weight: FontWeight.w700, color: PX.royal600)),
                 ),
               ],
             ),
           )
         else if (missing)
           Padding(
-            padding: const EdgeInsets.only(top: 6, left: 4),
-            child: Text('$label is required',
-                style: GoogleFonts.inter(fontSize: 11.5, color: AppConstants.error)),
+            padding: const EdgeInsets.only(top: 5, left: 2),
+            child: Text('$label is required', style: DT.text(size: 11.5, color: DT.error)),
           ),
       ],
     );
   }
 
-  /// Searchable bottom sheet (states and villages lists can be long).
-  Future<LocationItem?> _showLocationSheet(
-      String label,
-      List<LocationItem> items,
-      int? selectedId,
-      ) {
+  Future<LocationItem?> _showLocationSheet(String label, List<LocationItem> items, int? selectedId) {
     return showModalBottomSheet<LocationItem>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(DT.rXl))),
       builder: (ctx) {
         var query = '';
         return StatefulBuilder(
           builder: (ctx, setSheet) {
             final q = query.trim().toLowerCase();
-            final filtered = q.isEmpty
-                ? items
-                : items.where((e) => e.name.toLowerCase().contains(q)).toList();
-
+            final filtered = q.isEmpty ? items : items.where((e) => e.name.toLowerCase().contains(q)).toList();
+            final media = MediaQuery.of(ctx);
             return Padding(
-              padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+              padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
               child: SizedBox(
-                height: MediaQuery.of(ctx).size.height * 0.75,
+                height: media.size.height * 0.72,
                 child: Column(
                   children: [
                     const SizedBox(height: 10),
                     Container(
                       width: 40,
                       height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+                      decoration: BoxDecoration(color: DT.slate300, borderRadius: BorderRadius.circular(2)),
                     ),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 14, 12, 4),
+                      padding: const EdgeInsets.fromLTRB(18, 12, 8, 4),
                       child: Row(
                         children: [
                           Expanded(
-                            child: Text('Select $label',
-                                style: GoogleFonts.inter(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppConstants.textPrimary)),
+                            child: Text('Select ${label.toLowerCase()}',
+                                style: DT.text(size: 16.5, weight: FontWeight.w800)),
                           ),
                           IconButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            icon: const Icon(Icons.close),
-                          ),
+                              onPressed: () => Navigator.pop(ctx),
+                              icon: const Icon(Icons.close_rounded, color: DT.slate500)),
                         ],
                       ),
                     ),
@@ -1945,50 +2707,28 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                         child: TextField(
-                          autofocus: false,
                           onChanged: (v) => setSheet(() => query = v),
-                          style: GoogleFonts.inter(fontSize: 14),
-                          decoration: InputDecoration(
-                            hintText: 'Search ${label.toLowerCase()}',
-                            prefixIcon: const Icon(Icons.search),
-                            filled: true,
-                            fillColor: AppConstants.surfaceLight,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
+                          style: DT.text(size: 13.5),
+                          decoration: pxInputDecoration(hint: 'Search ${label.toLowerCase()}', icon: Icons.search_rounded, tinted: true),
                         ),
                       ),
-                    const Divider(height: 1),
+                    const Divider(height: 1, color: DT.slate200),
                     Expanded(
                       child: filtered.isEmpty
-                          ? Center(
-                        child: Text('No match for "$query"',
-                            style: GoogleFonts.inter(
-                                fontSize: 13, color: AppConstants.textSecondary)),
-                      )
+                          ? Center(child: Text('No match for "$query"', style: DT.text(size: 13, color: DT.slate500)))
                           : ListView.separated(
                         itemCount: filtered.length,
-                        separatorBuilder: (_, __) =>
-                            Divider(height: 1, color: Colors.grey.shade100),
+                        separatorBuilder: (_, __) => const Divider(height: 1, color: DT.slate100),
                         itemBuilder: (_, i) {
                           final item = filtered[i];
-                          final isSel = item.id == selectedId;
+                          final sel = item.id == selectedId;
                           return ListTile(
                             title: Text(item.name,
-                                style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    fontWeight:
-                                    isSel ? FontWeight.w700 : FontWeight.w500,
-                                    color: isSel
-                                        ? AppConstants.primary
-                                        : AppConstants.textPrimary)),
-                            trailing: isSel
-                                ? const Icon(Icons.check_circle,
-                                color: AppConstants.primary)
-                                : null,
+                                style: DT.text(
+                                    size: 14,
+                                    weight: sel ? FontWeight.w700 : FontWeight.w500,
+                                    color: sel ? PX.royal600 : DT.onyx900)),
+                            trailing: sel ? const Icon(Icons.check_circle_rounded, color: PX.royal600) : null,
                             onTap: () => Navigator.pop(ctx, item),
                           );
                         },
@@ -2014,247 +2754,60 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
     return Container(
       margin: const EdgeInsets.only(top: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-        color: Colors.grey.shade100,
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(DT.rMd),
+        border: Border.all(color: DT.slate200),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              color: AppConstants.primary.withValues(alpha: 0.08),
-              child: Row(
-                children: [
-                  const Icon(Icons.location_on, color: AppConstants.primary, size: 18),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text('Location Preview',
-                        style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppConstants.primary)),
-                  ),
-                  Text('${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}',
-                      style: GoogleFonts.inter(fontSize: 11, color: AppConstants.textSecondary)),
-                ],
-              ),
-            ),
-            Image.network(
-              staticMapUrl,
-              height: 180,
-              fit: BoxFit.cover,
-              loadingBuilder: (context, child, progress) => progress == null
-                  ? child
-                  : Container(
-                  height: 180,
-                  alignment: Alignment.center,
-                  child: const CircularProgressIndicator(strokeWidth: 2)),
-              errorBuilder: (_, __, ___) => Container(
-                height: 120,
-                alignment: Alignment.center,
-                color: Colors.grey.shade200,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.map_outlined, size: 36, color: Colors.grey),
-                    const SizedBox(height: 6),
-                    Text('Map preview unavailable',
-                        style: GoogleFonts.inter(fontSize: 12, color: AppConstants.textSecondary)),
-                  ],
-                ),
-              ),
-            ),
-            TextButton.icon(
-              onPressed: () =>
-                  _launchUrl('https://www.google.com/maps/search/?api=1&query=$lat,$lng'),
-              icon: const Icon(Icons.open_in_new, size: 16),
-              label: Text('Open in Google Maps', style: GoogleFonts.inter(fontSize: 12)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLogoPicker() {
-    return GestureDetector(
-      onTap: _pickLogo,
-      child: Container(
-        width: 130,
-        height: 130,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppConstants.primary.withValues(alpha: 0.4), width: 1.5),
-        ),
-        child: _logoBytes != null
-            ? ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.memory(_logoBytes!, fit: BoxFit.cover))
-            : _existingLogoUrl.isNotEmpty
-            ? ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Image.network(_existingLogoUrl,
-              fit: BoxFit.cover, errorBuilder: (_, __, ___) => _logoIcon()),
-        )
-            : _logoIcon(),
-      ),
-    );
-  }
-
-  Widget _logoIcon() {
-    return Center(
+      clipBehavior: Clip.antiAlias,
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Icon(Icons.add_a_photo_outlined, size: 32, color: AppConstants.primary),
-          const SizedBox(height: 6),
-          Text('Upload Logo',
-              style: GoogleFonts.inter(
-                  fontSize: 11, fontWeight: FontWeight.w600, color: AppConstants.primary)),
-          Text('PNG/JPG · max 2MB',
-              style: GoogleFonts.inter(fontSize: 9, color: AppConstants.textSecondary)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildImagesPicker() {
-    return SizedBox(
-      height: 92,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          for (var i = 0; i < _imageFiles.length; i++)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Stack(
+          Image.network(
+            staticMapUrl,
+            height: 150,
+            fit: BoxFit.cover,
+            loadingBuilder: (_, child, p) => p == null
+                ? child
+                : Container(
+                height: 150,
+                color: DT.slate100,
+                alignment: Alignment.center,
+                child: const CircularProgressIndicator(strokeWidth: 2, color: PX.royal600)),
+            errorBuilder: (_, __, ___) => Container(
+              height: 90,
+              color: DT.slate100,
+              alignment: Alignment.center,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.memory(_imageBytes[i], width: 92, height: 92, fit: BoxFit.cover),
-                  ),
-                  Positioned(
-                    top: 4,
-                    right: 4,
-                    child: GestureDetector(
-                      onTap: () => _removeImage(i),
-                      child: Container(
-                        padding: const EdgeInsets.all(3),
-                        decoration:
-                        const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                        child: const Icon(Icons.close, size: 14, color: Colors.white),
-                      ),
-                    ),
-                  ),
+                  const Icon(Icons.map_outlined, color: DT.slate400),
+                  const SizedBox(width: 6),
+                  Text('Map preview unavailable', style: DT.text(size: 12, color: DT.slate500)),
                 ],
               ),
             ),
-          if (_imageFiles.length < _maxImages)
-            GestureDetector(
-              onTap: _pickImages,
-              child: Container(
-                width: 92,
-                height: 92,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppConstants.primary.withValues(alpha: 0.35)),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
+            child: Row(
+              children: [
+                const Icon(Icons.location_on_rounded, size: 16, color: PX.royal600),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text('${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}',
+                      style: DT.text(size: 12, weight: FontWeight.w600, color: DT.onyx700)),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.add_photo_alternate_outlined, color: AppConstants.primary),
-                    const SizedBox(height: 4),
-                    Text('${_imageFiles.length}/$_maxImages',
-                        style: GoogleFonts.inter(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: AppConstants.primary)),
-                  ],
+                PxLinkButton(
+                  label: 'Open in Maps',
+                  icon: Icons.open_in_new_rounded,
+                  iconAfter: true,
+                  onTap: () => _launchUrl('https://www.google.com/maps/search/?api=1&query=$lat,$lng'),
                 ),
-              ),
+              ],
             ),
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildChipsEditor({
-    required String label,
-    required String hint,
-    required TextEditingController controller,
-    required List<String> items,
-    required VoidCallback onSubmitted,
-    required void Function(int) onRemove,
-    TextInputType? keyboardType,
-    List<TextInputFormatter>? inputFormatters,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: GoogleFonts.inter(
-                fontSize: 12, fontWeight: FontWeight.w600, color: AppConstants.textSecondary)),
-        const SizedBox(height: 6),
-        TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          inputFormatters: inputFormatters,
-          textInputAction: TextInputAction.done,
-          onFieldSubmitted: (_) => onSubmitted(),
-          decoration: InputDecoration(
-            hintText: hint,
-            filled: true,
-            fillColor: Colors.white,
-            suffixIcon: IconButton(
-              icon: const Icon(Icons.add_circle, color: AppConstants.primary),
-              onPressed: onSubmitted,
-            ),
-            border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: Colors.grey.shade200)),
-            enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: Colors.grey.shade200)),
-            focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: AppConstants.primary, width: 2)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          ),
-        ),
-        if (items.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: items.asMap().entries.map((e) {
-              return Chip(
-                label: Text(e.value, style: GoogleFonts.inter(fontSize: 11)),
-                backgroundColor: AppConstants.primary.withValues(alpha: 0.08),
-                deleteIconColor: AppConstants.error,
-                onDeleted: () => onRemove(e.key),
-                side: BorderSide.none,
-              );
-            }).toList(),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _switchTile(String label, bool value, ValueChanged<bool> onChanged) {
-    return SwitchListTile(
-      value: value,
-      onChanged: onChanged,
-      contentPadding: EdgeInsets.zero,
-      activeThumbColor: AppConstants.primary,
-      title: Text(label,
-          style: GoogleFonts.inter(
-              fontSize: 13, fontWeight: FontWeight.w600, color: AppConstants.textPrimary)),
     );
   }
 
@@ -2264,60 +2817,43 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
     LengthLimitingTextInputFormatter(10),
   ];
 
-  String? _required(String? v, String name) =>
-      (v == null || v.trim().isEmpty) ? '$name is required' : null;
+  String? _required(String? v, String name) => (v == null || v.trim().isEmpty) ? '$name is required' : null;
 
   String? _validatePhone(String? v, String name) {
     if (v == null || v.trim().isEmpty) return '$name is required';
     if (!RegExp(r'^[6-9]\d{9}$').hasMatch(v.trim())) return 'Enter valid 10-digit number';
     return null;
   }
+}
 
-  Widget _sectionTitle(String title) => Text(title,
-      style: GoogleFonts.inter(
-          fontSize: 14, fontWeight: FontWeight.w700, color: AppConstants.textPrimary));
+// =====================================================================
+// DASHED BORDER (logo / add-photo boxes)
+// =====================================================================
+class _DashedRRectPainter extends CustomPainter {
+  final Color color;
+  final double radius;
 
-  Widget _field(
-      TextEditingController ctrl,
-      String label,
-      String hint,
-      IconData icon, {
-        TextInputType? keyboardType,
-        List<TextInputFormatter>? inputFormatters,
-        String? Function(String?)? validator,
-        int maxLines = 1,
-        TextCapitalization textCapitalization = TextCapitalization.none,
-      }) {
-    return TextFormField(
-      controller: ctrl,
-      keyboardType: maxLines > 1 ? TextInputType.multiline : keyboardType,
-      inputFormatters: inputFormatters,
-      validator: validator,
-      maxLines: maxLines,
-      textCapitalization: textCapitalization,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        prefixIcon: Icon(icon, color: AppConstants.primary),
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade200)),
-        enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade200)),
-        focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppConstants.primary, width: 2)),
-        errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.red, width: 1)),
-        focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.red, width: 2)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      ),
+  const _DashedRRectPainter({required this.color, required this.radius});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.6
+      ..style = PaintingStyle.stroke;
+    final rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0.8, 0.8, size.width - 1.6, size.height - 1.6),
+      Radius.circular(radius),
     );
+    for (final metric in (Path()..addRRect(rrect)).computeMetrics()) {
+      var d = 0.0;
+      while (d < metric.length) {
+        canvas.drawPath(metric.extractPath(d, d + 6), paint);
+        d += 10;
+      }
+    }
   }
+
+  @override
+  bool shouldRepaint(covariant _DashedRRectPainter old) => old.color != color || old.radius != radius;
 }

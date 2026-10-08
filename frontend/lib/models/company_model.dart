@@ -272,6 +272,11 @@ class CompanyPaymentOrderResponse {
   final String currency;
   final int? companyId;
 
+  /// Backend says the company is already paid (or a previous captured
+  /// payment was recovered). No checkout needed.
+  final bool alreadyPaid;
+  final String? paymentId;
+
   CompanyPaymentOrderResponse({
     required this.status,
     this.message,
@@ -281,6 +286,8 @@ class CompanyPaymentOrderResponse {
     this.orderId,
     this.currency = 'INR',
     this.companyId,
+    this.alreadyPaid = false,
+    this.paymentId,
   });
 
   factory CompanyPaymentOrderResponse.fromJson(Map<String, dynamic> json) {
@@ -302,6 +309,8 @@ class CompanyPaymentOrderResponse {
       companyId: json['company_id'] is int
           ? json['company_id']
           : int.tryParse(json['company_id']?.toString() ?? ''),
+      alreadyPaid: json['already_paid'] == true,
+      paymentId: json['payment_id']?.toString(),
     );
   }
 
@@ -326,9 +335,15 @@ class CompanyPaymentVerifyResponse {
   });
 
   factory CompanyPaymentVerifyResponse.fromJson(Map<String, dynamic> json) {
+    // On a server crash the backend returns
+    // {"status": false, "message": "Something went wrong", "error": "<real reason>"}
+    final msg = json['message']?.toString();
+    final err = json['error']?.toString();
     return CompanyPaymentVerifyResponse(
       status: json['status'] == true,
-      message: json['message']?.toString(),
+      message: (err != null && err.isNotEmpty && err != msg)
+          ? '${msg ?? 'Verification failed'} ($err)'
+          : msg,
     );
   }
 

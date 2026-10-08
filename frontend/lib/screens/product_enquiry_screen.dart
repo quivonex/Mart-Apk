@@ -1,12 +1,29 @@
+// lib/screens/product_enquiry_screen.dart
+//
+// Product enquiry – Material 3 premium layout matching the app
+// (brand blue #1A68FA, page #F6F8FC, white cards, slate borders,
+// Plus Jakarta Sans via DT.text).
+// Logic unchanged: posts to ProductEnquiryService.submitEnquiry.
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import '../constants/app_constants.dart';
+import '../constants/design_tokens.dart';
 import '../models/product_model.dart';
 import '../models/product_enquiry_model.dart';
 import '../services/product_enquiry_service.dart';
+import '../widgets/product_ui.dart';
+
+// M3 spacing scale used on this screen (multiples of 4).
+class _S {
+  static const double xs = 4;
+  static const double sm = 8;
+  static const double md = 12;
+  static const double lg = 16;
+  static const double xl = 20;
+  static const double xxl = 24;
+}
 
 class ProductEnquiryScreen extends StatefulWidget {
   final Product product;
@@ -35,6 +52,8 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
   bool _isLoading = false;
 
   static const int _maxMessage = 500;
+  static const _brand = Color(0xFF1A68FA);
+  static const _brandDark = Color(0xFF0D3880);
 
   @override
   void initState() {
@@ -57,7 +76,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // Logic
+  // Logic (unchanged)
   // ---------------------------------------------------------------------------
   int get _quantity => int.tryParse(_quantityCtrl.text.trim()) ?? 0;
 
@@ -159,26 +178,22 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                 color: Colors.white,
                 size: 20,
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: _S.sm),
               Expanded(
                 child: Text(
                   msg,
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
+                  style: DT.text(
+                      size: 13, weight: FontWeight.w600, color: Colors.white),
                 ),
               ),
             ],
           ),
-          backgroundColor:
-          isError ? const Color(0xFFD32F2F) : const Color(0xFF2E7D32),
+          backgroundColor: isError ? DT.error : const Color(0xFF059669),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 4),
-          margin: const EdgeInsets.all(16),
+          margin: const EdgeInsets.all(_S.lg),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(DT.rMd),
           ),
         ),
       );
@@ -191,38 +206,26 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
+      behavior: HitTestBehavior.translucent,
       child: Scaffold(
-        backgroundColor: AppConstants.surfaceColor,
-        appBar: AppBar(
-          backgroundColor: AppConstants.primary,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          centerTitle: false,
-          title: Text(
-            'Product enquiry',
-            style: GoogleFonts.inter(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-          ),
-        ),
+        backgroundColor: DT.background,
+        appBar: _appBar(),
         body: Form(
           key: _formKey,
           child: ListView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            padding: const EdgeInsets.fromLTRB(_S.lg, _S.md, _S.lg, _S.xxl),
             children: [
               _buildHeader(),
-              const SizedBox(height: 16),
+              const SizedBox(height: _S.md),
               _buildContactSection(),
-              const SizedBox(height: 14),
+              const SizedBox(height: _S.md),
               _buildAddressSection(),
-              const SizedBox(height: 14),
+              const SizedBox(height: _S.md),
               _buildRequirementSection(),
-              const SizedBox(height: 14),
+              const SizedBox(height: _S.md),
               _buildDemoSection(),
-              const SizedBox(height: 14),
+              const SizedBox(height: _S.md),
               _buildExtrasSection(),
             ],
           ),
@@ -232,100 +235,164 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Header: product summary that overlaps the app bar
-  // ---------------------------------------------------------------------------
-  Widget _buildHeader() {
-    return Stack(
-      children: [
-        // Coloured band that continues from the app bar
-        Positioned(
-          left: -16,
-          right: -16,
-          top: 0,
-          height: 46,
-          child: Container(color: AppConstants.primary),
+  // ── App bar ──────────────────────────────────────────────
+  PreferredSizeWidget _appBar() {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(64),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(bottom: BorderSide(color: DT.slate200)),
+          boxShadow: [
+            BoxShadow(
+                color: Color(0x0D0F172A), blurRadius: 2, offset: Offset(0, 1)),
+          ],
         ),
-        Padding(
-          padding: const EdgeInsets.only(top: 12),
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.07),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  height: 52,
-                  width: 52,
-                  decoration: BoxDecoration(
-                    color: AppConstants.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+        child: SafeArea(
+          bottom: false,
+          child: SizedBox(
+            height: 64,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: _S.xs),
+              child: Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Back',
+                    onPressed: () => Navigator.maybePop(context),
+                    icon: const Icon(Icons.arrow_back_rounded,
+                        color: DT.onyx900, size: 24),
                   ),
-                  child: Icon(Icons.inventory_2_outlined,
-                      color: AppConstants.primary, size: 26),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'You are asking about',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: AppConstants.textSecondary,
+                  const SizedBox(width: _S.xs),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Product enquiry',
+                          style: DT.text(
+                              size: 18,
+                              weight: FontWeight.w700,
+                              color: DT.onyx900,
+                              letterSpacing: -0.3),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        widget.product.name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: AppConstants.textPrimary,
+                        const SizedBox(height: 2),
+                        Text(
+                          'Send your requirement to the supplier',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: DT.text(
+                              size: 12,
+                              weight: FontWeight.w500,
+                              color: DT.slate500),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppConstants.primary,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    '₹${widget.product.finalPrice}',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                      ],
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 
   // ---------------------------------------------------------------------------
-  // Sections
+  // Header: product summary card
+  // ---------------------------------------------------------------------------
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(_S.md + 2),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(DT.rLg),
+        border: Border.all(color: DT.slate200),
+        boxShadow: PX.cardShadow,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            height: 64,
+            width: 64,
+            decoration: BoxDecoration(
+              color: DT.slate100,
+              borderRadius: BorderRadius.circular(DT.rMd),
+              border: Border.all(color: DT.slate200),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: widget.product.thumbnail.isNotEmpty
+                ? Image.network(
+              widget.product.thumbnail,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _thumbFallback(),
+            )
+                : _thumbFallback(),
+          ),
+          const SizedBox(width: _S.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'You are asking about',
+                  style: DT.text(size: 11.5, color: DT.slate500),
+                ),
+                const SizedBox(height: _S.xs),
+                Text(
+                  widget.product.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: DT.text(
+                      size: 15,
+                      weight: FontWeight.w700,
+                      color: DT.onyx900,
+                      height: 1.3),
+                ),
+                if (widget.product.companyName.isNotEmpty) ...[
+                  const SizedBox(height: _S.xs),
+                  Text(
+                    'Sold by ${widget.product.companyName}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: DT.text(size: 11.5, color: DT.slate500),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: _S.sm),
+          Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: _S.md, vertical: _S.sm),
+            decoration: BoxDecoration(
+              color: _brand,
+              borderRadius: BorderRadius.circular(DT.rMd),
+              boxShadow: const [
+                BoxShadow(
+                    color: Color(0x331A68FA),
+                    blurRadius: 8,
+                    offset: Offset(0, 3)),
+              ],
+            ),
+            child: Text(
+              '₹${widget.product.finalPrice}',
+              style: DT.text(
+                  size: 14, weight: FontWeight.w800, color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _thumbFallback() => const Center(
+    child: Icon(Icons.inventory_2_outlined, size: 28, color: DT.slate400),
+  );
+
+  // ---------------------------------------------------------------------------
+  // Section: contact
   // ---------------------------------------------------------------------------
   Widget _buildContactSection() {
     return _SectionCard(
@@ -333,12 +400,13 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
       title: 'Your contact details',
       subtitle: 'We will reach you here with a quote',
       children: [
-        _buildField(
+        _textField(
           controller: _personNameCtrl,
           label: 'Full name',
+          required: true,
           hint: 'John Doe',
-          icon: Icons.person_outline,
-          textCapitalization: TextCapitalization.words,
+          icon: Icons.person_outline_rounded,
+          capitalization: TextCapitalization.words,
           textInputAction: TextInputAction.next,
           validator: (v) {
             if (v == null || v.trim().isEmpty) return 'Enter your name';
@@ -346,12 +414,12 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
             return null;
           },
         ),
-        const SizedBox(height: 14),
-        _buildField(
+        _textField(
           controller: _emailCtrl,
           label: 'Email',
+          required: true,
           hint: 'john@example.com',
-          icon: Icons.email_outlined,
+          icon: Icons.mail_outline_rounded,
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
           validator: (v) {
@@ -361,10 +429,10 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
             return null;
           },
         ),
-        const SizedBox(height: 14),
-        _buildField(
+        _textField(
           controller: _contactCtrl,
           label: 'Mobile number',
+          required: true,
           hint: '10-digit mobile number',
           icon: Icons.phone_outlined,
           keyboardType: TextInputType.phone,
@@ -374,9 +442,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
             LengthLimitingTextInputFormatter(10),
           ],
           validator: (v) {
-            if (v == null || v.trim().isEmpty) {
-              return 'Enter your mobile number';
-            }
+            if (v == null || v.trim().isEmpty) return 'Enter your mobile number';
             if (v.trim().length != 10) return 'Enter a 10-digit mobile number';
             return null;
           },
@@ -385,30 +451,33 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Section: address
+  // ---------------------------------------------------------------------------
   Widget _buildAddressSection() {
     return _SectionCard(
       icon: Icons.location_on_outlined,
       title: 'Delivery location',
       subtitle: 'Helps us check availability and shipping',
       children: [
-        _buildField(
+        _textField(
           controller: _addressCtrl,
           label: 'Full address',
+          required: true,
           hint: 'Street, area, landmark',
           icon: Icons.home_outlined,
-          maxLines: 3,
-          minLines: 2,
-          textCapitalization: TextCapitalization.sentences,
           keyboardType: TextInputType.streetAddress,
+          capitalization: TextCapitalization.sentences,
+          maxLines: 3,
           validator: (v) {
             if (v == null || v.trim().isEmpty) return 'Enter your address';
             return null;
           },
         ),
-        const SizedBox(height: 14),
-        _buildField(
+        _textField(
           controller: _pincodeCtrl,
           label: 'Pincode',
+          required: true,
           hint: '6-digit pincode',
           icon: Icons.pin_drop_outlined,
           keyboardType: TextInputType.number,
@@ -426,6 +495,9 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Section: requirement
+  // ---------------------------------------------------------------------------
   Widget _buildRequirementSection() {
     final remaining = _messageCtrl.text.length;
     return _SectionCard(
@@ -434,22 +506,29 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
       subtitle: 'Tell us quantity and any special requirements',
       children: [
         _buildQuantityStepper(),
-        const SizedBox(height: 14),
-        _buildField(
+        const SizedBox(height: _S.md),
+        PxLabel(
+          'Message',
+          required: true,
+          trailing: Text(
+            '$remaining / $_maxMessage',
+            style: DT.text(size: 11, color: DT.slate400),
+          ),
+        ),
+        TextFormField(
           controller: _messageCtrl,
-          label: 'Message',
-          hint: 'Describe your requirement (at least 10 characters)',
-          icon: Icons.message_outlined,
+          keyboardType: TextInputType.multiline,
+          textCapitalization: TextCapitalization.sentences,
           maxLines: 5,
           minLines: 3,
           maxLength: _maxMessage,
-          textCapitalization: TextCapitalization.sentences,
-          keyboardType: TextInputType.multiline,
-          counterText: '$remaining / $_maxMessage',
+          style: DT.text(size: 14, weight: FontWeight.w500, color: DT.onyx900),
+          decoration: pxInputDecoration(
+            hint: 'Describe your requirement (at least 10 characters)',
+            tinted: true,
+          ).copyWith(counterText: ''),
           validator: (v) {
-            if (v == null || v.trim().isEmpty) {
-              return 'Tell us what you need';
-            }
+            if (v == null || v.trim().isEmpty) return 'Tell us what you need';
             if (v.trim().length < 10) return 'Write at least 10 characters';
             return null;
           },
@@ -471,25 +550,43 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
-                  child: Text(
-                    'Quantity',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppConstants.textPrimary,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Quantity',
+                        style: DT.text(
+                            size: 13,
+                            weight: FontWeight.w700,
+                            color: DT.onyx700),
+                      ),
+                      const SizedBox(height: 2),
+                      if (_estimate != null)
+                        Text(
+                          'Estimated total: ${_money(_estimate!)}',
+                          style: DT.text(
+                              size: 11.5,
+                              weight: FontWeight.w600,
+                              color: _brand),
+                        )
+                      else
+                        Text(
+                          'How many units do you need?',
+                          style: DT.text(size: 11.5, color: DT.slate500),
+                        ),
+                    ],
                   ),
                 ),
+                const SizedBox(width: _S.sm),
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(DT.rMd),
                     border: Border.all(
-                      color: state.hasError
-                          ? Colors.red
-                          : Colors.grey.shade300,
+                      color: state.hasError ? DT.error : DT.slate200,
                     ),
                   ),
                   child: Row(
@@ -497,7 +594,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                     children: [
                       _stepperButton(Icons.remove, () => _changeQuantity(-1)),
                       SizedBox(
-                        width: 56,
+                        width: 52,
                         child: TextField(
                           controller: _quantityCtrl,
                           textAlign: TextAlign.center,
@@ -507,16 +604,15 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                             LengthLimitingTextInputFormatter(5),
                           ],
                           onChanged: (_) => state.didChange(_quantityCtrl.text),
-                          style: GoogleFonts.inter(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: AppConstants.textPrimary,
-                          ),
+                          style: DT.text(
+                              size: 16,
+                              weight: FontWeight.w800,
+                              color: DT.onyx900),
                           decoration: const InputDecoration(
                             border: InputBorder.none,
                             isDense: true,
                             contentPadding:
-                            EdgeInsets.symmetric(vertical: 12),
+                            EdgeInsets.symmetric(vertical: _S.md),
                           ),
                         ),
                       ),
@@ -528,10 +624,10 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
             ),
             if (state.hasError)
               Padding(
-                padding: const EdgeInsets.only(top: 6, left: 4),
+                padding: const EdgeInsets.only(top: _S.xs + 2, left: _S.xs),
                 child: Text(
                   state.errorText!,
-                  style: GoogleFonts.inter(fontSize: 12, color: Colors.red),
+                  style: DT.text(size: 11.5, color: DT.error),
                 ),
               ),
           ],
@@ -543,14 +639,17 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
   Widget _stepperButton(IconData icon, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(DT.rMd),
       child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Icon(icon, size: 20, color: AppConstants.primary),
+        padding: const EdgeInsets.all(10),
+        child: Icon(icon, size: 20, color: _brand),
       ),
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Section: demo
+  // ---------------------------------------------------------------------------
   Widget _buildDemoSection() {
     final wantsDemo = _demoRequired == 'yes';
     return _SectionCard(
@@ -570,7 +669,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                 }),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: _S.sm),
             Expanded(
               child: _OptionTile(
                 label: 'Yes, I want a demo',
@@ -586,19 +685,18 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
           alignment: Alignment.topCenter,
           child: wantsDemo
               ? Padding(
-            padding: const EdgeInsets.only(top: 14),
+            padding: const EdgeInsets.only(top: _S.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'How should we show it?',
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppConstants.textPrimary,
-                  ),
+                  style: DT.text(
+                      size: 12,
+                      weight: FontWeight.w700,
+                      color: DT.onyx700),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: _S.sm),
                 Row(
                   children: [
                     Expanded(
@@ -610,7 +708,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                             setState(() => _demoType = 'at_location'),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: _S.sm),
                     Expanded(
                       child: _OptionTile(
                         icon: Icons.videocam_outlined,
@@ -631,6 +729,9 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Section: extras
+  // ---------------------------------------------------------------------------
   Widget _buildExtrasSection() {
     return _SectionCard(
       icon: Icons.attach_file,
@@ -638,13 +739,13 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
       subtitle: 'Add a reference photo or a referral code',
       children: [
         _buildAttachmentPicker(),
-        const SizedBox(height: 14),
-        _buildField(
+        _textField(
           controller: _referralCtrl,
           label: 'Referral code',
+          optional: true,
           hint: 'Enter a code if you have one',
           icon: Icons.card_giftcard_outlined,
-          textCapitalization: TextCapitalization.characters,
+          capitalization: TextCapitalization.characters,
           validator: (_) => null,
         ),
       ],
@@ -658,38 +759,38 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
     if (_attachment == null) {
       return InkWell(
         onTap: _pickAttachment,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(DT.rMd),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+          padding: const EdgeInsets.symmetric(
+              vertical: _S.xl + 2, horizontal: _S.lg),
           decoration: BoxDecoration(
-            color: AppConstants.primary.withOpacity(0.04),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppConstants.primary.withOpacity(0.35),
-              width: 1.2,
-            ),
+            color: DT.blue50,
+            borderRadius: BorderRadius.circular(DT.rMd),
+            border: Border.all(color: DT.blue200),
           ),
           child: Column(
             children: [
-              Icon(Icons.add_photo_alternate_outlined,
-                  color: AppConstants.primary, size: 30),
-              const SizedBox(height: 8),
+              Container(
+                width: 46,
+                height: 46,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.add_photo_alternate_outlined,
+                    color: _brand, size: 24),
+              ),
+              const SizedBox(height: _S.sm + 2),
               Text(
                 'Add a photo',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppConstants.textPrimary,
-                ),
+                style: DT.text(
+                    size: 13.5, weight: FontWeight.w700, color: DT.onyx900),
               ),
               const SizedBox(height: 2),
               Text(
                 'JPG, PNG or WebP, up to 5MB',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: AppConstants.textSecondary,
-                ),
+                style: DT.text(size: 11.5, color: DT.slate500),
               ),
             ],
           ),
@@ -702,13 +803,13 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(DT.rMd),
+        border: Border.all(color: DT.slate200),
       ),
       child: Row(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(DT.rSm),
             child: Image.file(
               _attachment!,
               width: 56,
@@ -717,13 +818,13 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
               errorBuilder: (_, __, ___) => Container(
                 width: 56,
                 height: 56,
-                color: AppConstants.primary.withOpacity(0.08),
-                child: Icon(Icons.insert_drive_file_outlined,
-                    color: AppConstants.primary),
+                color: DT.blue50,
+                child: const Icon(Icons.insert_drive_file_outlined,
+                    color: _brand),
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: _S.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -732,27 +833,19 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                   name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppConstants.textPrimary,
-                  ),
+                  style: DT.text(
+                      size: 13, weight: FontWeight.w700, color: DT.onyx900),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  'Attached',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: AppConstants.textSecondary,
-                  ),
-                ),
+                Text('Attached',
+                    style: DT.text(size: 11.5, color: DT.slate500)),
               ],
             ),
           ),
           IconButton(
             tooltip: 'Remove photo',
             onPressed: _removeAttachment,
-            icon: const Icon(Icons.close, color: AppConstants.error, size: 20),
+            icon: const Icon(Icons.close_rounded, color: DT.error, size: 20),
           ),
         ],
       ),
@@ -765,44 +858,38 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
   Widget _buildBottomBar() {
     final estimate = _estimate;
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Colors.white,
+        border: Border(top: BorderSide(color: DT.slate200)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 14,
-            offset: const Offset(0, -4),
-          ),
+              color: Color(0x0F0F172A), blurRadius: 12, offset: Offset(0, -4)),
         ],
       ),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          padding: const EdgeInsets.fromLTRB(_S.lg, _S.md, _S.lg, _S.md),
           child: Row(
             children: [
               if (estimate != null)
                 Padding(
-                  padding: const EdgeInsets.only(right: 16),
+                  padding: const EdgeInsets.only(right: _S.lg),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         'Estimated total',
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          color: AppConstants.textSecondary,
-                        ),
+                        style: DT.text(size: 11, color: DT.slate500),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         _money(estimate),
-                        style: GoogleFonts.inter(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: AppConstants.textPrimary,
-                        ),
+                        style: DT.text(
+                            size: 18,
+                            weight: FontWeight.w800,
+                            color: DT.onyx900),
                       ),
                     ],
                   ),
@@ -813,36 +900,32 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _submit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppConstants.primary,
+                      backgroundColor: _brand,
                       foregroundColor: Colors.white,
-                      disabledBackgroundColor:
-                      AppConstants.primary.withOpacity(0.6),
-                      elevation: 0,
+                      disabledBackgroundColor: _brand.withValues(alpha: 0.55),
+                      elevation: 2,
+                      shadowColor: const Color(0x401A68FA),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
+                          borderRadius: BorderRadius.circular(DT.rMd)),
                     ),
                     child: _isLoading
                         ? const SizedBox(
                       height: 22,
                       width: 22,
                       child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2.5,
-                      ),
+                          color: Colors.white, strokeWidth: 2.5),
                     )
                         : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(Icons.send_rounded, size: 18),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: _S.sm),
                         Text(
                           'Send enquiry',
-                          style: GoogleFonts.inter(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
+                          style: DT.text(
+                              size: 15,
+                              weight: FontWeight.w700,
+                              color: Colors.white),
                         ),
                       ],
                     ),
@@ -857,84 +940,57 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // Shared field builder
+  // Reusable field helper — standardizes label + field + spacing between fields
   // ---------------------------------------------------------------------------
-  Widget _buildField({
+  Widget _textField({
     required TextEditingController controller,
     required String label,
     required String hint,
     required IconData icon,
+    bool required = false,
+    bool optional = false,
     TextInputType? keyboardType,
     TextInputAction? textInputAction,
-    TextCapitalization textCapitalization = TextCapitalization.none,
+    TextCapitalization capitalization = TextCapitalization.none,
     List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
     int maxLines = 1,
-    int? minLines,
-    int? maxLength,
-    String? counterText,
+    bool tinted = false,
   }) {
-    OutlineInputBorder border(Color c, [double w = 1]) => OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide(color: c, width: w),
-    );
-
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      textInputAction: textInputAction,
-      textCapitalization: textCapitalization,
-      inputFormatters: inputFormatters,
-      validator: validator,
-      maxLines: maxLines,
-      minLines: minLines,
-      maxLength: maxLength,
-      buildCounter: counterText == null
-          ? null
-          : (_, {required currentLength, required isFocused, maxLength}) =>
-          Text(
-            counterText,
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              color: AppConstants.textSecondary,
+    return Padding(
+      // Standard M3 spacing between stacked form fields.
+      padding: const EdgeInsets.only(top: _S.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          PxLabel(label, required: required, optional: optional),
+          TextFormField(
+            controller: controller,
+            keyboardType: maxLines > 1 ? TextInputType.multiline : keyboardType,
+            textInputAction: textInputAction,
+            textCapitalization: capitalization,
+            inputFormatters: inputFormatters,
+            validator: validator,
+            minLines: maxLines > 1 ? maxLines : null,
+            maxLines: maxLines,
+            style:
+            DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
+            decoration: pxInputDecoration(
+              hint: hint,
+              icon: icon,
+              iconColor: _brand,
+              tinted: tinted,
             ),
           ),
-      style: GoogleFonts.inter(
-        fontSize: 15,
-        color: AppConstants.textPrimary,
-      ),
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        hintStyle: GoogleFonts.inter(
-          fontSize: 14,
-          color: AppConstants.textLight,
-        ),
-        prefixIcon: maxLines > 1
-            ? Padding(
-          padding: const EdgeInsets.only(bottom: 0),
-          child: Icon(icon, color: AppConstants.primary, size: 22),
-        )
-            : Icon(icon, color: AppConstants.primary, size: 22),
-        prefixIconConstraints: const BoxConstraints(minWidth: 48),
-        filled: true,
-        fillColor: const Color(0xFFFAFAFB),
-        border: border(Colors.grey.shade300),
-        enabledBorder: border(Colors.grey.shade300),
-        focusedBorder: border(AppConstants.primary, 1.8),
-        errorBorder: border(Colors.red),
-        focusedErrorBorder: border(Colors.red, 1.8),
-        contentPadding:
-        const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+        ],
       ),
     );
   }
 }
 
 // =============================================================================
-// Reusable widgets
+// Section card (M3 premium)
 // =============================================================================
-
 class _SectionCard extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -951,51 +1007,62 @@ class _SectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(DT.rLg),
+        border: Border.all(color: DT.slate200),
+        boxShadow: PX.cardShadow,
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppConstants.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+          // Header (icon + title + subtitle + divider)
+          Container(
+            padding: const EdgeInsets.only(bottom: 14),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: DT.slate100)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: DT.blue50,
+                    borderRadius: BorderRadius.circular(DT.rMd),
+                  ),
+                  child: Icon(icon, size: 20, color: DT.blue800),
                 ),
-                child: Icon(icon, size: 20, color: AppConstants.primary),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: AppConstants.textPrimary,
+                const SizedBox(width: _S.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: DT.text(
+                            size: 14,
+                            weight: FontWeight.w700,
+                            color: DT.onyx900,
+                            height: 1.2),
                       ),
-                    ),
-                    Text(
-                      subtitle,
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: AppConstants.textSecondary,
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: DT.text(size: 11.5, color: DT.slate500),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
+          // Children – the first child has no extra top gap; the helper
+          // (_textField / stepper / option tiles) provides its own padding.
           ...children,
         ],
       ),
@@ -1003,6 +1070,9 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
+// =============================================================================
+// Option tile
+// =============================================================================
 class _OptionTile extends StatelessWidget {
   final String label;
   final IconData? icon;
@@ -1020,18 +1090,17 @@ class _OptionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(DT.rMd),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+        padding: const EdgeInsets.symmetric(
+            horizontal: _S.md, vertical: _S.md + 2),
         decoration: BoxDecoration(
-          color: selected
-              ? AppConstants.primary.withOpacity(0.08)
-              : const Color(0xFFFAFAFB),
-          borderRadius: BorderRadius.circular(12),
+          color: selected ? DT.blue50 : DT.slate50,
+          borderRadius: BorderRadius.circular(DT.rMd),
           border: Border.all(
-            color: selected ? AppConstants.primary : Colors.grey.shade300,
-            width: selected ? 1.8 : 1,
+            color: selected ? DT.blue800 : DT.slate200,
+            width: selected ? 1.6 : 1,
           ),
         ),
         child: Row(
@@ -1041,22 +1110,18 @@ class _OptionTile extends StatelessWidget {
               Icon(
                 icon,
                 size: 18,
-                color: selected
-                    ? AppConstants.primary
-                    : AppConstants.textSecondary,
+                color: selected ? DT.blue800 : DT.slate500,
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: _S.xs + 2),
             ],
             Flexible(
               child: Text(
                 label,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: selected
-                      ? AppConstants.primary
-                      : AppConstants.textPrimary,
+                style: DT.text(
+                  size: 12.5,
+                  weight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: selected ? DT.blue800 : DT.onyx700,
                 ),
               ),
             ),

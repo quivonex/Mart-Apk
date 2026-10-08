@@ -4,11 +4,11 @@
 // SubCategoryFormScreen   - create / edit. Pops with the saved CatalogSubCategory.
 
 import 'package:flutter/material.dart';
-import '../../constants/design_tokens.dart';
-import '../../models/catalog_models.dart';
-import '../../services/catalog_service.dart';
-import '../../widgets/catalog_widgets.dart';
-import '../../widgets/company_ui.dart';
+import '../constants/design_tokens.dart';
+import '../models/catalog_models.dart';
+import '../services/catalog_service.dart';
+import '../widgets/catalog_widgets.dart';
+import '../widgets/company_ui.dart';
 
 class SubCategoryManageScreen extends StatefulWidget {
   final CatalogCategory category;

@@ -104,6 +104,9 @@ class Property {
   final List<PropertyImage> images;
   final List<PricingSlab> pricingSlabs;
   final List<Amenity> amenities;
+  // Optional so existing code keeps compiling.
+  final String title;
+  final String description;
 
   Property({
     required this.id,
@@ -116,6 +119,8 @@ class Property {
     required this.images,
     required this.pricingSlabs,
     required this.amenities,
+    this.title = '',
+    this.description = '',
   });
 
   factory Property.fromJson(Map<String, dynamic> json) {
@@ -136,8 +141,42 @@ class Property {
       images: imagesList.map((e) => PropertyImage.fromJson(e)).toList(),
       pricingSlabs: slabsList.map((e) => PricingSlab.fromJson(e)).toList(),
       amenities: amenitiesList.map((e) => Amenity.fromJson(e)).toList(),
+      title: json['title']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
     );
   }
+
+  /// All image URLs, primary first (for the card carousel).
+  List<String> get imageUrls {
+    final sorted = [...images]..sort((a, b) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0));
+    return [for (final i in sorted) if (i.imageS3Key.startsWith('http')) i.imageS3Key];
+  }
+
+  /// Backend label for property_type (same as the website).
+  String get typeLabel => switch (propertyType) {
+    'flat' => 'Flat / Apartment',
+    'villa' => 'Villa / Bungalow',
+    'plot' => 'Plot / Land',
+    'commercial' => 'Commercial Space',
+    'shop' => 'Shop / Retail',
+    'office' => 'Office Space',
+    'warehouse' => 'Warehouse',
+    'other' => 'Other',
+    _ => formattedPropertyType,
+  };
+
+  /// Backend label for transaction_type.
+  String get transactionLabel => switch (transactionType) {
+    'sale' => 'For Sale',
+    'rent' => 'For Rent',
+    'lease' => 'For Lease',
+    'pg' => 'PG / Hostel',
+    _ => formattedTransactionType,
+  };
+
+  /// Title shown on cards: the listing title, else "Flat / Apartment in Pune".
+  String get displayTitle =>
+      title.trim().isNotEmpty ? title.trim() : '$typeLabel${city.isEmpty ? '' : ' in $city'}';
 
   /// Primary image URL (prefer is_primary = true, else first image)
   String get primaryImageUrl {
@@ -199,6 +238,8 @@ class Property {
       'images': images.map((e) => e.toJson()).toList(),
       'pricing_slabs': pricingSlabs.map((e) => e.toJson()).toList(),
       'amenities': amenities.map((e) => e.toJson()).toList(),
+      'title': title,
+      'description': description,
     };
   }
 }

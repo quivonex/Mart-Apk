@@ -17,15 +17,20 @@ class DT {
   static const Color slate200 = Color(0xFFE2E8F0);
   static const Color slate100 = Color(0xFFF1F5F9);
   static const Color slate50 = Color(0xFFF8FAFC);
-  static const Color background = Color(0xFFF8FAFC);
+  static const Color background = Color(0xFFF6F8FC);
   static const Color card = Colors.white;
   static const Color border = Color(0xFFE2E8F0);
   static const Color borderSoft = Color(0xCCE2E8F0); // slate-200/80
 
   // ---------- Brand ----------
-  static const Color blue900 = Color(0xFF1E3A8A);
-  static const Color blue800 = Color(0xFF1E40AF);
-  static const Color blue700 = Color(0xFF1D4ED8);
+  // Brand (home screen palette)
+  static const Color brand = Color(0xFF1A68FA);
+  static const Color brandDark = Color(0xFF0D3880);
+  static const Color accent = Color(0xFFFF5722);
+
+  static const Color blue900 = Color(0xFF0D3880);
+  static const Color blue800 = Color(0xFF1A68FA);
+  static const Color blue700 = Color(0xFF1557D0);
   static const Color blue200 = Color(0xFFBFDBFE);
   static const Color blue100 = Color(0xFFDBEAFE);
   static const Color blue50 = Color(0xFFEFF6FF);
@@ -75,7 +80,7 @@ class DT {
   static const LinearGradient logoGradient = LinearGradient(
     begin: Alignment.bottomLeft,
     end: Alignment.topRight,
-    colors: [Color(0xFF1E3A8A), Color(0xFF1E40AF), Color(0xFFF59E0B)],
+    colors: [Color(0xFF0D3880), Color(0xFF1A68FA), Color(0xFFF59E0B)],
   );
 
   static const LinearGradient rfqGradient = LinearGradient(

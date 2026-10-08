@@ -20,7 +20,7 @@ class LogoWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     if (useImage) {
       return Image.asset(
-        'lib/assets/images/img.png',
+        'lib/assets/images/qnx_mart_logo.png',
         width: size * 2.5,
         height: size * 0.9,
         fit: BoxFit.contain,

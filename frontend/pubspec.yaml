@@ -46,7 +46,10 @@ dependencies:
   url_launcher: ^6.2.1
   webview_flutter: ^4.7.0
   razorpay_flutter: ^1.4.7
+  video_player: ^2.9.0
   http_parser: ^4.0.2
+  file_picker: ^8.0.6
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -72,6 +75,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
 
   assets:
+    - lib/assets/images/qnx_mart_logo.png
     - lib/assets/images/
   #   - images/a_dot_ham.jpeg
 
