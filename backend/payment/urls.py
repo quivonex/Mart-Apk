@@ -2,6 +2,11 @@ from django.urls import path
 
 from .views import (
     CreatePaymentSettingAPIView,
+    CustomerMySubscriptionsAPIView,
+    CustomerSubscriptionPlanCreateAPIView,
+    CustomerSubscriptionPlanListAPIView,
+    CustomerSubscriptionPlanUpdateAPIView,
+    CustomerSubscriptionVerifyPaymentAPIView,
     PropertySubscriptionCreateOrderAPIView,
     PropertySubscriptionPlanCreateAPIView,
     PropertySubscriptionPlanListAPIView,
@@ -10,6 +15,7 @@ from .views import (
     UpdateCompanyRegistrationAmountAPIView,
     CreateRazorpayOrderAPIView,
     VerifyRazorpayPaymentAPIView,
+    CustomerSubscriptionCreateOrderAPIView,
 )
 
 urlpatterns = [
@@ -29,5 +35,13 @@ urlpatterns = [
     path("property-subscription-plan/list/",PropertySubscriptionPlanListAPIView.as_view(),name="property-subscription-plan-list"),
     path("property-subscription-plan/update/",PropertySubscriptionPlanUpdateAPIView.as_view(),name="property-subscription-plan-update"),
     
+
+
+    path("customer-subscription-plans/",CustomerSubscriptionPlanListAPIView.as_view(),name="customer-subscription-plan-list"),
+    path("customer-subscription-plans/update/",CustomerSubscriptionPlanUpdateAPIView.as_view(),name="customer-subscription-plan-update"),
+    path("customer-subscription-plans/create/",CustomerSubscriptionPlanCreateAPIView.as_view(),name="customer-subscription-plan-create"),
+    path("customer-subscription/create-order/",CustomerSubscriptionCreateOrderAPIView.as_view(),name="customer-subscription-create-order"),
+    path("customer-subscription/verify-payment/",CustomerSubscriptionVerifyPaymentAPIView.as_view(),name="customer-subscription-verify-payment"),
+    path("customer-subscriptions/my/",CustomerMySubscriptionsAPIView.as_view(),name="customer-my-subscriptions"),
 
 ]

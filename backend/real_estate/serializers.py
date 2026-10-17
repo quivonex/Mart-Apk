@@ -106,34 +106,46 @@ from .models import (
 )
 
 class PropertyDetailSerializer(serializers.ModelSerializer):
+
     amenities = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=Amenity.objects.all(),
         required=False,
         write_only=True
     )
+
     amenity_details = AmenityCreateSerializer(
         many=True,
         read_only=True,
         source="amenities"
     )
+
     images = PropertyImageSerializer(
         many=True,
         read_only=True
     )
+
     videos = PropertyVideoSerializer(
         many=True,
         read_only=True
     )
+
     documents = PropertyDocumentSerializer(
         many=True,
         read_only=True
     )
+
+    free_days_remaining = serializers.IntegerField(
+        read_only=True
+    )
+
+    subscription_days_remaining = serializers.IntegerField(
+        read_only=True
+    )
+
     class Meta:
         model = Property
         fields = "__all__"
-
-
 class FlatTypeCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = FlatType
@@ -204,6 +216,419 @@ from .models import (
 )
 
 
+# # class PropertyCreateSerializer(serializers.ModelSerializer):
+
+#     # ---------------------------------------
+#     # AMENITIES
+#     # ---------------------------------------
+
+#     amenities = serializers.PrimaryKeyRelatedField(
+#         many=True,
+#         queryset=Amenity.objects.all(),
+#         required=False
+#     )
+
+#     # ---------------------------------------
+#     # FLAT TYPES
+#     # ---------------------------------------
+
+#     flat_types = FlatTypeCreateSerializer(
+#         many=True,
+#         required=False
+#     )
+
+#     # ---------------------------------------
+#     # FLOORS
+#     # ---------------------------------------
+
+#     floors = FloorInfoCreateSerializer(
+#         many=True,
+#         required=False
+#     )
+
+#     # ---------------------------------------
+#     # PRICING SLABS
+#     # ---------------------------------------
+
+#     pricing_slabs = PricingSlabCreateSerializer(
+#         many=True,
+#         required=False
+#     )
+#     google_location_url = serializers.CharField(
+#     required=False,
+#     allow_blank=True,
+#     allow_null=True
+#     )
+
+#     rera_website = serializers.CharField(
+#         required=False,
+#         allow_blank=True,
+#         allow_null=True
+#     )
+
+#     property_website_url = serializers.CharField(
+        
+#         required=False,
+#         allow_blank=True,
+#         allow_null=True
+#     )
+
+#     class Meta:
+
+#         model = Property
+
+#         fields = [
+#             "title",
+#             "description",
+#             "property_type",
+#             "transaction_type",
+#             "property_condition",
+#             "status",
+#             "city",
+#             "area",
+#             "address",
+#             "landmark",
+#             "pincode",
+#             "latitude",
+#             "longitude",
+#             "google_location_url",
+#             "total_area",
+#             "plot_area",
+#             "total_floors",
+#             "total_towers",
+#             "builder",
+#             "agent",
+#             "marketing_partner",
+#             "amenities",
+#             "rera_number",
+#             "rera_qr_code",
+#             "rera_website",
+#             "rera_additional_urls",
+#             "property_website_url",
+#             "is_under_construction",
+#             "ready_to_move",
+#             "possession_date",
+#             "completion_percentage",
+#             "features",
+#             "is_featured",
+#             "is_verified",
+#             "is_negotiable",
+#             "referral_code",
+
+#             # Nested data
+#             "flat_types",
+#             "floors",
+#             "pricing_slabs",
+#         ]
+#         # =====================================================
+#     # URL VALIDATION
+#     # =====================================================
+
+#     def validate_google_location_url(self, value):
+
+#         if value:
+#             value = value.strip()
+
+#             if value and not value.startswith(("http://", "https://")):
+#                 value = "https://" + value
+
+#         return value
+
+
+#     def validate_rera_website(self, value):
+
+#         if value:
+#             value = value.strip()
+
+#             if value and not value.startswith(("http://", "https://")):
+#                 value = "https://" + value
+
+#         return value
+
+
+#     def validate_property_website_url(self, value):
+
+#         if value:
+#             value = value.strip()
+
+#             if value and not value.startswith(("http://", "https://")):
+#                 value = "https://" + value
+
+#         return value
+#     # =====================================================
+#     # MULTIPART JSON PARSING
+#     # =====================================================
+
+#     def to_internal_value(self, data):
+
+#         # ==========================================
+#         # Convert QueryDict -> normal dict
+#         # ==========================================
+
+#         if hasattr(data, "getlist"):
+
+#             original_data = data
+
+#             data = {}
+
+#             for key in original_data.keys():
+#                 data[key] = original_data.get(key)
+
+#         else:
+#             data = data.copy()
+
+#         # ==========================================
+#         # AMENITIES
+#         # ==========================================
+
+#         amenities = data.get("amenities")
+
+#         if isinstance(amenities, str):
+
+#             amenities = amenities.strip()
+
+#             if amenities:
+
+#                 try:
+#                     amenities = json.loads(amenities)
+
+#                 except json.JSONDecodeError:
+
+#                     # Single amenity:
+#                     # "2"
+
+#                     try:
+#                         amenities = [int(amenities)]
+
+#                     except (ValueError, TypeError):
+
+#                         raise serializers.ValidationError({
+#                             "amenities": "Invalid amenities format."
+#                         })
+
+#         # ==========================================
+#         # Remove extra nested list
+#         # [[1,2,3]] -> [1,2,3]
+#         # ==========================================
+
+#         if (
+#             isinstance(amenities, list)
+#             and len(amenities) == 1
+#             and isinstance(amenities[0], list)
+#         ):
+#             amenities = amenities[0]
+
+#         # ==========================================
+#         # Convert amenity IDs to integers
+#         # ==========================================
+
+#         if isinstance(amenities, list):
+
+#             try:
+#                 amenities = [
+#                     int(amenity)
+#                     for amenity in amenities
+#                 ]
+
+#             except (ValueError, TypeError):
+
+#                 raise serializers.ValidationError({
+#                     "amenities": "Amenities must contain valid IDs."
+#                 })
+
+#         if amenities is not None:
+#          data["amenities"] = amenities
+
+#         # ==========================================
+#         # FLAT TYPES / FLOORS / PRICING SLABS
+#         # ==========================================
+
+#         for field in [
+#             "flat_types",
+#             "floors",
+#             "pricing_slabs"
+#         ]:
+
+#             value = data.get(field)
+
+#             if isinstance(value, str):
+
+#                 value = value.strip()
+
+#                 if value:
+
+#                     try:
+#                         data[field] = json.loads(value)
+
+#                     except json.JSONDecodeError:
+
+#                         raise serializers.ValidationError({
+#                             field: "Invalid JSON format."
+#                         })
+
+#         # ==========================================
+#         # DRF VALIDATION
+#         # ==========================================
+
+#         return super().to_internal_value(data)
+#     # =====================================================
+#     # CREATE PROPERTY
+#     # =====================================================
+
+#     def create(self, validated_data):
+
+#         # -----------------------------------------------
+#         # Extract nested data
+#         # -----------------------------------------------
+
+#         amenities = validated_data.pop(
+#             "amenities",
+#             []
+#         )
+
+#         flat_types_data = validated_data.pop(
+#             "flat_types",
+#             []
+#         )
+
+#         floors_data = validated_data.pop(
+#             "floors",
+#             []
+#         )
+
+#         pricing_slabs_data = validated_data.pop(
+#             "pricing_slabs",
+#             []
+#         )
+
+#         # -----------------------------------------------
+#         # CREATE PROPERTY
+#         # -----------------------------------------------
+
+#         property_obj = Property.objects.create(
+#             **validated_data
+#         )
+
+#         # =================================================
+#         # AMENITIES
+#         # =================================================
+
+#         if amenities:
+
+#             property_obj.amenities.set(
+#                 amenities
+#             )
+
+#         # =================================================
+#         # FLAT TYPES
+#         # =================================================
+
+#         flat_type_map = {}
+
+#         for flat_data in flat_types_data:
+
+#             flat_type_obj = FlatType.objects.create(
+#                 property=property_obj,
+#                 **flat_data
+#             )
+
+#             # Map using flat_type value
+#             flat_type_map[
+#                 flat_type_obj.flat_type
+#             ] = flat_type_obj
+
+#         # =================================================
+#         # FLOORS
+#         # =================================================
+
+#         floor_map = {}
+
+#         for floor_data in floors_data:
+
+#             floor_obj = FloorInfo.objects.create(
+#                 property=property_obj,
+#                 **floor_data
+#             )
+
+#             # Map using floor_number
+#             floor_map[
+#                 floor_obj.floor_number
+#             ] = floor_obj
+
+#         # =================================================
+#         # PRICING SLABS
+#         # =================================================
+
+#         for pricing_data in pricing_slabs_data:
+
+#             pricing_data = pricing_data.copy()
+
+#             # -------------------------------------------
+#             # Get flat type
+#             # -------------------------------------------
+
+#             flat_type_name = pricing_data.pop(
+#                 "flat_type",
+#                 None
+#             )
+
+#             # -------------------------------------------
+#             # Get floor
+#             # -------------------------------------------
+
+#             floor_number = pricing_data.pop(
+#                 "floor",
+#                 None
+#             )
+
+#             # -------------------------------------------
+#             # Find flat type
+#             # -------------------------------------------
+
+#             flat_type_obj = flat_type_map.get(
+#                 flat_type_name
+#             )
+
+#             if not flat_type_obj:
+
+#                 raise serializers.ValidationError({
+#                     "pricing_slabs": [
+#                         f"Flat type '{flat_type_name}' not found."
+#                     ]
+#                 })
+
+#             # -------------------------------------------
+#             # Find floor
+#             # -------------------------------------------
+
+#             floor_obj = floor_map.get(
+#                 floor_number
+#             )
+
+#             if not floor_obj:
+
+#                 raise serializers.ValidationError({
+#                     "pricing_slabs": [
+#                         f"Floor '{floor_number}' not found."
+#                     ]
+#                 })
+
+#             # -------------------------------------------
+#             # Create Pricing Slab
+#             # -------------------------------------------
+
+#             PricingSlab.objects.create(
+#                 property=property_obj,
+#                 flat_type=flat_type_obj,
+#                 floor=floor_obj,
+#                 **pricing_data
+#             )
+
+#         # -----------------------------------------------
+#         # RETURN PROPERTY
+#         # -----------------------------------------------
+
+#         return property_obj
 class PropertyCreateSerializer(serializers.ModelSerializer):
 
     # ---------------------------------------
@@ -242,10 +667,11 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
         many=True,
         required=False
     )
+
     google_location_url = serializers.CharField(
-    required=False,
-    allow_blank=True,
-    allow_null=True
+        required=False,
+        allow_blank=True,
+        allow_null=True
     )
 
     rera_website = serializers.CharField(
@@ -255,7 +681,6 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
     )
 
     property_website_url = serializers.CharField(
-        
         required=False,
         allow_blank=True,
         allow_null=True
@@ -308,7 +733,8 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
             "floors",
             "pricing_slabs",
         ]
-        # =====================================================
+
+    # =====================================================
     # URL VALIDATION
     # =====================================================
 
@@ -317,32 +743,37 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
         if value:
             value = value.strip()
 
-            if value and not value.startswith(("http://", "https://")):
+            if value and not value.startswith(
+                ("http://", "https://")
+            ):
                 value = "https://" + value
 
         return value
-
 
     def validate_rera_website(self, value):
 
         if value:
             value = value.strip()
 
-            if value and not value.startswith(("http://", "https://")):
+            if value and not value.startswith(
+                ("http://", "https://")
+            ):
                 value = "https://" + value
 
         return value
-
 
     def validate_property_website_url(self, value):
 
         if value:
             value = value.strip()
 
-            if value and not value.startswith(("http://", "https://")):
+            if value and not value.startswith(
+                ("http://", "https://")
+            ):
                 value = "https://" + value
 
         return value
+
     # =====================================================
     # MULTIPART JSON PARSING
     # =====================================================
@@ -360,9 +791,11 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
             data = {}
 
             for key in original_data.keys():
+
                 data[key] = original_data.get(key)
 
         else:
+
             data = data.copy()
 
         # ==========================================
@@ -378,20 +811,20 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
             if amenities:
 
                 try:
+
                     amenities = json.loads(amenities)
 
                 except json.JSONDecodeError:
 
-                    # Single amenity:
-                    # "2"
-
                     try:
+
                         amenities = [int(amenities)]
 
                     except (ValueError, TypeError):
 
                         raise serializers.ValidationError({
-                            "amenities": "Invalid amenities format."
+                            "amenities":
+                                "Invalid amenities format."
                         })
 
         # ==========================================
@@ -404,6 +837,7 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
             and len(amenities) == 1
             and isinstance(amenities[0], list)
         ):
+
             amenities = amenities[0]
 
         # ==========================================
@@ -413,6 +847,7 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
         if isinstance(amenities, list):
 
             try:
+
                 amenities = [
                     int(amenity)
                     for amenity in amenities
@@ -421,11 +856,13 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
             except (ValueError, TypeError):
 
                 raise serializers.ValidationError({
-                    "amenities": "Amenities must contain valid IDs."
+                    "amenities":
+                        "Amenities must contain valid IDs."
                 })
 
         if amenities is not None:
-         data["amenities"] = amenities
+
+            data["amenities"] = amenities
 
         # ==========================================
         # FLAT TYPES / FLOORS / PRICING SLABS
@@ -446,12 +883,14 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
                 if value:
 
                     try:
+
                         data[field] = json.loads(value)
 
                     except json.JSONDecodeError:
 
                         raise serializers.ValidationError({
-                            field: "Invalid JSON format."
+                            field:
+                                "Invalid JSON format."
                         })
 
         # ==========================================
@@ -459,6 +898,116 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
         # ==========================================
 
         return super().to_internal_value(data)
+
+    # =====================================================
+    # MAIN VALIDATION
+    # =====================================================
+
+    def validate(self, attrs):
+
+        property_type = attrs.get("property_type")
+
+        flat_types_data = attrs.get(
+            "flat_types",
+            []
+        )
+
+        floors_data = attrs.get(
+            "floors",
+            []
+        )
+
+        pricing_slabs_data = attrs.get(
+            "pricing_slabs",
+            []
+        )
+
+        # =================================================
+        # NON-FLAT PROPERTY
+        # =================================================
+
+        if property_type != Property.PropertyType.FLAT:
+
+            # ---------------------------------------------
+            # Pricing slab is only for Flat
+            # ---------------------------------------------
+
+            if pricing_slabs_data:
+
+                raise serializers.ValidationError({
+                    "pricing_slabs":
+                        "Pricing slabs are only allowed "
+                        "for Flat / Apartment properties."
+                })
+
+            # ---------------------------------------------
+            # Flat types are only for Flat
+            # ---------------------------------------------
+
+            if flat_types_data:
+
+                raise serializers.ValidationError({
+                    "flat_types":
+                        "Flat types are only allowed "
+                        "for Flat / Apartment properties."
+                })
+
+            # ---------------------------------------------
+            # Floors are only for Flat
+            # ---------------------------------------------
+
+            if floors_data:
+
+                raise serializers.ValidationError({
+                    "floors":
+                        "Floors are only allowed "
+                        "for Flat / Apartment properties."
+                })
+
+        # =================================================
+        # FLAT PROPERTY
+        # =================================================
+
+        if property_type == Property.PropertyType.FLAT:
+
+            # ---------------------------------------------
+            # Flat types required
+            # ---------------------------------------------
+
+            if not flat_types_data:
+
+                raise serializers.ValidationError({
+                    "flat_types":
+                        "Flat types are required "
+                        "for Flat / Apartment properties."
+                })
+
+            # ---------------------------------------------
+            # Floors required
+            # ---------------------------------------------
+
+            if not floors_data:
+
+                raise serializers.ValidationError({
+                    "floors":
+                        "Floors are required "
+                        "for Flat / Apartment properties."
+                })
+
+            # ---------------------------------------------
+            # Pricing slabs required
+            # ---------------------------------------------
+
+            if not pricing_slabs_data:
+
+                raise serializers.ValidationError({
+                    "pricing_slabs":
+                        "Pricing slabs are required "
+                        "for Flat / Apartment properties."
+                })
+
+        return attrs
+
     # =====================================================
     # CREATE PROPERTY
     # =====================================================
@@ -509,115 +1058,123 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 
         # =================================================
         # FLAT TYPES
+        # ONLY FOR FLAT PROPERTY
         # =================================================
 
         flat_type_map = {}
 
-        for flat_data in flat_types_data:
+        if property_obj.property_type == Property.PropertyType.FLAT:
 
-            flat_type_obj = FlatType.objects.create(
-                property=property_obj,
-                **flat_data
-            )
+            for flat_data in flat_types_data:
 
-            # Map using flat_type value
-            flat_type_map[
-                flat_type_obj.flat_type
-            ] = flat_type_obj
+                flat_type_obj = FlatType.objects.create(
+                    property=property_obj,
+                    **flat_data
+                )
+
+                flat_type_map[
+                    flat_type_obj.flat_type
+                ] = flat_type_obj
 
         # =================================================
         # FLOORS
+        # ONLY FOR FLAT PROPERTY
         # =================================================
 
         floor_map = {}
 
-        for floor_data in floors_data:
+        if property_obj.property_type == Property.PropertyType.FLAT:
 
-            floor_obj = FloorInfo.objects.create(
-                property=property_obj,
-                **floor_data
-            )
+            for floor_data in floors_data:
 
-            # Map using floor_number
-            floor_map[
-                floor_obj.floor_number
-            ] = floor_obj
+                floor_obj = FloorInfo.objects.create(
+                    property=property_obj,
+                    **floor_data
+                )
+
+                floor_map[
+                    floor_obj.floor_number
+                ] = floor_obj
 
         # =================================================
         # PRICING SLABS
+        # ONLY FOR FLAT PROPERTY
         # =================================================
 
-        for pricing_data in pricing_slabs_data:
+        if property_obj.property_type == Property.PropertyType.FLAT:
 
-            pricing_data = pricing_data.copy()
+            for pricing_data in pricing_slabs_data:
 
-            # -------------------------------------------
-            # Get flat type
-            # -------------------------------------------
+                pricing_data = pricing_data.copy()
 
-            flat_type_name = pricing_data.pop(
-                "flat_type",
-                None
-            )
+                # -------------------------------------------
+                # Get flat type
+                # -------------------------------------------
 
-            # -------------------------------------------
-            # Get floor
-            # -------------------------------------------
+                flat_type_name = pricing_data.pop(
+                    "flat_type",
+                    None
+                )
 
-            floor_number = pricing_data.pop(
-                "floor",
-                None
-            )
+                # -------------------------------------------
+                # Get floor
+                # -------------------------------------------
 
-            # -------------------------------------------
-            # Find flat type
-            # -------------------------------------------
+                floor_number = pricing_data.pop(
+                    "floor",
+                    None
+                )
 
-            flat_type_obj = flat_type_map.get(
-                flat_type_name
-            )
+                # -------------------------------------------
+                # Find flat type
+                # -------------------------------------------
 
-            if not flat_type_obj:
+                flat_type_obj = flat_type_map.get(
+                    flat_type_name
+                )
 
-                raise serializers.ValidationError({
-                    "pricing_slabs": [
-                        f"Flat type '{flat_type_name}' not found."
-                    ]
-                })
+                if not flat_type_obj:
 
-            # -------------------------------------------
-            # Find floor
-            # -------------------------------------------
+                    raise serializers.ValidationError({
+                        "pricing_slabs": [
+                            f"Flat type '{flat_type_name}' "
+                            f"not found."
+                        ]
+                    })
 
-            floor_obj = floor_map.get(
-                floor_number
-            )
+                # -------------------------------------------
+                # Find floor
+                # -------------------------------------------
 
-            if not floor_obj:
+                floor_obj = floor_map.get(
+                    floor_number
+                )
 
-                raise serializers.ValidationError({
-                    "pricing_slabs": [
-                        f"Floor '{floor_number}' not found."
-                    ]
-                })
+                if not floor_obj:
 
-            # -------------------------------------------
-            # Create Pricing Slab
-            # -------------------------------------------
+                    raise serializers.ValidationError({
+                        "pricing_slabs": [
+                            f"Floor '{floor_number}' "
+                            f"not found."
+                        ]
+                    })
 
-            PricingSlab.objects.create(
-                property=property_obj,
-                flat_type=flat_type_obj,
-                floor=floor_obj,
-                **pricing_data
-            )
+                # -------------------------------------------
+                # Create Pricing Slab
+                # -------------------------------------------
+
+                PricingSlab.objects.create(
+                    property=property_obj,
+                    flat_type=flat_type_obj,
+                    floor=floor_obj,
+                    **pricing_data
+                )
 
         # -----------------------------------------------
         # RETURN PROPERTY
         # -----------------------------------------------
 
-        return property_obj
-    
+        return property_obj    
 class PropertyEnquiryCreateSerializer(serializers.ModelSerializer):
 
     property_details = PropertyDetailSerializer(

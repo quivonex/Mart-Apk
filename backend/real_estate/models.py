@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from django.utils.text import slugify
 from enquiry.models import MarketingPartner
 
@@ -111,6 +112,7 @@ class Property(models.Model):
     source = models.CharField(max_length=20,choices=[("website", "Website"),("admin", "Admin Panel"),],default="website")
     free_days = models.PositiveIntegerField(default=15,null=True, blank=True)
     free_expiry_date = models.DateTimeField(blank=True,null=True)
+    subscription_expiry_date = models.DateTimeField(blank=True,null=True)
     subscription_required = models.BooleanField(default=False)
     subscription_active = models.BooleanField(default=False)
     class Meta:
@@ -135,6 +137,39 @@ class Property(models.Model):
                 counter += 1
             self.slug = slug
         super().save(*args, **kwargs)
+        
+    @property
+    def free_days_remaining(self):
+        if not self.free_expiry_date:
+            return 0
+
+        now = timezone.now()
+
+        if self.free_expiry_date <= now:
+            return 0
+
+        remaining_seconds = (
+            self.free_expiry_date - now
+        ).total_seconds()
+
+        return max(0, int((remaining_seconds + 86399) // 86400))
+
+
+    @property
+    def subscription_days_remaining(self):
+        if not self.subscription_expiry_date:
+            return 0
+
+        now = timezone.now()
+
+        if self.subscription_expiry_date <= now:
+            return 0
+
+        remaining_seconds = (
+            self.subscription_expiry_date - now
+        ).total_seconds()
+
+        return max(0, int((remaining_seconds + 86399) // 86400))    
 
 class FlatType(models.Model):
     property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name="flat_types")
@@ -718,6 +753,7 @@ class PropertyEnquiry(models.Model):
     customer_name = models.CharField(max_length=100)
     customer_email = models.EmailField(blank=True,null=True)
     customer_mobile = models.CharField(max_length=15)
+    customer = models.ForeignKey(User,on_delete=models.CASCADE,related_name="property_enquiries",blank=True,null=True)
     flat_type = models.CharField(max_length=20,choices=FlatType.choices,blank=True,null=True)
     budget_min = models.DecimalField(max_digits=15,decimal_places=2,blank=True,null=True)
     budget_max = models.DecimalField(max_digits=15,decimal_places=2,blank=True,null=True)

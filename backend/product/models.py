@@ -107,48 +107,107 @@ class Product(models.Model):
 
 
     def save(self, *args, **kwargs):
+
+        # =====================================================
+        # AUTO SLUG
+        # =====================================================
+
         if not self.slug and self.name:
             base_slug = slugify(self.name)
-            
-            # First, try with just the base slug
-            if not Product.objects.filter(slug=base_slug).exclude(pk=self.pk).exists():
+
+            if not Product.objects.filter(
+                slug=base_slug
+            ).exclude(pk=self.pk).exists():
+
                 self.slug = base_slug
+
             else:
-                # If base slug exists, append random 6-character code
                 while True:
-                    # Option 1: Random alphanumeric code (e.g., shirt-a7x9p2)
-                    random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+                    random_suffix = ''.join(
+                        random.choices(
+                            string.ascii_lowercase + string.digits,
+                            k=6
+                        )
+                    )
+
                     unique_slug = f"{base_slug}-{random_suffix}"
-                    
-                    # Option 2: Or use counter (e.g., shirt-1, shirt-2)
-                    # You can also use this approach instead:
-                    # counter = 1
-                    # while Product.objects.filter(slug=unique_slug).exclude(pk=self.pk).exists():
-                    #     unique_slug = f"{base_slug}-{counter}"
-                    #     counter += 1
-                    
-                    if not Product.objects.filter(slug=unique_slug).exclude(pk=self.pk).exists():
+
+                    if not Product.objects.filter(
+                        slug=unique_slug
+                    ).exclude(pk=self.pk).exists():
+
                         self.slug = unique_slug
                         break
-            
-        # ✅ Auto Product Code
+
+        # =====================================================
+        # AUTO PRODUCT CODE
+        # =====================================================
+
         if not self.product_code:
+
             while True:
+
                 code = generate_product_code()
-                if not Product.objects.filter(product_code=code).exists():
+
+                if not Product.objects.filter(
+                    product_code=code
+                ).exists():
+
                     self.product_code = code
                     break
 
-        # ✅ Discount Calculation
+        # =====================================================
+        # DISCOUNT CALCULATION
+        # =====================================================
+
+        original_price = self.price or Decimal('0')
+
+        discount_amount = Decimal('0')
+
         if self.discount_type == 'flat' and self.discount_value:
-            self.final_price = self.price - self.discount_value
+
+            discount_amount = self.discount_value
 
         elif self.discount_type == 'percent' and self.discount_value:
-            discount_amount = (self.price * self.discount_value) / Decimal('100')
-            self.final_price = self.price - discount_amount
 
-        else:
-            self.final_price = self.price
+            discount_amount = (
+                original_price * self.discount_value
+            ) / Decimal('100')
+
+        # Discounted price
+        discounted_price = original_price - discount_amount
+
+        # Prevent negative price
+        discounted_price = max(
+            discounted_price,
+            Decimal('0')
+        )
+
+        # =====================================================
+        # GST CALCULATION
+        # =====================================================
+
+        gst_amount = Decimal('0')
+
+        if self.GST_percent:
+
+            gst_amount = (
+                discounted_price * self.GST_percent
+            ) / Decimal('100')
+
+        # =====================================================
+        # FINAL PRICE = DISCOUNTED PRICE + GST
+        # =====================================================
+
+        self.final_price = (
+            discounted_price + gst_amount
+        ).quantize(
+            Decimal('0.01')
+        )
+
+        # =====================================================
+        # SAVE
+        # =====================================================
 
         super().save(*args, **kwargs)
 
@@ -156,8 +215,34 @@ class Product(models.Model):
     def get_final_price_with_offer(self):
         today = date.today()
 
-        # 👉 Default = discounted price
-        base_price = self.final_price or self.price
+        # =====================================================
+        # 1. ORIGINAL PRODUCT PRICE
+        # =====================================================
+
+        original_price = self.price or Decimal('0')
+
+        # =====================================================
+        # 2. PRODUCT DISCOUNT
+        # =====================================================
+
+        discount_amount = Decimal('0')
+
+        if self.discount_type == 'flat' and self.discount_value:
+            discount_amount = self.discount_value
+
+        elif self.discount_type == 'percent' and self.discount_value:
+            discount_amount = (
+                original_price * self.discount_value
+            ) / Decimal('100')
+
+        discounted_price = max(
+            original_price - discount_amount,
+            Decimal('0')
+        )
+
+        # =====================================================
+        # 3. FIND ACTIVE OFFER
+        # =====================================================
 
         offer = self.offers.filter(
             is_active=True
@@ -166,31 +251,74 @@ class Product(models.Model):
             Q(end_date__gte=today) | Q(end_date__isnull=True)
         ).order_by('-id').first()
 
-        # ✅ If NO offer → return discount price
-        if not offer or not offer.discount_value:
-            return base_price
+        # =====================================================
+        # 4. BRANCH CHECK
+        # =====================================================
 
-        # ✅ Branch check
-        if offer.branch.exists():
-            if not self.branch or self.branch not in offer.branch.all():
-                return base_price
+        if offer:
 
-        offer_type = (offer.offer_type or "").strip().lower()
+            if offer.branch.exists():
 
-        # ✅ Apply offer on ORIGINAL price (as per your requirement)
-        original_price = self.price
+                if not self.branch or self.branch not in offer.branch.all():
+                    offer = None
 
-        if offer_type == "percentage":
-            discount = (original_price * offer.discount_value) / Decimal('100')
-            return max(original_price - discount, Decimal('0'))
+        # =====================================================
+        # 5. APPLY OFFER
+        # =====================================================
 
-        elif offer_type == "flat":
-            return max(original_price - offer.discount_value, Decimal('0'))
+        price_after_offer = discounted_price
 
-        return base_price
-    
-##############
-    import re
+        if offer and offer.discount_value:
+
+            offer_type = (
+                offer.offer_type or ""
+            ).strip().lower()
+
+            if offer_type == "percentage":
+
+                offer_discount = (
+                    discounted_price * offer.discount_value
+                ) / Decimal('100')
+
+                price_after_offer = (
+                    discounted_price - offer_discount
+                )
+
+            elif offer_type == "flat":
+
+                price_after_offer = (
+                    discounted_price - offer.discount_value
+                )
+
+            price_after_offer = max(
+                price_after_offer,
+                Decimal('0')
+            )
+
+        # =====================================================
+        # 6. GST
+        # =====================================================
+
+        gst_amount = Decimal('0')
+
+        if self.GST_percent:
+
+            gst_amount = (
+                price_after_offer * self.GST_percent
+            ) / Decimal('100')
+
+        # =====================================================
+        # 7. FINAL PRICE
+        # =====================================================
+
+        final_price = (
+            price_after_offer + gst_amount
+        ).quantize(Decimal('0.01'))
+
+        return final_price
+        
+    ##############
+        import re
 
 
 def convert_weight_to_kg(weight):

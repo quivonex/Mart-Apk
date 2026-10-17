@@ -8,9 +8,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 import urllib
-from .models import PaymentSetting, PropertySubscriptionPlan, PropertySubscriptionPayment
+from .models import CustomerSubscription, CustomerSubscriptionPlan, PaymentSetting, PropertySubscriptionPlan, PropertySubscriptionPayment, CustomerSubscriptionPayment
 from real_estate.models import Property
 from django.db import transaction
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 
 client = razorpay.Client(
@@ -1429,3 +1431,833 @@ class PropertySubscriptionPlanUpdateAPIView(APIView):
             )      
             
                   
+                  
+
+
+class CustomerSubscriptionCreateOrderAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+
+    def post(self, request):
+
+        user = request.user
+
+        plan_id = request.data.get("plan_id")
+
+        if not plan_id:
+            return Response({
+                "success": False,
+                "message": "plan_id is required."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            plan = CustomerSubscriptionPlan.objects.get(
+                id=plan_id,
+                is_active=True
+            )
+        except CustomerSubscriptionPlan.DoesNotExist:
+            return Response({
+                "success": False,
+                "message": "Subscription plan not found or inactive."
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        if plan.price is None or plan.price <= 0:
+            return Response({
+                "success": False,
+                "message": "Invalid subscription plan price."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        client = razorpay.Client(
+            auth=(
+                settings.RAZORPAY_KEY_ID,
+                settings.RAZORPAY_KEY_SECRET
+            )
+        )
+
+        amount = int(
+            Decimal(plan.price) * Decimal("100")
+        )
+
+        razorpay_order = client.order.create({
+            "amount": amount,
+            "currency": "INR",
+            "receipt": f"CUST_SUB_{user.id}_{plan.id}",
+            "notes": {
+                "user_id": str(user.id),
+                "plan_id": str(plan.id)
+            }
+        })
+
+        payment = CustomerSubscriptionPayment.objects.create(
+            user=user,
+            plan=plan,
+            razorpay_order_id=razorpay_order["id"],
+            amount=plan.price,
+            status="created"
+        )
+
+        return Response({
+            "success": True,
+            "message": "Subscription order created successfully.",
+
+            "payment_record_id": payment.id,
+
+            "order": {
+                "razorpay_order_id": razorpay_order["id"],
+                "amount": plan.price,
+                "amount_paise": amount,
+                "currency": "INR",
+
+                "plan_id": plan.id,
+                "plan_name": plan.name,
+                "enquiry_limit": plan.enquiry_limit,
+                "duration_days": plan.duration_days
+            },
+
+            "razorpay": {
+                "key_id": settings.RAZORPAY_KEY_ID
+            }
+        }, status=status.HTTP_201_CREATED)                  
+        
+        
+        
+class CustomerSubscriptionVerifyPaymentAPIView(APIView):
+
+    @transaction.atomic
+    def post(self, request):
+
+        user = request.user
+
+        razorpay_order_id = request.data.get(
+            "razorpay_order_id"
+        )
+
+        razorpay_payment_id = request.data.get(
+            "razorpay_payment_id"
+        )
+
+        razorpay_signature = request.data.get(
+            "razorpay_signature"
+        )
+
+        if not razorpay_order_id:
+            return Response({
+                "success": False,
+                "message": "razorpay_order_id is required."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if not razorpay_payment_id:
+            return Response({
+                "success": False,
+                "message": "razorpay_payment_id is required."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if not razorpay_signature:
+            return Response({
+                "success": False,
+                "message": "razorpay_signature is required."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # -----------------------------------
+        # Get Payment Record
+        # -----------------------------------
+
+        try:
+            payment_record = (
+                CustomerSubscriptionPayment.objects
+                .select_for_update()
+                .select_related("plan", "user")
+                .get(
+                    razorpay_order_id=razorpay_order_id
+                )
+            )
+
+        except CustomerSubscriptionPayment.DoesNotExist:
+
+            return Response({
+                "success": False,
+                "message": "Payment order not found."
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        # -----------------------------------
+        # Security Check
+        # -----------------------------------
+
+        if payment_record.user_id != user.id:
+
+            return Response({
+                "success": False,
+                "message": "You are not authorized for this payment."
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        # -----------------------------------
+        # Already Successful
+        # -----------------------------------
+
+        if payment_record.status == "success":
+
+            existing_subscription = (
+                CustomerSubscription.objects
+                .filter(
+                    user=user,
+                    plan=payment_record.plan
+                )
+                .order_by("-created_at")
+                .first()
+            )
+
+            return Response({
+                "success": True,
+                "message": "Payment already verified.",
+                "subscription_id": (
+                    existing_subscription.id
+                    if existing_subscription else None
+                )
+            }, status=status.HTTP_200_OK)
+
+        # -----------------------------------
+        # Razorpay Client
+        # -----------------------------------
+
+        client = razorpay.Client(
+            auth=(
+                settings.RAZORPAY_KEY_ID,
+                settings.RAZORPAY_KEY_SECRET
+            )
+        )
+
+        # -----------------------------------
+        # Verify Signature
+        # -----------------------------------
+
+        try:
+
+            client.utility.verify_payment_signature({
+                "razorpay_order_id": razorpay_order_id,
+                "razorpay_payment_id": razorpay_payment_id,
+                "razorpay_signature": razorpay_signature
+            })
+
+        except razorpay.errors.SignatureVerificationError:
+
+            payment_record.status = "failed"
+            payment_record.razorpay_payment_id = (
+                razorpay_payment_id
+            )
+            payment_record.razorpay_signature = (
+                razorpay_signature
+            )
+
+            payment_record.save(
+                update_fields=[
+                    "status",
+                    "razorpay_payment_id",
+                    "razorpay_signature",
+                    "updated_at"
+                ]
+            )
+
+            return Response({
+                "success": False,
+                "message": "Payment signature verification failed."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # -----------------------------------
+        # Payment Verified
+        # -----------------------------------
+
+        plan = payment_record.plan
+
+        now = timezone.now()
+
+        # -----------------------------------
+        # Deactivate OLD subscriptions
+        # -----------------------------------
+
+        CustomerSubscription.objects.filter(
+            user=user,
+            is_active=True
+        ).update(
+            is_active=False
+        )
+
+        # -----------------------------------
+        # New Subscription Dates
+        # -----------------------------------
+
+        start_date = now
+
+        end_date = (
+            start_date +
+            timedelta(days=plan.duration_days)
+        )
+
+        # -----------------------------------
+        # CREATE NEW SUBSCRIPTION
+        #
+        # enquiry_used = 0
+        # This means FULL limit is available
+        # -----------------------------------
+
+        subscription = CustomerSubscription.objects.create(
+            user=user,
+            plan=plan,
+
+            start_date=start_date,
+            end_date=end_date,
+
+            enquiry_limit=plan.enquiry_limit,
+
+            enquiry_used=0,
+
+            is_active=True
+        )
+
+        # -----------------------------------
+        # Update Payment
+        # -----------------------------------
+
+        payment_record.razorpay_payment_id = (
+            razorpay_payment_id
+        )
+
+        payment_record.razorpay_signature = (
+            razorpay_signature
+        )
+
+        payment_record.status = "success"
+
+        payment_record.save(
+            update_fields=[
+                "razorpay_payment_id",
+                "razorpay_signature",
+                "status",
+                "updated_at"
+            ]
+        )
+
+        # -----------------------------------
+        # SUCCESS RESPONSE
+        # -----------------------------------
+
+        return Response({
+
+            "success": True,
+
+            "message": (
+                "Payment verified and subscription "
+                "activated successfully."
+            ),
+
+            "subscription": {
+
+                "id": subscription.id,
+
+                "plan_id": plan.id,
+
+                "plan_name": plan.name,
+
+                "price": str(plan.price),
+
+                "enquiry_limit": (
+                    subscription.enquiry_limit
+                ),
+
+                "enquiry_used": (
+                    subscription.enquiry_used
+                ),
+
+                "remaining_enquiries": (
+                    subscription.remaining_enquiries
+                ),
+
+                "start_date": (
+                    subscription.start_date
+                ),
+
+                "end_date": (
+                    subscription.end_date
+                ),
+
+                "is_active": (
+                    subscription.is_active
+                )
+            },
+
+            "payment": {
+
+                "razorpay_order_id": (
+                    payment_record.razorpay_order_id
+                ),
+
+                "razorpay_payment_id": (
+                    payment_record.razorpay_payment_id
+                ),
+
+                "status": (
+                    payment_record.status
+                )
+            }
+
+        }, status=status.HTTP_200_OK)        
+        
+        
+        
+class CustomerSubscriptionPlanCreateAPIView(APIView):
+
+    def post(self, request):
+
+        name = request.data.get("name")
+        price = request.data.get("price")
+        enquiry_limit = request.data.get("enquiry_limit")
+        duration_days = request.data.get("duration_days")
+
+        # -------------------------
+        # Validation
+        # -------------------------
+
+        if not name:
+            return Response({
+                "success": False,
+                "message": "name is required."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if price is None:
+            return Response({
+                "success": False,
+                "message": "price is required."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if enquiry_limit is None:
+            return Response({
+                "success": False,
+                "message": "enquiry_limit is required."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if duration_days is None:
+            return Response({
+                "success": False,
+                "message": "duration_days is required."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # -------------------------
+        # Numeric Validation
+        # -------------------------
+
+        try:
+            price = float(price)
+            enquiry_limit = int(enquiry_limit)
+            duration_days = int(duration_days)
+        except (ValueError, TypeError):
+
+            return Response({
+                "success": False,
+                "message": "price, enquiry_limit and duration_days must be valid numbers."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if price < 0:
+            return Response({
+                "success": False,
+                "message": "price cannot be negative."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if enquiry_limit <= 0:
+            return Response({
+                "success": False,
+                "message": "enquiry_limit must be greater than 0."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if duration_days <= 0:
+            return Response({
+                "success": False,
+                "message": "duration_days must be greater than 0."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # -------------------------
+        # Duplicate Plan Check
+        # -------------------------
+
+        if CustomerSubscriptionPlan.objects.filter(
+            name__iexact=name.strip()
+        ).exists():
+
+            return Response({
+                "success": False,
+                "message": "Subscription plan with this name already exists."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # -------------------------
+        # Create Plan
+        # -------------------------
+
+        plan = CustomerSubscriptionPlan.objects.create(
+            name=name.strip(),
+            price=price,
+            enquiry_limit=enquiry_limit,
+            duration_days=duration_days,
+            is_active=True
+        )
+
+        # -------------------------
+        # Response
+        # -------------------------
+
+        return Response({
+            "success": True,
+            "message": "Customer subscription plan created successfully.",
+
+            "data": {
+                "id": plan.id,
+                "name": plan.name,
+                "price": str(plan.price),
+                "enquiry_limit": plan.enquiry_limit,
+                "duration_days": plan.duration_days,
+                "is_active": plan.is_active,
+                "created_at": plan.created_at,
+                "updated_at": plan.updated_at
+            }
+        }, status=status.HTTP_201_CREATED)        
+        
+        
+        
+class CustomerSubscriptionPlanListAPIView(APIView):
+
+    def post(self, request):
+
+        plans = CustomerSubscriptionPlan.objects.filter(
+            is_active=True
+        ).order_by("price")
+
+        data = []
+
+        for plan in plans:
+            data.append({
+                "id": plan.id,
+                "name": plan.name,
+                "price": str(plan.price),
+                "enquiry_limit": plan.enquiry_limit,
+                "duration_days": plan.duration_days,
+                "is_active": plan.is_active,
+                "created_at": plan.created_at,
+                "updated_at": plan.updated_at
+            })
+
+        return Response({
+            "success": True,
+            "message": "Customer subscription plans fetched successfully.",
+            "count": len(data),
+            "data": data
+        }, status=status.HTTP_200_OK)        
+        
+        
+class CustomerSubscriptionPlanUpdateAPIView(APIView):
+
+    def post(self, request):
+
+        plan_id = request.data.get("id")
+
+        if not plan_id:
+            return Response({
+                "success": False,
+                "message": "id is required."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            plan = CustomerSubscriptionPlan.objects.get(
+                id=plan_id
+            )
+        except CustomerSubscriptionPlan.DoesNotExist:
+            return Response({
+                "success": False,
+                "message": "Subscription plan not found."
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        # -------------------------
+        # Get Request Data
+        # -------------------------
+
+        name = request.data.get("name")
+        price = request.data.get("price")
+        enquiry_limit = request.data.get("enquiry_limit")
+        duration_days = request.data.get("duration_days")
+        is_active = request.data.get("is_active")
+
+        # -------------------------
+        # Name
+        # -------------------------
+
+        if name is not None:
+
+            name = str(name).strip()
+
+            if not name:
+                return Response({
+                    "success": False,
+                    "message": "name cannot be empty."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Duplicate check
+            if CustomerSubscriptionPlan.objects.filter(
+                name__iexact=name
+            ).exclude(
+                id=plan.id
+            ).exists():
+
+                return Response({
+                    "success": False,
+                    "message": "Subscription plan with this name already exists."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            plan.name = name
+
+        # -------------------------
+        # Price
+        # -------------------------
+
+        if price is not None:
+
+            try:
+                price = float(price)
+            except (ValueError, TypeError):
+
+                return Response({
+                    "success": False,
+                    "message": "price must be a valid number."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            if price < 0:
+
+                return Response({
+                    "success": False,
+                    "message": "price cannot be negative."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            plan.price = price
+
+        # -------------------------
+        # Enquiry Limit
+        # -------------------------
+
+        if enquiry_limit is not None:
+
+            try:
+                enquiry_limit = int(enquiry_limit)
+            except (ValueError, TypeError):
+
+                return Response({
+                    "success": False,
+                    "message": "enquiry_limit must be a valid integer."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            if enquiry_limit <= 0:
+
+                return Response({
+                    "success": False,
+                    "message": "enquiry_limit must be greater than 0."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            plan.enquiry_limit = enquiry_limit
+
+        # -------------------------
+        # Duration
+        # -------------------------
+
+        if duration_days is not None:
+
+            try:
+                duration_days = int(duration_days)
+            except (ValueError, TypeError):
+
+                return Response({
+                    "success": False,
+                    "message": "duration_days must be a valid integer."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            if duration_days <= 0:
+
+                return Response({
+                    "success": False,
+                    "message": "duration_days must be greater than 0."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            plan.duration_days = duration_days
+
+        # -------------------------
+        # Active / Inactive
+        # -------------------------
+
+        if is_active is not None:
+
+            if isinstance(is_active, str):
+
+                is_active = is_active.lower() in [
+                    "true",
+                    "1",
+                    "yes"
+                ]
+
+            plan.is_active = bool(is_active)
+
+        # -------------------------
+        # Save
+        # -------------------------
+
+        plan.save()
+
+        # -------------------------
+        # Response
+        # -------------------------
+
+        return Response({
+
+            "success": True,
+
+            "message": "Customer subscription plan updated successfully.",
+
+            "data": {
+                "id": plan.id,
+                "name": plan.name,
+                "price": str(plan.price),
+                "enquiry_limit": plan.enquiry_limit,
+                "duration_days": plan.duration_days,
+                "is_active": plan.is_active,
+                "created_at": plan.created_at,
+                "updated_at": plan.updated_at
+            }
+
+        }, status=status.HTTP_200_OK)        
+        
+        
+        
+class CustomerMySubscriptionsAPIView(APIView):
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        user = request.user
+        now = timezone.now()
+
+        subscriptions = (
+            CustomerSubscription.objects
+            .filter(user=user)
+            .select_related("plan")
+            .order_by("-created_at")
+        )
+
+        data = []
+
+        for subscription in subscriptions:
+
+            # ---------------------------------------
+            # CURRENT STATUS
+            # ---------------------------------------
+
+            if (
+                subscription.is_active
+                and subscription.start_date <= now
+                and subscription.end_date >= now
+            ):
+                current_status = "active"
+
+            elif subscription.end_date < now:
+                current_status = "expired"
+
+            else:
+                current_status = "inactive"
+
+            # ---------------------------------------
+            # REMAINING ENQUIRIES
+            # ---------------------------------------
+
+            remaining_enquiries = max(
+                subscription.enquiry_limit -
+                subscription.enquiry_used,
+                0
+            )
+
+            data.append({
+
+                "subscription_id":
+                    subscription.id,
+
+                "plan": {
+                    "id":
+                        subscription.plan.id,
+
+                    "name":
+                        subscription.plan.name,
+
+                    "price":
+                        str(subscription.plan.price),
+
+                    "enquiry_limit":
+                        subscription.plan.enquiry_limit,
+
+                    "duration_days":
+                        subscription.plan.duration_days
+                },
+
+                "price":
+                    str(subscription.plan.price),
+
+                "enquiry_limit":
+                    subscription.enquiry_limit,
+
+                "enquiry_used":
+                    subscription.enquiry_used,
+
+                "remaining_enquiries":
+                    remaining_enquiries,
+
+                "start_date":
+                    subscription.start_date,
+
+                "end_date":
+                    subscription.end_date,
+
+                "is_active":
+                    subscription.is_active,
+
+                "status":
+                    current_status,
+
+                "created_at":
+                    subscription.created_at,
+
+                "updated_at":
+                    subscription.updated_at
+            })
+
+        # ---------------------------------------
+        # CURRENT ACTIVE SUBSCRIPTION
+        # ---------------------------------------
+
+        active_subscription = next(
+            (
+                item
+                for item in data
+                if item["status"] == "active"
+            ),
+            None
+        )
+
+        return Response(
+            {
+                "success": True,
+
+                "message":
+                    "My subscriptions fetched successfully.",
+
+                "current_subscription":
+                    active_subscription,
+
+                "total_subscriptions":
+                    len(data),
+
+                "subscriptions":
+                    data
+            },
+            status=status.HTTP_200_OK
+        )        

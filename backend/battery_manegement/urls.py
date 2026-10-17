@@ -43,10 +43,11 @@ urlpatterns = [
     path('olx/', include('olx.urls')),  # Include olx app URLs
     path('real_estate/', include('real_estate.urls')),  # Include real estate app URLs
     path('loan/', include('loan.urls')),  # Include loan app URLs
-    path('AI/', include('AI.urls')),  # Include AI app URLs
-    path('commission/', include('commission.urls')),  # Include commission app URLs
-
+    path('AI/', include('AI.urls')),
+    path('commission/', include('commission.urls')),
+    
 ]
+
 if settings.DEBUG:
     urlpatterns += static(
         settings.MEDIA_URL,

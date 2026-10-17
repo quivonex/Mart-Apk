@@ -716,3 +716,74 @@ def track_return_shipment(shipment_id):
             "success": False,
             "error": str(e)
         }        
+        
+        
+        
+        
+
+
+def get_shiprocket_token():
+    url = f"{settings.SHIPROCKET_BASE_URL.rstrip('/')}/auth/login"
+
+    payload = {
+        "email": settings.SHIPROCKET_EMAIL,
+        "password": settings.SHIPROCKET_PASSWORD,
+    }
+
+    response = requests.post(
+        url,
+        json=payload,
+        timeout=30,
+    )
+    response.raise_for_status()
+
+    token = response.json().get("token")
+
+    if not token:
+        raise Exception("Shiprocket token not found in response.")
+
+    return token
+
+
+def get_shipping_rates(
+    pickup_postcode,
+    delivery_postcode,
+    weight,
+    length,
+    breadth,
+    height,
+    cod,
+    declared_value,
+):
+    token = get_shiprocket_token()
+
+    url = (
+        f"{settings.SHIPROCKET_BASE_URL.rstrip('/')}"
+        "/courier/serviceability/"
+    )
+
+    params = {
+        "pickup_postcode": pickup_postcode,
+        "delivery_postcode": delivery_postcode,
+        "weight": weight,
+        "length": length,
+        "breadth": breadth,
+        "height": height,
+        "cod": int(cod),
+        "declared_value": declared_value,
+    }
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
+
+    response = requests.get(
+        url,
+        params=params,
+        headers=headers,
+        timeout=30,
+    )
+    response.raise_for_status()
+
+    return response.json()

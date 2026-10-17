@@ -56,7 +56,6 @@ urlpatterns = [
     path("enquiries/", PropertyEnquiryListAPIView.as_view(), name="property-enquiries-list"),
     path("enquiries/filter/", PropertyEnquiryMultipalFilterListAPIView.as_view(), name="property-enquiries-filter"),
     path("property_enquiry/referral-link/", PropertyEnquiryReferralLinkAPIView.as_view(), name="property-referral-link"),
-
     
     path('real-estate/channel-partner/create/',RealEstateChannelPartnerCreateAPIView.as_view(),name='real-estate-channel-partner-create'),
     path("channel-partner/list/",RealEstateChannelPartnerListAPIView.as_view(),name="channel-partner-list"),

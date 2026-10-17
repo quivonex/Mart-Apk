@@ -14,7 +14,7 @@ from .views import( CancelOrderAPIView,
                    ShipOrderListAPIView,
                    ShipOrderListCompanyAPIView, 
                    ShipmentListAPIView, 
-                   ShippingRateAPIView, 
+                   ShippingRateAPIView, ShippingRateLocationAPIView, 
                    ShiprocketCreateOrderAPIView,
                    AssignAWBAPIView,
                    TrackShipmentAPIView,
@@ -54,4 +54,6 @@ urlpatterns = [
     path("return-order/assign-awb/",AssignReturnAWBAPIView.as_view(),name="return-assign-awb"),
     path("return-order/pickup/",ReturnPickupRequestAPIView.as_view(),name="return-pickup"),
     path("return-order/track/",TrackReturnShipmentAPIView.as_view(),name="return-track"),
+    
+    path('api/shiprocket/shipping-rates/', ShippingRateLocationAPIView.as_view(), name='shipping-rates'),
     ]

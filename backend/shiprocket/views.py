@@ -6,7 +6,7 @@ from shiprocket.serializers import ShipmentListSerializer
 from company.models import Company
 from product.models import Product
 from order.models import Address
-from state.services.shiprocket import ShiprocketService
+from state.services.shiprocket import ShiprocketService, get_shipping_rates
 ShipmentListSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -15,6 +15,7 @@ import random
 from .models import ShipOrder, ShipOrderItem
 from .models import ReturnOrder
 
+
 class ShippingRateAPIView(APIView):
 
     authentication_classes = []
@@ -22,54 +23,67 @@ class ShippingRateAPIView(APIView):
 
     def post(self, request):
 
+        # =====================================================
+        # GET REQUEST DATA
+        # =====================================================
+
         product_ids = request.data.get("product_ids")
         address_id = request.data.get("address_id")
+
         payment_method = request.data.get(
             "payment_method",
             "Prepaid"
         )
 
         # =====================================================
-        # Validate product_ids
+        # VALIDATE PRODUCT IDS
         # =====================================================
 
         if not product_ids:
-
-            return Response({
-                "status": False,
-                "message": "product_ids is required."
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {
+                    "status": False,
+                    "message": "product_ids is required."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         if not isinstance(product_ids, list):
-
-            return Response({
-                "status": False,
-                "message": "product_ids must be an array."
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {
+                    "status": False,
+                    "message": "product_ids must be an array."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         if len(product_ids) == 0:
-
-            return Response({
-                "status": False,
-                "message": "At least one product_id is required."
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {
+                    "status": False,
+                    "message": "At least one product_id is required."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         # =====================================================
-        # Validate address
+        # VALIDATE ADDRESS
         # =====================================================
 
         if not address_id:
+            return Response(
+                {
+                    "status": False,
+                    "message": "address_id is required."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-            return Response({
-                "status": False,
-                "message": "address_id is required."
-            }, status=status.HTTP_400_BAD_REQUEST)
+        # =====================================================
+        # GET PRODUCTS + ADDRESS
+        # =====================================================
 
         try:
-
-            # =================================================
-            # Get Products
-            # =================================================
 
             products = list(
                 Product.objects
@@ -80,15 +94,21 @@ class ShippingRateAPIView(APIView):
                 )
             )
 
-            if not products:
+            # =================================================
+            # NO PRODUCTS
+            # =================================================
 
-                return Response({
-                    "status": False,
-                    "message": "No products found."
-                }, status=status.HTTP_404_NOT_FOUND)
+            if not products:
+                return Response(
+                    {
+                        "status": False,
+                        "message": "No products found."
+                    },
+                    status=status.HTTP_404_NOT_FOUND
+                )
 
             # =================================================
-            # Check missing products
+            # CHECK MISSING PRODUCTS
             # =================================================
 
             found_ids = {
@@ -103,15 +123,17 @@ class ShippingRateAPIView(APIView):
             ]
 
             if missing_product_ids:
-
-                return Response({
-                    "status": False,
-                    "message": "Some products were not found.",
-                    "missing_product_ids": missing_product_ids
-                }, status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {
+                        "status": False,
+                        "message": "Some products were not found.",
+                        "missing_product_ids": missing_product_ids
+                    },
+                    status=status.HTTP_404_NOT_FOUND
+                )
 
             # =================================================
-            # Address
+            # GET ADDRESS
             # =================================================
 
             address = Address.objects.get(
@@ -120,17 +142,27 @@ class ShippingRateAPIView(APIView):
 
         except Address.DoesNotExist:
 
-            return Response({
-                "status": False,
-                "message": "Address not found."
-            }, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {
+                    "status": False,
+                    "message": "Address not found."
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
 
         except Exception as e:
 
-            return Response({
-                "status": False,
-                "message": str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {
+                    "status": False,
+                    "message": str(e)
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # =====================================================
+        # SHIPPING CALCULATION
+        # =====================================================
 
         try:
 
@@ -140,12 +172,11 @@ class ShippingRateAPIView(APIView):
 
             cod = (
                 payment_method.lower()
-                ==
-                "cod"
+                == "cod"
             )
 
             # =================================================
-            # Group Products By Company
+            # GROUP PRODUCTS BY COMPANY
             # =================================================
 
             company_products = {}
@@ -154,13 +185,16 @@ class ShippingRateAPIView(APIView):
 
                 if not product.company:
 
-                    return Response({
-                        "status": False,
-                        "message": (
-                            f"Company not found for "
-                            f"product {product.id}."
-                        )
-                    }, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(
+                        {
+                            "status": False,
+                            "message": (
+                                f"Company not found for "
+                                f"product {product.id}."
+                            )
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
                 company_id = product.company.id
 
@@ -171,12 +205,12 @@ class ShippingRateAPIView(APIView):
                         "products": []
                     }
 
-                company_products[company_id]["products"].append(
-                    product
-                )
+                company_products[
+                    company_id
+                ]["products"].append(product)
 
             # =================================================
-            # Final Response Data
+            # FINAL RESPONSE DATA
             # =================================================
 
             companies_data = []
@@ -184,7 +218,7 @@ class ShippingRateAPIView(APIView):
             total_shipping_charge = 0.0
 
             # =================================================
-            # Process Each Company
+            # PROCESS EACH COMPANY
             # =================================================
 
             for company_id, company_data in company_products.items():
@@ -193,21 +227,24 @@ class ShippingRateAPIView(APIView):
                 company_product_list = company_data["products"]
 
                 # =============================================
-                # Pickup Pincode
+                # PICKUP PINCODE
                 # =============================================
 
                 if not company.pincode:
 
-                    return Response({
-                        "status": False,
-                        "message": (
-                            f"Pickup pincode missing "
-                            f"for company {company.name}."
-                        )
-                    }, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(
+                        {
+                            "status": False,
+                            "message": (
+                                f"Pickup pincode missing "
+                                f"for company {company.name}."
+                            )
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
                 # =============================================
-                # Calculate Total Weight & Dimensions
+                # CALCULATE TOTAL WEIGHT & DIMENSIONS
                 # =============================================
 
                 total_weight = 0.0
@@ -236,82 +273,69 @@ class ShippingRateAPIView(APIView):
                     )
 
                     total_weight += weight
-
                     total_length += length
-
                     total_breadth += breadth
-
                     total_height += height
 
-                    company_products_data.append({
+                    company_products_data.append(
+                        {
+                            "product_id": product.id,
 
-                        "product_id":
-                            product.id,
+                            "product_name": product.name,
 
-                        "product_name":
-                            product.name,
+                            "weight": weight,
 
-                        "weight":
-                            weight,
+                            "length": length,
 
-                        "length":
-                            length,
+                            "breadth": breadth,
 
-                        "breadth":
-                            breadth,
-
-                        "height":
-                            height,
-
-                    })
+                            "height": height,
+                        }
+                    )
 
                 # =============================================
-                # Weight Validation
+                # WEIGHT VALIDATION
                 # =============================================
 
                 if total_weight <= 0:
 
-                    return Response({
-                        "status": False,
-                        "message": (
-                            f"Product weight must be greater "
-                            f"than 0 for company "
-                            f"{company.name}."
-                        )
-                    }, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(
+                        {
+                            "status": False,
+                            "message": (
+                                f"Product weight must be greater "
+                                f"than 0 for company "
+                                f"{company.name}."
+                            )
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
                 # =============================================
-                # Shiprocket API
+                # SHIPROCKET API
                 # =============================================
 
                 shiprocket_response = (
                     ShiprocketService.check_serviceability(
 
-                        pickup_pincode=
-                            company.pincode,
+                        pickup_pincode=company.pincode,
 
-                        delivery_pincode=
-                            address.pincode,
+                        delivery_pincode=address.pincode,
 
-                        weight=
-                            total_weight,
+                        weight=total_weight,
 
-                        length=
-                            total_length,
+                        length=total_length,
 
-                        breadth=
-                            total_breadth,
+                        breadth=total_breadth,
 
-                        height=
-                            total_height,
+                        height=total_height,
 
-                        cod=
-                            cod,
+                        cod=cod,
                     )
                 )
 
                 # =============================================
-                # Available Couriers
+                # AVAILABLE COURIERS
                 # =============================================
 
                 available_couriers = (
@@ -323,9 +347,24 @@ class ShippingRateAPIView(APIView):
                     )
                 )
 
+                # =============================================
+                # IMPORTANT:
+                # ONLY SURFACE COURIERS
+                # =============================================
+
+                surface_couriers = [
+                    courier
+                    for courier in available_couriers
+                    if courier.get("is_surface") is True
+                ]
+
                 courier_list = []
 
                 company_shipping_charge = 0.0
+
+                # =============================================
+                # RECOMMENDED COURIER ID
+                # =============================================
 
                 recommended_courier_company_id = (
                     shiprocket_response
@@ -336,10 +375,11 @@ class ShippingRateAPIView(APIView):
                 )
 
                 # =============================================
-                # Courier List
+                # COURIER LIST
+                # ONLY SURFACE
                 # =============================================
 
-                for courier in available_couriers:
+                for courier in surface_couriers:
 
                     freight_charge = float(
                         courier.get(
@@ -355,78 +395,79 @@ class ShippingRateAPIView(APIView):
                         )
                     )
 
+                    # =========================================
+                    # TOTAL CHARGE
+                    # =========================================
+
                     total_charge = (
-                        freight_charge
-                        +
-                        cod_charges
+                        freight_charge + cod_charges
                         if cod
-                        else
-                        freight_charge
+                        else freight_charge
                     )
 
-                    courier_list.append({
-
-                        "courier_company_id":
-                            courier.get(
-                                "courier_company_id"
-                            ),
-
-                        "courier_name":
-                            courier.get(
-                                "courier_name"
-                            ),
-
-                        "estimated_delivery_days":
-                            courier.get(
-                                "estimated_delivery_days"
-                            ),
-
-                        "etd":
-                            courier.get(
-                                "etd"
-                            ),
-
-                        "freight_charge":
-                            freight_charge,
-
-                        "cod_charges":
-                            cod_charges,
-
-                        "total_charge":
-                            total_charge,
-
-                        "rating":
-                            courier.get(
-                                "rating"
-                            ),
-
-                        "is_surface":
-                            courier.get(
-                                "is_surface"
-                            ),
-
-                        "cod_available":
-                            bool(
+                    courier_list.append(
+                        {
+                            "courier_company_id":
                                 courier.get(
-                                    "cod"
-                                )
-                            ),
+                                    "courier_company_id"
+                                ),
 
-                        "recommended":
-                            bool(
+                            "courier_name":
                                 courier.get(
-                                    "recommended_lt"
-                                )
-                            ),
+                                    "courier_name"
+                                ),
 
-                        "pickup_available":
-                            courier.get(
-                                "pickup_availability"
-                            ),
-                    })
+                            "estimated_delivery_days":
+                                courier.get(
+                                    "estimated_delivery_days"
+                                ),
+
+                            "etd":
+                                courier.get(
+                                    "etd"
+                                ),
+
+                            "freight_charge":
+                                freight_charge,
+
+                            "cod_charges":
+                                cod_charges,
+
+                            "total_charge":
+                                total_charge,
+
+                            "rating":
+                                courier.get(
+                                    "rating"
+                                ),
+
+                            # Always TRUE because
+                            # only surface courier
+                            "is_surface": True,
+
+                            "cod_available":
+                                bool(
+                                    courier.get(
+                                        "cod"
+                                    )
+                                ),
+
+                            "recommended":
+                                bool(
+                                    courier.get(
+                                        "recommended_lt"
+                                    )
+                                ),
+
+                            "pickup_available":
+                                courier.get(
+                                    "pickup_availability"
+                                ),
+                        }
+                    )
 
                 # =============================================
-                # Recommended Courier Charge
+                # RECOMMENDED COURIER
                 # =============================================
 
                 recommended_courier = None
@@ -448,12 +489,19 @@ class ShippingRateAPIView(APIView):
                             break
 
                 # =============================================
-                # Fallback First Courier
+                # FALLBACK FIRST SURFACE COURIER
                 # =============================================
 
-                if not recommended_courier and courier_list:
+                if (
+                    not recommended_courier
+                    and courier_list
+                ):
 
                     recommended_courier = courier_list[0]
+
+                # =============================================
+                # SHIPPING CHARGE
+                # =============================================
 
                 if recommended_courier:
 
@@ -469,102 +517,111 @@ class ShippingRateAPIView(APIView):
                 )
 
                 # =============================================
-                # Company Response
+                # COMPANY RESPONSE
                 # =============================================
 
-                companies_data.append({
+                companies_data.append(
+                    {
+                        "company_id":
+                            company.id,
 
-                    "company_id":
-                        company.id,
+                        "company_name":
+                            company.name,
 
-                    "company_name":
-                        company.name,
+                        "pickup_pincode":
+                            company.pincode,
 
-                    "pickup_pincode":
-                        company.pincode,
+                        "delivery_pincode":
+                            address.pincode,
 
-                    "delivery_pincode":
-                        address.pincode,
+                        "products":
+                            company_products_data,
 
-                    "products":
-                        company_products_data,
+                        "shipment":
+                            {
+                                "total_weight":
+                                    total_weight,
 
-                    "shipment": {
+                                "length":
+                                    total_length,
 
-                        "total_weight":
-                            total_weight,
+                                "breadth":
+                                    total_breadth,
 
-                        "length":
-                            total_length,
+                                "height":
+                                    total_height,
+                            },
 
-                        "breadth":
-                            total_breadth,
+                        "recommended_courier_company_id":
+                            (
+                                recommended_courier[
+                                    "courier_company_id"
+                                ]
+                                if recommended_courier
+                                else None
+                            ),
 
-                        "height":
-                            total_height,
+                        "recommended_courier":
+                            recommended_courier,
 
-                    },
+                        "shipping_charge":
+                            company_shipping_charge,
 
-                    "recommended_courier_company_id":
-                        recommended_courier_company_id,
+                        "total_couriers":
+                            len(courier_list),
 
-                    "recommended_courier":
-                        recommended_courier,
-
-                    "shipping_charge":
-                        company_shipping_charge,
-
-                    "total_couriers":
-                        len(courier_list),
-
-                    "couriers":
-                        courier_list,
-
-                })
+                        "couriers":
+                            courier_list,
+                    }
+                )
 
             # =================================================
-            # Final Response
+            # FINAL RESPONSE
             # =================================================
 
-            return Response({
+            return Response(
+                {
+                    "status": True,
 
-                "status": True,
+                    "message":
+                        "Surface shipping rates fetched successfully.",
 
-                "message":
-                    "Shipping rates fetched successfully.",
+                    "payment_method":
+                        payment_method,
 
-                "payment_method":
-                    payment_method,
+                    "cod":
+                        cod,
 
-                "cod":
-                    cod,
+                    "delivery_type":
+                        "Surface",
 
-                "total_products":
-                    len(products),
+                    "total_products":
+                        len(products),
 
-                "total_companies":
-                    len(companies_data),
+                    "total_companies":
+                        len(companies_data),
 
-                "total_shipping_charge":
-                    round(
-                        total_shipping_charge,
-                        2
-                    ),
+                    "total_shipping_charge":
+                        round(
+                            total_shipping_charge,
+                            2
+                        ),
 
-                "companies":
-                    companies_data,
-
-            }, status=status.HTTP_200_OK)
+                    "companies":
+                        companies_data,
+                },
+                status=status.HTTP_200_OK
+            )
 
         except Exception as e:
 
-            return Response({
-
-                "status": False,
-
-                "message": str(e)
-
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {
+                    "status": False,
+                    "message": str(e)
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
             
 
 class OrderCourierRatesAPIView(APIView):
@@ -5953,4 +6010,187 @@ class PackingVideoRetrieveAPIView(APIView):
                     "error": str(e)
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+
+
+
+
+class ShippingRateLocationAPIView(APIView):
+
+    def post(self, request):
+
+        pickup_postcode = request.data.get("pickup_postcode")
+        delivery_postcode = request.data.get("delivery_postcode")
+        weight = request.data.get("weight")
+        length = request.data.get("length")
+        breadth = request.data.get("breadth")
+        height = request.data.get("height")
+        payment_method = request.data.get("payment_method")
+        declared_value = request.data.get("declared_value")
+
+        # ==========================================
+        # VALIDATION
+        # ==========================================
+
+        required_fields = {
+            "pickup_postcode": pickup_postcode,
+            "delivery_postcode": delivery_postcode,
+            "weight": weight,
+            "length": length,
+            "breadth": breadth,
+            "height": height,
+            "payment_method": payment_method,
+            "declared_value": declared_value,
+        }
+
+        missing_fields = [
+            field
+            for field, value in required_fields.items()
+            if value is None or value == ""
+        ]
+
+        if missing_fields:
+            return Response(
+                {
+                    "success": False,
+                    "message": "Required fields are missing.",
+                    "missing_fields": missing_fields,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # ==========================================
+        # PAYMENT METHOD VALIDATION
+        # ==========================================
+
+        payment_method = str(payment_method).strip().upper()
+
+        if payment_method not in ["COD", "PREPAID"]:
+            return Response(
+                {
+                    "success": False,
+                    "message": "payment_method must be COD or PREPAID.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        cod = 1 if payment_method == "COD" else 0
+
+        # ==========================================
+        # FETCH SHIPROCKET SHIPPING RATES
+        # ==========================================
+
+        try:
+            data = get_shipping_rates(
+                pickup_postcode=pickup_postcode,
+                delivery_postcode=delivery_postcode,
+                weight=weight,
+                length=length,
+                breadth=breadth,
+                height=height,
+                cod=cod,
+                declared_value=declared_value,
+            )
+
+            courier_data = (
+                data.get("data", {})
+                .get("available_courier_companies", [])
+            )
+
+            # ==========================================
+            # FILTER SURFACE COURIERS ONLY
+            # ==========================================
+
+            surface_couriers = [
+                courier
+                for courier in courier_data
+                if "surface" in str(
+                    courier.get("courier_name", "")
+                ).lower()
+                and courier.get("rate") is not None
+            ]
+
+            if not surface_couriers:
+                return Response(
+                    {
+                        "success": False,
+                        "message": "No Surface courier available for this route.",
+                        "courier": None,
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
+            # ==========================================
+            # SELECT LOWEST RATE SURFACE COURIER
+            # ==========================================
+
+            best_courier = min(
+                surface_couriers,
+                key=lambda courier: float(courier["rate"]),
+            )
+
+            # ==========================================
+            # SINGLE COURIER RESPONSE
+            # ==========================================
+
+            courier_response = {
+                "courier_id": best_courier.get(
+                    "courier_company_id"
+                ),
+                "courier_name": best_courier.get(
+                    "courier_name"
+                ),
+                "rate": best_courier.get("rate"),
+                "freight_charge": best_courier.get(
+                    "freight_charge"
+                ),
+                "cod_charges": best_courier.get(
+                    "cod_charges"
+                ),
+                "estimated_delivery_days": best_courier.get(
+                    "estimated_delivery_days"
+                ),
+                "etd": best_courier.get("etd"),
+                "rating": best_courier.get("rating"),
+            }
+
+            return Response(
+                {
+                    "success": True,
+                    "message": "Surface shipping rate fetched successfully.",
+                    "payment_method": payment_method,
+                    "courier": courier_response,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except requests.exceptions.RequestException:
+            return Response(
+                {
+                    "success": False,
+                    "message": (
+                        "Unable to connect to Shiprocket or fetch rates."
+                    ),
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        except (TypeError, ValueError):
+            return Response(
+                {
+                    "success": False,
+                    "message": "Invalid shipping rate returned by Shiprocket.",
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "message": "Unable to fetch shipping rates.",
+                    "error": str(e),
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
