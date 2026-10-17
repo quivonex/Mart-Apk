@@ -140,19 +140,19 @@ class OrderData {
   int get statusColorValue {
     switch (status.toUpperCase()) {
       case 'PENDING':
-        return 0xFFFF9800;
+        return 0xFFF97316;
       case 'CONFIRMED':
-        return 0xFF2196F3;
+        return 0xFF6366F1;
       case 'PACKED':
-        return 0xFF9C27B0;
+        return 0xFF8B5CF6;
       case 'SHIPPED':
-        return 0xFF4CAF50;
+        return 0xFF10B981;
       case 'OUT_FOR_DELIVERY':
         return 0xFF00BCD4;
       case 'DELIVERED':
-        return 0xFF0D47A1;
+        return 0xFF4338CA;
       case 'CANCELLED':
-        return 0xFFF44336;
+        return 0xFFEF4444;
       case 'RETURN_REQUESTED':
       case 'RETURN_PICKUP':
       case 'RETURN_IN_TRANSIT':
@@ -167,11 +167,14 @@ class OrderData {
 }
 
 class ProductInfo {
+  /// Product id (used by Re-order to add the same product to the cart).
+  final int id;
   final String name;
   final String thumbnailS3Key;
   final int quantity;
 
   ProductInfo({
+    this.id = 0,
     required this.name,
     required this.thumbnailS3Key,
     required this.quantity,
@@ -179,6 +182,7 @@ class ProductInfo {
 
   factory ProductInfo.fromJson(Map<String, dynamic> json) {
     return ProductInfo(
+      id: json['id'] is int ? json['id'] as int : int.tryParse('${json['id'] ?? ''}') ?? 0,
       name: json['name'] ?? '',
       thumbnailS3Key: json['thumbnail_s3_key'] ?? '',
       quantity: json['quantity'] ?? 0,
@@ -187,6 +191,7 @@ class ProductInfo {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'name': name,
       'thumbnail_s3_key': thumbnailS3Key,
       'quantity': quantity,
@@ -367,19 +372,19 @@ class OrderDetailData {
   int get statusColorValue {
     switch (status.toUpperCase()) {
       case 'PENDING':
-        return 0xFFFF9800;
+        return 0xFFF97316;
       case 'CONFIRMED':
-        return 0xFF2196F3;
+        return 0xFF6366F1;
       case 'PACKED':
-        return 0xFF9C27B0;
+        return 0xFF8B5CF6;
       case 'SHIPPED':
-        return 0xFF4CAF50;
+        return 0xFF10B981;
       case 'OUT FOR DELIVERY':
         return 0xFF00BCD4;
       case 'DELIVERED':
-        return 0xFF0D47A1;
+        return 0xFF4338CA;
       case 'CANCELLED':
-        return 0xFFF44336;
+        return 0xFFEF4444;
       default:
         return 0xFF9E9E9E;
     }

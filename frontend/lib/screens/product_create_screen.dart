@@ -23,6 +23,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -92,6 +93,8 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
   static const _draftKey = 'product_create_draft_v1';
   static const _maxImages = 8;
   static const _maxImageBytes = 5 * 1024 * 1024;
+  static const _maxVideos = 3;
+  static const _maxVideoBytes = 50 * 1024 * 1024;
 
   final _formKey = GlobalKey<FormState>();
   final _picker = ImagePicker();
@@ -162,6 +165,10 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
   List<MyProductImage> _existingImages = [];
   final Set<int> _deleteImageIds = {};
 
+  // Videos (backend: multipart 'videos', same on create and update-request)
+  final List<XFile> _videos = [];
+  final List<int> _videoSizes = [];
+
   final List<(String, String)> _specs = [];
   final List<_Variant> _variants = [];
 
@@ -225,14 +232,16 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
           _description.text.isNotEmpty ||
           _stock.text.isNotEmpty ||
           _thumb != null ||
-          _images.isNotEmpty;
+          _images.isNotEmpty ||
+          _videos.isNotEmpty;
 
   bool get _dirty {
     if (_isEdit) return _changedFields().isNotEmpty || _hasMediaChanges;
     return _hasInput;
   }
 
-  bool get _hasMediaChanges => _thumb != null || _images.isNotEmpty || _deleteImageIds.isNotEmpty;
+  bool get _hasMediaChanges =>
+      _thumb != null || _images.isNotEmpty || _deleteImageIds.isNotEmpty || _videos.isNotEmpty;
 
   // =====================================================================
   // DRAFT (create mode)
@@ -288,6 +297,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
       if (!mounted) return;
       setState(() => _draftSavedAt = DateTime.now());
       if (!silent) {
+        if (!mounted) return;
         showCompanySnack(context, 'Draft saved on this device (photos are not included)');
       }
     } catch (_) {
@@ -379,6 +389,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
     }
     _restoring = false;
     await _clearDraft();
+    if (!mounted) return;
     setState(() {
       _discountType = 'none';
       _gst = null;
@@ -391,6 +402,8 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
       _thumbBytes = null;
       _images.clear();
       _imageBytes.clear();
+      _videos.clear();
+      _videoSizes.clear();
       _specs.clear();
       _variants.clear();
       _branch = null;
@@ -682,56 +695,64 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
     final c = _company!;
     final saved =
     await _push<CatalogBranch>(BranchFormScreen(companyId: c.id, companyName: c.label));
-    if (saved != null) await _loadBranches(selectId: saved.id, selectName: saved.name);
+    if (saved != null && mounted) await _loadBranches(selectId: saved.id, selectName: saved.name);
   }
 
   Future<void> _manageBranches() async {
     final c = _company!;
     final changed = await _push<bool>(BranchManageScreen(companyId: c.id, companyName: c.label));
-    if (changed == true) _loadBranches();
+    if (changed == true && mounted) _loadBranches();
   }
 
   Future<void> _addCategory() async {
     final c = _company!;
     final saved = await _push<CatalogCategory>(CategoryFormScreen(
         companyId: c.id, companyName: c.label, presetBranchId: _branch?.id));
-    if (saved != null) await _loadCategories(selectId: saved.id, selectName: saved.name);
+    if (saved != null && mounted) await _loadCategories(selectId: saved.id, selectName: saved.name);
   }
 
   Future<void> _manageCategories() async {
     final c = _company!;
     final changed =
     await _push<bool>(CategoryManageScreen(companyId: c.id, companyName: c.label));
-    if (changed == true) _loadCategories();
+    if (changed == true && mounted) _loadCategories();
   }
 
   Future<void> _addSubcategory() async {
     final saved = await _push<CatalogSubCategory>(SubCategoryFormScreen(category: _category!));
-    if (saved != null) await _loadSubcategories(selectId: saved.id, selectName: saved.name);
+    if (saved != null && mounted) await _loadSubcategories(selectId: saved.id, selectName: saved.name);
   }
 
   Future<void> _manageSubcategories() async {
     final changed = await _push<bool>(SubCategoryManageScreen(category: _category!));
-    if (changed == true) _loadSubcategories();
+    if (changed == true && mounted) _loadSubcategories();
   }
 
   Future<void> _addUnit() async {
     final saved = await _push<CatalogUnit>(const UnitFormScreen());
-    if (saved != null) await _loadUnits(selectId: saved.id, selectName: saved.label);
+    if (saved != null && mounted) await _loadUnits(selectId: saved.id, selectName: saved.label);
   }
 
   Future<void> _manageUnits() async {
     final changed = await _push<bool>(const UnitManageScreen());
-    if (changed == true) _loadUnits();
+    if (changed == true && mounted) _loadUnits();
   }
 
   // =====================================================================
   // MEDIA
   // =====================================================================
+  /// Camera or gallery. On web there is only the file picker, so gallery.
+  Future<ImageSource?> _askSource({bool video = false}) async {
+    if (kIsWeb) return ImageSource.gallery;
+    return pickMediaSource(context, video: video);
+  }
+
   Future<void> _pickThumb() async {
+    final source = await _askSource();
+    if (source == null) return;
     try {
       final x = await _picker.pickImage(
-          source: ImageSource.gallery, imageQuality: 85, maxWidth: 1200);
+          source: source, imageQuality: 85, maxWidth: 1200);
       if (x == null) return;
       final bytes = await x.readAsBytes();
       if (bytes.lengthInBytes > _maxImageBytes) {
@@ -762,8 +783,17 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
       showCompanySnack(context, 'You can add up to $_maxImages extra photos', error: true);
       return;
     }
+    final source = await _askSource();
+    if (source == null) return;
     try {
-      final picked = await _picker.pickMultiImage(imageQuality: 85, maxWidth: 1600);
+      final List<XFile> picked;
+      if (source == ImageSource.camera) {
+        final shot = await _picker.pickImage(
+            source: ImageSource.camera, imageQuality: 85, maxWidth: 1600);
+        picked = shot == null ? [] : [shot];
+      } else {
+        picked = await _picker.pickMultiImage(imageQuality: 85, maxWidth: 1600);
+      }
       var skipped = 0;
       final files = <XFile>[];
       final bytes = <Uint8List>[];
@@ -788,6 +818,35 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
       }
     } catch (e) {
       if (mounted) showCompanySnack(context, 'Could not pick photos: $e', error: true);
+    }
+  }
+
+  Future<void> _pickVideo() async {
+    if (_videos.length >= _maxVideos) {
+      showCompanySnack(context, 'You can add up to $_maxVideos videos', error: true);
+      return;
+    }
+    final source = await _askSource(video: true);
+    if (source == null) return;
+    try {
+      final x = await _picker.pickVideo(
+          source: source, maxDuration: const Duration(minutes: 2));
+      if (x == null) return;
+      final size = await x.length();
+      if (size > _maxVideoBytes) {
+        if (mounted) {
+          showCompanySnack(context,
+              'Video must be under ${_maxVideoBytes ~/ (1024 * 1024)}MB', error: true);
+        }
+        return;
+      }
+      if (!mounted) return;
+      setState(() {
+        _videos.add(x);
+        _videoSizes.add(size);
+      });
+    } catch (e) {
+      if (mounted) showCompanySnack(context, 'Could not add video: $e', error: true);
     }
   }
 
@@ -970,6 +1029,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
     final formOk = _formKey.currentState!.validate();
     final extra = _validateExtras();
     if (!formOk || extra != null) {
+      if (!mounted) return;
       showCompanySnack(context, extra ?? 'Please fix the highlighted fields', error: true);
       return;
     }
@@ -986,14 +1046,17 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
         fields: changes,
         thumbnail: _thumb,
         images: _images,
+        videos: _videos,
         deleteImageIds: _deleteImageIds.toList(),
       );
       if (!mounted) return;
       setState(() => _saving = false);
       if (!res.ok) {
+        if (!mounted) return;
         showCompanySnack(context, res.message, error: true);
         return;
       }
+      if (!mounted) return;
       await _doneDialog(
         'Changes sent for review',
         'The admin will review your changes to ${_name.text.trim()}. The live listing '
@@ -1008,6 +1071,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
       fields: _createFields(),
       thumbnail: _thumb!,
       images: _images,
+      videos: _videos,
       variantImages: {
         for (var i = 0; i < _variants.length; i++)
           if (_variants[i].image != null) 'variant_image_$i': _variants[i].image!,
@@ -1016,11 +1080,13 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
     if (!mounted) return;
     setState(() => _saving = false);
     if (!res.ok) {
+      if (!mounted) return;
       showCompanySnack(context, res.message, error: true);
       return;
     }
     _draftTimer?.cancel();
     await _clearDraft();
+    if (!mounted) return;
     await _doneDialog(
       'Product submitted',
       '${_name.text.trim()} was added and is waiting for admin approval. It will be '
@@ -1124,6 +1190,8 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                 const SizedBox(height: 16),
                 _photosSection(),
                 const SizedBox(height: 16),
+                _videosSection(),
+                const SizedBox(height: 16),
                 _specsCard(),
                 const SizedBox(height: 12),
                 _variantsCard(),
@@ -1145,8 +1213,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
       preferredSize: const Size.fromHeight(64),
       child: Container(
         decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(bottom: BorderSide(color: DT.slate200)),
+          gradient: DT.headerGradient,
           boxShadow: [BoxShadow(color: Color(0x0D0F172A), blurRadius: 2, offset: Offset(0, 1))],
         ),
         child: SafeArea(
@@ -1159,7 +1226,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                 IconButton(
                   tooltip: 'Back',
                   onPressed: () => Navigator.maybePop(context),
-                  icon: const Icon(Icons.arrow_back_rounded, color: DT.onyx900, size: 24),
+                  icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 24),
                 ),
                 const SizedBox(width: 2),
                 Expanded(
@@ -1173,7 +1240,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                             child: Text(_isEdit ? 'Edit product' : 'Add product',
                                 overflow: TextOverflow.ellipsis,
                                 style: DT.text(
-                                    size: 18, weight: FontWeight.w700, color: DT.onyx900)),
+                                    size: 18, weight: FontWeight.w700, color: Colors.white)),
                           ),
                           if (!_isEdit && saved != null) ...[
                             const SizedBox(width: 8),
@@ -1185,7 +1252,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                         _isEdit ? widget.existing!.name : 'New B2B product listing',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: DT.text(size: 12, weight: FontWeight.w500, color: DT.slate500),
+                        style: DT.text(size: 12, weight: FontWeight.w500, color: const Color(0xFFE0E7FF)),
                       ),
                     ],
                   ),
@@ -1259,9 +1326,9 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: warn ? DT.amber50 : const Color(0xB3EFF6FF),
+        color: warn ? DT.amber50 : const Color(0xB3EEF2FF),
         borderRadius: BorderRadius.circular(DT.rMd),
-        border: Border.all(color: warn ? DT.amber200 : const Color(0xCCBFDBFE)),
+        border: Border.all(color: warn ? DT.amber200 : const Color(0xCCC7D2FE)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2050,6 +2117,152 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
     );
   }
 
+  // ── Videos ──────────────────────────────────────────────
+  Widget _videosSection() {
+    final full = _videos.length >= _maxVideos;
+    return PxSection(
+      title: 'Videos',
+      subtitle: 'Optional · a short demo helps buyers decide',
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: DT.slate100,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: DT.slate200),
+        ),
+        child: Text('${_videos.length} / $_maxVideos',
+            style: DT.text(size: 11.5, weight: FontWeight.w600, color: DT.onyx700)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < _videos.length; i++) ...[
+            _videoTile(i),
+            const SizedBox(height: 8),
+          ],
+          if (!full)
+            GestureDetector(
+              onTap: _pickVideo,
+              child: CustomPaint(
+                foregroundPainter:
+                _DashedRRectPainter(color: PX.royal600.withValues(alpha: 0.6), radius: DT.rMd),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: PX.royal50.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(DT.rMd),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: PX.royal600.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.video_call_outlined, color: PX.royal600, size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(_videos.isEmpty ? 'Add a video' : 'Add another video',
+                                style: DT.text(
+                                    size: 13.5, weight: FontWeight.w700, color: PX.royal600)),
+                            const SizedBox(height: 2),
+                            Text('Record or upload · MP4 / MOV · up to 2 min, ${_maxVideoBytes ~/ (1024 * 1024)}MB',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: DT.text(size: 11.5, color: DT.slate500)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          if (_isEdit && _videos.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text('New videos are added once the update is approved.',
+                  style: DT.text(size: 11.5, color: DT.slate500)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _videoTile(int i) {
+    final v = _videos[i];
+    final name = v.name.isNotEmpty ? v.name : v.path.split(RegExp(r'[\\/]')).last;
+    final mb = _videoSizes[i] / (1024 * 1024);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 10, 4, 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(DT.rMd),
+        border: Border.all(color: DT.slate200),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF4F46E5), Color(0xFF8B5CF6)],
+              ),
+              borderRadius: BorderRadius.circular(DT.rSm + 2),
+            ),
+            child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 30),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: DT.text(size: 13, weight: FontWeight.w700, color: DT.onyx900)),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Text('${mb.toStringAsFixed(mb < 10 ? 1 : 0)} MB',
+                        style: DT.text(size: 11.5, color: DT.slate500)),
+                    if (_isEdit) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: DT.emerald700,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text('New',
+                            style: DT.text(size: 9, weight: FontWeight.w700, color: Colors.white)),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Remove video',
+            onPressed: () => setState(() {
+              _videos.removeAt(i);
+              _videoSizes.removeAt(i);
+            }),
+            icon: const Icon(Icons.close_rounded, color: DT.error, size: 20),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── 6. Specifications ───────────────────────────────────
   Widget _specsCard() {
     return PxSection(
@@ -2276,7 +2489,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
         firstDate: DateTime(now.year - 10),
         lastDate: DateTime(now.year + 15),
       );
-      if (d == null) return;
+      if (d == null || !mounted) return;
       setState(() => mfg ? _mfgDate = d : _expDate = d);
       _scheduleDraft();
     }
@@ -2425,43 +2638,50 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
               SizedBox(
                 width: double.infinity,
                 height: 50,
-                child: ElevatedButton(
-                  onPressed: _saving ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: PX.royal600,
-                    disabledBackgroundColor: PX.royal600.withValues(alpha: 0.55),
-                    foregroundColor: Colors.white,
-                    elevation: 2,
-                    shadowColor: const Color(0x401A68FA),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: DT.ctaGradient,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
                   ),
-                  child: _saving
-                      ? Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2.2, color: Colors.white)),
-                      const SizedBox(width: 10),
-                      Text('Uploading…',
-                          style: DT.text(
-                              size: 14, weight: FontWeight.w700, color: Colors.white)),
-                    ],
-                  )
-                      : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.check_rounded, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                          _isEdit
-                              ? 'Submit changes for review'
-                              : 'Submit product for review',
-                          style: DT.text(
-                              size: 14, weight: FontWeight.w700, color: Colors.white)),
-                    ],
+                  child: ElevatedButton(
+                    onPressed: _saving ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      disabledBackgroundColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
+                    ),
+                    child: _saving
+                        ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2.2, color: Colors.white)),
+                        const SizedBox(width: 10),
+                        Text('Uploading…',
+                            style: DT.text(
+                                size: 14, weight: FontWeight.w700, color: Colors.white)),
+                      ],
+                    )
+                        : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.check_rounded, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                            _isEdit
+                                ? 'Submit changes for review'
+                                : 'Submit product for review',
+                            style: DT.text(
+                                size: 14, weight: FontWeight.w700, color: Colors.white)),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -2634,16 +2854,24 @@ class _SpecSheetState extends State<_SpecSheet> {
                 const SizedBox(height: 18),
                 SizedBox(
                   height: 48,
-                  child: ElevatedButton(
-                    onPressed: _save,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: PX.royal600,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: DT.ctaGradient,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
                     ),
-                    child: Text('Save',
-                        style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
+                    child: ElevatedButton(
+                      onPressed: _save,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
+                      ),
+                      child: Text('Save',
+                          style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
+                    ),
                   ),
                 ),
               ],
@@ -2723,8 +2951,10 @@ class _VariantSheetState extends State<_VariantSheet> {
   };
 
   Future<void> _pickImage() async {
+    final source = kIsWeb ? ImageSource.gallery : await pickMediaSource(context);
+    if (source == null) return;
     final x = await widget.picker.pickImage(
-        source: ImageSource.gallery, imageQuality: 85, maxWidth: 1200);
+        source: source, imageQuality: 85, maxWidth: 1200);
     if (x == null) return;
     final b = await x.readAsBytes();
     if (!mounted) return;
@@ -2919,16 +3149,24 @@ class _VariantSheetState extends State<_VariantSheet> {
               const SizedBox(height: 18),
               SizedBox(
                 height: 48,
-                child: ElevatedButton(
-                  onPressed: _save,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: PX.royal600,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: DT.ctaGradient,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
                   ),
-                  child: Text(widget.existing == null ? 'Add variant' : 'Save variant',
-                      style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
+                  child: ElevatedButton(
+                    onPressed: _save,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
+                    ),
+                    child: Text(widget.existing == null ? 'Add variant' : 'Save variant',
+                        style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
+                  ),
                 ),
               ),
             ],
@@ -2937,4 +3175,72 @@ class _VariantSheetState extends State<_VariantSheet> {
       ),
     );
   }
+}
+
+// =====================================================================
+// Camera / gallery chooser (photos and videos)
+// =====================================================================
+Future<ImageSource?> pickMediaSource(BuildContext context, {bool video = false}) {
+  Widget tile(BuildContext ctx, IconData icon, String label, String hint, ImageSource src) =>
+      Expanded(
+        child: Material(
+          color: PX.royal50,
+          borderRadius: BorderRadius.circular(DT.rLg),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(DT.rLg),
+            onTap: () => Navigator.pop(ctx, src),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
+              child: Column(
+                children: [
+                  Icon(icon, color: PX.royal600, size: 28),
+                  const SizedBox(height: 6),
+                  Text(label,
+                      style: DT.text(size: 13.5, weight: FontWeight.w700, color: DT.onyx900)),
+                  const SizedBox(height: 2),
+                  Text(hint,
+                      textAlign: TextAlign.center,
+                      style: DT.text(size: 11, color: DT.slate500)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+  return showModalBottomSheet<ImageSource>(
+    context: context,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(DT.rXl))),
+    builder: (ctx) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration:
+              BoxDecoration(color: DT.slate300, borderRadius: BorderRadius.circular(2)),
+            ),
+            const SizedBox(height: 14),
+            Text(video ? 'Add a video' : 'Add photos',
+                style: DT.text(size: 16, weight: FontWeight.w800)),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                tile(ctx, video ? Icons.videocam_outlined : Icons.photo_camera_outlined,
+                    'Camera', video ? 'Record now' : 'Take a photo', ImageSource.camera),
+                const SizedBox(width: 12),
+                tile(ctx, video ? Icons.video_library_outlined : Icons.photo_library_outlined,
+                    video ? 'Upload video' : 'Upload photo', 'From gallery', ImageSource.gallery),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }

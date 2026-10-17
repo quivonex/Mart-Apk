@@ -8,17 +8,17 @@ import '../services/partner_service.dart';
 
 // Extra colours used only on this screen (the rest come from DT).
 class _C {
-  static const blue600 = Color(0xFF2563EB);
-  static const blue500 = Color(0xFF3B82F6);
-  static const blue300 = Color(0xFF93C5FD);
-  static const rose500 = Color(0xFFF43F5E);
-  static const emerald600 = Color(0xFF059669);
+  static const blue600 = Color(0xFF6366F1);
+  static const blue500 = Color(0xFF6366F1);
+  static const blue300 = Color(0xFFA5B4FC);
+  static const rose500 = Color(0xFFEF4444);
+  static const emerald600 = Color(0xFF10B981);
   static const emerald800 = Color(0xFF065F46);
   static const indigo600 = Color(0xFF4F46E5);
   static const purple600 = Color(0xFF9333EA);
   static const sky600 = Color(0xFF0284C7);
   static const pink500 = Color(0xFFEC4899);
-  static const red600 = Color(0xFFDC2626);
+  static const red600 = Color(0xFFEF4444);
   static const emerald500 = Color(0xFF10B981);
 }
 
@@ -285,24 +285,32 @@ class _MarketingPartnerEnquiryScreenState
               SizedBox(
                 width: double.infinity,
                 height: 48,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context); // close sheet
-                    Navigator.maybePop(this.context); // back to home
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: DT.onyx900,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(DT.rMd),
-                    ),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: DT.ctaGradient,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
                   ),
-                  child: Text('Done',
-                      style: DT.text(
-                          size: 14,
-                          weight: FontWeight.w700,
-                          color: Colors.white)),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context); // close sheet
+                      Navigator.maybePop(this.context); // back to home
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(DT.rMd),
+                      ),
+                    ),
+                    child: Text('Done',
+                        style: DT.text(
+                            size: 14,
+                            weight: FontWeight.w700,
+                            color: Colors.white)),
+                  ),
                 ),
               ),
             ],
@@ -419,8 +427,7 @@ class _MarketingPartnerEnquiryScreenState
       preferredSize: const Size.fromHeight(64),
       child: Container(
         decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(bottom: BorderSide(color: DT.borderSoft)),
+          gradient: DT.headerGradient,
           boxShadow: DT.shadowXs,
         ),
         child: SafeArea(
@@ -435,7 +442,7 @@ class _MarketingPartnerEnquiryScreenState
                     tooltip: 'Back',
                     onPressed: () => Navigator.maybePop(context),
                     icon: const Icon(Icons.arrow_back_rounded,
-                        color: DT.onyx700),
+                        color: Colors.white),
                   ),
                   Expanded(
                     child: Column(
@@ -450,7 +457,7 @@ class _MarketingPartnerEnquiryScreenState
                             size: 16,
                             weight: FontWeight.w700,
                             letterSpacing: -0.2,
-                            height: 1.2,
+                            height: 1.2, color: Colors.white,
                           ),
                         ),
                         Text(
@@ -458,7 +465,7 @@ class _MarketingPartnerEnquiryScreenState
                           style: DT.text(
                               size: 11,
                               weight: FontWeight.w500,
-                              color: DT.slate500),
+                              color: const Color(0xFFE0E7FF)),
                         ),
                       ],
                     ),
@@ -467,7 +474,7 @@ class _MarketingPartnerEnquiryScreenState
                     tooltip: 'How it works',
                     onPressed: _showHelp,
                     icon: const Icon(Icons.help_outline_rounded,
-                        color: DT.slate500, size: 22),
+                        color: const Color(0xFFE0E7FF), size: 22),
                   ),
                 ],
               ),
@@ -481,35 +488,27 @@ class _MarketingPartnerEnquiryScreenState
   // ---------- Hero ----------
   Widget _buildHeroBanner() {
     return Container(
-      clipBehavior: Clip.antiAlias,
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [DT.onyx900, Color(0xFF172554)],
-        ),
+        color: DT.blue50,
         borderRadius: BorderRadius.circular(DT.rLg),
-        boxShadow: DT.shadowM3,
+        border: Border.all(color: DT.blue200),
       ),
-      child: Stack(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Positioned(
-            right: -16,
-            top: -16,
-            child: IgnorePointer(
-              child: Container(
-                width: 112,
-                height: 112,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(colors: [
-                    _C.blue500.withAlpha(70),
-                    _C.blue500.withAlpha(0),
-                  ]),
-                ),
-              ),
+          Container(
+            width: 44,
+            height: 44,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
             ),
+            child: const Icon(Icons.handshake_outlined,
+                color: _C.blue600, size: 22),
           ),
-          Padding(
-            padding: const EdgeInsets.all(16),
+          const SizedBox(width: 12),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -519,16 +518,16 @@ class _MarketingPartnerEnquiryScreenState
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: _C.blue500.withAlpha(50),
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: _C.blue300.withAlpha(80)),
+                        border: Border.all(color: DT.blue200),
                       ),
                       child: Text(
                         'Partner program',
                         style: DT.text(
                             size: 10,
                             weight: FontWeight.w700,
-                            color: _C.blue300),
+                            color: _C.blue600),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -539,29 +538,28 @@ class _MarketingPartnerEnquiryScreenState
                         style: DT.text(
                             size: 11.5,
                             weight: FontWeight.w500,
-                            color: DT.slate300),
+                            color: DT.slate500),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   'Earn commissions & grow with QN Mart',
                   style: DT.text(
-                    size: 18,
+                    size: 15,
                     weight: FontWeight.w700,
-                    color: Colors.white,
-                    letterSpacing: -0.3,
+                    letterSpacing: -0.2,
                     height: 1.25,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   'Refer buyers and suppliers for industrial machinery, MRO and components, and earn on every deal.',
                   style: DT.text(
                     size: 12,
-                    color: DT.slate300,
-                    height: 1.55,
+                    color: DT.onyx600,
+                    height: 1.45,
                   ),
                 ),
               ],
@@ -662,7 +660,8 @@ class _MarketingPartnerEnquiryScreenState
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.next,
             style: _inputStyle,
-            decoration: _inputDecoration(hint: 'e.g. Rajesh Kumar'),
+            decoration: _inputDecoration(
+                hint: 'e.g. Rajesh Kumar', icon: Icons.person_outline_rounded),
             validator: (v) => (v == null || v.trim().isEmpty)
                 ? 'Full name is required'
                 : null,
@@ -675,7 +674,8 @@ class _MarketingPartnerEnquiryScreenState
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             style: _inputStyle,
-            decoration: _inputDecoration(hint: 'name@company.com'),
+            decoration: _inputDecoration(
+                hint: 'name@company.com', icon: Icons.mail_outline_rounded),
             validator: (value) {
               if (value == null || value.trim().isEmpty) return null;
               final regex = RegExp(r'^[\w\-.+]+@([\w-]+\.)+[\w-]{2,}$');
@@ -701,13 +701,11 @@ class _MarketingPartnerEnquiryScreenState
             decoration: _inputDecoration(
               hint: '98765 43210',
               prefix: Container(
-                height: 48,
-                alignment: Alignment.center,
-                margin: const EdgeInsets.only(left: 1, right: 10),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                margin: const EdgeInsets.only(right: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 decoration: const BoxDecoration(
-                  color: DT.slate100,
-                  border: Border(right: BorderSide(color: DT.slate300)),
+                  color: DT.blue50,
+                  border: Border(right: BorderSide(color: DT.blue200)),
                   borderRadius: BorderRadius.horizontal(
                       left: Radius.circular(DT.rMd)),
                 ),
@@ -745,8 +743,8 @@ class _MarketingPartnerEnquiryScreenState
   Widget _buildAddressSection() {
     return _SectionCard(
       icon: Icons.location_on_outlined,
-      iconBg: DT.emerald50,
-      iconFg: _C.emerald600,
+      iconBg: DT.blue50,
+      iconFg: _C.blue600,
       title: 'Address Details',
       subtitle: 'Where you live and the market you cover',
       children: [
@@ -755,6 +753,7 @@ class _MarketingPartnerEnquiryScreenState
           child: _dropdown(
             value: _selectedState,
             hint: 'Select your state',
+            icon: Icons.flag_outlined,
             items: _states,
             onChanged: (v) => setState(() => _selectedState = v),
           ),
@@ -767,7 +766,8 @@ class _MarketingPartnerEnquiryScreenState
               textCapitalization: TextCapitalization.words,
               textInputAction: TextInputAction.next,
               style: _inputStyle,
-              decoration: _inputDecoration(hint: 'e.g. Pune'),
+              decoration: _inputDecoration(
+                  hint: 'e.g. Pune', icon: Icons.location_city_rounded),
             ),
           ),
           _field(
@@ -777,7 +777,8 @@ class _MarketingPartnerEnquiryScreenState
               textCapitalization: TextCapitalization.words,
               textInputAction: TextInputAction.next,
               style: _inputStyle,
-              decoration: _inputDecoration(hint: 'e.g. Haveli'),
+              decoration: _inputDecoration(
+                  hint: 'e.g. Haveli', icon: Icons.map_outlined),
             ),
           ),
         ),
@@ -789,7 +790,8 @@ class _MarketingPartnerEnquiryScreenState
               textCapitalization: TextCapitalization.words,
               textInputAction: TextInputAction.next,
               style: _inputStyle,
-              decoration: _inputDecoration(hint: 'City or locality'),
+              decoration: _inputDecoration(
+                  hint: 'City or locality', icon: Icons.home_work_outlined),
             ),
           ),
           _field(
@@ -804,7 +806,8 @@ class _MarketingPartnerEnquiryScreenState
                 LengthLimitingTextInputFormatter(6),
               ],
               style: _inputStyle.copyWith(letterSpacing: 1),
-              decoration: _inputDecoration(hint: '411001'),
+              decoration: _inputDecoration(
+                  hint: '411001', icon: Icons.pin_drop_outlined),
               validator: (value) {
                 final v = value?.trim() ?? '';
                 if (v.isEmpty) return 'Required';
@@ -822,8 +825,8 @@ class _MarketingPartnerEnquiryScreenState
   Widget _buildWorkSection() {
     return _SectionCard(
       icon: Icons.work_outline_rounded,
-      iconBg: DT.indigo50,
-      iconFg: _C.indigo600,
+      iconBg: DT.blue50,
+      iconFg: _C.blue600,
       title: 'Work Information',
       subtitle: 'Your commercial reach and expertise',
       children: [
@@ -836,7 +839,8 @@ class _MarketingPartnerEnquiryScreenState
             maxLines: 3,
             style: _inputStyle,
             decoration: _inputDecoration(
-                hint: 'e.g. Bhosari industrial cluster & Chakan MIDC'),
+                hint: 'e.g. Bhosari industrial cluster & Chakan MIDC',
+                icon: Icons.place_outlined),
           ),
         ),
         _field(
@@ -844,6 +848,7 @@ class _MarketingPartnerEnquiryScreenState
           child: _dropdown(
             value: _selectedProfession,
             hint: 'Select your domain',
+            icon: Icons.work_outline_rounded,
             items: _professions,
             onChanged: (v) => setState(() => _selectedProfession = v),
           ),
@@ -853,6 +858,7 @@ class _MarketingPartnerEnquiryScreenState
           child: _dropdown(
             value: _selectedExperience,
             hint: 'Select years of experience',
+            icon: Icons.timeline_rounded,
             items: _experiences,
             onChanged: (v) => setState(() => _selectedExperience = v),
           ),
@@ -865,8 +871,8 @@ class _MarketingPartnerEnquiryScreenState
   Widget _buildPlatformsSection() {
     return _SectionCard(
       icon: Icons.campaign_outlined,
-      iconBg: DT.purple50,
-      iconFg: _C.purple600,
+      iconBg: DT.blue50,
+      iconFg: _C.blue600,
       title: 'Promotion Platforms',
       subtitle: 'Channels you use to reach business clients',
       trailing: Container(
@@ -915,8 +921,8 @@ class _MarketingPartnerEnquiryScreenState
 
     return _SectionCard(
       icon: Icons.badge_outlined,
-      iconBg: DT.sky50,
-      iconFg: _C.sky600,
+      iconBg: DT.blue50,
+      iconFg: _C.blue600,
       title: 'Profile Photo',
       subtitle: 'Shown on your partner ID badge',
       children: [
@@ -1033,8 +1039,8 @@ class _MarketingPartnerEnquiryScreenState
   Widget _buildReferralSection() {
     return _SectionCard(
       icon: Icons.redeem_outlined,
-      iconBg: DT.amber50,
-      iconFg: DT.amber600,
+      iconBg: DT.blue50,
+      iconFg: _C.blue600,
       title: 'Referral',
       subtitle: 'Enter a partner code if someone referred you',
       children: [
@@ -1055,7 +1061,8 @@ class _MarketingPartnerEnquiryScreenState
                   weight: FontWeight.w700,
                   letterSpacing: 1.2,
                 ),
-                decoration: _inputDecoration(hint: 'e.g. QN-PARTNER-88'),
+                decoration: _inputDecoration(
+                    hint: 'e.g. QN-PARTNER-88', icon: Icons.confirmation_number_outlined),
               ),
             ),
             const SizedBox(width: 8),
@@ -1065,7 +1072,7 @@ class _MarketingPartnerEnquiryScreenState
                 onPressed: _applyReferral,
                 style: ElevatedButton.styleFrom(
                   backgroundColor:
-                  _referralApplied ? _C.emerald600 : DT.onyx900,
+                  _referralApplied ? _C.emerald600 : _C.blue600,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -1087,15 +1094,15 @@ class _MarketingPartnerEnquiryScreenState
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: DT.emerald50,
+            color: DT.blue50,
             borderRadius: BorderRadius.circular(DT.rSm),
-            border: Border.all(color: DT.emerald200),
+            border: Border.all(color: DT.blue200),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Icon(Icons.verified_outlined,
-                  color: _C.emerald600, size: 18),
+                  color: _C.blue600, size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -1105,7 +1112,7 @@ class _MarketingPartnerEnquiryScreenState
                   style: DT.text(
                     size: 11.5,
                     weight: FontWeight.w500,
-                    color: _C.emerald800,
+                    color: DT.blue900,
                     height: 1.45,
                   ),
                 ),
@@ -1134,42 +1141,49 @@ class _MarketingPartnerEnquiryScreenState
             children: [
               SizedBox(
                 width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _submitForm,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _C.blue600,
-                    disabledBackgroundColor: _C.blue600.withAlpha(160),
-                    foregroundColor: Colors.white,
-                    elevation: 4,
-                    shadowColor: _C.blue500.withAlpha(60),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(DT.rMd),
-                    ),
+                height: 52,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: DT.ctaGradient,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                      : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Submit Application',
-                        style: DT.text(
-                          size: 14,
-                          weight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _submitForm,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      disabledBackgroundColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(DT.rMd),
                       ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.arrow_forward_rounded, size: 18),
-                    ],
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                        : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.check_rounded, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Submit Application',
+                          style: DT.text(
+                            size: 14,
+                            weight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1178,7 +1192,7 @@ class _MarketingPartnerEnquiryScreenState
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Icons.lock_outline_rounded,
-                      size: 13, color: _C.emerald600),
+                      size: 13, color: _C.blue600),
                   const SizedBox(width: 5),
                   Flexible(
                     child: Text(
@@ -1202,7 +1216,8 @@ class _MarketingPartnerEnquiryScreenState
   TextStyle get _inputStyle =>
       DT.text(size: 13.5, weight: FontWeight.w500, color: DT.onyx900);
 
-  InputDecoration _inputDecoration({String? hint, Widget? prefix}) {
+  InputDecoration _inputDecoration(
+      {String? hint, Widget? prefix, IconData? icon}) {
     OutlineInputBorder border(Color c, [double w = 1]) => OutlineInputBorder(
       borderRadius: BorderRadius.circular(DT.rMd),
       borderSide: BorderSide(color: c, width: w),
@@ -1212,20 +1227,26 @@ class _MarketingPartnerEnquiryScreenState
       hintText: hint,
       hintStyle: DT.text(size: 13, weight: FontWeight.w500, color: DT.slate400),
       filled: true,
-      fillColor: DT.slate50,
+      fillColor: Colors.white,
       isDense: true,
       contentPadding:
       const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
-      prefixIcon: prefix,
+      prefixIcon: prefix ??
+          (icon == null
+              ? null
+              : Padding(
+            padding: const EdgeInsets.only(left: 14, right: 10),
+            child: Icon(icon, color: _C.blue600, size: 20),
+          )),
       prefixIconConstraints:
-      const BoxConstraints(minHeight: 50, minWidth: 0),
+      const BoxConstraints(minHeight: 0, minWidth: 0),
       errorStyle: DT.text(size: 11, weight: FontWeight.w500, color: DT.error),
       errorMaxLines: 2,
-      enabledBorder: border(DT.slate300),
+      enabledBorder: border(DT.slate200),
       focusedBorder: border(_C.blue600, 1.5),
       errorBorder: border(DT.error),
       focusedErrorBorder: border(DT.error, 1.5),
-      border: border(DT.slate300),
+      border: border(DT.slate200),
     );
   }
 
@@ -1234,6 +1255,7 @@ class _MarketingPartnerEnquiryScreenState
     required String hint,
     required List<String> items,
     required ValueChanged<String?> onChanged,
+    IconData? icon,
   }) {
     return DropdownButtonFormField<String>(
       value: value,
@@ -1243,7 +1265,7 @@ class _MarketingPartnerEnquiryScreenState
       dropdownColor: Colors.white,
       icon: const Icon(Icons.expand_more_rounded, color: DT.slate400),
       style: _inputStyle,
-      decoration: _inputDecoration(),
+      decoration: _inputDecoration(icon: icon),
       hint: Text(
         hint,
         style: DT.text(size: 13, weight: FontWeight.w500, color: DT.slate400),

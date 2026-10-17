@@ -176,9 +176,9 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: DT.blue50,
         borderRadius: BorderRadius.circular(DT.rLg),
-        border: Border.all(color: DT.border),
+        border: Border.all(color: DT.blue200),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,9 +207,9 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
                   runSpacing: 6,
                   children: [
                     pill,
-                    if (_c.isoCertified) _pill('ISO', DT.blue50, DT.blue800),
-                    if (_c.isiCertified) _pill('ISI', DT.blue50, DT.blue800),
-                    if (_c.codAvailable) _pill('COD', DT.teal50, DT.teal800),
+                    if (_c.isoCertified) _pill('ISO', Colors.white, DT.blue800),
+                    if (_c.isiCertified) _pill('ISI', Colors.white, DT.blue800),
+                    if (_c.codAvailable) _pill('COD', Colors.white, DT.blue800),
                   ],
                 ),
               ],
@@ -230,23 +230,23 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: DT.amber50,
+        color: DT.blue50,
         borderRadius: BorderRadius.circular(DT.rLg),
-        border: Border.all(color: DT.amber200),
+        border: Border.all(color: DT.blue200),
       ),
       child: Row(
         children: [
-          const Icon(Icons.payments_outlined, color: DT.amber700),
+          const Icon(Icons.payments_outlined, color: DT.blue800),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Registration fee not paid',
-                    style: DT.text(size: 13.5, weight: FontWeight.w700, color: DT.amber900)),
+                    style: DT.text(size: 13.5, weight: FontWeight.w700, color: DT.blue900)),
                 const SizedBox(height: 2),
                 Text('Pay to activate the admin panel and shipping pickup.',
-                    style: DT.text(size: 12, color: DT.amber800, height: 1.4)),
+                    style: DT.text(size: 12, color: DT.onyx600, height: 1.4)),
               ],
             ),
           ),
@@ -254,7 +254,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
           ElevatedButton(
             onPressed: _pay,
             style: ElevatedButton.styleFrom(
-              backgroundColor: DT.amber600,
+              backgroundColor: DT.blue800,
               foregroundColor: Colors.white,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -353,7 +353,15 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(t.icon, color: DT.blue800, size: 24),
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: DT.blue50,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(t.icon, color: DT.blue800, size: 20),
+                  ),
                   const SizedBox(height: 6),
                   Text(t.label,
                       textAlign: TextAlign.center,

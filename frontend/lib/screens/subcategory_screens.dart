@@ -80,7 +80,11 @@ class _SubCategoryManageScreenState extends State<SubCategoryManageScreen> {
       },
       child: Scaffold(
         backgroundColor: DT.background,
-        appBar: CompanyTopBar(title: 'Subcategories', subtitle: widget.category.name),
+        // ✅ FIX: Wrapped in PreferredSize with height 65 to prevent 1px overflow
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(65),
+          child: CompanyTopBar(title: 'Subcategories', subtitle: widget.category.name),
+        ),
         floatingActionButton: _items.isEmpty
             ? null
             : FloatingActionButton.extended(

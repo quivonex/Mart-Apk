@@ -74,7 +74,7 @@ class _UnitCreateEditScreenState extends State<UnitCreateEditScreen> {
       SnackBar(
         content: Text(msg),
         backgroundColor:
-        isError ? const Color(0xFFD32F2F) : Colors.green,
+        isError ? const Color(0xFFEF4444) : Color(0xFF10B981),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 3),
         margin: const EdgeInsets.all(16),
@@ -91,6 +91,7 @@ class _UnitCreateEditScreenState extends State<UnitCreateEditScreen> {
       backgroundColor: AppConstants.surfaceColor,
       appBar: AppBar(
         backgroundColor: AppConstants.primary,
+        flexibleSpace: Container(decoration: const BoxDecoration(gradient: AppConstants.appBarGradient)),
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(
@@ -220,11 +221,11 @@ class _UnitCreateEditScreenState extends State<UnitCreateEditScreen> {
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.red, width: 1),
+        borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.red, width: 2),
+        borderSide: const BorderSide(color: Color(0xFFEF4444), width: 2),
       ),
       contentPadding:
       const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

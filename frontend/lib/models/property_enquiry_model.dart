@@ -7,7 +7,7 @@ class PropertyEnquiryRequest {
   final double? budgetMin;         // optional
   final double? budgetMax;         // optional, >= budgetMin
   final String message;            // required, min 10 chars
-  final String status;             // always "new"
+  final String status;             // always "new" (read-only on the backend)
   final String? referralCode;      // optional
 
   PropertyEnquiryRequest({
@@ -23,23 +23,31 @@ class PropertyEnquiryRequest {
     this.referralCode,
   });
 
+  /// Only digits, last 10 (so "+91 98765 43210" → "9876543210").
+  static String cleanMobile(String raw) {
+    final d = raw.replaceAll(RegExp(r'\D'), '');
+    return d.length > 10 ? d.substring(d.length - 10) : d;
+  }
+
+  static num _money(double v) => v == v.roundToDouble() ? v.toInt() : v;
+
+  /// Empty optional values are left out instead of being sent as null.
   Map<String, dynamic> toJson() {
     return {
       'property': property,
-      'customer_name': customerName,
-      'customer_email': customerEmail,
-      'customer_mobile': customerMobile,
-      'flat_type': flatType,         // null if not selected
-      'budget_min': budgetMin,       // null if empty
-      'budget_max': budgetMax,       // null if empty
-      'message': message,
-      'status': status,              // always "new"
-      if (referralCode != null && referralCode!.isNotEmpty)
-        'referral_code': referralCode,
+      'customer_name': customerName.trim(),
+      'customer_email': customerEmail.trim(),
+      'customer_mobile': cleanMobile(customerMobile),
+      'message': message.trim(),
+      if (flatType != null && flatType!.isNotEmpty) 'flat_type': flatType,
+      if (budgetMin != null) 'budget_min': _money(budgetMin!),
+      if (budgetMax != null) 'budget_max': _money(budgetMax!),
+      if (referralCode != null && referralCode!.trim().isNotEmpty)
+        'referral_code': referralCode!.trim(),
     };
   }
 
-  /// Flat type options for dropdown
+  /// Flat type options for dropdown (same keys as the backend FlatType choices)
   static const List<Map<String, String>> flatTypeOptions = [
     {'value': 'studio', 'label': 'Studio'},
     {'value': '1_bhk', 'label': '1 BHK'},
@@ -57,6 +65,8 @@ class PropertyEnquiryResponse {
   final String? message;
   final Map<String, dynamic>? errors;
   final String? error;
+  final String? detail;              // DRF auth / 404 / 405 errors
+  final int? statusCode;
 
   PropertyEnquiryResponse({
     this.success,
@@ -64,9 +74,12 @@ class PropertyEnquiryResponse {
     this.message,
     this.errors,
     this.error,
+    this.detail,
+    this.statusCode,
   });
 
-  factory PropertyEnquiryResponse.fromJson(Map<String, dynamic> json) {
+  factory PropertyEnquiryResponse.fromJson(Map<String, dynamic> json,
+      {int? statusCode}) {
     // Handle both "success" and "status" fields
     bool? successValue;
     if (json['success'] is bool) {
@@ -74,40 +87,89 @@ class PropertyEnquiryResponse {
     } else if (json['status'] is bool) {
       successValue = json['status'];
     } else if (json['status'] is String) {
-      successValue =
-          json['status'].toString().toLowerCase() == 'success';
+      successValue = json['status'].toString().toLowerCase() == 'success';
+    }
+
+    // Some DRF errors come back as the field map itself: {"customer_mobile": [...]}
+    Map<String, dynamic>? errors = json['errors'] is Map
+        ? Map<String, dynamic>.from(json['errors'])
+        : null;
+    if (errors == null &&
+        successValue == null &&
+        statusCode != null &&
+        statusCode >= 400 &&
+        json.values.any((v) => v is List)) {
+      errors = {
+        for (final e in json.entries)
+          if (e.value is List) e.key: e.value,
+      };
     }
 
     return PropertyEnquiryResponse(
-      success: successValue,
+      success: successValue ??
+          (statusCode != null && statusCode >= 400 ? false : null),
       status: json['status'],
       message: json['message']?.toString(),
-      errors: json['errors'] is Map
-          ? Map<String, dynamic>.from(json['errors'])
-          : null,
+      errors: errors,
       error: json['error']?.toString(),
+      detail: json['detail']?.toString(),
+      statusCode: statusCode,
     );
   }
 
-  /// Success if `success == true` OR `status == true/"success"`
   bool get isSuccess => success == true;
 
-  /// User-friendly message (picks first field error if any)
+  static String _fieldLabel(String key) => switch (key) {
+    'property' => 'Property',
+    'customer_name' => 'Name',
+    'customer_email' => 'Email',
+    'customer_mobile' => 'Mobile',
+    'flat_type' => 'Flat type',
+    'budget_min' => 'Min budget',
+    'budget_max' => 'Max budget',
+    'message' => 'Message',
+    _ => key.replaceAll('_', ' '),
+  };
+
+  static String _firstText(dynamic v) {
+    if (v is List && v.isNotEmpty) return _firstText(v.first);
+    if (v is Map && v.isNotEmpty) return _firstText(v.values.first);
+    return v.toString();
+  }
+
+  /// User-friendly message — never just "Something went wrong".
   String get displayMessage {
     if (isSuccess) {
       return message ?? 'Enquiry submitted successfully.';
     }
 
     if (errors != null && errors!.isNotEmpty) {
-      final firstKey = errors!.keys.first;
-      final firstError = errors![firstKey];
-      if (firstError is List && firstError.isNotEmpty) {
-        return firstError.first.toString();
+      final key = errors!.keys.first;
+      final text = _firstText(errors![key]);
+      if (key == 'non_field_errors') return text;
+      if (key == 'property' && text.toLowerCase().contains('invalid pk')) {
+        return 'This property is no longer available for enquiries.';
       }
-      return firstError.toString();
+      return '${_fieldLabel(key)}: $text';
     }
 
-    return message ?? error ?? 'Something went wrong';
+    if (detail != null && detail!.isNotEmpty) {
+      if (statusCode == 401 || statusCode == 403) {
+        return 'Please log in again to send an enquiry. ($detail)';
+      }
+      return detail!;
+    }
+
+    final m = message ?? error;
+    if (m != null && m.isNotEmpty) return m;
+
+    return switch (statusCode) {
+      null => 'Could not send enquiry. Please try again.',
+      401 || 403 => 'Please log in again to send an enquiry.',
+      404 => 'Enquiry service not found (404). Please check the server URL.',
+      >= 500 => 'Server error ($statusCode). Please try again in a moment.',
+      _ => 'Could not send enquiry (HTTP $statusCode).',
+    };
   }
 
   /// All field errors as a flat list
@@ -117,10 +179,10 @@ class PropertyEnquiryResponse {
     errors!.forEach((key, value) {
       if (value is List) {
         for (final e in value) {
-          all.add(e.toString());
+          all.add('${_fieldLabel(key)}: $e');
         }
       } else {
-        all.add(value.toString());
+        all.add('${_fieldLabel(key)}: $value');
       }
     });
     return all;

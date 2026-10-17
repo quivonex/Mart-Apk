@@ -1,17 +1,29 @@
 // lib/screens/register_screen.dart
 //
-// Register – designed to match the login screen (brand blue #1A68FA, dark blue
-// #0D3880, accent #FF5722, page #F6F8FC, white cards, slate inputs).
-// Logic unchanged: send OTP -> verify OTP -> complete registration.
+// Register – brand blue #1A68FA, dark blue #0D3880, accent #FF5722, page #F6F8FC.
+//
+// Flow on one card:
+//   1. Email      -> "Send OTP"           (RegistrationService.sendOtp)
+//   2. OTP        appears below the email (RegistrationService.verifyOtp, auto-verifies at 6 digits)
+//   3. Details    form opens after the email is verified (RegistrationService.register)
 
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../constants/design_tokens.dart';
 import '../models/registration_model.dart';
 import '../services/registration_service.dart';
-import '../utils/shared_preferences_helper.dart';
-import '../widgets/product_ui.dart';
 import 'login_screen.dart';
 import 'terms_conditions_screen.dart';
+
+const _brand = Color(0xFF6366F1);
+const _brandDark = Color(0xFF4338CA);
+const _accent = Color(0xFFF97316);
+const _green = Color(0xFF10B981);
+const _otpLength = 6;
+const _resendSeconds = 30;
+
+enum _Stage { email, otp, details }
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -21,171 +33,174 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  // Controllers
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _emailFormKey = GlobalKey<FormState>();
+  final _detailsFormKey = GlobalKey<FormState>();
+
   final _emailController = TextEditingController();
+  final _otpController = TextEditingController();
+  final _otpFocus = FocusNode();
+  final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _otpController = TextEditingController();
 
-  // States
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
-  bool _isLoading = false;
+  _Stage _stage = _Stage.email;
+  bool _sendingOtp = false;
+  bool _verifyingOtp = false;
+  bool _registering = false;
   bool _agreeTerms = false;
-  bool _isEmailVerified = false;
-  bool _isSendingOtp = false;
-  bool _isVerifyingOtp = false;
+  bool _showTermsError = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirm = true;
+  String? _otpError;
+  int _resendIn = 0;
+  Timer? _timer;
 
-  // Step management
-  int _currentStep = 0; // 0 = Registration Form, 1 = OTP Verification
-
-  static const _brand = Color(0xFF1A68FA);
-  static const _brandDark = Color(0xFF0D3880);
-  static const _accent = Color(0xFFFF5722);
+  bool get _busy => _sendingOtp || _verifyingOtp || _registering;
+  String get _email => _emailController.text.trim();
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _addressController.dispose();
-    _usernameController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    _otpController.dispose();
+    _timer?.cancel();
+    for (final c in [
+      _emailController,
+      _otpController,
+      _nameController,
+      _phoneController,
+      _addressController,
+      _usernameController,
+      _passwordController,
+      _confirmPasswordController,
+    ]) {
+      c.dispose();
+    }
+    _otpFocus.dispose();
     super.dispose();
   }
 
+  String _clean(Object e) => e.toString().replaceAll('Exception: ', '').trim();
+
   // =====================================================================
-  // LOGIC (unchanged)
+  // LOGIC
   // =====================================================================
-  Future<void> _sendOtp() async {
-    if (_emailController.text.trim().isEmpty) {
-      _showErrorDialog('Error', 'Please enter your email first');
-      return;
-    }
+  Future<void> _sendOtp({bool resend = false}) async {
+    FocusScope.of(context).unfocus();
+    if (!resend && !_emailFormKey.currentState!.validate()) return;
 
     setState(() {
-      _isSendingOtp = true;
+      _sendingOtp = true;
+      _otpError = null;
     });
-
     try {
-      final request = SendOtpRequest(
-        email: _emailController.text.trim(),
-      );
-
-      final response = await RegistrationService.sendOtp(request);
-
+      await RegistrationService.sendOtp(SendOtpRequest(email: _email));
+      if (!mounted) return;
+      _otpController.clear();
       setState(() {
-        _isSendingOtp = false;
-        _currentStep = 1; // Move to OTP verification step
+        _sendingOtp = false;
+        _stage = _Stage.otp;
       });
-
-      _showSuccessDialog('OTP Sent', 'OTP has been sent to your email address');
+      _startResendTimer();
+      _snack(resend ? 'A new OTP has been sent to $_email' : 'OTP sent to $_email');
+      Future.delayed(const Duration(milliseconds: 250), () {
+        if (mounted) _otpFocus.requestFocus();
+      });
     } catch (e) {
-      setState(() {
-        _isSendingOtp = false;
-      });
-      _showErrorDialog('Failed', e.toString().replaceFirst('Exception: ', ''));
+      if (!mounted) return;
+      setState(() => _sendingOtp = false);
+      _showErrorDialog('Could not send OTP', _clean(e));
     }
+  }
+
+  void _startResendTimer() {
+    _timer?.cancel();
+    setState(() => _resendIn = _resendSeconds);
+    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
+      setState(() => _resendIn--);
+      if (_resendIn <= 0) t.cancel();
+    });
   }
 
   Future<void> _verifyOtp() async {
-    if (_otpController.text.trim().isEmpty) {
-      _showErrorDialog('Error', 'Please enter the OTP');
+    final otp = _otpController.text.trim();
+    if (otp.length != _otpLength) {
+      setState(() => _otpError = 'Enter the $_otpLength-digit OTP');
       return;
     }
-
+    FocusScope.of(context).unfocus();
     setState(() {
-      _isVerifyingOtp = true;
+      _verifyingOtp = true;
+      _otpError = null;
     });
-
     try {
-      final request = VerifyOtpRequest(
-        email: _emailController.text.trim(),
-        otp: _otpController.text.trim(),
-      );
-
-      final response = await RegistrationService.verifyOtp(request);
-
+      await RegistrationService.verifyOtp(VerifyOtpRequest(email: _email, otp: otp));
+      if (!mounted) return;
+      _timer?.cancel();
       setState(() {
-        _isVerifyingOtp = false;
-        _isEmailVerified = true;
+        _verifyingOtp = false;
+        _stage = _Stage.details;
       });
-
-      _showSuccessDialog('Verified', 'Email verified successfully!');
+      _snack('Email verified. Complete your details.');
     } catch (e) {
+      if (!mounted) return;
       setState(() {
-        _isVerifyingOtp = false;
+        _verifyingOtp = false;
+        _otpError = _clean(e);
       });
-      _showErrorDialog(
-          'Verification Failed', e.toString().replaceFirst('Exception: ', ''));
+      _otpController.clear();
+      _otpFocus.requestFocus();
     }
   }
 
+  void _changeEmail() {
+    _timer?.cancel();
+    _otpController.clear();
+    setState(() {
+      _stage = _Stage.email;
+      _otpError = null;
+      _resendIn = 0;
+    });
+  }
+
   Future<void> _register() async {
-    if (_currentStep == 0) {
-      // Validate form first
-      if (_formKey.currentState!.validate() && _agreeTerms) {
-        // Send OTP
-        await _sendOtp();
-      } else if (!_agreeTerms) {
-        _showErrorDialog(
-            'Terms Required', 'Please agree to the Terms & Conditions');
-      }
+    FocusScope.of(context).unfocus();
+    final ok = _detailsFormKey.currentState!.validate();
+    setState(() => _showTermsError = !_agreeTerms);
+    if (!ok) return;
+    if (!_agreeTerms) {
+      _showErrorDialog('Terms required', 'Please agree to the Terms & Conditions to continue.');
       return;
     }
 
-    // Step 1: Verify OTP first
-    if (_currentStep == 1 && !_isEmailVerified) {
-      await _verifyOtp();
-      return;
-    }
-
-    // Step 2: Complete Registration
-    if (_isEmailVerified) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      try {
-        final request = RegisterRequest(
-          name: _nameController.text.trim(),
-          email: _emailController.text.trim(),
-          phoneNumber: _phoneController.text.trim(),
-          address: _addressController.text.trim(),
-          username: _usernameController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
-
-        final response = await RegistrationService.register(request);
-
-        setState(() {
-          _isLoading = false;
-        });
-
-        _showSuccessDialog(
-          'Registration Complete',
-          'Your account has been created. Please sign in.',
-          onOk: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const LoginScreen()),
-            );
-          },
-        );
-      } catch (e) {
-        setState(() {
-          _isLoading = false;
-        });
-        _showErrorDialog(
-            'Registration Failed', e.toString().replaceFirst('Exception: ', ''));
-      }
+    setState(() => _registering = true);
+    try {
+      await RegistrationService.register(RegisterRequest(
+        name: _nameController.text.trim(),
+        email: _email,
+        phoneNumber: _phoneController.text.trim(),
+        address: _addressController.text.trim(),
+        username: _usernameController.text.trim(),
+        password: _passwordController.text,
+      ));
+      if (!mounted) return;
+      setState(() => _registering = false);
+      _showSuccessDialog(
+        'Account created 🎉',
+        'Welcome to QNXMart B2B, ${_nameController.text.trim().split(' ').first}! Please sign in to continue.',
+        onOk: () => Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _registering = false);
+      _showErrorDialog('Registration failed', _clean(e));
     }
   }
 
@@ -195,99 +210,114 @@ class _RegisterScreenState extends State<RegisterScreen> {
       MaterialPageRoute(builder: (_) => const TermsConditionsScreen()),
     );
     if (result == true && mounted) {
-      setState(() => _agreeTerms = true);
+      setState(() {
+        _agreeTerms = true;
+        _showTermsError = false;
+      });
     }
   }
 
-  // =====================================================================
-  // DIALOG HELPERS
-  // =====================================================================
-  void _showErrorDialog(String title, String message) {
-    showDialog(
+  Future<bool> _confirmLeave() async {
+    if (_stage == _Stage.email) return true;
+    final leave = await showDialog<bool>(
       context: context,
-      barrierDismissible: true,
-      builder: (context) => AlertDialog(
-        icon: Container(
-          width: 52,
-          height: 52,
-          decoration:
-          const BoxDecoration(color: DT.errorBg, shape: BoxShape.circle),
-          child: const Icon(Icons.error_outline_rounded,
-              color: DT.error, size: 26),
-        ),
-        title: Text(
-          title,
-          textAlign: TextAlign.center,
-          style: DT.text(size: 17, weight: FontWeight.w700, color: DT.onyx900),
-        ),
-        content: Text(
-          message,
-          textAlign: TextAlign.center,
-          style: DT.text(size: 13.5, color: DT.slate500, height: 1.5),
-        ),
+      builder: (ctx) => AlertDialog(
+        title: Text('Leave registration?', style: DT.text(size: 17, weight: FontWeight.w800)),
+        content: Text('You will need to verify your email again.',
+            style: DT.text(size: 13.5, color: DT.slate500, height: 1.45)),
         actions: [
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _brand,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
-              child: Text('OK',
-                  style: DT.text(
-                      size: 14, weight: FontWeight.w700, color: Colors.white)),
-            ),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Stay')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('Leave', style: DT.text(size: 14, weight: FontWeight.w700, color: DT.error)),
           ),
         ],
       ),
     );
+    return leave == true;
   }
 
-  void _showSuccessDialog(String title, String message, {VoidCallback? onOk}) {
+  // =====================================================================
+  // FEEDBACK
+  // =====================================================================
+  void _snack(String msg) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+            const SizedBox(width: 10),
+            Expanded(child: Text(msg, style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white))),
+          ],
+        ),
+        backgroundColor: _green,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ));
+  }
+
+  void _showErrorDialog(String title, String message) => _dialog(
+    icon: Icons.error_outline_rounded,
+    iconColor: DT.error,
+    iconBg: DT.errorBg,
+    title: title,
+    message: message,
+  );
+
+  void _showSuccessDialog(String title, String message, {VoidCallback? onOk}) => _dialog(
+    icon: Icons.check_rounded,
+    iconColor: _green,
+    iconBg: DT.emerald50,
+    title: title,
+    message: message,
+    dismissible: false,
+    onOk: onOk,
+  );
+
+  void _dialog({
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBg,
+    required String title,
+    required String message,
+    bool dismissible = true,
+    VoidCallback? onOk,
+  }) {
     showDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
+      barrierDismissible: dismissible,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         icon: Container(
-          width: 52,
-          height: 52,
-          decoration: const BoxDecoration(
-              color: DT.emerald50, shape: BoxShape.circle),
-          child: const Icon(Icons.check_rounded,
-              color: Color(0xFF059669), size: 28),
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
+          child: Icon(icon, color: iconColor, size: 28),
         ),
-        title: Text(
-          title,
-          textAlign: TextAlign.center,
-          style: DT.text(size: 17, weight: FontWeight.w700, color: DT.onyx900),
-        ),
-        content: Text(
-          message,
-          textAlign: TextAlign.center,
-          style: DT.text(size: 13.5, color: DT.slate500, height: 1.5),
-        ),
+        title: Text(title,
+            textAlign: TextAlign.center, style: DT.text(size: 17, weight: FontWeight.w800, color: DT.onyx900)),
+        content: Text(message,
+            textAlign: TextAlign.center, style: DT.text(size: 13.5, color: DT.slate500, height: 1.5)),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                Navigator.pop(context);
-                if (onOk != null) onOk();
+                Navigator.pop(ctx);
+                onOk?.call();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: _brand,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                minimumSize: const Size.fromHeight(46),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: Text('OK',
-                  style: DT.text(
-                      size: 14, weight: FontWeight.w700, color: Colors.white)),
+              child: Text('OK', style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
             ),
           ),
         ],
@@ -300,46 +330,54 @@ class _RegisterScreenState extends State<RegisterScreen> {
   // =====================================================================
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: DT.background,
-      body: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        behavior: HitTestBehavior.translucent,
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              _hero(context),
-              Transform.translate(
-                offset: const Offset(0, -34),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    children: [
-                      _formCard(),
-                      const SizedBox(height: 18),
-                      _loginCard(),
-                      const SizedBox(height: 18),
-                      _footer(),
-                    ],
+    return PopScope(
+      canPop: _stage == _Stage.email && !_busy,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop || _busy) return;
+        if (await _confirmLeave() && context.mounted) Navigator.pop(context);
+      },
+      child: Scaffold(
+        backgroundColor: DT.background,
+        body: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          behavior: HitTestBehavior.translucent,
+          child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            child: Column(
+              children: [
+                _hero(context),
+                Transform.translate(
+                  offset: const Offset(0, -34),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      children: [
+                        _card(),
+                        const SizedBox(height: 18),
+                        _loginCard(),
+                        const SizedBox(height: 18),
+                        _footer(),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  // ── Hero (brand gradient, same as login) ────────────────
+  // ── Hero ────────────────────────────────────────────────
   Widget _hero(BuildContext context) {
     final top = MediaQuery.of(context).padding.top;
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.fromLTRB(22, top + 22, 22, 62),
+      padding: EdgeInsets.fromLTRB(22, top + 18, 22, 62),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [_brandDark, Color(0xFF1557D0), _brand],
+          colors: [Color(0xFF4F46E5), _brand, Color(0xFF8B5CF6)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -351,14 +389,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
           Positioned(
             right: -18,
             bottom: -46,
-            child: Icon(Icons.storefront_rounded,
-                size: 150, color: Colors.white.withValues(alpha: 0.08)),
+            child: Icon(Icons.storefront_rounded, size: 150, color: Colors.white.withValues(alpha: 0.08)),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
+                  if (Navigator.canPop(context)) ...[
+                    InkWell(
+                      onTap: () => Navigator.maybePop(context),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                  ],
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
@@ -368,14 +422,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     child: Image.asset(
                       'lib/assets/images/qnx_mart_logo.png',
-                      height: 32,
+                      height: 30,
                       fit: BoxFit.contain,
                       errorBuilder: (_, __, ___) => Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('QNX', style: DT.text(size: 20, weight: FontWeight.w900, color: _brandDark, letterSpacing: -0.8)),
+                          Text('QNX',
+                              style: DT.text(size: 19, weight: FontWeight.w900, color: _brandDark, letterSpacing: -0.8)),
                           const SizedBox(width: 3),
-                          Text('MART', style: DT.text(size: 20, weight: FontWeight.w800, color: _accent, letterSpacing: -0.4)),
+                          Text('MART',
+                              style: DT.text(size: 19, weight: FontWeight.w800, color: _accent, letterSpacing: -0.4)),
                         ],
                       ),
                     ),
@@ -393,37 +449,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text('Market chalega nahi, daudega',
                   style: DT.text(size: 11, weight: FontWeight.w600, color: Colors.white60)),
-              Text('Market chalega nahi, daudega',
-                  style: DT.text(
-                      size: 11,
-                      weight: FontWeight.w600,
-                      color: Colors.white60)),
-              const SizedBox(height: 26),
+              const SizedBox(height: 22),
               Text('Create your account ✨',
-                  style: DT.text(
-                      size: 26,
-                      weight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: -0.5)),
+                  style: DT.text(size: 26, weight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5)),
               const SizedBox(height: 6),
               Text(
-                  'Join QNXMart B2B to buy, sell and grow your business.',
-                  style: DT.text(
-                      size: 13.5,
-                      color: const Color(0xFFBFDBFE),
-                      height: 1.45)),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _heroChip(Icons.shopping_bag_outlined, 'Products'),
-                  _heroChip(Icons.apartment_rounded, 'Real Estate'),
-                  _heroChip(Icons.recycling_rounded, 'ReMart'),
-                ],
+                switch (_stage) {
+                  _Stage.email => 'Start with your email – we\'ll send you a one-time code.',
+                  _Stage.otp => 'Check your inbox and enter the 6-digit code.',
+                  _Stage.details => 'Almost done! Tell us a little about you.',
+                },
+                style: DT.text(size: 13.5, color: const Color(0xFFC7D2FE), height: 1.45),
               ),
             ],
           ),
@@ -432,559 +471,503 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _heroChip(IconData icon, String label) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-    decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(999),
-      border: Border.all(color: Colors.white24),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: Colors.white),
-        const SizedBox(width: 5),
-        Text(label,
-            style: DT.text(
-                size: 11.5, weight: FontWeight.w700, color: Colors.white)),
-      ],
-    ),
-  );
-
-  // ── Form card ───────────────────────────────────────────
-  Widget _formCard() {
+  // ── Main card ───────────────────────────────────────────
+  Widget _card() {
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: DT.slate200),
-        boxShadow: const [
-          BoxShadow(
-              color: Color(0x140F172A),
-              blurRadius: 18,
-              offset: Offset(0, 6)),
-        ],
+        boxShadow: const [BoxShadow(color: Color(0x140F172A), blurRadius: 18, offset: Offset(0, 6))],
       ),
-      child: Form(
-        key: _formKey,
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
+        alignment: Alignment.topCenter,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(_currentStep == 0 ? 'Register' : 'Verify email',
-                          style: DT.text(
-                              size: 18,
-                              weight: FontWeight.w800,
-                              color: DT.onyx900)),
-                      const SizedBox(height: 2),
-                      Text(
-                        _currentStep == 0
-                            ? 'Fill in your details to get started'
-                            : 'Enter the OTP sent to your email',
-                        style: DT.text(size: 12, color: DT.slate500),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Step indicator
-            _stepIndicator(),
-            const SizedBox(height: 18),
-
-            // Step 0: Registration form
-            if (_currentStep == 0) ...[
-              const PxLabel('Full name', required: true),
-              TextFormField(
-                controller: _nameController,
-                textCapitalization: TextCapitalization.words,
-                textInputAction: TextInputAction.next,
-                style:
-                DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
-                decoration: pxInputDecoration(
-                  hint: 'Enter your full name',
-                  icon: Icons.person_outline_rounded,
-                  iconColor: _brand,
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your name';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 14),
-              const PxLabel('Email address', required: true),
-              TextFormField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-                style:
-                DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
-                decoration: pxInputDecoration(
-                  hint: 'Enter your email',
-                  icon: Icons.mail_outline_rounded,
-                  iconColor: _brand,
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your email';
-                  }
-                  if (!value.contains('@')) {
-                    return 'Please enter a valid email';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 14),
-              const PxLabel('Phone number', required: true),
-              TextFormField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                textInputAction: TextInputAction.next,
-                style:
-                DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
-                decoration: pxInputDecoration(
-                  hint: 'Enter your phone number',
-                  icon: Icons.phone_outlined,
-                  iconColor: _brand,
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your phone number';
-                  }
-                  if (value.length < 10) {
-                    return 'Please enter a valid phone number';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 14),
-              const PxLabel('Address', required: true),
-              TextFormField(
-                controller: _addressController,
-                textCapitalization: TextCapitalization.sentences,
-                textInputAction: TextInputAction.next,
-                style:
-                DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
-                decoration: pxInputDecoration(
-                  hint: 'Enter your address',
-                  icon: Icons.location_on_outlined,
-                  iconColor: _brand,
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your address';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 14),
-              const PxLabel('Username', required: true),
-              TextFormField(
-                controller: _usernameController,
-                textInputAction: TextInputAction.next,
-                style:
-                DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
-                decoration: pxInputDecoration(
-                  hint: 'Choose a username',
-                  icon: Icons.account_circle_outlined,
-                  iconColor: _brand,
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please choose a username';
-                  }
-                  if (value.length < 3) {
-                    return 'Username must be at least 3 characters';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 14),
-              const PxLabel('Password', required: true),
-              TextFormField(
-                controller: _passwordController,
-                obscureText: _obscurePassword,
-                textInputAction: TextInputAction.next,
-                style:
-                DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
-                decoration: pxInputDecoration(
-                  hint: 'Create a strong password',
-                  icon: Icons.lock_outline_rounded,
-                  iconColor: _brand,
-                  suffix: IconButton(
-                    tooltip: _obscurePassword ? 'Show password' : 'Hide password',
-                    onPressed: () =>
-                        setState(() => _obscurePassword = !_obscurePassword),
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                      color: DT.slate400,
-                      size: 20,
-                    ),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please create a password';
-                  }
-                  if (value.length < 8) {
-                    return 'Password must be at least 8 characters';
-                  }
-                  if (!RegExp(r'[A-Z]').hasMatch(value)) {
-                    return 'Must contain at least 1 uppercase letter';
-                  }
-                  if (!RegExp(r'[0-9]').hasMatch(value)) {
-                    return 'Must contain at least 1 digit';
-                  }
-                  if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(value)) {
-                    return 'Must contain at least 1 special character';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 14),
-              const PxLabel('Confirm password', required: true),
-              TextFormField(
-                controller: _confirmPasswordController,
-                obscureText: _obscureConfirmPassword,
-                textInputAction: TextInputAction.done,
-                onFieldSubmitted: (_) {
-                  if (!_isLoading && !_isSendingOtp) _register();
-                },
-                style:
-                DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
-                decoration: pxInputDecoration(
-                  hint: 'Re-enter your password',
-                  icon: Icons.lock_outline_rounded,
-                  iconColor: _brand,
-                  suffix: IconButton(
-                    tooltip: _obscureConfirmPassword
-                        ? 'Show password'
-                        : 'Hide password',
-                    onPressed: () => setState(() =>
-                    _obscureConfirmPassword = !_obscureConfirmPassword),
-                    icon: Icon(
-                      _obscureConfirmPassword
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                      color: DT.slate400,
-                      size: 20,
-                    ),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please confirm your password';
-                  }
-                  if (value != _passwordController.text) {
-                    return 'Passwords do not match';
-                  }
-                  return null;
-                },
-              ),
-            ],
-
-            // Step 1: OTP verification
-            if (_currentStep == 1) ...[
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: _brand.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: _brand.withValues(alpha: 0.15)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.mail_outline_rounded,
-                        color: _brand, size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'OTP sent to ${_emailController.text}',
-                        style: DT.text(size: 12.5, color: DT.slate500),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-              const PxLabel('Enter OTP', required: true),
-              TextFormField(
-                controller: _otpController,
-                keyboardType: TextInputType.number,
-                maxLength: 6,
-                textInputAction: TextInputAction.done,
-                onFieldSubmitted: (_) {
-                  if (!_isVerifyingOtp) _register();
-                },
-                style: DT.text(
-                    size: 16,
-                    weight: FontWeight.w700,
-                    color: DT.onyx900,
-                    letterSpacing: 6),
-                decoration:
-                pxInputDecoration(hint: '6-digit OTP', icon: Icons.password_outlined, iconColor: _brand)
-                    .copyWith(counterText: ''),
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  TextButton(
-                    onPressed: _isSendingOtp ? null : _sendOtp,
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      minimumSize: const Size(0, 32),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: Text(
-                      _isSendingOtp ? 'Sending…' : 'Resend OTP',
-                      style: DT.text(
-                          size: 13, weight: FontWeight.w700, color: _brand),
-                    ),
-                  ),
-                  const Spacer(),
-                  if (_isEmailVerified)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF059669)
-                            .withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.check_circle,
-                              color: Color(0xFF059669), size: 16),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Verified',
-                            style: DT.text(
-                                size: 12,
-                                weight: FontWeight.w700,
-                                color: const Color(0xFF059669)),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-            ],
-
-            // Terms & Conditions (only on step 0)
-            if (_currentStep == 0) ...[
-              const SizedBox(height: 12),
-              InkWell(
-                borderRadius: BorderRadius.circular(10),
-                onTap: () => setState(() => _agreeTerms = !_agreeTerms),
-                child: Padding(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: Checkbox(
-                          value: _agreeTerms,
-                          onChanged: (value) =>
-                              setState(() => _agreeTerms = value ?? false),
-                          activeColor: _brand,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          materialTapTargetSize:
-                          MaterialTapTargetSize.shrinkWrap,
-                          visualDensity: VisualDensity.compact,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Text.rich(
-                            TextSpan(
-                              text: 'I agree to the ',
-                              style: DT.text(size: 12.5, color: DT.slate500),
-                              children: [
-                                WidgetSpan(
-                                  alignment: PlaceholderAlignment.baseline,
-                                  baseline: TextBaseline.alphabetic,
-                                  child: GestureDetector(
-                                    onTap: _openTerms,
-                                    child: Text(
-                                      'Terms & Conditions',
-                                      style: DT.text(
-                                        size: 12.5,
-                                        weight: FontWeight.w700,
-                                        color: _brand,
-                                        decoration: TextDecoration.underline,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                TextSpan(
-                                    text: ' and ',
-                                    style: DT.text(
-                                        size: 12.5, color: DT.slate500)),
-                                WidgetSpan(
-                                  alignment: PlaceholderAlignment.baseline,
-                                  baseline: TextBaseline.alphabetic,
-                                  child: GestureDetector(
-                                    onTap: _openTerms,
-                                    child: Text(
-                                      'Privacy Policy',
-                                      style: DT.text(
-                                        size: 12.5,
-                                        weight: FontWeight.w700,
-                                        color: _brand,
-                                        decoration: TextDecoration.underline,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-
+            _stepper(),
             const SizedBox(height: 20),
-
-            // Primary submit button
-            SizedBox(
-              height: 50,
-              child: ElevatedButton(
-                onPressed:
-                (_isLoading || _isSendingOtp || _isVerifyingOtp)
-                    ? null
-                    : _register,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _brand,
-                  disabledBackgroundColor: _brand.withValues(alpha: 0.55),
-                  foregroundColor: Colors.white,
-                  elevation: 2,
-                  shadowColor: const Color(0x401A68FA),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-                child: (_isLoading || _isSendingOtp || _isVerifyingOtp)
-                    ? Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2.2, color: Colors.white),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      _currentStep == 0
-                          ? 'Sending OTP…'
-                          : (_isEmailVerified
-                          ? 'Creating account…'
-                          : 'Verifying…'),
-                      style: DT.text(
-                          size: 15,
-                          weight: FontWeight.w700,
-                          color: Colors.white),
-                    ),
-                  ],
-                )
-                    : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      _currentStep == 0
-                          ? 'Continue'
-                          : (_isEmailVerified
-                          ? 'Complete Registration'
-                          : 'Verify OTP'),
-                      style: DT.text(
-                          size: 15,
-                          weight: FontWeight.w800,
-                          color: Colors.white),
-                    ),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.arrow_forward_rounded, size: 19),
-                  ],
-                ),
-              ),
-            ),
+            _emailBlock(),
+            if (_stage == _Stage.otp) ...[
+              const SizedBox(height: 18),
+              _otpBlock(),
+            ],
+            if (_stage == _Stage.details) ...[
+              const SizedBox(height: 18),
+              _detailsBlock(),
+            ],
           ],
         ),
       ),
     );
   }
 
-  // ── Step indicator ──────────────────────────────────────
-  Widget _stepIndicator() {
-    Widget dot(int step, String label) {
-      final isActive = _currentStep >= step;
-      return Column(
-        children: [
-          Container(
-            width: 28,
-            height: 28,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isActive ? _brand : DT.slate200,
+  // ── Stepper ─────────────────────────────────────────────
+  Widget _stepper() {
+    final current = _stage.index;
+    Widget dot(int i, String label, IconData icon) {
+      final done = current > i;
+      final active = current == i;
+      return Expanded(
+        child: Column(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: done ? _green : (active ? _brand : DT.slate100),
+                boxShadow: active
+                    ? const [BoxShadow(color: Color(0x406366F1), blurRadius: 10, offset: Offset(0, 3))]
+                    : null,
+              ),
+              child: Icon(done ? Icons.check_rounded : icon,
+                  size: 18, color: done || active ? Colors.white : DT.slate400),
             ),
-            child: Text(
-              '${step + 1}',
-              style: DT.text(
-                  size: 12,
-                  weight: FontWeight.w700,
-                  color: isActive ? Colors.white : DT.slate500),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: DT.text(
-              size: 10,
-              weight: isActive ? FontWeight.w700 : FontWeight.w500,
-              color: isActive ? DT.onyx900 : DT.slate400,
-            ),
-          ),
-        ],
+            const SizedBox(height: 6),
+            Text(label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: DT.text(
+                    size: 11.5,
+                    weight: active || done ? FontWeight.w700 : FontWeight.w500,
+                    color: active ? DT.onyx900 : (done ? _green : DT.slate400))),
+          ],
+        ),
       );
     }
 
-    Widget connector(bool active) => Expanded(
+    Widget line(int afterStep) => Expanded(
       child: Container(
-        height: 2,
-        margin: const EdgeInsets.only(bottom: 16),
-        color: active ? _brand : DT.slate200,
+        height: 3,
+        margin: const EdgeInsets.only(bottom: 22),
+        decoration: BoxDecoration(
+          color: current > afterStep ? _green : DT.slate200,
+          borderRadius: BorderRadius.circular(2),
+        ),
       ),
     );
 
     return Row(
       children: [
-        dot(0, 'Details'),
-        connector(_currentStep >= 1),
-        dot(1, 'OTP'),
+        dot(0, 'Email', Icons.mail_outline_rounded),
+        line(0),
+        dot(1, 'Verify', Icons.password_rounded),
+        line(1),
+        dot(2, 'Details', Icons.person_outline_rounded),
       ],
+    );
+  }
+
+  // ── Step 1: email ───────────────────────────────────────
+  Widget _emailBlock() {
+    final locked = _stage != _Stage.email;
+    final verified = _stage == _Stage.details;
+    return Form(
+      key: _emailFormKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(child: _label('Email address', required: !locked)),
+              if (locked && !verified)
+                _linkButton('Change', Icons.edit_outlined, _busy ? null : _changeEmail),
+            ],
+          ),
+          TextFormField(
+            controller: _emailController,
+            readOnly: locked,
+            keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.send,
+            autofillHints: const [AutofillHints.email],
+            onFieldSubmitted: (_) {
+              if (!_busy && !locked) _sendOtp();
+            },
+            style: _inputStyle.copyWith(color: locked ? DT.onyx700 : DT.onyx900),
+            decoration: _input(
+              hint: 'you@company.com',
+              icon: Icons.mail_outline_rounded,
+              filled: locked ? DT.slate50 : Colors.white,
+              suffix: verified
+                  ? Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.verified_rounded, color: _green, size: 18),
+                    const SizedBox(width: 4),
+                    Text('Verified', style: DT.text(size: 12, weight: FontWeight.w800, color: _green)),
+                  ],
+                ),
+              )
+                  : null,
+            ),
+            validator: (v) {
+              final t = (v ?? '').trim();
+              if (t.isEmpty) return 'Please enter your email';
+              if (!RegExp(r'^[\w\-.+]+@([\w\-]+\.)+[\w\-]{2,}$').hasMatch(t)) return 'Please enter a valid email';
+              return null;
+            },
+          ),
+          if (!locked) ...[
+            const SizedBox(height: 16),
+            _primaryButton(
+              label: 'Send OTP',
+              busyLabel: 'Sending OTP…',
+              icon: Icons.send_rounded,
+              busy: _sendingOtp,
+              onPressed: _busy ? null : _sendOtp,
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Icon(Icons.info_outline_rounded, size: 15, color: DT.slate400),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text('We\'ll send a 6-digit code to verify this email.',
+                      style: DT.text(size: 11.5, color: DT.slate500)),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ── Step 2: OTP ─────────────────────────────────────────
+  Widget _otpBlock() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FBFF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: DT.blue100),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(color: DT.blue50, borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.mark_email_read_outlined, color: _brand, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Enter verification code',
+                        style: DT.text(size: 14, weight: FontWeight.w800, color: DT.onyx900)),
+                    Text.rich(
+                      TextSpan(
+                        text: 'Sent to ',
+                        style: DT.text(size: 12, color: DT.slate500),
+                        children: [
+                          TextSpan(text: _email, style: DT.text(size: 12, weight: FontWeight.w700, color: DT.onyx800)),
+                        ],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _OtpBoxes(
+            controller: _otpController,
+            focusNode: _otpFocus,
+            length: _otpLength,
+            hasError: _otpError != null,
+            enabled: !_verifyingOtp,
+            onChanged: (v) {
+              if (_otpError != null) setState(() => _otpError = null);
+              if (v.length == _otpLength && !_verifyingOtp) _verifyOtp();
+            },
+          ),
+          if (_otpError != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.error_outline_rounded, size: 15, color: DT.error),
+                const SizedBox(width: 6),
+                Expanded(child: Text(_otpError!, style: DT.text(size: 12, weight: FontWeight.w600, color: DT.error))),
+              ],
+            ),
+          ],
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Text('Didn\'t get it?', style: DT.text(size: 12.5, color: DT.slate500)),
+              const SizedBox(width: 4),
+              if (_resendIn > 0)
+                Text('Resend in ${_resendIn}s', style: DT.text(size: 12.5, weight: FontWeight.w700, color: DT.slate400))
+              else
+                _linkButton(_sendingOtp ? 'Sending…' : 'Resend OTP', Icons.refresh_rounded,
+                    _busy ? null : () => _sendOtp(resend: true)),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _primaryButton(
+            label: 'Verify OTP',
+            busyLabel: 'Verifying…',
+            icon: Icons.verified_user_outlined,
+            busy: _verifyingOtp,
+            onPressed: _busy ? null : _verifyOtp,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Step 3: details ─────────────────────────────────────
+  Widget _detailsBlock() {
+    return Form(
+      key: _detailsFormKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _sectionTitle(Icons.badge_outlined, 'Your details'),
+          const SizedBox(height: 12),
+          _label('Full name', required: true),
+          TextFormField(
+            controller: _nameController,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.next,
+            autofillHints: const [AutofillHints.name],
+            style: _inputStyle,
+            decoration: _input(hint: 'Enter your full name', icon: Icons.person_outline_rounded),
+            validator: (v) => (v ?? '').trim().length < 2 ? 'Please enter your name' : null,
+          ),
+          const SizedBox(height: 14),
+          _label('Mobile number', required: true),
+          TextFormField(
+            controller: _phoneController,
+            keyboardType: TextInputType.phone,
+            textInputAction: TextInputAction.next,
+            autofillHints: const [AutofillHints.telephoneNumberNational],
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
+            style: _inputStyle,
+            decoration: _input(hint: '10-digit mobile number', icon: Icons.phone_outlined).copyWith(
+              prefixText: '+91  ',
+              prefixStyle: DT.text(size: 14, weight: FontWeight.w700, color: DT.slate500),
+            ),
+            validator: (v) =>
+            RegExp(r'^[6-9]\d{9}$').hasMatch((v ?? '').trim()) ? null : 'Enter a valid 10-digit mobile number',
+          ),
+          const SizedBox(height: 14),
+          _label('Address', required: true),
+          TextFormField(
+            controller: _addressController,
+            minLines: 2,
+            maxLines: 3,
+            keyboardType: TextInputType.multiline,
+            textCapitalization: TextCapitalization.sentences,
+            style: _inputStyle.copyWith(fontWeight: FontWeight.w500),
+            decoration: _input(hint: 'Shop / office, area, city', icon: Icons.location_on_outlined, filled: DT.slate50),
+            validator: (v) => (v ?? '').trim().length < 5 ? 'Please enter your address' : null,
+          ),
+          const SizedBox(height: 20),
+          _sectionTitle(Icons.lock_outline_rounded, 'Login details'),
+          const SizedBox(height: 12),
+          _label('Username', required: true),
+          TextFormField(
+            controller: _usernameController,
+            textInputAction: TextInputAction.next,
+            autofillHints: const [AutofillHints.newUsername],
+            inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
+            style: _inputStyle,
+            decoration: _input(hint: 'Choose a username', icon: Icons.alternate_email_rounded),
+            validator: (v) {
+              final t = (v ?? '').trim();
+              if (t.isEmpty) return 'Please choose a username';
+              if (t.length < 3) return 'Username must be at least 3 characters';
+              return null;
+            },
+          ),
+          const SizedBox(height: 14),
+          _label('Password', required: true),
+          TextFormField(
+            controller: _passwordController,
+            obscureText: _obscurePassword,
+            textInputAction: TextInputAction.next,
+            autofillHints: const [AutofillHints.newPassword],
+            onChanged: (_) => setState(() {}),
+            style: _inputStyle,
+            decoration: _input(
+              hint: 'Create a strong password',
+              icon: Icons.lock_outline_rounded,
+              suffix: _eye(_obscurePassword, () => setState(() => _obscurePassword = !_obscurePassword)),
+            ),
+            validator: (v) {
+              final p = v ?? '';
+              if (p.isEmpty) return 'Please create a password';
+              if (_passwordRules.any((r) => !r.$2(p))) return 'Password does not meet all the rules below';
+              return null;
+            },
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [for (final r in _passwordRules) _ruleChip(r.$1, r.$2(_passwordController.text))],
+          ),
+          const SizedBox(height: 14),
+          _label('Confirm password', required: true),
+          TextFormField(
+            controller: _confirmPasswordController,
+            obscureText: _obscureConfirm,
+            textInputAction: TextInputAction.done,
+            onChanged: (_) => setState(() {}),
+            onFieldSubmitted: (_) {
+              if (!_busy) _register();
+            },
+            style: _inputStyle,
+            decoration: _input(
+              hint: 'Re-enter your password',
+              icon: Icons.lock_outline_rounded,
+              suffix: _confirmPasswordController.text.isNotEmpty &&
+                  _confirmPasswordController.text == _passwordController.text
+                  ? const Padding(
+                padding: EdgeInsets.only(right: 12),
+                child: Icon(Icons.check_circle_rounded, color: _green, size: 20),
+              )
+                  : _eye(_obscureConfirm, () => setState(() => _obscureConfirm = !_obscureConfirm)),
+            ),
+            validator: (v) {
+              if ((v ?? '').isEmpty) return 'Please confirm your password';
+              if (v != _passwordController.text) return 'Passwords do not match';
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+          _termsRow(),
+          const SizedBox(height: 18),
+          _primaryButton(
+            label: 'Create account',
+            busyLabel: 'Creating account…',
+            icon: Icons.arrow_forward_rounded,
+            busy: _registering,
+            onPressed: _busy ? null : _register,
+          ),
+        ],
+      ),
+    );
+  }
+
+  static final List<(String, bool Function(String))> _passwordRules = [
+    ('8+ characters', (p) => p.length >= 8),
+    ('1 uppercase', (p) => RegExp(r'[A-Z]').hasMatch(p)),
+    ('1 number', (p) => RegExp(r'[0-9]').hasMatch(p)),
+    ('1 special character', (p) => RegExp(r'[!@#$%^&*(),.?":{}|<>_\-+=~`\[\]\\/;]').hasMatch(p)),
+  ];
+
+  Widget _ruleChip(String label, bool ok) => AnimatedContainer(
+    duration: const Duration(milliseconds: 180),
+    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+    decoration: BoxDecoration(
+      color: ok ? DT.emerald50 : DT.slate50,
+      borderRadius: BorderRadius.circular(999),
+      border: Border.all(color: ok ? DT.emerald200 : DT.slate200),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(ok ? Icons.check_rounded : Icons.circle_outlined, size: 13, color: ok ? _green : DT.slate400),
+        const SizedBox(width: 4),
+        Text(label, style: DT.text(size: 11, weight: FontWeight.w700, color: ok ? DT.emerald700 : DT.slate500)),
+      ],
+    ),
+  );
+
+  Widget _termsRow() {
+    final err = _showTermsError && !_agreeTerms;
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () => setState(() {
+        _agreeTerms = !_agreeTerms;
+        if (_agreeTerms) _showTermsError = false;
+      }),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(10, 10, 12, 10),
+        decoration: BoxDecoration(
+          color: err ? DT.errorBg : DT.slate50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: err ? DT.errorBorder : DT.slate200),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 22,
+              height: 22,
+              child: Checkbox(
+                value: _agreeTerms,
+                onChanged: (v) => setState(() {
+                  _agreeTerms = v ?? false;
+                  if (_agreeTerms) _showTermsError = false;
+                }),
+                activeColor: _brand,
+                side: BorderSide(color: err ? DT.error : DT.slate400, width: 1.4),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text.rich(
+                  TextSpan(
+                    text: 'I agree to the ',
+                    style: DT.text(size: 12.5, color: DT.slate500, height: 1.4),
+                    children: [
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.baseline,
+                        baseline: TextBaseline.alphabetic,
+                        child: GestureDetector(
+                          onTap: _openTerms,
+                          child: Text('Terms & Conditions',
+                              style: DT.text(
+                                  size: 12.5,
+                                  weight: FontWeight.w700,
+                                  color: _brand,
+                                  decoration: TextDecoration.underline)),
+                        ),
+                      ),
+                      TextSpan(text: ' and ', style: DT.text(size: 12.5, color: DT.slate500)),
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.baseline,
+                        baseline: TextBaseline.alphabetic,
+                        child: GestureDetector(
+                          onTap: _openTerms,
+                          child: Text('Privacy Policy',
+                              style: DT.text(
+                                  size: 12.5,
+                                  weight: FontWeight.w700,
+                                  color: _brand,
+                                  decoration: TextDecoration.underline)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -995,8 +978,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () =>
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen())),
+        onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen())),
         child: Ink(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
@@ -1008,11 +990,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Container(
                 width: 42,
                 height: 42,
-                decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
-                    borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.login_rounded,
-                    color: _brand, size: 22),
+                decoration: BoxDecoration(color: DT.blue50, borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.login_rounded, color: _brand, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1020,26 +999,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Already have an account?',
-                        style: DT.text(
-                            size: 14,
-                            weight: FontWeight.w800,
-                            color: DT.onyx900)),
-                    Text('Sign in to continue',
-                        style: DT.text(size: 12, color: DT.slate500)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: DT.text(size: 14, weight: FontWeight.w800, color: DT.onyx900)),
+                    Text('Sign in to continue', style: DT.text(size: 12, color: DT.slate500)),
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: DT.blue50,
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: const Color(0xFFDBEAFE)),
+                  border: Border.all(color: DT.blue100),
                 ),
-                child: Text('Login',
-                    style: DT.text(
-                        size: 12.5, weight: FontWeight.w800, color: _brand)),
+                child: Text('Login', style: DT.text(size: 12.5, weight: FontWeight.w800, color: _brand)),
               ),
             ],
           ),
@@ -1048,22 +1023,222 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // ── Footer ──────────────────────────────────────────────
-  Widget _footer() {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.verified_user_outlined,
-                size: 15, color: DT.slate400),
-            const SizedBox(width: 6),
-            Text('Your details are encrypted and secure',
+  Widget _footer() => Column(
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.verified_user_outlined, size: 15, color: DT.slate400),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text('Your details are encrypted and secure',
                 style: DT.text(size: 11.5, color: DT.slate400)),
-          ],
+          ),
+        ],
+      ),
+      const SizedBox(height: 24),
+    ],
+  );
+
+  // =====================================================================
+  // Small design helpers (private to this screen)
+  // =====================================================================
+  static final TextStyle _inputStyle = DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900);
+
+  InputDecoration _input({required String hint, required IconData icon, Widget? suffix, Color? filled}) {
+    OutlineInputBorder b(Color c, [double w = 1]) =>
+        OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: c, width: w));
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: DT.text(size: 13.5, color: DT.slate400),
+      prefixIcon: Icon(icon, size: 19, color: _brand),
+      prefixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 20),
+      suffixIcon: suffix,
+      suffixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 20),
+      filled: true,
+      fillColor: filled ?? Colors.white,
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      enabledBorder: b(DT.slate200),
+      focusedBorder: b(_brand, 2),
+      errorBorder: b(DT.error),
+      focusedErrorBorder: b(DT.error, 2),
+      errorMaxLines: 2,
+    );
+  }
+
+  Widget _eye(bool obscure, VoidCallback onTap) => IconButton(
+    tooltip: obscure ? 'Show password' : 'Hide password',
+    onPressed: onTap,
+    icon: Icon(obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: DT.slate400, size: 20),
+  );
+
+  Widget _label(String text, {bool required = false}) => Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Text.rich(
+      TextSpan(
+        text: text,
+        style: DT.text(size: 12, weight: FontWeight.w600, color: DT.onyx700),
+        children: [
+          if (required) TextSpan(text: ' *', style: DT.text(size: 12, color: const Color(0xFFF43F5E))),
+        ],
+      ),
+    ),
+  );
+
+  Widget _sectionTitle(IconData icon, String title) => Row(
+    children: [
+      Container(
+        width: 30,
+        height: 30,
+        decoration: BoxDecoration(color: DT.blue50, borderRadius: BorderRadius.circular(9)),
+        child: Icon(icon, size: 17, color: _brand),
+      ),
+      const SizedBox(width: 10),
+      Text(title, style: DT.text(size: 14.5, weight: FontWeight.w800, color: DT.onyx900)),
+      const SizedBox(width: 10),
+      const Expanded(child: Divider(height: 1, color: DT.slate100)),
+    ],
+  );
+
+  Widget _linkButton(String label, IconData icon, VoidCallback? onTap) => TextButton.icon(
+    onPressed: onTap,
+    icon: Icon(icon, size: 15),
+    label: Text(label, style: DT.text(size: 12.5, weight: FontWeight.w700, color: onTap == null ? DT.slate400 : _brand)),
+    style: TextButton.styleFrom(
+      foregroundColor: _brand,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      minimumSize: const Size(0, 30),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    ),
+  );
+
+  Widget _primaryButton({
+    required String label,
+    required String busyLabel,
+    required IconData icon,
+    required bool busy,
+    required VoidCallback? onPressed,
+  }) =>
+      SizedBox(
+        height: 50,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: DT.ctaGradient,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
+          ),
+          child: ElevatedButton(
+            onPressed: onPressed,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              disabledBackgroundColor: Colors.transparent,
+              foregroundColor: Colors.white,
+              disabledForegroundColor: Colors.white,
+              elevation: 0,
+              shadowColor: Colors.transparent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (busy)
+                  const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white))
+                else
+                  Icon(icon, size: 19),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(busy ? busyLabel : label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: DT.text(size: 15, weight: FontWeight.w800, color: Colors.white)),
+                ),
+              ],
+            ),
+          ),
         ),
-        const SizedBox(height: 24),
-      ],
+      );
+}
+
+// =====================================================================
+// 6-box OTP input (one hidden TextField under the boxes – paste works)
+// =====================================================================
+class _OtpBoxes extends StatelessWidget {
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final int length;
+  final bool hasError;
+  final bool enabled;
+  final ValueChanged<String> onChanged;
+
+  const _OtpBoxes({
+    required this.controller,
+    required this.focusNode,
+    required this.length,
+    required this.hasError,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([controller, focusNode]),
+      builder: (context, _) {
+        final text = controller.text;
+        return Stack(
+          children: [
+            Row(
+              children: [
+                for (var i = 0; i < length; i++) ...[
+                  if (i > 0) const SizedBox(width: 8),
+                  Expanded(child: _box(i, text)),
+                ],
+              ],
+            ),
+            Positioned.fill(
+              child: Opacity(
+                opacity: 0,
+                child: TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  enabled: enabled,
+                  autofocus: false,
+                  keyboardType: TextInputType.number,
+                  autofillHints: const [AutofillHints.oneTimeCode],
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(length)],
+                  showCursor: false,
+                  enableInteractiveSelection: false,
+                  onChanged: onChanged,
+                  decoration: const InputDecoration(border: InputBorder.none, counterText: ''),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _box(int i, String text) {
+    final filled = i < text.length;
+    final active = focusNode.hasFocus && (i == text.length || (i == length - 1 && text.length == length));
+    final color = hasError ? DT.error : (active ? _brand : (filled ? DT.blue200 : DT.slate200));
+    return AspectRatio(
+      aspectRatio: 0.9,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: hasError ? DT.errorBg : (filled ? DT.blue50 : Colors.white),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color, width: active || hasError ? 2 : 1.2),
+        ),
+        child: Text(
+          filled ? text[i] : '',
+          style: DT.text(size: 22, weight: FontWeight.w800, color: hasError ? DT.error : DT.onyx900),
+        ),
+      ),
     );
   }
 }

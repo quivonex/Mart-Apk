@@ -185,27 +185,35 @@ class _CompanyPhotosScreenState extends State<CompanyPhotosScreen> {
             ),
             child: SizedBox(
               height: 48,
-              child: ElevatedButton(
-                onPressed: _dirty && !_saving ? _save : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: DT.blue800,
-                  disabledBackgroundColor: DT.slate200,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape:
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: DT.ctaGradient,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
                 ),
-                child: _saving
-                    ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
-                )
-                    : Text('Save photos',
-                    style: DT.text(
-                        size: 14.5,
-                        weight: FontWeight.w700,
-                        color: _dirty ? Colors.white : DT.slate400)),
+                child: ElevatedButton(
+                  onPressed: _dirty && !_saving ? _save : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    disabledBackgroundColor: Colors.transparent,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape:
+                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
+                  ),
+                  child: _saving
+                      ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                  )
+                      : Text('Save photos',
+                      style: DT.text(
+                          size: 14.5,
+                          weight: FontWeight.w700,
+                          color: _dirty ? Colors.white : DT.slate400)),
+                ),
               ),
             ),
           ),

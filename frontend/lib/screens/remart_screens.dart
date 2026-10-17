@@ -6,68 +6,49 @@
 //   POST olx/categories/                             (public)
 //   POST olx/enquiries/create/  {listing_id, message, phone_number}   (login)
 //
-// "Add Product" on ReMart needs the plan + payment flow, so it opens the website.
+// "Add Product" opens RemartAddProductScreen (photos, details, plan + Razorpay payment).
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:url_launcher/url_launcher.dart';
 import '../constants/design_tokens.dart';
 import '../services/api_urls.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'login_screen.dart';
+import 'remart_add_product_screen.dart';
 
-const _green = Color(0xFF1A68FA);
-const _greenBg = Color(0xFFEFF6FF);
-const _website = 'https://qnxmartb2b.com';
+const _green = Color(0xFF6366F1);
+const _greenBg = Color(0xFFEEF2FF);
 
-/// Drawer "QNX ReMart › Add Product": posting needs a plan and payment, done on the website.
-Future<void> openRemartPosting(BuildContext context) {
-  return showModalBottomSheet(
-    context: context,
-    backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
-    builder: (ctx) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Icon(Icons.recycling_rounded, size: 40, color: _green),
-            const SizedBox(height: 10),
-            Text('Sell on QNX ReMart',
-                textAlign: TextAlign.center, style: DT.text(size: 18, weight: FontWeight.w800)),
-            const SizedBox(height: 6),
-            Text(
-              'Posting a used or resale item includes choosing a listing plan and payment. '
-                  'For now this is done on our website; your listing then appears here in the app.',
-              textAlign: TextAlign.center,
-              style: DT.text(size: 13.5, color: DT.onyx600, height: 1.5),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(ctx);
-                launchUrl(Uri.parse(_website), mode: LaunchMode.externalApplication);
-              },
-              icon: const Icon(Icons.open_in_new_rounded, size: 18),
-              label: Text('Post on qnxmartb2b.com',
-                  style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _green,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                minimumSize: const Size.fromHeight(48),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-          ],
-        ),
+/// Drawer "QNX ReMart › Add Product": opens the in-app sell form (login required).
+/// Returns true when an item was posted.
+Future<bool> openRemartPosting(BuildContext context) async {
+  final token = await SharedPreferencesHelper.getAccessToken();
+  if (!context.mounted) return false;
+  if (token == null || token.isEmpty) {
+    final go = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: const Icon(Icons.recycling_rounded, color: _green, size: 36),
+        title: const Text('Login required'),
+        content: const Text('Please log in to sell an item on QNX ReMart.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Login')),
+        ],
       ),
-    ),
+    );
+    if (go == true && context.mounted) {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+    }
+    return false;
+  }
+  final posted = await Navigator.push<bool>(
+    context,
+    MaterialPageRoute(builder: (_) => const RemartAddProductScreen()),
   );
+  return posted == true;
 }
 
 // =====================================================================
@@ -247,7 +228,7 @@ Future<void> startRemartEnquiry(BuildContext context, RemartListing listing) asy
     await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        icon: const Icon(Icons.storefront_rounded, color: Color(0xFF1A68FA), size: 36),
+        icon: const Icon(Icons.storefront_rounded, color: Color(0xFF6366F1), size: 36),
         title: const Text('This is your listing'),
         content: const Text(
             'Buyers can send you enquiries on this item. You can\'t send an enquiry on your own listing.'),
@@ -343,7 +324,7 @@ class _RemartListingsScreenState extends State<RemartListingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: Colors.white,
         foregroundColor: DT.onyx900,
@@ -358,7 +339,9 @@ class _RemartListingsScreenState extends State<RemartListingsScreen> {
         ),
         actions: [
           TextButton.icon(
-            onPressed: () => openRemartPosting(context),
+            onPressed: () async {
+              if (await openRemartPosting(context)) _load();
+            },
             icon: const Icon(Icons.add_rounded, color: _green),
             label: Text('Sell', style: DT.text(size: 13.5, weight: FontWeight.w800, color: _green)),
           ),
@@ -434,7 +417,7 @@ class _RemartListingsScreenState extends State<RemartListingsScreen> {
         showCheckmark: false,
         selectedColor: _green,
         backgroundColor: _greenBg,
-        side: BorderSide(color: sel ? _green : const Color(0xFFDBEAFE)),
+        side: BorderSide(color: sel ? _green : const Color(0xFFE0E7FF)),
         labelStyle: DT.text(size: 12.5, weight: FontWeight.w700, color: sel ? Colors.white : _green),
         onSelected: (_) {
           setState(() => _categoryId = id);
@@ -716,15 +699,15 @@ class _RemartListingDetailScreenState extends State<RemartListingDetailScreen> {
             height: 50,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
+              color: const Color(0xFFEEF2FF),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFDBEAFE)),
+              border: Border.all(color: const Color(0xFFE0E7FF)),
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.storefront_rounded, color: Color(0xFF1A68FA), size: 20),
+              const Icon(Icons.storefront_rounded, color: Color(0xFF6366F1), size: 20),
               const SizedBox(width: 8),
               Text('This is your listing',
-                  style: DT.text(size: 14.5, weight: FontWeight.w800, color: const Color(0xFF1A68FA))),
+                  style: DT.text(size: 14.5, weight: FontWeight.w800, color: const Color(0xFF6366F1))),
             ]),
           )
               : ElevatedButton.icon(

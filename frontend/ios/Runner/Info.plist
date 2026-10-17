@@ -26,6 +26,31 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+
+	<!-- ═══════════ PERMISSIONS ═══════════ -->
+	<!-- Camera: take logo & product photos -->
+	<key>NSCameraUsageDescription</key>
+	<string>QNX Mart needs camera access so you can take photos of your company logo and products.</string>
+
+	<!-- Photo library: pick existing photos & videos -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>QNX Mart needs access to your photos so you can upload company logos, product images and videos.</string>
+
+	<!-- Photo library: save photos (future use / share) -->
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>QNX Mart needs permission to save photos to your library.</string>
+
+	<!-- Location: auto-fill business address -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>QNX Mart uses your location to auto-fill your business address and set your shipping pickup point.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>QNX Mart uses your location to auto-fill your business address and set your shipping pickup point.</string>
+
+	<!-- Microphone: record videos with sound (product videos) -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>QNX Mart needs microphone access to record product videos with sound.</string>
+
+	<!-- ═══════════ APP CONFIG ═══════════ -->
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

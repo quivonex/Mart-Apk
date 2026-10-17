@@ -6,17 +6,53 @@ import '../services/seller_service.dart';
 
 // Colours used only on this screen (the rest come from DT).
 class _C {
-  static const navy1 = Color(0xFF1B223C);
-  static const navy2 = Color(0xFF212B4E);
-  static const navy3 = Color(0xFF242E54);
-  static const navy4 = Color(0xFF161D36);
-  static const blue600 = Color(0xFF2563EB);
-  static const blue400 = Color(0xFF60A5FA);
+  static const navy1 = Color(0xFF1E1B4B);
+  static const navy2 = Color(0xFF312E81);
+  static const navy3 = Color(0xFF312E81);
+  static const navy4 = Color(0xFF1E1B4B);
+  static const blue600 = Color(0xFF6366F1);
+  static const blue400 = Color(0xFF818CF8);
   static const indigo600 = Color(0xFF4F46E5);
   static const teal600 = Color(0xFF0D9488);
-  static const emerald600 = Color(0xFF059669);
+  static const emerald600 = Color(0xFF10B981);
   static const emerald300 = Color(0xFF6EE7B7);
   static const amber300 = Color(0xFFFCD34D);
+  // Header blue colour (matching the QNXMart brand blue)
+  static const headerBlue = Color(0xFF6366F1);
+}
+
+/// Business categories accepted by the backend (seller/models.py
+/// BUSINESS_CATEGORY_CHOICES). The first value is what is saved.
+const List<(String, String, IconData)> _businessCategories = [
+  ('electronics', 'Electronics', Icons.devices_other_rounded),
+  ('fashion', 'Fashion', Icons.checkroom_rounded),
+  ('home', 'Home & Kitchen', Icons.kitchen_rounded),
+  ('books', 'Books', Icons.menu_book_rounded),
+  ('sports', 'Sports', Icons.sports_cricket_rounded),
+  ('automotive', 'Automotive', Icons.directions_car_filled_rounded),
+  ('grocery', 'Grocery', Icons.local_grocery_store_rounded),
+  ('health', 'Health', Icons.health_and_safety_rounded),
+  ('toys', 'Toys', Icons.toys_rounded),
+  ('other', 'Other', Icons.category_rounded),
+];
+
+/// States accepted by the backend (seller/models.py STATE_CHOICES).
+const List<(String, String)> _states = [
+  ('MH', 'Maharashtra'),
+  ('DL', 'Delhi'),
+  ('KA', 'Karnataka'),
+  ('TN', 'Tamil Nadu'),
+];
+
+/// Maps a saved / typed value ("electronics", "Electronics", "MH",
+/// "Maharashtra") to the backend key, or '' when it is not offered.
+String _matchKey(String raw, Iterable<(String, String)> options) {
+  final v = raw.trim().toLowerCase();
+  if (v.isEmpty) return '';
+  for (final o in options) {
+    if (o.$1.toLowerCase() == v || o.$2.toLowerCase() == v) return o.$1;
+  }
+  return '';
 }
 
 class SellerProfileScreen extends StatefulWidget {
@@ -127,7 +163,9 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
     SellerRequest.businessTypeOptions.map((e) => e['value']).toSet();
     _businessType = validTypes.contains(s.businessType) ? s.businessType : null;
 
-    _businessCategoryCtrl.text = s.businessCategory;
+    // Category / state are dropdowns now – keep only values the backend accepts.
+    _businessCategoryCtrl.text = _matchKey(
+        s.businessCategory, _businessCategories.map((c) => (c.$1, c.$2)));
     _contactNameCtrl.text = s.contactPersonName;
     _designationCtrl.text = s.designation;
     _emailCtrl.text = s.email;
@@ -136,7 +174,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
     _landlineCtrl.text = s.landline;
     _addressCtrl.text = s.address;
     _cityCtrl.text = s.city;
-    _stateCtrl.text = s.state;
+    _stateCtrl.text = _matchKey(s.state, _states);
     _pincodeCtrl.text = s.pincode;
     _panCtrl.text = s.panNumber.toUpperCase();
     _accountCtrl.text = s.accountNumber;
@@ -246,14 +284,14 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
   // =================================================================
   List<MapEntry<String, bool>> get _completionItems => [
     MapEntry('Select business type', _businessType != null),
-    MapEntry('Add business category', _businessCategoryCtrl.text.trim().isNotEmpty),
+    MapEntry('Select business category', _businessCategoryCtrl.text.trim().isNotEmpty),
     MapEntry('Add contact name', _contactNameCtrl.text.trim().isNotEmpty),
     MapEntry('Add designation', _designationCtrl.text.trim().isNotEmpty),
     MapEntry('Add email', _emailCtrl.text.trim().isNotEmpty),
     MapEntry('Add mobile number', _mobileCtrl.text.trim().length == 10),
     MapEntry('Add address', _addressCtrl.text.trim().isNotEmpty),
     MapEntry('Add city', _cityCtrl.text.trim().isNotEmpty),
-    MapEntry('Add state', _stateCtrl.text.trim().isNotEmpty),
+    MapEntry('Select state', _stateCtrl.text.trim().isNotEmpty),
     MapEntry('Add pincode', _pincodeCtrl.text.trim().length == 6),
     MapEntry('Add PAN', _panRegex.hasMatch(_panCtrl.text.trim())),
     MapEntry('Add bank account', _accountCtrl.text.trim().isNotEmpty),
@@ -281,14 +319,15 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
     );
   }
 
-  // ---------- App bar ----------
+  // ---------- App bar (Blue header, Seller ID removed) ----------
   PreferredSizeWidget _buildAppBar() {
     return PreferredSize(
       preferredSize: const Size.fromHeight(68),
       child: Container(
         decoration: const BoxDecoration(
+          // Header colour changed to Blue
           gradient: LinearGradient(
-            colors: [_C.navy1, _C.navy2, Color(0xFF1C2440)],
+            colors: [_C.headerBlue, Color(0xFF8B5CF6)],
           ),
           boxShadow: [
             BoxShadow(
@@ -307,7 +346,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                     tooltip: 'Back',
                     onPressed: () => Navigator.maybePop(context),
                     icon: const Icon(Icons.arrow_back_rounded,
-                        color: DT.slate200),
+                        color: Colors.white),
                   ),
                   const SizedBox(width: 2),
                   Expanded(
@@ -338,15 +377,16 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                             ],
                           ],
                         ),
+                        // Seller ID line removed. Only a short subtitle remains.
                         const SizedBox(height: 1),
                         Text(
                           _isEdit
-                              ? 'Seller ID: #$_existingSellerId'
+                              ? 'Manage your store details'
                               : 'Set up your store to start selling',
                           style: DT.text(
                               size: 11.5,
                               weight: FontWeight.w500,
-                              color: DT.slate300),
+                              color: Colors.white70),
                         ),
                       ],
                     ),
@@ -383,7 +423,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                         borderRadius: BorderRadius.circular(DT.rMd),
                       ),
                       child: const Icon(Icons.more_vert_rounded,
-                          color: DT.slate200, size: 20),
+                          color: Colors.white, size: 20),
                     ),
                   ),
                 ],
@@ -418,7 +458,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
             width: 28,
             height: 28,
             child: CircularProgressIndicator(
-                strokeWidth: 2.5, color: _C.navy3),
+                strokeWidth: 2.5, color: _C.headerBlue),
           ),
           const SizedBox(height: 14),
           Text('Loading your seller details…',
@@ -459,7 +499,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                   style: DT.text(
                       size: 13, weight: FontWeight.w700, color: Colors.white)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: _C.navy3,
+                backgroundColor: _C.headerBlue,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding:
@@ -518,7 +558,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
     );
   }
 
-  // ---------- Hero / completion card ----------
+  // ---------- Hero / completion card (Blue header colour) ----------
   Widget _buildHeroCard() {
     return ListenableBuilder(
       listenable: _allFields,
@@ -532,13 +572,14 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
         return Container(
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
+            // Hero card background changed to the same Blue as the header
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [_C.navy3, Color(0xFF1D2645), _C.navy4],
+              colors: [_C.headerBlue, Color(0xFF8B5CF6)],
             ),
             borderRadius: BorderRadius.circular(DT.rLg),
-            border: Border.all(color: const Color(0x66334155)),
+            border: Border.all(color: const Color(0x33FFFFFF)),
             boxShadow: DT.shadowM3,
           ),
           child: Stack(
@@ -546,12 +587,12 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
               Positioned(
                 right: -40,
                 bottom: -40,
-                child: _glow(144, const Color(0x333B82F6)),
+                child: _glow(144, const Color(0x33FFFFFF)),
               ),
               Positioned(
                 left: -24,
                 top: -24,
-                child: _glow(96, const Color(0x336366F1)),
+                child: _glow(96, const Color(0x22FFFFFF)),
               ),
               Padding(
                 padding: const EdgeInsets.all(16),
@@ -568,11 +609,11 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                             gradient: const LinearGradient(
                               begin: Alignment.bottomLeft,
                               end: Alignment.topRight,
-                              colors: [_C.blue600, _C.blue400],
+                              colors: [Colors.white24, Colors.white10],
                             ),
                             borderRadius: BorderRadius.circular(DT.rMd),
                             border: Border.all(
-                                color: const Color(0x1AFFFFFF), width: 2),
+                                color: const Color(0x33FFFFFF), width: 2),
                           ),
                           child: Icon(
                             _isEdit
@@ -601,7 +642,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                                     : 'Register to start selling on QN Mart',
                                 style: DT.text(
                                     size: 12,
-                                    color: DT.slate300,
+                                    color: Colors.white70,
                                     height: 1.4),
                               ),
                             ],
@@ -610,12 +651,12 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                         const SizedBox(width: 8),
                         _darkPill(
                           '${(pct * 100).round()}% done',
-                          complete ? _C.emerald300 : _C.amber300,
+                          complete ? Colors.white : _C.amber300,
                           complete
-                              ? const Color(0x3310B981)
+                              ? const Color(0x33FFFFFF)
                               : const Color(0x33FBBF24),
                           complete
-                              ? const Color(0x4D34D399)
+                              ? const Color(0x4DFFFFFF)
                               : const Color(0x4DFBBF24),
                         ),
                       ],
@@ -625,7 +666,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                       padding: const EdgeInsets.only(top: 12),
                       decoration: const BoxDecoration(
                         border: Border(
-                            top: BorderSide(color: Color(0x80334155))),
+                            top: BorderSide(color: Color(0x33FFFFFF))),
                       ),
                       child: Column(
                         children: [
@@ -633,7 +674,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                             children: [
                               Text('Profile completion',
                                   style: DT.text(
-                                      size: 11, color: DT.slate300)),
+                                      size: 11, color: Colors.white70)),
                               const Spacer(),
                               Flexible(
                                 child: Text(
@@ -655,10 +696,10 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                             height: 8,
                             padding: const EdgeInsets.all(1.5),
                             decoration: BoxDecoration(
-                              color: const Color(0xCC1E293B),
+                              color: const Color(0x33FFFFFF),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                  color: const Color(0x80334155)),
+                                  color: const Color(0x33FFFFFF)),
                             ),
                             child: LayoutBuilder(
                               builder: (context, c) => Align(
@@ -674,7 +715,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                                         Color(0xFF34D399),
                                         _C.emerald600
                                       ]
-                                          : const [_C.blue400, _C.blue600],
+                                          : const [Colors.white, Colors.white70],
                                     ),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
@@ -741,15 +782,94 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
           validator: (v) =>
           v == null || v.isEmpty ? 'Business type is required' : null,
         ),
-        _field(
-          controller: _businessCategoryCtrl,
-          label: 'Business Category',
-          hint: 'e.g. Electronics & Components',
-          icon: Icons.grid_view_rounded,
-          textCapitalization: TextCapitalization.words,
-          validator: (v) => _required(v, 'Business category'),
-        ),
+        _categoryDropdown(),
       ],
+    );
+  }
+
+  /// Business category dropdown – saves the backend key (e.g. "electronics").
+  Widget _categoryDropdown() {
+    final current = _businessCategoryCtrl.text.trim();
+    return DropdownButtonFormField<String>(
+      value: current.isEmpty ? null : current,
+      isExpanded: true,
+      borderRadius: BorderRadius.circular(DT.rMd),
+      dropdownColor: Colors.white,
+      menuMaxHeight: 380,
+      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: DT.slate400),
+      style: _inputStyle(),
+      decoration: _decoration(
+        label: 'Business Category',
+        icon: Icons.grid_view_rounded,
+        hint: 'Select business category',
+      ),
+      selectedItemBuilder: (_) => [
+        for (final c in _businessCategories)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(c.$2,
+                overflow: TextOverflow.ellipsis, style: _inputStyle()),
+          ),
+      ],
+      items: [
+        for (final c in _businessCategories)
+          DropdownMenuItem<String>(
+            value: c.$1,
+            child: Row(
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: DT.blue50,
+                    borderRadius: BorderRadius.circular(DT.rSm),
+                  ),
+                  child: Icon(c.$3, size: 17, color: _C.blue600),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(c.$2,
+                      overflow: TextOverflow.ellipsis,
+                      style: DT.text(
+                          size: 13.5,
+                          weight: FontWeight.w600,
+                          color: DT.onyx800)),
+                ),
+              ],
+            ),
+          ),
+      ],
+      onChanged: (v) => setState(() => _businessCategoryCtrl.text = v ?? ''),
+      validator: (v) =>
+      v == null || v.isEmpty ? 'Business category is required' : null,
+    );
+  }
+
+  /// State dropdown – saves the backend code (e.g. "MH").
+  Widget _stateDropdown() {
+    final current = _stateCtrl.text.trim();
+    return DropdownButtonFormField<String>(
+      value: current.isEmpty ? null : current,
+      isExpanded: true,
+      borderRadius: BorderRadius.circular(DT.rMd),
+      dropdownColor: Colors.white,
+      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: DT.slate400),
+      style: _inputStyle(compact: true),
+      decoration: _decoration(
+        label: 'State',
+        icon: Icons.map_outlined,
+        hint: 'Select',
+        compact: true,
+      ),
+      items: [
+        for (final st in _states)
+          DropdownMenuItem<String>(
+            value: st.$1,
+            child: Text(st.$2, overflow: TextOverflow.ellipsis),
+          ),
+      ],
+      onChanged: (v) => setState(() => _stateCtrl.text = v ?? ''),
+      validator: (v) => v == null || v.isEmpty ? 'State is required' : null,
     );
   }
 
@@ -875,17 +995,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
               ),
             ),
             const SizedBox(width: 12),
-            Expanded(
-              child: _field(
-                controller: _stateCtrl,
-                label: 'State',
-                hint: 'e.g. Maharashtra',
-                icon: Icons.map_outlined,
-                compact: true,
-                textCapitalization: TextCapitalization.words,
-                validator: (v) => _required(v, 'State'),
-              ),
-            ),
+            Expanded(child: _stateDropdown()),
           ],
         ),
         _field(
@@ -1033,7 +1143,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
       child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFF1A2340), _C.navy3, Color(0xFF1C2440)],
+            colors: [_C.headerBlue, Color(0xFF8B5CF6)],
           ),
           borderRadius: BorderRadius.circular(DT.rLg),
           boxShadow: const [
@@ -1062,7 +1172,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(Icons.check_rounded,
-                        color: _C.blue400, size: 20),
+                        color: Colors.white, size: 20),
                     const SizedBox(width: 10),
                     Text(
                       label,

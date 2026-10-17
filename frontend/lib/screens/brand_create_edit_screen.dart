@@ -28,7 +28,7 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
   bool _isLoadingSubcategories = false;
   bool _isSubmitting = false;
 
-  static const _brand = Color(0xFF1A68FA);
+  static const _brand = Color(0xFF6366F1);
 
   bool get _isEdit => widget.existing != null;
 
@@ -136,7 +136,7 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
           content: Text(msg,
               style: DT.text(
                   size: 13, weight: FontWeight.w600, color: Colors.white)),
-          backgroundColor: isError ? DT.error : const Color(0xFF059669),
+          backgroundColor: isError ? DT.error : const Color(0xFF10B981),
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(16),
           shape: RoundedRectangleBorder(
@@ -149,7 +149,6 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: DT.background,
-      appBar: _appBar(),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         behavior: HitTestBehavior.translucent,
@@ -223,67 +222,6 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
         ),
       ),
       bottomNavigationBar: _bottomBar(),
-    );
-  }
-
-  PreferredSizeWidget _appBar() {
-    return PreferredSize(
-      preferredSize: const Size.fromHeight(64),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(bottom: BorderSide(color: DT.slate200)),
-          boxShadow: [
-            BoxShadow(
-                color: Color(0x0D0F172A), blurRadius: 2, offset: Offset(0, 1)),
-          ],
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: SizedBox(
-            height: 64,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: Row(
-                children: [
-                  IconButton(
-                    tooltip: 'Back',
-                    onPressed: () => Navigator.maybePop(context),
-                    icon: const Icon(Icons.arrow_back_rounded,
-                        color: DT.onyx900, size: 24),
-                  ),
-                  const SizedBox(width: 2),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _isEdit ? 'Edit brand' : 'Add brand',
-                          style: DT.text(
-                              size: 18,
-                              weight: FontWeight.w700,
-                              color: DT.onyx900,
-                              letterSpacing: -0.3),
-                        ),
-                        Text(
-                          'Link a brand to your catalog',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: DT.text(
-                              size: 12,
-                              weight: FontWeight.w500,
-                              color: DT.slate500),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -576,37 +514,44 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
           child: SizedBox(
             height: 52,
-            child: ElevatedButton(
-              onPressed: _isSubmitting ? null : _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _brand,
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: _brand.withValues(alpha: 0.55),
-                elevation: 2,
-                shadowColor: const Color(0x401A68FA),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(DT.rMd)),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: DT.ctaGradient,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
               ),
-              child: _isSubmitting
-                  ? const SizedBox(
-                height: 22,
-                width: 22,
-                child: CircularProgressIndicator(
-                    color: Colors.white, strokeWidth: 2.5),
-              )
-                  : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.check_rounded, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    _isEdit ? 'Update brand' : 'Create brand',
-                    style: DT.text(
-                        size: 15,
-                        weight: FontWeight.w700,
-                        color: Colors.white),
-                  ),
-                ],
+              child: ElevatedButton(
+                onPressed: _isSubmitting ? null : _submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: Colors.transparent,
+                  elevation: 0,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(DT.rMd)),
+                ),
+                child: _isSubmitting
+                    ? const SizedBox(
+                  height: 22,
+                  width: 22,
+                  child: CircularProgressIndicator(
+                      color: Colors.white, strokeWidth: 2.5),
+                )
+                    : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.check_rounded, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      _isEdit ? 'Update brand' : 'Create brand',
+                      style: DT.text(
+                          size: 15,
+                          weight: FontWeight.w700,
+                          color: Colors.white),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

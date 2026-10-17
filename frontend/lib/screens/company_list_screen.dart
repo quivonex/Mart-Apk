@@ -8,10 +8,10 @@ import 'company_detail_screen.dart';
 
 // Colours used only on this screen (the rest come from DT).
 class _C {
-  static const navy1 = Color(0xFF1B223C);
-  static const navy3 = Color(0xFF242E54);
-  static const blue600 = Color(0xFF2563EB);
-  static const emerald600 = Color(0xFF059669);
+  static const navy1 = Color(0xFF4338CA);
+  static const navy3 = Color(0xFF6366F1);
+  static const blue600 = Color(0xFF6366F1);
+  static const emerald600 = Color(0xFF10B981);
   static const emerald700 = Color(0xFF047857);
 }
 
@@ -148,9 +148,9 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
         onPressed: _openCreate,
         backgroundColor: _C.navy3,
         foregroundColor: Colors.white,
-        elevation: 3,
+        elevation: 2,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DT.rLg),
+          borderRadius: BorderRadius.circular(DT.rMd),
         ),
         icon: const Icon(Icons.add_rounded),
         label: Text(
@@ -169,8 +169,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
       preferredSize: const Size.fromHeight(64),
       child: Container(
         decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(bottom: BorderSide(color: DT.border)),
+          gradient: DT.headerGradient,
         ),
         child: SafeArea(
           bottom: false,
@@ -184,7 +183,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                     tooltip: 'Back',
                     onPressed: () => Navigator.maybePop(context),
                     icon: const Icon(Icons.arrow_back_rounded,
-                        color: DT.onyx700),
+                        color: Colors.white),
                   ),
                   Expanded(
                     child: Column(
@@ -197,7 +196,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                             size: 17,
                             weight: FontWeight.w700,
                             letterSpacing: -0.3,
-                            height: 1.2,
+                            height: 1.2, color: Colors.white,
                           ),
                         ),
                         Text(
@@ -209,7 +208,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                           style: DT.text(
                               size: 11.5,
                               weight: FontWeight.w500,
-                              color: DT.slate500),
+                              color: const Color(0xFFE0E7FF)),
                         ),
                       ],
                     ),
@@ -284,23 +283,19 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [_C.navy3, Color(0xFF1D2645), Color(0xFF161D36)],
-        ),
+        color: DT.blue50,
         borderRadius: BorderRadius.circular(DT.rLg),
-        boxShadow: DT.shadowM3,
+        border: Border.all(color: DT.blue200),
       ),
       padding: const EdgeInsets.symmetric(vertical: 14),
       child: IntrinsicHeight(
         child: Row(
           children: [
-            _stat('Total', _companies.length, Colors.white),
+            _stat('Total', _companies.length, DT.onyx900),
             _divider(),
-            _stat('Paid', _paidCount, const Color(0xFF6EE7B7)),
+            _stat('Paid', _paidCount, _C.emerald600),
             _divider(),
-            _stat('Payment pending', _pendingCount, const Color(0xFFFCD34D)),
+            _stat('Payment pending', _pendingCount, DT.amber600),
           ],
         ),
       ),
@@ -325,14 +320,14 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
           Text(
             label,
             textAlign: TextAlign.center,
-            style: DT.text(size: 11, weight: FontWeight.w500, color: DT.slate300),
+            style: DT.text(size: 11, weight: FontWeight.w500, color: DT.slate500),
           ),
         ],
       ),
     );
   }
 
-  Widget _divider() => Container(width: 1, color: const Color(0x33FFFFFF));
+  Widget _divider() => Container(width: 1, color: DT.blue200);
 
   // ---------- Search ----------
   Widget _buildSearch() {
@@ -344,7 +339,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
       decoration: InputDecoration(
         hintText: 'Search by name, owner, district or GST',
         hintStyle: DT.text(size: 13, color: DT.slate400),
-        prefixIcon: const Icon(Icons.search_rounded, color: DT.slate500, size: 20),
+        prefixIcon: const Icon(Icons.search_rounded, color: _C.blue600, size: 20),
         suffixIcon: _query.isEmpty
             ? null
             : IconButton(
@@ -385,9 +380,9 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
             duration: const Duration(milliseconds: 160),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
             decoration: BoxDecoration(
-              color: selected ? DT.onyx900 : Colors.white,
+              color: selected ? _C.blue600 : Colors.white,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: selected ? DT.onyx900 : DT.slate200),
+              border: Border.all(color: selected ? _C.blue600 : DT.slate200),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -405,7 +400,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                   padding:
                   const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                   decoration: BoxDecoration(
-                    color: selected ? const Color(0x33FFFFFF) : DT.slate100,
+                    color: selected ? const Color(0x33FFFFFF) : DT.blue50,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -413,7 +408,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                     style: DT.text(
                       size: 10.5,
                       weight: FontWeight.w700,
-                      color: selected ? Colors.white : DT.onyx600,
+                      color: selected ? Colors.white : _C.blue600,
                     ),
                   ),
                 ),
@@ -677,7 +672,7 @@ class _CompanyCard extends StatelessWidget {
                           Row(
                             children: [
                               const Icon(Icons.person_outline_rounded,
-                                  size: 13, color: DT.slate400),
+                                  size: 13, color: _C.blue600),
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
@@ -707,9 +702,9 @@ class _CompanyCard extends StatelessWidget {
               margin: const EdgeInsets.symmetric(horizontal: 14),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: DT.slate50,
+                color: DT.blue50,
                 borderRadius: BorderRadius.circular(DT.rMd),
-                border: Border.all(color: DT.slate100),
+                border: Border.all(color: DT.blue100),
               ),
               child: Column(
                 children: [
@@ -748,10 +743,10 @@ class _CompanyCard extends StatelessWidget {
                             style: DT.text(
                                 size: 12.5,
                                 weight: FontWeight.w700,
-                                color: DT.onyx800)),
+                                color: _C.blue600)),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: DT.onyx800,
-                          side: const BorderSide(color: DT.slate300),
+                          foregroundColor: _C.blue600,
+                          side: const BorderSide(color: DT.blue200),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(DT.rMd),
                           ),
@@ -773,7 +768,7 @@ class _CompanyCard extends StatelessWidget {
                                   weight: FontWeight.w700,
                                   color: Colors.white)),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: DT.amber600,
+                            backgroundColor: _C.blue600,
                             foregroundColor: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
@@ -901,7 +896,7 @@ class _InfoRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         children: [
-          Icon(icon, size: 15, color: DT.slate400),
+          Icon(icon, size: 15, color: _C.blue600),
           const SizedBox(width: 8),
           Expanded(
             child: Text(

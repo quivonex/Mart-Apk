@@ -1,11 +1,11 @@
 {
-    "name": "qnx_mart",
-    "short_name": "qnx_mart",
+    "name": "QNX MART",
+    "short_name": "QNX MART",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "QNX Mart B2B Wholesale Hub - Market chalega nahi daudega",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

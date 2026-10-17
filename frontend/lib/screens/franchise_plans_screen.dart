@@ -90,6 +90,7 @@ class _FranchisePlansScreenState extends State<FranchisePlansScreen> {
       backgroundColor: AppConstants.surfaceColor,
       appBar: AppBar(
         backgroundColor: AppConstants.primary,
+        flexibleSpace: Container(decoration: const BoxDecoration(gradient: AppConstants.appBarGradient)),
         foregroundColor: Colors.white,
         elevation: 0,
         title: Column(
@@ -290,7 +291,7 @@ class _FranchisePlansScreenState extends State<FranchisePlansScreen> {
                           ),
                         ),
                         Text(
-                          '${product.quantity} ${product.unit}',
+                          '${product.quantityLabel} ${product.unit}',
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,

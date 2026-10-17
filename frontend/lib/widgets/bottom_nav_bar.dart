@@ -33,7 +33,7 @@ class BottomNavBar extends StatelessWidget {
   });
 
   static const _tabs = <_NavTab>[
-    _NavTab('Home', Icons.home_outlined, Icons.home_rounded, Color(0xFF1A68FA)), // blue
+    _NavTab('Home', Icons.home_outlined, Icons.home_rounded, Color(0xFF6366F1)), // blue
     _NavTab('Products', Icons.storefront_outlined, Icons.storefront_rounded, Color(0xFF7C3AED)), // violet
     _NavTab('Cart', Icons.shopping_cart_outlined, Icons.shopping_cart_rounded, Color(0xFFF97316)), // orange
     _NavTab('Orders', Icons.local_shipping_outlined, Icons.local_shipping_rounded, Color(0xFF0D9488)), // teal

@@ -344,21 +344,29 @@ class _SupplierCreateEditScreenState extends State<SupplierCreateEditScreen> {
           ),
           child: SizedBox(
             height: 48,
-            child: ElevatedButton(
-              onPressed: _saving ? null : _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: DT.blue800,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: DT.ctaGradient,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
               ),
-              child: _saving
-                  ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                  : Text(_isEdit ? 'Save changes' : 'Add supplier',
-                  style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
+              child: ElevatedButton(
+                onPressed: _saving ? null : _submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
+                ),
+                child: _saving
+                    ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                    : Text(_isEdit ? 'Save changes' : 'Add supplier',
+                    style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
+              ),
             ),
           ),
         ),

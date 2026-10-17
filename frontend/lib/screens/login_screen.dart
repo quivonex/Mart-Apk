@@ -30,9 +30,9 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  static const _brand = Color(0xFF1A68FA);
-  static const _brandDark = Color(0xFF0D3880);
-  static const _accent = Color(0xFFFF5722);
+  static const _brand = Color(0xFF6366F1);
+  static const _brandDark = Color(0xFF4338CA);
+  static const _accent = Color(0xFFF97316);
 
   @override
   void dispose() {
@@ -136,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
       padding: EdgeInsets.fromLTRB(22, top + 22, 22, 62),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [_brandDark, Color(0xFF1557D0), _brand],
+          colors: [Color(0xFF4F46E5), _brand, Color(0xFF8B5CF6)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -199,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: DT.text(size: 26, weight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5)),
               const SizedBox(height: 6),
               Text('Log in to buy, sell and manage your business on QNXMart.',
-                  style: DT.text(size: 13.5, color: const Color(0xFFBFDBFE), height: 1.45)),
+                  style: DT.text(size: 13.5, color: const Color(0xFFC7D2FE), height: 1.45)),
               const SizedBox(height: 16),
               Wrap(
                 spacing: 8,
@@ -312,36 +312,43 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 20),
             SizedBox(
               height: 50,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _login,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _brand,
-                  disabledBackgroundColor: _brand.withValues(alpha: 0.55),
-                  foregroundColor: Colors.white,
-                  elevation: 2,
-                  shadowColor: const Color(0x401A68FA),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: DT.ctaGradient,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
                 ),
-                child: _isLoading
-                    ? Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white),
-                    ),
-                    const SizedBox(width: 10),
-                    Text('Logging in…', style: DT.text(size: 15, weight: FontWeight.w700, color: Colors.white)),
-                  ],
-                )
-                    : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('Log in', style: DT.text(size: 15, weight: FontWeight.w800, color: Colors.white)),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.arrow_forward_rounded, size: 19),
-                  ],
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _login,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    disabledBackgroundColor: Colors.transparent,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: _isLoading
+                      ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white),
+                      ),
+                      const SizedBox(width: 10),
+                      Text('Logging in…', style: DT.text(size: 15, weight: FontWeight.w700, color: Colors.white)),
+                    ],
+                  )
+                      : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Log in', style: DT.text(size: 15, weight: FontWeight.w800, color: Colors.white)),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.arrow_forward_rounded, size: 19),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -386,9 +393,9 @@ class _LoginScreenState extends State<LoginScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: const Color(0xFFEEF2FF),
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: const Color(0xFFDBEAFE)),
+                  border: Border.all(color: const Color(0xFFE0E7FF)),
                 ),
                 child: Text('Register', style: DT.text(size: 12.5, weight: FontWeight.w800, color: _brand)),
               ),

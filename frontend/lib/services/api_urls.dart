@@ -1,8 +1,8 @@
 class ApiUrls {
   // Base URL - Change this to your actual server IP
 
-  static const String baseUrl = 'http://192.168.31.248:16000';
-  // static const String baseUrl = "https://api.qnxmartb2b.com";
+  //static const String baseUrl = 'http://192.168.31.248:16000';
+   static const String baseUrl = "https://api.qnxmartb2b.com";
 
   // Auth Endpoints
   static const String login = '/accounts/login/';
@@ -24,8 +24,8 @@ class ApiUrls {
   // Cart Endpoints
   static const String addToCart = '/cart/cart/add/';
   static const String getCartList = '/cart/cart/list/';
-  static const String updateCartQuantity = '/cart/cart/update/';
   static const String removeFromCart = '/cart/cart/delete/';
+  // No cart update API on the backend – quantity +/- uses addToCart with +1 / -1.
 
   // Loan Enquiry Endpoints
   static const String createLoanEnquiry = '/loan/loan-enquiry/create/';
@@ -121,7 +121,8 @@ class ApiUrls {
 
   // Marketing Partner Enquiry Endpoint
   static const String createMarketingPartnerEnquiry = '/enquiry/marketing-partner/create/';
-
+// ✅ Admin uploaded images (home carousel)
+  static const String adminImageList = '/admin_profile/upload_image_list/';
 
   // Full URL getters
   static String get loginUrl => '$baseUrl$login';
@@ -135,7 +136,6 @@ class ApiUrls {
   static String get approvedProductListUrl => '$baseUrl$approvedProductList';
   static String get addToCartUrl => '$baseUrl$addToCart';
   static String get getCartListUrl => '$baseUrl$getCartList';
-  static String get updateCartQuantityUrl => '$baseUrl$updateCartQuantity';
   static String get removeFromCartUrl => '$baseUrl$removeFromCart';
   static String get createLoanEnquiryUrl => '$baseUrl$createLoanEnquiry';
   static String get productFranchisePlansUrl => '$baseUrl$productFranchisePlans';
@@ -200,4 +200,26 @@ class ApiUrls {
   static String get getTalukasUrl => '$baseUrl$getTalukas';
   static String get getVillagesUrl => '$baseUrl$getVillages';
   static String get createMarketingPartnerEnquiryUrl => '$baseUrl$createMarketingPartnerEnquiry';
+
+  static String get adminImageListUrl => '$baseUrl$adminImageList';
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../constants/design_tokens.dart';
+import '../models/company_model.dart';
 import '../models/subcategory_model.dart';
+import '../services/catalog_service.dart';
+import '../services/company_service.dart';
 import '../services/subcategory_service.dart';
 import '../widgets/product_ui.dart';
 
@@ -20,12 +23,21 @@ class _SubCategoryCreateEditScreenState
   final _nameCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
 
+  // Company (dropdown at top)
+  List<Company> _companies = [];
+  int? _selectedCompanyId;
+  bool _isLoadingCompanies = true;
+  String? _companiesError;
+
+  // Categories for the selected company
   List<CategoryName> _categories = [];
   int? _selectedCategoryId;
-  bool _isLoadingCategories = true;
+  bool _isLoadingCategories = false;
+  String? _categoriesError;
+
   bool _isSubmitting = false;
 
-  static const _brand = Color(0xFF1A68FA);
+  static const _brand = Color(0xFF6366F1);
 
   bool get _isEdit => widget.existing != null;
 
@@ -33,11 +45,11 @@ class _SubCategoryCreateEditScreenState
   void initState() {
     super.initState();
     if (_isEdit) {
-      _selectedCategoryId = widget.existing!.effectiveCategoryId;
       _nameCtrl.text = widget.existing!.name;
       _descCtrl.text = widget.existing!.description;
+      _selectedCategoryId = widget.existing!.effectiveCategoryId;
     }
-    _loadCategories();
+    _loadCompanies();
   }
 
   @override
@@ -47,18 +59,75 @@ class _SubCategoryCreateEditScreenState
     super.dispose();
   }
 
-  Future<void> _loadCategories() async {
-    setState(() => _isLoadingCategories = true);
-    final res = await SubCategoryService.getCategoryNames();
+  // ── Load companies ────────────────────────────────────
+  Future<void> _loadCompanies() async {
+    setState(() {
+      _isLoadingCompanies = true;
+      _companiesError = null;
+    });
+    final res = await CompanyService.getMyCompanies();
     if (!mounted) return;
     setState(() {
-      _isLoadingCategories = false;
-      if (res.isSuccess) _categories = res.data;
+      _isLoadingCompanies = false;
+      if (res.isSuccess) {
+        _companies = res.data.where((c) => c.isActive).toList();
+
+        // If editing, try to figure out the company from the current category.
+        // If we already have a selected category, we can't easily reverse-map
+        // it to a company here — so we just show all companies and let the
+        // user confirm. If only one company exists, auto-select it.
+        if (_companies.length == 1 && _selectedCompanyId == null) {
+          _selectedCompanyId = _companies.first.id;
+          _loadCategories(_companies.first.id);
+        }
+      } else {
+        _companiesError = res.message ?? 'Could not load your companies';
+      }
     });
+  }
+
+  // ── Load categories for a company ─────────────────────
+  Future<void> _loadCategories(int companyId) async {
+    setState(() {
+      _isLoadingCategories = true;
+      _categoriesError = null;
+      _categories = [];
+    });
+
+    // Prefer CatalogService.getCategories(companyId) — returns categories
+    // that belong to this company only.
+    final r = await CatalogService.getCategories(companyId);
+    if (!mounted) return;
+
+    if (r.ok) {
+      setState(() {
+        _isLoadingCategories = false;
+        _categories = r.items
+            .map((c) => CategoryName(id: c.id, name: c.name))
+            .toList();
+      });
+    } else {
+      // Fallback: use SubCategoryService.getCategoryNames() if catalog fails.
+      final fallback = await SubCategoryService.getCategoryNames();
+      if (!mounted) return;
+      setState(() {
+        _isLoadingCategories = false;
+        if (fallback.isSuccess) {
+          _categories = fallback.data;
+        } else {
+          _categoriesError = r.message ?? 'Could not load categories';
+        }
+      });
+    }
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (_selectedCompanyId == null) {
+      _snack('Please select a company', isError: true);
+      return;
+    }
     if (_selectedCategoryId == null) {
       _snack('Please select a category', isError: true);
       return;
@@ -98,7 +167,7 @@ class _SubCategoryCreateEditScreenState
           content: Text(msg,
               style: DT.text(
                   size: 13, weight: FontWeight.w600, color: Colors.white)),
-          backgroundColor: isError ? DT.error : const Color(0xFF059669),
+          backgroundColor: isError ? DT.error : const Color(0xFF10B981),
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(16),
           shape: RoundedRectangleBorder(
@@ -125,6 +194,13 @@ class _SubCategoryCreateEditScreenState
                 title: _isEdit ? 'Edit subcategory' : 'New subcategory',
                 subtitle:
                 'Subcategories live inside a category, e.g. Car Batteries',
+              ),
+              const SizedBox(height: 16),
+              _sectionCard(
+                icon: Icons.business_outlined,
+                title: 'Company',
+                subtitle: 'Subcategory will belong to a category of this company',
+                children: [_companyDropdown()],
               ),
               const SizedBox(height: 16),
               _sectionCard(
@@ -186,11 +262,10 @@ class _SubCategoryCreateEditScreenState
 
   PreferredSizeWidget _appBar() {
     return PreferredSize(
-      preferredSize: const Size.fromHeight(64),
+      preferredSize: const Size.fromHeight(65),
       child: Container(
         decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(bottom: BorderSide(color: DT.slate200)),
+          gradient: DT.headerGradient,
           boxShadow: [
             BoxShadow(
                 color: Color(0x0D0F172A), blurRadius: 2, offset: Offset(0, 1)),
@@ -199,7 +274,7 @@ class _SubCategoryCreateEditScreenState
         child: SafeArea(
           bottom: false,
           child: SizedBox(
-            height: 64,
+            height: 65,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6),
               child: Row(
@@ -208,7 +283,7 @@ class _SubCategoryCreateEditScreenState
                     tooltip: 'Back',
                     onPressed: () => Navigator.maybePop(context),
                     icon: const Icon(Icons.arrow_back_rounded,
-                        color: DT.onyx900, size: 24),
+                        color: Colors.white, size: 24),
                   ),
                   const SizedBox(width: 2),
                   Expanded(
@@ -221,7 +296,7 @@ class _SubCategoryCreateEditScreenState
                           style: DT.text(
                               size: 18,
                               weight: FontWeight.w700,
-                              color: DT.onyx900,
+                              color: Colors.white,
                               letterSpacing: -0.3),
                         ),
                         Text(
@@ -231,7 +306,7 @@ class _SubCategoryCreateEditScreenState
                           style: DT.text(
                               size: 12,
                               weight: FontWeight.w500,
-                              color: DT.slate500),
+                              color: const Color(0xFFE0E7FF)),
                         ),
                       ],
                     ),
@@ -245,51 +320,66 @@ class _SubCategoryCreateEditScreenState
     );
   }
 
-  Widget _categoryDropdown() {
-    if (_isLoadingCategories) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: DT.slate50,
-          borderRadius: BorderRadius.circular(DT.rMd),
-          border: Border.all(color: DT.slate200),
-        ),
-        child: const Row(
-          children: [
-            SizedBox(
-              height: 18,
-              width: 18,
-              child:
-              CircularProgressIndicator(strokeWidth: 2, color: _brand),
-            ),
-            SizedBox(width: 10),
-            Text('Loading categories…'),
-          ],
-        ),
-      );
+  // ── Company dropdown ──────────────────────────────────
+  Widget _companyDropdown() {
+    if (_isLoadingCompanies) {
+      return _loadingBox('Loading companies…');
+    }
+    if (_companiesError != null) {
+      return _errorBox(_companiesError!, onRetry: _loadCompanies);
+    }
+    if (_companies.isEmpty) {
+      return _errorBox('No companies found. Please create a company first.');
     }
 
+    return DropdownButtonFormField<int>(
+      value: _selectedCompanyId,
+      isExpanded: true,
+      icon: const Icon(Icons.expand_more, color: DT.slate500),
+      style: DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
+      decoration: pxInputDecoration(
+        hint: 'Select company',
+        icon: Icons.business_outlined,
+        iconColor: _brand,
+      ),
+      hint: Text('Select company',
+          style: DT.text(size: 13.5, color: DT.slate400)),
+      items: _companies.map((c) {
+        return DropdownMenuItem<int>(
+          value: c.id,
+          child: Text(c.name,
+              overflow: TextOverflow.ellipsis,
+              style: DT.text(
+                  size: 14, weight: FontWeight.w600, color: DT.onyx900)),
+        );
+      }).toList(),
+      onChanged: (v) {
+        setState(() {
+          _selectedCompanyId = v;
+          _selectedCategoryId = null;
+          _categories = [];
+        });
+        if (v != null) _loadCategories(v);
+      },
+      validator: (v) => v == null ? 'Company is required' : null,
+    );
+  }
+
+  // ── Category dropdown (depends on company) ────────────
+  Widget _categoryDropdown() {
+    if (_selectedCompanyId == null) {
+      return _hintBox('Select a company first');
+    }
+    if (_isLoadingCategories) {
+      return _loadingBox('Loading categories…');
+    }
+    if (_categoriesError != null) {
+      return _errorBox(_categoriesError!,
+          onRetry: () => _loadCategories(_selectedCompanyId!));
+    }
     if (_categories.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: DT.errorBg,
-          borderRadius: BorderRadius.circular(DT.rMd),
-          border: Border.all(color: DT.errorBorder),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.error_outline, color: DT.error, size: 18),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'No categories found. Please create a category first.',
-                style: DT.text(size: 12, color: DT.error),
-              ),
-            ),
-          ],
-        ),
-      );
+      return _errorBox(
+          'No categories found for this company. Please create a category first.');
     }
 
     return DropdownButtonFormField<int>(
@@ -318,6 +408,79 @@ class _SubCategoryCreateEditScreenState
     );
   }
 
+  // ── Small helpers ─────────────────────────────────────
+  Widget _loadingBox(String text) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: DT.slate50,
+        borderRadius: BorderRadius.circular(DT.rMd),
+        border: Border.all(color: DT.slate200),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(
+            height: 18,
+            width: 18,
+            child: CircularProgressIndicator(strokeWidth: 2, color: _brand),
+          ),
+          const SizedBox(width: 10),
+          Text(text, style: DT.text(size: 12, color: DT.slate500)),
+        ],
+      ),
+    );
+  }
+
+  Widget _errorBox(String text, {VoidCallback? onRetry}) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: DT.errorBg,
+        borderRadius: BorderRadius.circular(DT.rMd),
+        border: Border.all(color: DT.errorBorder),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, color: DT.error, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(text, style: DT.text(size: 12, color: DT.error)),
+          ),
+          if (onRetry != null)
+            TextButton(
+              onPressed: onRetry,
+              child: Text('Retry',
+                  style: DT.text(
+                      size: 12,
+                      weight: FontWeight.w700,
+                      color: DT.error)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _hintBox(String text) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: DT.slate50,
+        borderRadius: BorderRadius.circular(DT.rMd),
+        border: Border.all(color: DT.slate200),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline, color: DT.slate400, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(text, style: DT.text(size: 12, color: DT.slate500)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Info card ─────────────────────────────────────────
   Widget _infoCard({
     required IconData icon,
     required String title,
@@ -361,6 +524,7 @@ class _SubCategoryCreateEditScreenState
     );
   }
 
+  // ── Section card ──────────────────────────────────────
   Widget _sectionCard({
     required IconData icon,
     required String title,
@@ -423,6 +587,7 @@ class _SubCategoryCreateEditScreenState
     );
   }
 
+  // ── Bottom bar ────────────────────────────────────────
   Widget _bottomBar() {
     return Container(
       decoration: const BoxDecoration(
@@ -439,39 +604,46 @@ class _SubCategoryCreateEditScreenState
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
           child: SizedBox(
             height: 52,
-            child: ElevatedButton(
-              onPressed: _isSubmitting ? null : _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _brand,
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: _brand.withValues(alpha: 0.55),
-                elevation: 2,
-                shadowColor: const Color(0x401A68FA),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(DT.rMd)),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: DT.ctaGradient,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
               ),
-              child: _isSubmitting
-                  ? const SizedBox(
-                height: 22,
-                width: 22,
-                child: CircularProgressIndicator(
-                    color: Colors.white, strokeWidth: 2.5),
-              )
-                  : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.check_rounded, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    _isEdit
-                        ? 'Update subcategory'
-                        : 'Create subcategory',
-                    style: DT.text(
-                        size: 15,
-                        weight: FontWeight.w700,
-                        color: Colors.white),
-                  ),
-                ],
+              child: ElevatedButton(
+                onPressed: _isSubmitting ? null : _submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: Colors.transparent,
+                  elevation: 0,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(DT.rMd)),
+                ),
+                child: _isSubmitting
+                    ? const SizedBox(
+                  height: 22,
+                  width: 22,
+                  child: CircularProgressIndicator(
+                      color: Colors.white, strokeWidth: 2.5),
+                )
+                    : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.check_rounded, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      _isEdit
+                          ? 'Update subcategory'
+                          : 'Create subcategory',
+                      style: DT.text(
+                          size: 15,
+                          weight: FontWeight.w700,
+                          color: Colors.white),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

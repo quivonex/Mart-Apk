@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:qnx_mart/screens/splash_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
@@ -19,7 +20,7 @@ class MyApp extends StatelessWidget {
       title: 'QNX MART',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
-      home: const AuthCheck(),
+      home: const SplashScreen(),
     );
   }
 }

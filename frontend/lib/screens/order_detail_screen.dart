@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/design_tokens.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -11,14 +12,14 @@ import '../services/order_service.dart';
 
 class _C {
   // Brand
-  static const brand50 = Color(0xFFEFF6FF);
-  static const brand100 = Color(0xFFDBEAFE);
-  static const brand200 = Color(0xFFBFDBFE);
-  static const brand600 = Color(0xFF2563EB);
-  static const brand700 = Color(0xFF1D4ED8);
+  static const brand50 = Color(0xFFEEF2FF);
+  static const brand100 = Color(0xFFE0E7FF);
+  static const brand200 = Color(0xFFC7D2FE);
+  static const brand600 = Color(0xFF6366F1);
+  static const brand700 = Color(0xFF4F46E5);
 
   // Onyx
-  static const onyx900 = Color(0xFF0B132B);
+  static const onyx900 = Color(0xFF1E1B4B);
 
   // Slate
   static const slate50 = Color(0xFFF8FAFC);
@@ -35,7 +36,7 @@ class _C {
   // Emerald
   static const emerald50 = Color(0xFFECFDF5);
   static const emerald100 = Color(0xFFD1FAE5);
-  static const emerald600 = Color(0xFF059669);
+  static const emerald600 = Color(0xFF10B981);
   static const emerald700 = Color(0xFF047857);
 
   // Amber
@@ -50,8 +51,8 @@ class _C {
   static const red50 = Color(0xFFFEF2F2);
   static const red200 = Color(0xFFFECACA);
   static const red300 = Color(0xFFFCA5A5);
-  static const red600 = Color(0xFFDC2626);
-  static const red700 = Color(0xFFB91C1C);
+  static const red600 = Color(0xFFEF4444);
+  static const red700 = Color(0xFFEF4444);
 }
 
 TextStyle _ts(
@@ -150,12 +151,13 @@ PreferredSizeWidget _onyxAppBar(
       List<Widget>? actions,
     }) {
   return AppBar(
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.transparent,
+    flexibleSpace: Container(decoration: const BoxDecoration(gradient: DT.headerGradient)),
     surfaceTintColor: Colors.transparent,
     elevation: 0,
     scrolledUnderElevation: 0,
     titleSpacing: 0,
-    iconTheme: const IconThemeData(color: _C.slate700),
+    iconTheme: const IconThemeData(color: Colors.white),
     shape: Border(
       bottom: BorderSide(color: _C.slate200.withOpacity(0.8)),
     ),
@@ -171,13 +173,13 @@ PreferredSizeWidget _onyxAppBar(
         Text(
           title,
           style: _ts(18,
-              weight: FontWeight.w700, color: _C.slate900, spacing: -0.3),
+              weight: FontWeight.w700, color: Colors.white, spacing: -0.3),
         ),
         if (subtitle != null) ...[
           const SizedBox(height: 2),
           Text(
             subtitle,
-            style: _ts(11, color: _C.slate400, spacing: 0.6),
+            style: _ts(11, color: const Color(0xFFE0E7FF), spacing: 0.6),
           ),
         ],
       ],
@@ -662,8 +664,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       _loadOrderDetail();
     } catch (e) {
       if (!mounted) return;
-      _snack(context, e.toString().replaceFirst('Exception: ', ''),
-          background: _C.red600);
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      // Backend can only cancel orders that already have a Shiprocket shipment.
+      _snack(
+        context,
+        msg.toLowerCase().contains('shipment not found')
+            ? 'This order is not with the courier yet, so it can\'t be cancelled here. Please contact support.'
+            : msg,
+        background: _C.red600,
+      );
+      _loadOrderDetail();
     } finally {
       if (mounted) setState(() => _isCancelling = false);
     }
@@ -789,7 +799,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           if (_orderDetail != null)
             IconButton(
               tooltip: 'Help',
-              icon: const Icon(Icons.more_vert_rounded, color: _C.slate600),
+              icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
               onPressed: () => _showHelp(_orderDetail!),
             ),
           const SizedBox(width: 4),
@@ -1260,8 +1270,58 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   // ---------------- Actions ----------------
 
+  /// Shown instead of "Cancel Order" while the order is not with the courier yet.
+  Widget _cancelLaterNote(OrderDetailData order) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+      decoration: BoxDecoration(
+        color: _C.amber50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _C.amber200),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 1),
+            child: Icon(Icons.info_outline_rounded, size: 18, color: _C.amber700),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Want to cancel?',
+                    style: _ts(13, weight: FontWeight.w700, color: _C.amber800)),
+                const SizedBox(height: 2),
+                Text(
+                  'This order is not with the courier yet, so it can\'t be cancelled from the app. '
+                      'Contact support with your order ID and they will cancel it.',
+                  style: _ts(12, color: _C.amber800, height: 1.4),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () => _showHelp(order),
+            style: TextButton.styleFrom(
+              foregroundColor: _C.amber800,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: const Size(0, 32),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Text('Support', style: _ts(12.5, weight: FontWeight.w700, color: _C.amber800)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildActions(OrderDetailData order, int shipmentId) {
     final isDelivered = _norm(order.status) == 'DELIVERED';
+    // cancel-order/ needs a Shiprocket shipment; without one it answers 404
+    // "Shipment not found", even though order detail says can_cancel = true.
+    final hasShipment = shipmentId > 0;
     final buttons = <Widget>[
       if (shipmentId > 0)
         _ActionButton(
@@ -1272,7 +1332,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           border: _C.brand200,
           onPressed: _openTracking,
         ),
-      if (order.canCancel)
+      if (order.canCancel && hasShipment)
         _ActionButton(
           label: _isCancelling ? 'Cancelling...' : 'Cancel Order',
           icon: Icons.cancel_outlined,
@@ -1282,6 +1342,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           loading: _isCancelling,
           onPressed: _isCancelling ? null : _cancelOrder,
         ),
+      if (order.canCancel && !hasShipment) _cancelLaterNote(order),
       if (isDelivered)
         _ActionButton(
           label: 'Return Order',

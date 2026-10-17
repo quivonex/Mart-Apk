@@ -49,7 +49,11 @@ dependencies:
   video_player: ^2.9.0
   http_parser: ^4.0.2
   file_picker: ^8.0.6
-
+  flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.4
+ # 🆕 Map packages (OpenStreetMap tiles, no API key needed)
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -77,7 +81,49 @@ flutter:
   assets:
     - lib/assets/images/qnx_mart_logo.png
     - lib/assets/images/
-  #   - images/a_dot_ham.jpeg
+    - lib/assets/icon/axis bank.jpeg
+    - lib/assets/icon/bajaj finance.jpeg
+    - lib/assets/icon/chola finance.jpeg
+    - lib/assets/icon/hdfc bank.jpeg
+    - lib/assets/icon/icici bank.jpeg
+    - lib/assets/icon/indusland bank.jpeg
+    - lib/assets/icon/kotak bank.jpeg
+    - lib/assets/icon/l&t finance.jpeg
+    - lib/assets/icon/mahindra finance.jpeg
+    - lib/assets/icon/tata capital.jpeg
+
+      #   - images/a_dot_ham.jpeg
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "lib/assets/icon/icon.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "lib/assets/icon/icon_foreground.png"
+  web:
+    generate: true
+    image_path: "lib/assets/icon/icon.png"
+    background_color: "#0175C2"
+    theme_color: "#0175C2"
+  remove_alpha_ios: true
+  min_sdk_android: 21
+
+
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/icon/splash.png
+  color_dark: "#0F172A"
+  image_dark: assets/icon/splash.png
+  android_12:
+    color: "#FFFFFF"
+    image: assets/icon/splash.png
+    icon_background_color: "#FFFFFF"
+    color_dark: "#0F172A"
+    image_dark: assets/icon/splash.png
+  android: true
+  ios: true
+  web: true
+  fullscreen: true
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

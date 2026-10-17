@@ -1,6 +1,7 @@
 // lib/screens/terms_conditions_screen.dart
 
 import 'package:flutter/material.dart';
+import '../constants/design_tokens.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class TermsConditionsScreen extends StatelessWidget {
@@ -11,7 +12,8 @@ class TermsConditionsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF2C3E50),
+        backgroundColor: const Color(0xFF4338CA),
+        flexibleSpace: Container(decoration: const BoxDecoration(gradient: DT.headerGradient)),
         foregroundColor: Colors.white,
         elevation: 0,
         title: Column(
@@ -114,7 +116,7 @@ class TermsConditionsScreen extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2E7D32),
+                  backgroundColor: const Color(0xFF047857),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -154,7 +156,7 @@ class TermsConditionsScreen extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF2C3E50),
+              color: const Color(0xFF4338CA),
             ),
           ),
           const SizedBox(height: 4),

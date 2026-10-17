@@ -62,19 +62,22 @@ class OrderService {
       }
 
       if (response.statusCode >= 400) {
+        // Show the backend's own message (e.g. "Shipment not found.").
+        // Before, the inner catch swallowed it and showed "Server error: 404".
+        String msg = 'Server error: ${response.statusCode}';
         try {
           final errorData = jsonDecode(response.body);
-          final msg = errorData['message'] ??
-              errorData['detail'] ??
-              'Server error: ${response.statusCode}';
-          throw Exception(msg);
+          if (errorData is Map) {
+            msg = (errorData['message'] ?? errorData['detail'] ?? msg).toString();
+          }
         } catch (_) {
-          throw Exception('Server error: ${response.statusCode}');
+          // body was not JSON – keep the status-code message
         }
+        throw Exception(msg);
       }
 
       final Map<String, dynamic> jsonData =
-          jsonDecode(response.body) as Map<String, dynamic>;
+      jsonDecode(response.body) as Map<String, dynamic>;
       final OrderResponse orderResponse = OrderResponse.fromJson(jsonData);
 
       if (!orderResponse.success) {
@@ -112,21 +115,24 @@ class OrderService {
       }
 
       if (response.statusCode >= 400) {
+        // Show the backend's own message (e.g. "Shipment not found.").
+        // Before, the inner catch swallowed it and showed "Server error: 404".
+        String msg = 'Server error: ${response.statusCode}';
         try {
           final errorData = jsonDecode(response.body);
-          final msg = errorData['message'] ??
-              errorData['detail'] ??
-              'Server error: ${response.statusCode}';
-          throw Exception(msg);
+          if (errorData is Map) {
+            msg = (errorData['message'] ?? errorData['detail'] ?? msg).toString();
+          }
         } catch (_) {
-          throw Exception('Server error: ${response.statusCode}');
+          // body was not JSON – keep the status-code message
         }
+        throw Exception(msg);
       }
 
       final Map<String, dynamic> jsonData =
-          jsonDecode(response.body) as Map<String, dynamic>;
+      jsonDecode(response.body) as Map<String, dynamic>;
       final OrderDetailResponse detailResponse =
-          OrderDetailResponse.fromJson(jsonData);
+      OrderDetailResponse.fromJson(jsonData);
 
       if (!detailResponse.success) {
         throw Exception(detailResponse.message ?? 'Order not found.');
@@ -163,21 +169,24 @@ class OrderService {
       }
 
       if (response.statusCode >= 400) {
+        // Show the backend's own message (e.g. "Shipment not found.").
+        // Before, the inner catch swallowed it and showed "Server error: 404".
+        String msg = 'Server error: ${response.statusCode}';
         try {
           final errorData = jsonDecode(response.body);
-          final msg = errorData['message'] ??
-              errorData['detail'] ??
-              'Server error: ${response.statusCode}';
-          throw Exception(msg);
+          if (errorData is Map) {
+            msg = (errorData['message'] ?? errorData['detail'] ?? msg).toString();
+          }
         } catch (_) {
-          throw Exception('Server error: ${response.statusCode}');
+          // body was not JSON – keep the status-code message
         }
+        throw Exception(msg);
       }
 
       final Map<String, dynamic> jsonData =
-          jsonDecode(response.body) as Map<String, dynamic>;
+      jsonDecode(response.body) as Map<String, dynamic>;
       final CancelOrderResponse cancelResponse =
-          CancelOrderResponse.fromJson(jsonData);
+      CancelOrderResponse.fromJson(jsonData);
 
       if (!cancelResponse.success) {
         throw Exception(cancelResponse.message ?? 'Failed to cancel order.');
@@ -214,21 +223,24 @@ class OrderService {
       }
 
       if (response.statusCode >= 400) {
+        // Show the backend's own message (e.g. "Shipment not found.").
+        // Before, the inner catch swallowed it and showed "Server error: 404".
+        String msg = 'Server error: ${response.statusCode}';
         try {
           final errorData = jsonDecode(response.body);
-          final msg = errorData['message'] ??
-              errorData['detail'] ??
-              'Server error: ${response.statusCode}';
-          throw Exception(msg);
+          if (errorData is Map) {
+            msg = (errorData['message'] ?? errorData['detail'] ?? msg).toString();
+          }
         } catch (_) {
-          throw Exception('Server error: ${response.statusCode}');
+          // body was not JSON – keep the status-code message
         }
+        throw Exception(msg);
       }
 
       final Map<String, dynamic> jsonData =
-          jsonDecode(response.body) as Map<String, dynamic>;
+      jsonDecode(response.body) as Map<String, dynamic>;
       final TrackShipmentResponse trackResponse =
-          TrackShipmentResponse.fromJson(jsonData);
+      TrackShipmentResponse.fromJson(jsonData);
 
       if (!trackResponse.success) {
         throw Exception(
@@ -281,21 +293,24 @@ class OrderService {
       }
 
       if (response.statusCode >= 400) {
+        // Show the backend's own message (e.g. "Shipment not found.").
+        // Before, the inner catch swallowed it and showed "Server error: 404".
+        String msg = 'Server error: ${response.statusCode}';
         try {
           final errorData = jsonDecode(response.body);
-          final msg = errorData['message'] ??
-              errorData['detail'] ??
-              'Server error: ${response.statusCode}';
-          throw Exception(msg);
+          if (errorData is Map) {
+            msg = (errorData['message'] ?? errorData['detail'] ?? msg).toString();
+          }
         } catch (_) {
-          throw Exception('Server error: ${response.statusCode}');
+          // body was not JSON – keep the status-code message
         }
+        throw Exception(msg);
       }
 
       final Map<String, dynamic> jsonData =
-          jsonDecode(response.body) as Map<String, dynamic>;
+      jsonDecode(response.body) as Map<String, dynamic>;
       final ReturnOrderResponse returnResponse =
-          ReturnOrderResponse.fromJson(jsonData);
+      ReturnOrderResponse.fromJson(jsonData);
 
       if (!returnResponse.success) {
         throw Exception(

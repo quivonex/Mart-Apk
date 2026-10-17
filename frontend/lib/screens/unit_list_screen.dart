@@ -106,7 +106,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
       SnackBar(
         content: Text(res.displayMessage),
         backgroundColor:
-        res.isSuccess ? Colors.green : const Color(0xFFD32F2F),
+        res.isSuccess ? const Color(0xFF10B981) : Color(0xFFEF4444),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -120,6 +120,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
       backgroundColor: AppConstants.surfaceColor,
       appBar: AppBar(
         backgroundColor: AppConstants.primary,
+        flexibleSpace: Container(decoration: const BoxDecoration(gradient: AppConstants.appBarGradient)),
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(
@@ -231,7 +232,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
                   padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: (u.isActive ? Colors.green : Colors.red)
+                    color: (u.isActive ? const Color(0xFF10B981) : Color(0xFFEF4444))
                         .withOpacity(0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
@@ -240,7 +241,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
                     style: GoogleFonts.inter(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
-                      color: u.isActive ? Colors.green : Colors.red,
+                      color: u.isActive ? const Color(0xFF10B981) : Color(0xFFEF4444),
                     ),
                   ),
                 ),
@@ -297,7 +298,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
-                      u.isActive ? AppConstants.error : Colors.green,
+                      u.isActive ? AppConstants.error : const Color(0xFF10B981),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),

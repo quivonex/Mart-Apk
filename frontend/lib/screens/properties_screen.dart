@@ -1,30 +1,34 @@
 import 'package:flutter/material.dart';
+import '../constants/design_tokens.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/property_model.dart';
 import '../services/real_estate_service.dart';
 import 'property_detail_screen.dart';
+import 'property_schedule_visit_sheet.dart';
+import 'property_video_screen.dart';
 
 /// Design tokens from the HTML design (Tailwind slate / brand palette).
 class _C {
-  static const navy = Color(0xFF1E255E);
-  static const navyDark = Color(0xFF161C47);
+  static const navy = Color(0xFF312E81);
+  static const navyDark = Color(0xFF1E1B4B);
   static const slate50 = Color(0xFFF8FAFC);
   static const slate100 = Color(0xFFF1F5F9);
   static const slate200 = Color(0xFFE2E8F0);
   static const slate300 = Color(0xFFCBD5E1);
   static const slate400 = Color(0xFF94A3B8);
   static const slate500 = Color(0xFF64748B);
+  static const slate600 = Color(0xFF475569);
   static const slate700 = Color(0xFF334155);
   static const slate900 = Color(0xFF0F172A);
-  static const blue50 = Color(0xFFEFF6FF);
-  static const blue100 = Color(0xFFDBEAFE);
-  static const blue200 = Color(0xFFBFDBFE);
-  static const blue600 = Color(0xFF2563EB);
-  static const blue700 = Color(0xFF1D4ED8);
-  static const blue800 = Color(0xFF1E40AF);
+  static const blue50 = Color(0xFFEEF2FF);
+  static const blue100 = Color(0xFFE0E7FF);
+  static const blue200 = Color(0xFFC7D2FE);
+  static const blue600 = Color(0xFF6366F1);
+  static const blue700 = Color(0xFF4F46E5);
+  static const blue800 = Color(0xFF4338CA);
   static const emerald500 = Color(0xFF10B981);
-  static const emerald600 = Color(0xFF059669);
+  static const emerald600 = Color(0xFF10B981);
   static const amber400 = Color(0xFFFBBF24);
   static const amber500 = Color(0xFFF59E0B);
   static const amber600 = Color(0xFFD97706);
@@ -34,7 +38,8 @@ class _C {
   static const amber50 = Color(0xFFFFFBEB);
   static const orange50 = Color(0xFFFFF7ED);
   static const amber200 = Color(0xFFFDE68A);
-  static const error = Color(0xFFDC2626);
+  static const orange500 = Color(0xFFF97316); // ✅ image tag orange
+  static const error = Color(0xFFEF4444);
 }
 
 class PropertiesScreen extends StatefulWidget {
@@ -57,11 +62,13 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
   final TextEditingController _searchController = TextEditingController();
   final Set<int> _selectedAmenityIds = {};
   String _selectedTransactionType = 'All';
-  String _selectedPropertyType = 'All'; // quick category chips
-  String _sort = 'relevant'; // relevant | az
+  String _selectedPropertyType = 'All';
+  String _sort = 'relevant';
 
-  // Local favourites (keyed by slug)
   final Set<String> _favorites = {};
+
+  // ✅ Track current image index per property card
+  final Map<String, int> _cardImageIndex = {};
 
   @override
   void initState() {
@@ -94,7 +101,6 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
       _error = null;
     });
 
-    // Load both in parallel
     final results = await Future.wait([
       RealEstateService.getApprovedProperties(),
       RealEstateService.getAmenitiesList(),
@@ -115,17 +121,13 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
         _displayProperties = [];
         _error = propertyRes.message ?? 'No properties found';
       }
-
-      // Amenities — non-critical, don't fail screen if it errors
       _allAmenities = amenityRes.data;
     });
   }
 
-  /// Must be called inside setState().
   void _applyFilters() {
     _displayProperties = List.from(_allProperties);
 
-    // Quick category (property type)
     if (_selectedPropertyType != 'All') {
       _displayProperties = _displayProperties
           .where((p) =>
@@ -134,7 +136,6 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
           .toList();
     }
 
-    // Transaction type
     if (_selectedTransactionType != 'All') {
       _displayProperties = _displayProperties
           .where((p) =>
@@ -143,7 +144,6 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
           .toList();
     }
 
-    // Search (city, area, address, type)
     if (_searchQuery.isNotEmpty) {
       _displayProperties = _displayProperties
           .where((p) =>
@@ -154,7 +154,6 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
           .toList();
     }
 
-    // Amenities (must have ALL selected)
     if (_selectedAmenityIds.isNotEmpty) {
       _displayProperties = _displayProperties.where((p) {
         final ids = p.amenities.map((a) => a.id).toSet();
@@ -162,7 +161,6 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
       }).toList();
     }
 
-    // Sort
     if (_sort == 'az') {
       _displayProperties.sort((a, b) =>
           a.area.toLowerCase().compareTo(b.area.toLowerCase()));
@@ -189,11 +187,9 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
     });
   }
 
-  /// Number shown on the filter button badge.
   int get _activeFilterCount =>
       _selectedAmenityIds.length + (_selectedTransactionType != 'All' ? 1 : 0);
 
-  /// raw propertyType -> display label, built from the loaded data.
   Map<String, String> get _propertyTypeLabels {
     final map = <String, String>{};
     for (final p in _allProperties) {
@@ -236,7 +232,8 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: _C.navy,
+      backgroundColor: Colors.transparent,
+      flexibleSpace: Container(decoration: const BoxDecoration(gradient: DT.headerGradient)),
       foregroundColor: Colors.white,
       elevation: 3,
       shadowColor: const Color(0x33000000),
@@ -266,7 +263,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                 Text('MIDC Plots, Warehouses & Land',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: _t(11, FontWeight.w500, const Color(0xFFBFDBFE))),
+                    style: _t(11, FontWeight.w500, const Color(0xFFC7D2FE))),
               ],
             ),
           ),
@@ -275,9 +272,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
       actions: [
         IconButton(
           tooltip: 'Shortlisted',
-          onPressed: () {
-            // TODO: open shortlisted properties
-          },
+          onPressed: () {},
           icon: Stack(
             clipBehavior: Clip.none,
             children: [
@@ -330,7 +325,6 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Search + filter button
           Row(
             children: [
               Expanded(
@@ -375,7 +369,6 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
             ],
           ),
 
-          // Category chips
           if (typeLabels.isNotEmpty) ...[
             const SizedBox(height: 12),
             SizedBox(
@@ -406,7 +399,6 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
             ),
           ],
 
-          // Result count + sort
           if (!_isLoading && _error == null) ...[
             const SizedBox(height: 10),
             Row(
@@ -514,13 +506,13 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        itemCount: _displayProperties.length + 1, // + advisory banner
+        itemCount: _displayProperties.length + 1,
         itemBuilder: (context, index) {
           if (index == _displayProperties.length) {
             return _buildAdvisoryBanner();
           }
           return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.only(bottom: 12),
             child: _buildPropertyCard(_displayProperties[index]),
           );
         },
@@ -529,7 +521,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // Property card
+  // Property card — matches 2nd screenshot
   // ---------------------------------------------------------------------------
 
   Color _transactionColor(String type) {
@@ -547,8 +539,15 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
 
   Widget _buildPropertyCard(Property property) {
     final isFav = _favorites.contains(property.slug);
-    final title = '${property.area}, ${property.city}';
-    final amenities = property.amenities;
+    final images = property.imageUrls;
+    final totalImages = images.isEmpty ? 1 : images.length;
+    final currentIdx = (_cardImageIndex[property.slug] ?? 0)
+        .clamp(0, totalImages - 1);
+
+    // Title: "Flat / Apartment in Pune"
+    final displayTitle = property.title.isNotEmpty
+        ? property.title
+        : '${property.formattedPropertyType}${property.city.isEmpty ? '' : ' in ${property.city}'}';
 
     return Container(
       decoration: BoxDecoration(
@@ -557,7 +556,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
         border: Border.all(color: _C.slate200),
         boxShadow: const [
           BoxShadow(
-              color: Color(0x0D000000), blurRadius: 3, offset: Offset(0, 1)),
+              color: Color(0x14000000), blurRadius: 10, offset: Offset(0, 4)),
         ],
       ),
       clipBehavior: Clip.antiAlias,
@@ -566,23 +565,32 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ---- Media banner ----
+            // ============ IMAGE CAROUSEL ============
             SizedBox(
-              height: 190,
+              height: 150,
               width: double.infinity,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  property.primaryImageUrl.isNotEmpty
-                      ? Image.network(
-                    property.primaryImageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _imagePlaceholder(),
-                    loadingBuilder: (c, child, progress) =>
-                    progress == null ? child : _imagePlaceholder(),
-                  )
-                      : _imagePlaceholder(),
-                  // top scrim so the tags stay readable on photos
+                  // Image carousel
+                  if (images.isEmpty)
+                    _imagePlaceholder()
+                  else
+                    PageView.builder(
+                      itemCount: totalImages,
+                      onPageChanged: (i) => setState(
+                              () => _cardImageIndex[property.slug] = i),
+                      itemBuilder: (_, i) => Image.network(
+                        images[i],
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _imagePlaceholder(),
+                        loadingBuilder: (c, child, progress) => progress == null
+                            ? child
+                            : _imagePlaceholder(),
+                      ),
+                    ),
+
+                  // Top gradient scrim (for tag readability)
                   const DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -592,169 +600,288 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                       ),
                     ),
                   ),
+
+                  // Bottom subtle scrim (for dots readability)
+                  const Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: 60,
+                    child: IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [Color(0x55000000), Color(0x00000000)],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // ---- TOP-LEFT: Property type tag (orange) ----
                   Positioned(
                     top: 12,
                     left: 12,
-                    right: 12,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Wrap(
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: [
-                              _Tag(
-                                text: property.formattedPropertyType,
-                                color: const Color(0xE61E255E),
-                              ),
-                              _Tag(
-                                text: property.formattedTransactionType,
-                                color: _transactionColor(
-                                    property.transactionType),
-                              ),
-                              const _VerifiedTag(),
-                            ],
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: _C.orange500,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.apartment,
+                              size: 13, color: Colors.white),
+                          const SizedBox(width: 5),
+                          Text(
+                            property.formattedPropertyType,
+                            style: _t(11, FontWeight.w700, Colors.white,
+                                letterSpacing: 0.2),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: () => setState(() {
-                            if (!_favorites.remove(property.slug)) {
-                              _favorites.add(property.slug);
-                            }
-                          }),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // ---- TOP-RIGHT: Transaction tag (white pill) ----
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: const [
+                          BoxShadow(
+                              color: Color(0x22000000),
+                              blurRadius: 4,
+                              offset: Offset(0, 1)),
+                        ],
+                      ),
+                      child: Text(
+                        property.formattedTransactionType,
+                        style: _t(11, FontWeight.w700, _C.navy),
+                      ),
+                    ),
+                  ),
+
+                  // ---- LEFT ARROW ----
+                  if (totalImages > 1 && currentIdx > 0)
+                    Positioned(
+                      left: 8,
+                      top: 0,
+                      bottom: 0,
+                      child: Center(
+                        child: GestureDetector(
+                          onTap: () {
+                            final newIdx = currentIdx - 1;
+                            setState(() => _cardImageIndex[property.slug] = newIdx);
+                          },
                           child: Container(
-                            width: 28,
-                            height: 28,
-                            decoration: const BoxDecoration(
-                              color: Color(0xE6FFFFFF),
+                            width: 34,
+                            height: 34,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.85),
                               shape: BoxShape.circle,
-                              boxShadow: [
+                              boxShadow: const [
                                 BoxShadow(
-                                    color: Color(0x33000000),
-                                    blurRadius: 3,
-                                    offset: Offset(0, 1)),
+                                    color: Color(0x33000000), blurRadius: 4),
                               ],
                             ),
-                            child: Icon(
-                              isFav ? Icons.favorite : Icons.favorite_border,
-                              size: 16,
-                              color: isFav ? Colors.red : _C.slate700,
-                            ),
+                            child: const Icon(Icons.chevron_left,
+                                size: 22, color: _C.slate900),
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
 
-            // ---- Body ----
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: _t(16, FontWeight.w700, _C.slate900,
-                        letterSpacing: -0.2),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.only(top: 1),
-                        child: Icon(Icons.location_on_outlined,
-                            size: 14, color: _C.slate400),
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          property.address,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: _t(12, FontWeight.w500, _C.slate500,
-                              height: 1.35),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // Amenity badges
-                  if (amenities.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        for (var i = 0; i < amenities.take(3).length; i++)
-                          _AmenityChip(
-                            label: amenities[i].name,
-                            highlighted: i == 0,
-                            style: _t(
-                                11,
-                                FontWeight.w500,
-                                i == 0 ? _C.blue800 : _C.slate700),
-                          ),
-                        if (amenities.length > 3)
-                          _AmenityChip(
-                            label: '+${amenities.length - 3} more',
-                            highlighted: false,
-                            style: _t(11, FontWeight.w600, _C.slate500),
-                          ),
-                      ],
-                    ),
-                  ],
-
-                  // Footer
-                  const SizedBox(height: 12),
-                  const Divider(height: 1, color: _C.slate100),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              property.formattedMinPrice,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: _t(20, FontWeight.w800, _C.navy,
-                                  height: 1.2),
+                  // ---- RIGHT ARROW ----
+                  if (totalImages > 1 && currentIdx < totalImages - 1)
+                    Positioned(
+                      right: 8,
+                      top: 0,
+                      bottom: 0,
+                      child: Center(
+                        child: GestureDetector(
+                          onTap: () {
+                            final newIdx = currentIdx + 1;
+                            setState(() => _cardImageIndex[property.slug] = newIdx);
+                          },
+                          child: Container(
+                            width: 34,
+                            height: 34,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.85),
+                              shape: BoxShape.circle,
+                              boxShadow: const [
+                                BoxShadow(
+                                    color: Color(0x33000000), blurRadius: 4),
+                              ],
                             ),
-                            Text('Starting price',
-                                style: _t(10, FontWeight.w500, _C.slate500)),
-                          ],
+                            child: const Icon(Icons.chevron_right,
+                                size: 22, color: _C.slate900),
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      ElevatedButton(
-                        onPressed: () => _openDetail(property),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _C.navy,
-                          foregroundColor: Colors.white,
-                          elevation: 1,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 18, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                    ),
+
+                  // ---- BOTTOM-RIGHT: Photo counter (camera + 5/7) ----
+                  if (totalImages > 0)
+                    Positioned(
+                      right: 12,
+                      bottom: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 9, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.65),
+                          borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text('View Details',
-                                style: _t(12, FontWeight.w700, Colors.white)),
-                            const SizedBox(width: 6),
-                            const Icon(Icons.chevron_right, size: 16),
+                            const Icon(Icons.photo_camera_outlined,
+                                size: 12, color: Colors.white),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${currentIdx + 1}/$totalImages',
+                              style: _t(11, FontWeight.w700, Colors.white),
+                            ),
                           ],
                         ),
+                      ),
+                    ),
+
+                  // ---- BOTTOM-CENTER: Page dots ----
+                  if (totalImages > 1)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 14,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          for (var i = 0; i < totalImages && i < 6; i++)
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 180),
+                              margin: const EdgeInsets.symmetric(horizontal: 3),
+                              width: i == currentIdx ? 16 : 6,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: i == currentIdx
+                                    ? Colors.white
+                                    : Colors.white.withValues(alpha: 0.55),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            // ============ BODY (compact) ============
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ---- Title + price ----
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          displayTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: _t(15.5, FontWeight.w800, _C.navy,
+                              height: 1.25, letterSpacing: -0.2),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            property.formattedMinPrice,
+                            maxLines: 1,
+                            style: _t(16.5, FontWeight.w800, _C.blue700,
+                                letterSpacing: -0.3),
+                          ),
+                          Text('onwards',
+                              style: _t(9.5, FontWeight.w600, _C.slate400)),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+
+                  // ---- Location ----
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on_outlined,
+                          size: 14, color: _C.slate500),
+                      const SizedBox(width: 3),
+                      Expanded(
+                        child: Text(
+                          [property.area, property.city]
+                              .where((s) => s.isNotEmpty)
+                              .join(', '),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: _t(12, FontWeight.w600, _C.slate500),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+
+                  // ---- One compact action row ----
+                  Row(
+                    children: [
+                      _cardAction(
+                        icon: Icons.visibility_outlined,
+                        label: 'Details',
+                        fg: _C.navy,
+                        bg: _C.slate50,
+                        border: _C.slate200,
+                        onTap: () => _openDetail(property),
+                      ),
+                      const SizedBox(width: 6),
+                      _cardAction(
+                        icon: Icons.play_circle_fill,
+                        label: 'Video',
+                        fg: _C.blue600,
+                        bg: const Color(0xFFF5F5FF),
+                        border: _C.blue200,
+                        onTap: () => _openVideo(property),
+                      ),
+                      const SizedBox(width: 6),
+                      _cardAction(
+                        icon: Icons.event_available_rounded,
+                        label: 'Visit',
+                        fg: _C.orange500,
+                        bg: _C.orange50,
+                        border: const Color(0xFFFED7AA),
+                        onTap: () => _scheduleVisit(property),
+                      ),
+                      const SizedBox(width: 6),
+                      _cardAction(
+                        icon: Icons.chat_bubble_outline,
+                        label: 'Enquire',
+                        fg: Colors.white,
+                        gradient: const LinearGradient(
+                          colors: [_C.blue600, Color(0xFF8B5CF6)],
+                        ),
+                        onTap: () => _openEnquiry(property),
                       ),
                     ],
                   ),
@@ -762,6 +889,47 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Small icon + label button used in the compact card action row.
+  Widget _cardAction({
+    required IconData icon,
+    required String label,
+    required Color fg,
+    Color? bg,
+    Color? border,
+    Gradient? gradient,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Ink(
+            height: 46,
+            decoration: BoxDecoration(
+              color: gradient == null ? bg : null,
+              gradient: gradient,
+              borderRadius: BorderRadius.circular(10),
+              border: border == null ? null : Border.all(color: border),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 17, color: fg),
+                const SizedBox(height: 2),
+                Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: _t(11, FontWeight.w700, fg)),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -779,6 +947,64 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
     );
   }
 
+  Future<void> _openEnquiry(Property property) async {
+    if (property.slug.isEmpty) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: _C.navy),
+      ),
+    );
+    final r = await RealEstateService.getPropertyDetail(property.slug);
+    if (!mounted) return;
+    Navigator.of(context, rootNavigator: true).pop();
+    if (r.isSuccess && r.data != null) {
+      // ignore: use_build_context_synchronously
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PremiumPropertyDetailScreen(
+            slug: property.slug,
+            previewName: '${property.area}, ${property.city}',
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(r.message ?? 'Could not open enquiry')),
+      );
+    }
+  }
+
+  /// Plays the property's video tour (videos come from the detail API).
+  void _openVideo(Property property) {
+    PropertyVideoScreen.openForSlug(
+      context,
+      slug: property.slug,
+      title: property.displayTitle,
+      subtitle: '${property.area}, ${property.city}',
+    );
+  }
+
+  /// Opens the "Schedule a site visit" form for this property.
+  Future<void> _scheduleVisit(Property property) async {
+    final sent = await showScheduleVisitSheet(
+      context,
+      propertyId: property.id,
+      propertyTitle: property.displayTitle,
+      location: '${property.area}, ${property.city}',
+    );
+    if (!sent || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Site visit requested. Our team will confirm shortly.'),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: _C.emerald600,
+      ),
+    );
+  }
+
   Widget _imagePlaceholder() {
     return Container(
       decoration: const BoxDecoration(
@@ -789,7 +1015,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
         ),
       ),
       child: const Center(
-        child: Icon(Icons.apartment, size: 88, color: Color(0x99CBD5E1)),
+        child: Icon(Icons.apartment, size: 60, color: Color(0x99CBD5E1)),
       ),
     );
   }
@@ -841,9 +1067,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
           ),
           const SizedBox(width: 8),
           ElevatedButton(
-            onPressed: () {
-              // TODO: hook up "Request Call" action
-            },
+            onPressed: () {},
             style: ElevatedButton.styleFrom(
               backgroundColor: _C.amber600,
               foregroundColor: Colors.white,
@@ -968,7 +1192,6 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                 ),
                 const SizedBox(height: 8),
 
-                // Transaction type
                 Text('Transaction Type',
                     style: _t(13, FontWeight.w700, _C.slate900)),
                 const SizedBox(height: 8),
@@ -1005,7 +1228,6 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                   }).toList(),
                 ),
 
-                // Amenities
                 if (_allAmenities.isNotEmpty) ...[
                   const SizedBox(height: 20),
                   Text('Amenities',
@@ -1176,88 +1398,6 @@ class _CategoryChip extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _Tag extends StatelessWidget {
-  final String text;
-  final Color color;
-
-  const _Tag({required this.text, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        text.toUpperCase(),
-        style: GoogleFonts.plusJakartaSans(
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.8,
-          color: Colors.white,
-        ),
-      ),
-    );
-  }
-}
-
-class _VerifiedTag extends StatelessWidget {
-  const _VerifiedTag();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: _C.emerald600,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.check, size: 10, color: Colors.white),
-          const SizedBox(width: 3),
-          Text(
-            'Verified',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AmenityChip extends StatelessWidget {
-  final String label;
-  final bool highlighted;
-  final TextStyle style;
-
-  const _AmenityChip({
-    required this.label,
-    required this.highlighted,
-    required this.style,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: highlighted ? _C.blue50 : _C.slate100,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: highlighted ? _C.blue100 : _C.slate200),
-      ),
-      child: Text(label, style: style),
     );
   }
 }

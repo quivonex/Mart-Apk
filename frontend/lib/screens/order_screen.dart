@@ -3,6 +3,7 @@ import '../constants/app_constants.dart';
 import '../models/order_model.dart';
 import '../services/order_service.dart';
 import 'order_detail_screen.dart';
+import 'reorder_screen.dart';
 import '../utils/order_payment_helper.dart';
 
 class OrdersScreen extends StatefulWidget {
@@ -486,13 +487,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Re-ordering ${order.product.name}'),
-                        duration: const Duration(seconds: 2),
-                      ),
+                  onPressed: () async {
+                    final placed = await Navigator.push<bool>(
+                      context,
+                      MaterialPageRoute(builder: (_) => ReorderScreen(order: order)),
                     );
+                    if (placed == true && mounted) _loadOrders();
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppConstants.primary,

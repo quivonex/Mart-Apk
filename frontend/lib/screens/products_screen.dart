@@ -6,11 +6,12 @@ import '../widgets/product_card.dart';
 import '../utils/cart_helper.dart';
 import 'franchise_plans_screen.dart';
 import 'product_enquiry_screen.dart';
+import 'product_detail_screen.dart';   // 🆕 add this line
 
 // Colours used only on this screen (the rest come from DT).
 class _C {
-  static const navy3 = Color(0xFF242E54);
-  static const blue600 = Color(0xFF2563EB);
+  static const navy3 = Color(0xFF312E81);
+  static const blue600 = Color(0xFF6366F1);
 }
 
 enum _Sort { recommended, priceLow, priceHigh, nameAz, discount }
@@ -219,6 +220,15 @@ class _ProductsScreenState extends State<ProductsScreen> {
           productSlug: product.slug,
           productName: product.name,
         ),
+      ),
+    );
+  }
+
+  void _openDetail(Product product) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProductDetailScreen(product: product),
       ),
     );
   }
@@ -548,6 +558,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     final p = shown[i];
                     return ProductCard(
                       product: p,
+                      onTap: () => _openDetail(p),
                       onEnquiry: () => _openEnquiry(p),
                       onAddToCart: () =>
                           CartHelper.addToCart(context: context, product: p),

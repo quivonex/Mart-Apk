@@ -11,10 +11,12 @@ class AccountScreen extends StatefulWidget {
 }
 
 class _AccountScreenState extends State<AccountScreen> {
-  String _username = '';
-  String _email = '';
-  String _address = '';
-  bool _isLoading = true;
+  String _username    = '';
+  String _email       = '';
+  String _address     = '';
+  String _gstNumber   = '';   // 🆕
+  String _companyName = '';   // 🆕
+  bool _isLoading     = true;
 
   @override
   void initState() {
@@ -23,15 +25,21 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _loadUserData() async {
-    final username = await SharedPreferencesHelper.getUsername();
-    final email = await SharedPreferencesHelper.getUserEmail();
-    final address = await SharedPreferencesHelper.getUserAddress();
+    final username    = await SharedPreferencesHelper.getUsername();
+    final email       = await SharedPreferencesHelper.getUserEmail();
+    final address     = await SharedPreferencesHelper.getUserAddress();
+    final gst         = await SharedPreferencesHelper.getGstNumber();     // 🆕
+    final companyName = await SharedPreferencesHelper.getCompanyName();   // 🆕
 
     setState(() {
-      _username = username ?? 'User';
-      _email = email ?? 'user@email.com';
-      _address = address ?? 'No address set';
-      _isLoading = false;
+      _username    = username ?? 'User';
+      _email       = email ?? 'user@email.com';
+      _address     = address ?? 'No address set';
+      _gstNumber   = (gst != null && gst.isNotEmpty) ? gst : 'Not provided';
+      _companyName = (companyName != null && companyName.isNotEmpty)
+          ? companyName
+          : '$_username Trading Co.';
+      _isLoading   = false;
     });
   }
 
@@ -52,7 +60,8 @@ class _AccountScreenState extends State<AccountScreen> {
       child: _isLoading
           ? const Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(AppConstants.primary),
+          valueColor:
+          AlwaysStoppedAnimation<Color>(AppConstants.primary),
         ),
       )
           : SingleChildScrollView(
@@ -74,12 +83,12 @@ class _AccountScreenState extends State<AccountScreen> {
               ),
               child: Column(
                 children: [
-                  // QNX MART logo at the top of the profile card
                   Image.asset(
                     'lib/assets/images/qnx_mart_logo.png',
                     height: 42,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                    errorBuilder: (_, __, ___) =>
+                    const SizedBox.shrink(),
                   ),
                   const SizedBox(height: 14),
                   Text(
@@ -159,12 +168,12 @@ class _AccountScreenState extends State<AccountScreen> {
                   _buildBusinessInfo(
                     icon: Icons.business,
                     label: 'Company Name',
-                    value: '$_username Trading Co.',
+                    value: _companyName,   // ✅ dynamic
                   ),
                   _buildBusinessInfo(
                     icon: Icons.confirmation_number,
                     label: 'GSTIN',
-                    value: '22AAAAA0000A1Z5',
+                    value: _gstNumber,     // ✅ dynamic
                   ),
                   _buildBusinessInfo(
                     icon: Icons.location_on,
@@ -343,8 +352,11 @@ class _AccountScreenState extends State<AccountScreen> {
           fontFamily: 'Inter',
         ),
       ),
-      trailing:
-      Icon(Icons.chevron_right, color: AppConstants.textLight, size: 20),
+      trailing: Icon(
+        Icons.chevron_right,
+        color: AppConstants.textLight,
+        size: 20,
+      ),
       contentPadding: EdgeInsets.zero,
       visualDensity: const VisualDensity(vertical: -2),
       onTap: onTap,

@@ -355,6 +355,7 @@ class CatalogService {
     required Map<String, String> fields,
     required XFile thumbnail,
     List<XFile> images = const [],
+    List<XFile> videos = const [],
     Map<String, XFile> variantImages = const {},
   }) async {
     try {
@@ -372,6 +373,9 @@ class CatalogService {
       }
       for (final e in variantImages.entries) {
         req.files.add(await imagePart(e.key, e.value));
+      }
+      for (final v in videos) {
+        req.files.add(await videoPart('videos', v));
       }
 
       final streamed = await req.send().timeout(_uploadTimeout);
@@ -411,6 +415,33 @@ class CatalogService {
         'image/webp' => 'webp',
         'image/gif' => 'gif',
         _ => 'jpg',
+      }}';
+    }
+    return http.MultipartFile.fromBytes(field, bytes,
+        filename: name, contentType: MediaType.parse(mime));
+  }
+
+  /// Video file part (mp4 / mov / webm / 3gp / mkv). Backend reads request.FILES.getlist('videos').
+  static Future<http.MultipartFile> videoPart(String field, XFile x) async {
+    final bytes = await x.readAsBytes();
+    var name = x.name.isNotEmpty ? x.name : x.path.split('/').last;
+    final ext = name.contains('.') ? name.split('.').last.toLowerCase() : '';
+    var mime = x.mimeType ?? '';
+    if (!mime.startsWith('video/')) {
+      mime = switch (ext) {
+        'mov' => 'video/quicktime',
+        'webm' => 'video/webm',
+        '3gp' => 'video/3gpp',
+        'mkv' => 'video/x-matroska',
+        _ => 'video/mp4',
+      };
+    }
+    if (!name.contains('.')) {
+      name = '$name.${switch (mime) {
+        'video/quicktime' => 'mov',
+        'video/webm' => 'webm',
+        'video/3gpp' => '3gp',
+        _ => 'mp4',
       }}';
     }
     return http.MultipartFile.fromBytes(field, bytes,
@@ -462,6 +493,7 @@ class CatalogService {
     Map<String, String> fields = const {},
     XFile? thumbnail,
     List<XFile> images = const [],
+    List<XFile> videos = const [],
     List<int> deleteImageIds = const [],
   }) async {
     try {
@@ -484,6 +516,9 @@ class CatalogService {
       if (thumbnail != null) req.files.add(await imagePart('thumbnail', thumbnail));
       for (final img in images) {
         req.files.add(await imagePart('images', img));
+      }
+      for (final v in videos) {
+        req.files.add(await videoPart('videos', v));
       }
 
       final streamed = await req.send().timeout(_uploadTimeout);

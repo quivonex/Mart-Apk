@@ -1,33 +1,36 @@
 // lib/constants/app_theme.dart
 //
-// One theme for the whole app, matching the home screen design:
-//   brand blue #1A68FA · dark blue #0D3880 · accent orange #FF5722
-//   page #F6F8FC · slate text/borders · Plus Jakarta Sans · 12–16 px radii
+// One theme for the whole app – QNX MART palette:
+//   Primary #6366F1 · Secondary #8B5CF6 · Accent #F97316
+//   Success #10B981 · Warning #F59E0B · Error #EF4444 · Background #F8FAFC
+//   Headers: indigo -> violet gradient · Plus Jakarta Sans · 12–16 px radii
 //
 // Every default Material widget (app bars, buttons, inputs, dialogs, sheets,
-// checkboxes, switches, chips, pickers, snackbars…) picks this up, so screens
-// that don't set their own colours automatically look like the home page.
+// checkboxes, switches, chips, pickers, snackbars…) picks this up.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   AppTheme._();
 
-  // ── Palette (same values as the home screen) ──────────────
-  static const Color brand = Color(0xFF1A68FA);
-  static const Color brandDark = Color(0xFF0D3880);
-  static const Color brandDeep = Color(0xFF1557D0);
-  static const Color accent = Color(0xFFFF5722);
-  static const Color page = Color(0xFFF6F8FC);
+  // ── Palette (QNX MART) ────────────────────────────────────
+  static const Color brand = Color(0xFF6366F1);
+  static const Color brandDark = Color(0xFF4338CA);
+  static const Color brandDeep = Color(0xFF4F46E5);
+  static const Color accent = Color(0xFFF97316);
+  static const Color page = Color(0xFFF8FAFC);
   static const Color ink = Color(0xFF0F172A); // slate-900
   static const Color inkSoft = Color(0xFF475569); // slate-600
   static const Color muted = Color(0xFF94A3B8); // slate-400
   static const Color line = Color(0xFFE2E8F0); // slate-200
   static const Color hairline = Color(0xFFF1F5F9); // slate-100
-  static const Color brandTint = Color(0xFFEFF6FF); // blue-50
-  static const Color danger = Color(0xFFDC2626);
-  static const Color success = Color(0xFF059669);
+  static const Color brandTint = Color(0xFFEEF2FF); // blue-50
+  static const Color danger = Color(0xFFEF4444);
+  static const Color success = Color(0xFF10B981);
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color secondary = Color(0xFF8B5CF6);
 
   static TextStyle _t(double size, FontWeight w, Color c, {double? h, double? ls}) =>
       GoogleFonts.plusJakartaSans(fontSize: size, fontWeight: w, color: c, height: h, letterSpacing: ls);
@@ -64,9 +67,12 @@ class AppTheme {
       onPrimary: Colors.white,
       primaryContainer: brandTint,
       onPrimaryContainer: brandDark,
-      secondary: accent,
+      secondary: secondary,
       onSecondary: Colors.white,
-      tertiary: brandDark,
+      secondaryContainer: const Color(0xFFEDE9FE),
+      onSecondaryContainer: const Color(0xFF5B21B6),
+      tertiary: accent,
+      onTertiary: Colors.white,
       surface: Colors.white,
       onSurface: ink,
       onSurfaceVariant: inkSoft,
@@ -87,19 +93,19 @@ class AppTheme {
       textTheme: textTheme,
       primaryTextTheme: textTheme,
 
-      // White header with dark text and a hairline – like the home header.
+      // Indigo header with white text (screens with a gradient header draw it themselves).
       appBarTheme: AppBarTheme(
-        backgroundColor: Colors.white,
-        foregroundColor: ink,
+        backgroundColor: brand,
+        foregroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        scrolledUnderElevation: 0.5,
-        shadowColor: const Color(0x140F172A),
+        scrolledUnderElevation: 0,
+        shadowColor: const Color(0x334F46E5),
         centerTitle: false,
-        titleTextStyle: _t(18, FontWeight.w700, ink),
-        iconTheme: const IconThemeData(color: ink, size: 24),
-        actionsIconTheme: const IconThemeData(color: inkSoft, size: 22),
-        shape: const Border(bottom: BorderSide(color: hairline)),
+        titleTextStyle: _t(18, FontWeight.w700, Colors.white),
+        iconTheme: const IconThemeData(color: Colors.white, size: 24),
+        actionsIconTheme: const IconThemeData(color: Colors.white, size: 22),
+        systemOverlayStyle: SystemUiOverlayStyle.light,
       ),
 
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -127,7 +133,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: brand,
-          side: const BorderSide(color: Color(0xFFBFDBFE)),
+          side: const BorderSide(color: Color(0xFFC7D2FE)),
           minimumSize: const Size(64, 46),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -207,7 +213,7 @@ class AppTheme {
         behavior: SnackBarBehavior.floating,
         backgroundColor: ink,
         contentTextStyle: _t(13, FontWeight.w600, Colors.white),
-        actionTextColor: const Color(0xFF93C5FD),
+        actionTextColor: const Color(0xFFA5B4FC),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         insetPadding: const EdgeInsets.all(16),
       ),
@@ -215,7 +221,7 @@ class AppTheme {
         backgroundColor: brandTint,
         selectedColor: brand,
         disabledColor: hairline,
-        side: const BorderSide(color: Color(0xFFDBEAFE)),
+        side: const BorderSide(color: Color(0xFFE0E7FF)),
         shape: const StadiumBorder(),
         labelStyle: _t(12.5, FontWeight.w600, brand),
         secondaryLabelStyle: _t(12.5, FontWeight.w700, Colors.white),
@@ -268,7 +274,7 @@ class AppTheme {
       ),
       textSelectionTheme: const TextSelectionThemeData(
         cursorColor: brand,
-        selectionColor: Color(0x401A68FA),
+        selectionColor: Color(0x406366F1),
         selectionHandleColor: brand,
       ),
     );

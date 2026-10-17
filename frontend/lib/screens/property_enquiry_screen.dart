@@ -29,6 +29,7 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
 
   String? _selectedFlatType;
   bool _isLoading = false;
+  String? _error; // last server / network error, shown above the button
 
   @override
   void dispose() {
@@ -43,6 +44,8 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
   }
 
   Future<void> _submit() async {
+    FocusScope.of(context).unfocus();
+    setState(() => _error = null);
     if (!_formKey.currentState!.validate()) return;
 
     // Validate budget range
@@ -81,7 +84,10 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
     final response = await PropertyEnquiryService.submitEnquiry(request);
 
     if (!mounted) return;
-    setState(() => _isLoading = false);
+    setState(() {
+      _isLoading = false;
+      _error = response.isSuccess ? null : response.displayMessage;
+    });
 
     // Snackbar
     ScaffoldMessenger.of(context).showSnackBar(
@@ -110,7 +116,7 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
           ],
         ),
         backgroundColor:
-        response.isSuccess ? Colors.green : const Color(0xFFD32F2F),
+        response.isSuccess ? const Color(0xFF10B981) : Color(0xFFEF4444),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 4),
         margin: const EdgeInsets.all(16),
@@ -129,7 +135,7 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: isError ? const Color(0xFFD32F2F) : Colors.green,
+        backgroundColor: isError ? const Color(0xFFEF4444) : Color(0xFF10B981),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -141,6 +147,7 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
       backgroundColor: AppConstants.surfaceColor,
       appBar: AppBar(
         backgroundColor: AppConstants.primary,
+        flexibleSpace: Container(decoration: const BoxDecoration(gradient: AppConstants.appBarGradient)),
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(
@@ -190,7 +197,7 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
                   if (v == null || v.trim().isEmpty) {
                     return 'Email is required';
                   }
-                  final re = RegExp(r'^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$');
+                  final re = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]{2,}$');
                   if (!re.hasMatch(v.trim())) return 'Enter a valid email';
                   return null;
                 },
@@ -212,6 +219,9 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
                   }
                   if (v.trim().length != 10) {
                     return 'Enter valid 10-digit number';
+                  }
+                  if (!RegExp(r'^[6-9]').hasMatch(v.trim())) {
+                    return 'Enter a valid Indian mobile number';
                   }
                   return null;
                 },
@@ -300,7 +310,39 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
                 icon: Icons.card_giftcard_outlined,
                 validator: (_) => null,
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 20),
+
+              if (_error != null) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF2F2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFFECACA)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.error_outline,
+                          color: Color(0xFFEF4444), size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _error!,
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFFB91C1C),
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+              ],
 
               // Submit
               SizedBox(
@@ -441,11 +483,11 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.red, width: 1),
+        borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.red, width: 2),
+        borderSide: const BorderSide(color: Color(0xFFEF4444), width: 2),
       ),
       contentPadding:
       const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

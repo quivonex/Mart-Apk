@@ -10,12 +10,12 @@ import '../constants/design_tokens.dart';
 
 class PX {
   PX._();
-  static const Color royal600 = Color(0xFF2563EB); // brand primary
-  static const Color royal700 = Color(0xFF1D4ED8); // brand dark
-  static const Color royal50 = Color(0xFFEFF6FF);
-  static const Color royal200 = Color(0xFFBFDBFE);
+  static const Color royal600 = Color(0xFF6366F1); // brand primary
+  static const Color royal700 = Color(0xFF4F46E5); // brand dark
+  static const Color royal50 = Color(0xFFEEF2FF);
+  static const Color royal200 = Color(0xFFC7D2FE);
   static const Color onyx950 = Color(0xFF090D16);
-  static const Color emerald600 = Color(0xFF059669);
+  static const Color emerald600 = Color(0xFF10B981);
   static const Color emerald100 = Color(0xFFD1FAE5);
   static const Color emerald500 = Color(0xFF10B981);
   static const Color amber400 = Color(0xFFFBBF24);
@@ -28,7 +28,7 @@ class PX {
     BoxShadow(color: Color(0x0D0F172A), blurRadius: 2, offset: Offset(0, 1), spreadRadius: -1),
   ];
   static const List<BoxShadow> fabShadow = [
-    BoxShadow(color: Color(0x662563EB), blurRadius: 16, offset: Offset(0, 6), spreadRadius: -2),
+    BoxShadow(color: Color(0x666366F1), blurRadius: 16, offset: Offset(0, 6), spreadRadius: -2),
     BoxShadow(color: Color(0x400F172A), blurRadius: 8, offset: Offset(0, 3), spreadRadius: -2),
   ];
   static const List<BoxShadow> stickyShadow = [

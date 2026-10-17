@@ -114,6 +114,7 @@ class CatalogPickerField<T extends CatalogOption> extends StatelessWidget {
                       style: DT.text(
                         size: 13.5,
                         weight: FontWeight.w500,
+                        // ✅ Reverted back to dark
                         color: selected != null
                             ? DT.onyx900
                             : (enabled ? DT.slate400 : DT.slate400),
@@ -246,10 +247,12 @@ class _PickerSheetState<T extends CatalogOption> extends State<_PickerSheet<T>> 
                 children: [
                   Expanded(
                     child: Text('Select ${widget.title.toLowerCase()}',
+                        // ✅ Reverted back to dark
                         style: DT.text(size: 16.5, weight: FontWeight.w800)),
                   ),
                   IconButton(
                       onPressed: () => Navigator.pop(context),
+                      // ✅ Reverted back to dark
                       icon: const Icon(Icons.close_rounded, color: DT.slate500)),
                 ],
               ),
@@ -259,6 +262,7 @@ class _PickerSheetState<T extends CatalogOption> extends State<_PickerSheet<T>> 
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: TextField(
                   onChanged: (v) => setState(() => _q = v),
+                  // ✅ Reverted back to dark
                   style: DT.text(size: 13.5),
                   decoration: InputDecoration(
                     hintText: 'Search',
@@ -307,6 +311,7 @@ class _PickerSheetState<T extends CatalogOption> extends State<_PickerSheet<T>> 
                         style: DT.text(
                             size: 14,
                             weight: sel ? FontWeight.w700 : FontWeight.w500,
+                            // ✅ Reverted back to dark
                             color: sel ? DT.blue800 : DT.onyx900)),
                     subtitle: item.sublabel.isEmpty
                         ? null
@@ -412,6 +417,7 @@ class _CatalogManageListState<T extends CatalogOption> extends State<CatalogMana
           if (widget.items.length > 6) ...[
             TextField(
               onChanged: (v) => setState(() => _q = v),
+              // ✅ Reverted back to dark
               style: DT.text(size: 13.5),
               decoration: InputDecoration(
                 hintText: 'Search',
@@ -460,29 +466,31 @@ class _CatalogManageListState<T extends CatalogOption> extends State<CatalogMana
     );
   }
 
+  // ✅ Blue theme
   Widget _chip(String text, int count, bool sel, VoidCallback onTap) => GestureDetector(
     onTap: onTap,
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: sel ? DT.onyx900 : Colors.white,
+        color: sel ? DT.blue800 : Colors.white,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: sel ? DT.onyx900 : DT.border),
+        border: Border.all(color: sel ? DT.blue800 : DT.blue200),
       ),
       child: Text('$text  $count',
           style: DT.text(
               size: 12.5,
               weight: FontWeight.w700,
-              color: sel ? Colors.white : DT.onyx700)),
+              color: sel ? Colors.white : DT.blue800)),
     ),
   );
 
+  // ✅ Blue theme
   Widget _row(T item) {
     return Material(
       color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(DT.rMd),
-        side: const BorderSide(color: DT.border),
+        side: const BorderSide(color: DT.blue200),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(DT.rMd),
@@ -499,7 +507,7 @@ class _CatalogManageListState<T extends CatalogOption> extends State<CatalogMana
                         style: DT.text(
                             size: 14,
                             weight: FontWeight.w700,
-                            color: item.isActive ? DT.onyx900 : DT.slate500)),
+                            color: item.isActive ? DT.blue800 : DT.slate500)),
                     if (item.sublabel.isNotEmpty) ...[
                       const SizedBox(height: 2),
                       Text(item.sublabel,
@@ -511,14 +519,14 @@ class _CatalogManageListState<T extends CatalogOption> extends State<CatalogMana
                 ),
               ),
               PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert_rounded, color: DT.slate500, size: 20),
+                icon: const Icon(Icons.more_vert_rounded, color: DT.blue800, size: 20),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
                 onSelected: (v) =>
                 v == 'edit' ? widget.onEdit(item) : widget.onToggleActive(item),
                 itemBuilder: (_) => [
                   PopupMenuItem(
                       value: 'edit',
-                      child: Text('Edit', style: DT.text(size: 13.5, weight: FontWeight.w600))),
+                      child: Text('Edit', style: DT.text(size: 13.5, weight: FontWeight.w600, color: DT.blue800))),
                   PopupMenuItem(
                     value: 'toggle',
                     child: Text(item.isActive ? 'Deactivate' : 'Restore',
@@ -586,7 +594,11 @@ class CatalogFormScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: DT.background,
-      appBar: CompanyTopBar(title: title, subtitle: subtitle),
+      // ✅ FIX: Wrapped in PreferredSize with height 65 to prevent 1px overflow
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(65),
+        child: CompanyTopBar(title: title, subtitle: subtitle),
+      ),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         behavior: HitTestBehavior.translucent,
@@ -607,22 +619,30 @@ class CatalogFormScaffold extends StatelessWidget {
           ),
           child: SizedBox(
             height: 48,
-            child: ElevatedButton(
-              onPressed: saving ? null : onSave,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: DT.blue800,
-                disabledBackgroundColor: DT.blue800.withValues(alpha: 0.5),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: DT.ctaGradient,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
               ),
-              child: saving
-                  ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                  : Text(saveLabel,
-                  style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
+              child: ElevatedButton(
+                onPressed: saving ? null : onSave,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  disabledBackgroundColor: Colors.transparent,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
+                ),
+                child: saving
+                    ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                    : Text(saveLabel,
+                    style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
+              ),
             ),
           ),
         ),
@@ -672,12 +692,14 @@ class CatalogTextField extends StatelessWidget {
       maxLines: maxLines,
       textCapitalization: capitalization,
       onChanged: onChanged,
+      // ✅ Reverted back to dark
       style: DT.text(size: 13.5),
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
         labelStyle: DT.text(size: 13, color: DT.slate500),
         hintStyle: DT.text(size: 13, color: DT.slate400),
+        // ✅ Reverted back to dark
         prefixIcon: icon == null ? null : Icon(icon, size: 19, color: DT.slate400),
         suffixText: suffixText,
         filled: true,

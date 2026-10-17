@@ -147,7 +147,7 @@ class _PropertyFilterPanelState extends State<PropertyFilterPanel> {
   static const _headerBottom = Color(0xFF475569);
   static const _label = Color(0xFF334155);
   static const _border = Color(0xFFCBD5E1);
-  static const _blue = Color(0xFF1D6BF3);
+  static const _blue = Color(0xFF6366F1);
 
   // Loaded once per app run.
   static List<LocationItem>? _statesCache;

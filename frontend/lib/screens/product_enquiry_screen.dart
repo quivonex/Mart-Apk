@@ -5,7 +5,8 @@
 // Plus Jakarta Sans via DT.text).
 // Logic unchanged: posts to ProductEnquiryService.submitEnquiry.
 
-import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -48,12 +49,13 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
 
   String _demoRequired = 'no'; // 'yes' or 'no'
   String? _demoType; // 'at_location' or 'online'
-  File? _attachment;
+  XFile? _attachment;
+  Uint8List? _attachmentBytes;
   bool _isLoading = false;
 
   static const int _maxMessage = 500;
-  static const _brand = Color(0xFF1A68FA);
-  static const _brandDark = Color(0xFF0D3880);
+  static const _brand = Color(0xFF6366F1);
+  static const _brandDark = Color(0xFF4338CA);
 
   @override
   void initState() {
@@ -98,29 +100,93 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
     return '₹${isWhole ? v.toInt() : v.toStringAsFixed(2)}';
   }
 
+  /// Camera or gallery. Uses XFile + bytes so it works on web and mobile
+  /// (dart:io File / Image.file do not work in the browser).
   Future<void> _pickAttachment() async {
+    final source = kIsWeb ? ImageSource.gallery : await _askSource();
+    if (source == null) return;
     try {
-      final picker = ImagePicker();
-      final XFile? picked = await picker.pickImage(
-        source: ImageSource.gallery,
+      final picked = await ImagePicker().pickImage(
+        source: source,
         imageQuality: 80,
+        maxWidth: 1800,
       );
       if (picked == null) return;
-
-      final file = File(picked.path);
-      final sizeInBytes = await file.length();
-      if (sizeInBytes > 5 * 1024 * 1024) {
-        _showSnackbar('File size must be under 5MB', isError: true);
+      final bytes = await picked.readAsBytes();
+      if (bytes.lengthInBytes > 5 * 1024 * 1024) {
+        _showSnackbar('Photo must be under 5MB', isError: true);
         return;
       }
       if (!mounted) return;
-      setState(() => _attachment = file);
+      setState(() {
+        _attachment = picked;
+        _attachmentBytes = bytes;
+      });
     } catch (e) {
-      _showSnackbar('Failed to pick file: $e', isError: true);
+      _showSnackbar('Could not add photo: $e', isError: true);
     }
   }
 
-  void _removeAttachment() => setState(() => _attachment = null);
+  Future<ImageSource?> _askSource() {
+    Widget tile(BuildContext ctx, IconData icon, String label, ImageSource src) => Expanded(
+      child: Material(
+        color: DT.blue50,
+        borderRadius: BorderRadius.circular(DT.rLg),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(DT.rLg),
+          onTap: () => Navigator.pop(ctx, src),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: _S.lg + 2),
+            child: Column(
+              children: [
+                Icon(icon, color: _brand, size: 28),
+                const SizedBox(height: _S.xs + 2),
+                Text(label,
+                    style: DT.text(size: 13, weight: FontWeight.w700, color: _brandDark)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    return showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(DT.rXl))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(_S.lg, _S.md, _S.lg, _S.lg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: DT.slate300, borderRadius: BorderRadius.circular(2)),
+              ),
+              const SizedBox(height: _S.md),
+              Text('Add a photo', style: DT.text(size: 16, weight: FontWeight.w800)),
+              const SizedBox(height: _S.md),
+              Row(
+                children: [
+                  tile(ctx, Icons.photo_camera_outlined, 'Camera', ImageSource.camera),
+                  const SizedBox(width: _S.md),
+                  tile(ctx, Icons.photo_library_outlined, 'Gallery', ImageSource.gallery),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _removeAttachment() => setState(() {
+    _attachment = null;
+    _attachmentBytes = null;
+  });
 
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
@@ -188,7 +254,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
               ),
             ],
           ),
-          backgroundColor: isError ? DT.error : const Color(0xFF059669),
+          backgroundColor: isError ? DT.error : const Color(0xFF10B981),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 4),
           margin: const EdgeInsets.all(_S.lg),
@@ -241,8 +307,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
       preferredSize: const Size.fromHeight(64),
       child: Container(
         decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(bottom: BorderSide(color: DT.slate200)),
+          gradient: DT.headerGradient,
           boxShadow: [
             BoxShadow(
                 color: Color(0x0D0F172A), blurRadius: 2, offset: Offset(0, 1)),
@@ -260,7 +325,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                     tooltip: 'Back',
                     onPressed: () => Navigator.maybePop(context),
                     icon: const Icon(Icons.arrow_back_rounded,
-                        color: DT.onyx900, size: 24),
+                        color: Colors.white, size: 24),
                   ),
                   const SizedBox(width: _S.xs),
                   Expanded(
@@ -273,7 +338,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                           style: DT.text(
                               size: 18,
                               weight: FontWeight.w700,
-                              color: DT.onyx900,
+                              color: Colors.white,
                               letterSpacing: -0.3),
                         ),
                         const SizedBox(height: 2),
@@ -284,7 +349,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                           style: DT.text(
                               size: 12,
                               weight: FontWeight.w500,
-                              color: DT.slate500),
+                              color: const Color(0xFFE0E7FF)),
                         ),
                       ],
                     ),
@@ -371,7 +436,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
               borderRadius: BorderRadius.circular(DT.rMd),
               boxShadow: const [
                 BoxShadow(
-                    color: Color(0x331A68FA),
+                    color: Color(0x336366F1),
                     blurRadius: 8,
                     offset: Offset(0, 3)),
               ],
@@ -789,7 +854,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
               ),
               const SizedBox(height: 2),
               Text(
-                'JPG, PNG or WebP, up to 5MB',
+                kIsWeb ? 'JPG, PNG or WebP, up to 5MB' : 'Camera or gallery · up to 5MB',
                 style: DT.text(size: 11.5, color: DT.slate500),
               ),
             ],
@@ -798,7 +863,10 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
       );
     }
 
-    final name = _attachment!.path.split(RegExp(r'[\\/]')).last;
+    final name = _attachment!.name.isNotEmpty
+        ? _attachment!.name
+        : _attachment!.path.split(RegExp(r'[\\/]')).last;
+    final sizeKb = (_attachmentBytes?.lengthInBytes ?? 0) / 1024;
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -810,8 +878,8 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(DT.rSm),
-            child: Image.file(
-              _attachment!,
+            child: Image.memory(
+              _attachmentBytes!,
               width: 56,
               height: 56,
               fit: BoxFit.cover,
@@ -837,10 +905,18 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                       size: 13, weight: FontWeight.w700, color: DT.onyx900),
                 ),
                 const SizedBox(height: 2),
-                Text('Attached',
+                Text(
+                    sizeKb >= 1024
+                        ? 'Attached · ${(sizeKb / 1024).toStringAsFixed(1)} MB'
+                        : 'Attached · ${sizeKb.toStringAsFixed(0)} KB',
                     style: DT.text(size: 11.5, color: DT.slate500)),
               ],
             ),
+          ),
+          IconButton(
+            tooltip: 'Change photo',
+            onPressed: _pickAttachment,
+            icon: const Icon(Icons.swap_horiz_rounded, color: _brand, size: 20),
           ),
           IconButton(
             tooltip: 'Remove photo',
@@ -897,37 +973,44 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
               Expanded(
                 child: SizedBox(
                   height: 52,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _brand,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: _brand.withValues(alpha: 0.55),
-                      elevation: 2,
-                      shadowColor: const Color(0x401A68FA),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(DT.rMd)),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: DT.ctaGradient,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
                     ),
-                    child: _isLoading
-                        ? const SizedBox(
-                      height: 22,
-                      width: 22,
-                      child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2.5),
-                    )
-                        : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.send_rounded, size: 18),
-                        const SizedBox(width: _S.sm),
-                        Text(
-                          'Send enquiry',
-                          style: DT.text(
-                              size: 15,
-                              weight: FontWeight.w700,
-                              color: Colors.white),
-                        ),
-                      ],
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: Colors.transparent,
+                        elevation: 0,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(DT.rMd)),
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2.5),
+                      )
+                          : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.send_rounded, size: 18),
+                          const SizedBox(width: _S.sm),
+                          Text(
+                            'Send enquiry',
+                            style: DT.text(
+                                size: 15,
+                                weight: FontWeight.w700,
+                                color: Colors.white),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

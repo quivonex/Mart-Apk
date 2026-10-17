@@ -401,7 +401,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                             width: 8,
                             height: 8,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF3B82F6),
+                              color: const Color(0xFF6366F1),
                               shape: BoxShape.circle,
                               border: Border.all(color: DT.onyx900, width: 2),
                             ),
@@ -572,7 +572,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
               decoration: BoxDecoration(
-                color: sel ? const Color(0xFF1E40AF) : Colors.white,
+                color: sel ? const Color(0xFF4338CA) : Colors.white,
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text('$count',
@@ -1178,16 +1178,24 @@ class _RestockSheetState extends State<_RestockSheet> {
               const SizedBox(height: 16),
               SizedBox(
                 height: 48,
-                child: ElevatedButton(
-                  onPressed: _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: PX.royal600,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: DT.ctaGradient,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
                   ),
-                  child: Text('Send stock update',
-                      style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
+                  child: ElevatedButton(
+                    onPressed: _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
+                    ),
+                    child: Text('Send stock update',
+                        style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
+                  ),
                 ),
               ),
             ],

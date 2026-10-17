@@ -30,8 +30,7 @@ class CompanyTopBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: DT.border)),
+        gradient: DT.headerGradient,
       ),
       child: SafeArea(
         bottom: false,
@@ -47,7 +46,7 @@ class CompanyTopBar extends StatelessWidget implements PreferredSizeWidget {
                     IconButton(
                       tooltip: 'Back',
                       onPressed: () => Navigator.maybePop(context),
-                      icon: const Icon(Icons.arrow_back_rounded, color: DT.onyx700),
+                      icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
                     ),
                     Expanded(
                       child: Column(
@@ -61,16 +60,16 @@ class CompanyTopBar extends StatelessWidget implements PreferredSizeWidget {
                                   size: 17,
                                   weight: FontWeight.w700,
                                   letterSpacing: -0.3,
-                                  height: 1.2)),
+                                  height: 1.2, color: Colors.white)),
                           if (subtitle != null && subtitle!.isNotEmpty)
                             Text(subtitle!,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: DT.text(size: 12, color: DT.slate500)),
+                                style: DT.text(size: 12, color: const Color(0xFFE0E7FF))),
                         ],
                       ),
                     ),
-                    ...actions,
+                    ...actions.map((a) => IconTheme(data: const IconThemeData(color: Colors.white), child: a)),
                   ],
                 ),
               ),

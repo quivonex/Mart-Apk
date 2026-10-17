@@ -1,21 +1,45 @@
+// lib/models/franchise_plan_model.dart
+//
+// Matches POST /franchicies/product-franchise-plans/
+// {
+//   "status": true,
+//   "message": "Franchise plans fetched successfully.",
+//   "count": 2,
+//   "data": [
+//     {
+//       "id": 1,
+//       "company_id": 1,
+//       "user": 1,
+//       "product": 1,
+//       "plan_name": "Silver",
+//       "amount": "300000.00",
+//       "description": "Tea Franchise",
+//       "plan_products": [
+//         { "id": 1, "item_name": "Cup", "quantity": "500.00", "unit": "pcs" },
+//         ...
+//       ]
+//     }
+//   ]
+// }
+
 class FranchisePlanRequest {
   final String slug;
 
   FranchisePlanRequest({required this.slug});
 
-  Map<String, dynamic> toJson() {
-    return {
-      'slug': slug,
-    };
-  }
-}// ============ Plan Product Item ============
+  Map<String, dynamic> toJson() => {'slug': slug};
+}
+
+// ============ Plan Product Item ============
 
 class FranchisePlanProduct {
+  final int id;
   final String itemName;
-  final int quantity;
+  final String quantity; // API sends string like "500.00"
   final String unit;
 
   FranchisePlanProduct({
+    required this.id,
     required this.itemName,
     required this.quantity,
     required this.unit,
@@ -23,20 +47,31 @@ class FranchisePlanProduct {
 
   factory FranchisePlanProduct.fromJson(Map<String, dynamic> json) {
     return FranchisePlanProduct(
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       itemName: json['item_name']?.toString() ?? '',
-      quantity: json['quantity'] is int
-          ? json['quantity']
-          : int.tryParse(json['quantity']?.toString() ?? '0') ?? 0,
+      quantity: json['quantity']?.toString() ?? '0',
       unit: json['unit']?.toString() ?? '',
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'item_name': itemName,
-      'quantity': quantity,
-      'unit': unit,
-    };
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'item_name': itemName,
+    'quantity': quantity,
+    'unit': unit,
+  };
+
+  /// "500.00" → 500, "20.50" → 20.5
+  double get quantityValue =>
+      double.tryParse(quantity.replaceAll(',', '')) ?? 0.0;
+
+  /// "500.00" → "500", "20.50" → "20.5"
+  String get quantityLabel {
+    final v = quantityValue;
+    if (v == v.roundToDouble()) return v.toInt().toString();
+    return v.toString();
   }
 }
 
@@ -44,20 +79,22 @@ class FranchisePlanProduct {
 
 class FranchisePlan {
   final int id;
+  final int companyId;
+  final int? userId;
+  final int product;
   final String planName;
   final String amount;
   final String description;
-  final int companyId;
-  final int product;
   final List<FranchisePlanProduct> planProducts;
 
   FranchisePlan({
     required this.id,
+    required this.companyId,
+    this.userId,
+    required this.product,
     required this.planName,
     required this.amount,
     required this.description,
-    required this.companyId,
-    required this.product,
     required this.planProducts,
   });
 
@@ -67,34 +104,60 @@ class FranchisePlan {
       id: json['id'] is int
           ? json['id']
           : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
-      planName: json['plan_name']?.toString() ?? '',
-      amount: json['amount']?.toString() ?? '0',
-      description: json['description']?.toString() ?? '',
       companyId: json['company_id'] is int
           ? json['company_id']
           : int.tryParse(json['company_id']?.toString() ?? '0') ?? 0,
+      userId: json['user'] is int
+          ? json['user']
+          : int.tryParse(json['user']?.toString() ?? ''),
       product: json['product'] is int
           ? json['product']
           : int.tryParse(json['product']?.toString() ?? '0') ?? 0,
-      planProducts:
-      productsList.map((item) => FranchisePlanProduct.fromJson(item)).toList(),
+      planName: json['plan_name']?.toString() ?? '',
+      amount: json['amount']?.toString() ?? '0',
+      description: json['description']?.toString() ?? '',
+      planProducts: productsList
+          .whereType<Map>()
+          .map((e) => FranchisePlanProduct.fromJson(Map<String, dynamic>.from(e)))
+          .toList(),
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'plan_name': planName,
-      'amount': amount,
-      'description': description,
-      'company_id': companyId,
-      'product': product,
-      'plan_products': planProducts.map((p) => p.toJson()).toList(),
-    };
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'company_id': companyId,
+    if (userId != null) 'user': userId,
+    'product': product,
+    'plan_name': planName,
+    'amount': amount,
+    'description': description,
+    'plan_products': planProducts.map((p) => p.toJson()).toList(),
+  };
+
+  /// "300000.00" → "₹3,00,000"  (Indian grouping)
+  String get amountLabel {
+    final v = double.tryParse(amount.replaceAll(',', '')) ?? 0;
+    final s = v == v.roundToDouble()
+        ? v.toStringAsFixed(0)
+        : v.toStringAsFixed(2);
+    final parts = s.split('.');
+    var n = parts[0];
+    if (n.length > 3) {
+      final last3 = n.substring(n.length - 3);
+      var rest = n.substring(0, n.length - 3);
+      final groups = <String>[];
+      while (rest.length > 2) {
+        groups.insert(0, rest.substring(rest.length - 2));
+        rest = rest.substring(0, rest.length - 2);
+      }
+      if (rest.isNotEmpty) groups.insert(0, rest);
+      n = '${groups.join(',')},$last3';
+    }
+    return '₹$n${parts.length > 1 ? '.${parts[1]}' : ''}';
   }
 }
 
-// ============ Franchise Plans Response ============
+// ============ Plans Response ============
 
 class FranchisePlanResponse {
   final bool status;
@@ -112,32 +175,29 @@ class FranchisePlanResponse {
   factory FranchisePlanResponse.fromJson(Map<String, dynamic> json) {
     final dataList = json['data'] as List? ?? [];
     return FranchisePlanResponse(
-      status: json['status'] ?? false,
+      status: json['status'] == true ||
+          json['status']?.toString().toLowerCase() == 'true',
       message: json['message']?.toString(),
       count: json['count'] is int
           ? json['count']
           : int.tryParse(json['count']?.toString() ?? '0') ?? 0,
-      data: dataList.map((item) => FranchisePlan.fromJson(item)).toList(),
+      data: dataList
+          .whereType<Map>()
+          .map((e) => FranchisePlan.fromJson(Map<String, dynamic>.from(e)))
+          .toList(),
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'status': status,
-      if (message != null) 'message': message,
-      'count': count,
-      'data': data.map((p) => p.toJson()).toList(),
-    };
   }
 
   bool get hasPlans => data.isNotEmpty;
   bool get isEmpty => data.isEmpty;
 }
 
+// ============ Apply Request ============
+
 class FranchiseApplyRequest {
   final int company;
   final int product;
-  final int franchisePlan; // maps to "FranchisePlan" key
+  final int franchisePlan;
   final String franchiseName;
   final String ownerName;
   final String email;
@@ -149,7 +209,7 @@ class FranchiseApplyRequest {
   final String pincode;
   final String gstNo;
   final String panNo;
-  final String joiningDate; // YYYY-MM-DD
+  final String joiningDate;
   final String? franchiseReferralCode;
 
   FranchiseApplyRequest({
@@ -171,49 +231,40 @@ class FranchiseApplyRequest {
     this.franchiseReferralCode,
   });
 
-  Map<String, dynamic> toJson() {
-    return {
-      'company': company,
-      'product': product,
-      'FranchisePlan': franchisePlan, // ⚠️ capital 'F' as per API
-      'franchise_name': franchiseName,
-      'owner_name': ownerName,
-      'email': email,
-      'mobile_no': mobileNo,
-      'alternate_mobile_no': alternateMobileNo,
-      'address': address,
-      'city': city,
-      'state': state,
-      'pincode': pincode,
-      'gst_no': gstNo,
-      'pan_no': panNo,
-      'joining_date': joiningDate,
-      'franchise_referral_code': franchiseReferralCode,
-    };
-  }
+  Map<String, dynamic> toJson() => {
+    'company': company,
+    'product': product,
+    'FranchisePlan': franchisePlan,
+    'franchise_name': franchiseName,
+    'owner_name': ownerName,
+    'email': email,
+    'mobile_no': mobileNo,
+    'alternate_mobile_no': alternateMobileNo,
+    'address': address,
+    'city': city,
+    'state': state,
+    'pincode': pincode,
+    'gst_no': gstNo,
+    'pan_no': panNo,
+    'joining_date': joiningDate,
+    'franchise_referral_code': franchiseReferralCode,
+  };
 
-  /// Helper — today's date in YYYY-MM-DD format
   static String todayDate() {
     final now = DateTime.now();
-    final y = now.year.toString().padLeft(4, '0');
-    final m = now.month.toString().padLeft(2, '0');
-    final d = now.day.toString().padLeft(2, '0');
-    return '$y-$m-$d';
+    return '${now.year.toString().padLeft(4, '0')}-'
+        '${now.month.toString().padLeft(2, '0')}-'
+        '${now.day.toString().padLeft(2, '0')}';
   }
 }
 
 class FranchiseApplyResponse {
-  final dynamic status; // Can be bool true or String "success"
+  final dynamic status;
   final String? message;
   final Map<String, dynamic>? errors;
   final String? error;
 
-  FranchiseApplyResponse({
-    this.status,
-    this.message,
-    this.errors,
-    this.error,
-  });
+  FranchiseApplyResponse({this.status, this.message, this.errors, this.error});
 
   factory FranchiseApplyResponse.fromJson(Map<String, dynamic> json) {
     return FranchiseApplyResponse(
@@ -226,20 +277,16 @@ class FranchiseApplyResponse {
     );
   }
 
-  /// Success if status is `true` (bool) OR `"success"` (string)
   bool get isSuccess {
     if (status is bool) return status == true;
     if (status is String) return status.toString().toLowerCase() == 'success';
     return false;
   }
 
-  /// Build a user-friendly message (including field errors if any)
   String get displayMessage {
     if (isSuccess) {
       return message ?? 'Franchise application submitted successfully!';
     }
-
-    // If field-level errors exist, show first one
     if (errors != null && errors!.isNotEmpty) {
       final firstKey = errors!.keys.first;
       final firstError = errors![firstKey];
@@ -248,14 +295,12 @@ class FranchiseApplyResponse {
       }
       return firstError.toString();
     }
-
     return message ?? error ?? 'Something went wrong.';
   }
 
-  /// All field errors as a flat list (for UI display)
   List<String> get allErrors {
     if (errors == null) return [];
-    final List<String> all = [];
+    final all = <String>[];
     errors!.forEach((key, value) {
       if (value is List) {
         for (final e in value) {

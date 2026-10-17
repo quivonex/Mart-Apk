@@ -1,6 +1,7 @@
-import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ProductEnquiryRequest {
   final String product;         // Product ID (required)
@@ -19,7 +20,7 @@ class ProductEnquiryRequest {
   final String? selectedSize;
   final String? selectedVariant;
   final String? selectedVariantData; // JSON string
-  final File? attachment;       // JPG, PNG, WebP, PDF, max 5MB
+  final XFile? attachment;      // JPG, PNG, WebP, max 5MB (XFile works on web + mobile)
 
   ProductEnquiryRequest({
     required this.product,
@@ -80,12 +81,29 @@ class ProductEnquiryRequest {
     }
 
     // Optional: attachment file
+    // fromBytes (not fromPath) so it also works in the browser.
     if (attachment != null) {
-      final file = await http.MultipartFile.fromPath(
+      final bytes = await attachment!.readAsBytes();
+      var name = attachment!.name.isNotEmpty
+          ? attachment!.name
+          : attachment!.path.split(RegExp(r'[\\/]')).last;
+      var mime = attachment!.mimeType ?? '';
+      final ext = name.contains('.') ? name.split('.').last.toLowerCase() : '';
+      if (mime.isEmpty) {
+        mime = switch (ext) {
+          'png' => 'image/png',
+          'webp' => 'image/webp',
+          'pdf' => 'application/pdf',
+          _ => 'image/jpeg',
+        };
+      }
+      if (!name.contains('.')) name = '$name.${mime == 'image/png' ? 'png' : 'jpg'}';
+      request.files.add(http.MultipartFile.fromBytes(
         'attachment',
-        attachment!.path,
-      );
-      request.files.add(file);
+        bytes,
+        filename: name,
+        contentType: MediaType.parse(mime),
+      ));
     }
 
     return request;

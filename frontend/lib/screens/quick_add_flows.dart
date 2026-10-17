@@ -13,12 +13,13 @@ import '../models/catalog_models.dart';
 import '../models/company_model.dart';
 import '../services/catalog_service.dart';
 import '../services/company_service.dart';
-import 'branch_screens.dart';
+import 'branch_create_edit_screen.dart';
 import 'category_screens.dart';
 import 'company_create_edit_screen.dart';
+import 'subcategory_create_edit_screen.dart';
 import 'subcategory_screens.dart';
 
-const _blue = Color(0xFF0D6EFD);
+const _blue = Color(0xFF6366F1);
 
 void _snack(BuildContext context, String msg, {bool error = false}) {
   ScaffoldMessenger.of(context)
@@ -134,79 +135,50 @@ Future<Company?> pickCompany(BuildContext context, {required String forWhat}) as
   );
 }
 
+// ===========================================================================
+// ADD BRANCH — opens the branch form directly.
+// Company is picked inside the form via the dropdown.
+// ===========================================================================
 Future<void> startAddBranch(BuildContext context) async {
-  final c = await pickCompany(context, forWhat: 'branch');
-  if (c == null || !context.mounted) return;
-  final saved = await Navigator.push<CatalogBranch>(
+  final saved = await Navigator.push<bool>(
     context,
-    MaterialPageRoute(builder: (_) => BranchFormScreen(companyId: c.id, companyName: c.name)),
+    MaterialPageRoute(
+      builder: (_) => const BranchCreateEditScreen(),
+    ),
   );
-  if (saved != null && context.mounted) _snack(context, 'Branch "${saved.name}" added to ${c.name}');
+  if (saved == true && context.mounted) {
+    _snack(context, 'Branch added successfully');
+  }
 }
 
+// ===========================================================================
+// ADD CATEGORY — opens the category form directly.
+// Company is picked inside the form via the dropdown.
+// ===========================================================================
 Future<void> startAddCategory(BuildContext context) async {
-  final c = await pickCompany(context, forWhat: 'category');
-  if (c == null || !context.mounted) return;
   final saved = await Navigator.push<CatalogCategory>(
     context,
-    MaterialPageRoute(builder: (_) => CategoryFormScreen(companyId: c.id, companyName: c.name)),
-  );
-  if (saved != null && context.mounted) _snack(context, 'Category "${saved.name}" added to ${c.name}');
-}
-
-Future<void> startAddSubCategory(BuildContext context) async {
-  final c = await pickCompany(context, forWhat: 'subcategory');
-  if (c == null || !context.mounted) return;
-
-  final r = await _withLoader(context, () => CatalogService.getCategories(c.id));
-  if (!context.mounted) return;
-  if (!r.ok) {
-    _snack(context, r.message ?? 'Could not load categories', error: true);
-    return;
-  }
-
-  CatalogCategory? category;
-  if (r.items.isEmpty) {
-    final create = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Add a category first'),
-        content: Text('${c.name} has no categories yet. Subcategories belong to a category.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Add category')),
-        ],
-      ),
-    );
-    if (create != true || !context.mounted) return;
-    category = await Navigator.push<CatalogCategory>(
-      context,
-      MaterialPageRoute(builder: (_) => CategoryFormScreen(companyId: c.id, companyName: c.name)),
-    );
-    // The create API may not return the new row; reload and match by name.
-    if (category != null && category.id == 0 && context.mounted) {
-      final again = await CatalogService.getCategories(c.id);
-      final name = category.name.toLowerCase();
-      category = again.items.where((e) => e.name.toLowerCase() == name).firstOrNull ?? category;
-    }
-  } else if (r.items.length == 1) {
-    category = r.items.first;
-  } else {
-    category = await _pickFromList<CatalogCategory>(
-      context,
-      title: 'Choose a category',
-      items: r.items,
-      label: (e) => e.name,
-      sublabel: (e) => e.sublabel,
-    );
-  }
-  if (category == null || category.id == 0 || !context.mounted) return;
-
-  final saved = await Navigator.push<CatalogSubCategory>(
-    context,
-    MaterialPageRoute(builder: (_) => SubCategoryFormScreen(category: category!)),
+    MaterialPageRoute(
+      builder: (_) => const CategoryFormScreen(),
+    ),
   );
   if (saved != null && context.mounted) {
-    _snack(context, 'Subcategory "${saved.name}" added to ${category.name}');
+    _snack(context, 'Category "${saved.name}" added successfully');
+  }
+}
+
+// ===========================================================================
+// ADD SUBCATEGORY — opens the subcategory form directly.
+// Company + category are picked inside the form via dropdowns.
+// ===========================================================================
+Future<void> startAddSubCategory(BuildContext context) async {
+  final saved = await Navigator.push<bool>(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const SubCategoryCreateEditScreen(),
+    ),
+  );
+  if (saved == true && context.mounted) {
+    _snack(context, 'Subcategory added successfully');
   }
 }

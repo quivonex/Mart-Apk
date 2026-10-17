@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/cart_model.dart';
 import '../services/cart_service.dart';
 import '../utils/shared_preferences_helper.dart';
+import 'checkout_screen.dart';
 
 /// Design tokens from the HTML design (Tailwind slate / brand / amber).
 class _C {
@@ -15,14 +16,14 @@ class _C {
   static const slate500 = Color(0xFF64748B);
   static const slate600 = Color(0xFF475569);
   static const slate900 = Color(0xFF0F172A);
-  static const blue50 = Color(0xFFEFF6FF);
-  static const blue200 = Color(0xFFBFDBFE);
-  static const blue600 = Color(0xFF2563EB);
-  static const blue700 = Color(0xFF1D4ED8);
-  static const blue900 = Color(0xFF1E3A8A);
+  static const blue50 = Color(0xFFEEF2FF);
+  static const blue200 = Color(0xFFC7D2FE);
+  static const blue600 = Color(0xFF6366F1);
+  static const blue700 = Color(0xFF4F46E5);
+  static const blue900 = Color(0xFF4338CA);
   static const indigo950 = Color(0xFF1E1B4B);
   static const emerald50 = Color(0xFFECFDF5);
-  static const emerald600 = Color(0xFF059669);
+  static const emerald600 = Color(0xFF10B981);
   static const emerald700 = Color(0xFF047857);
   static const amber50 = Color(0xFFFFFBEB);
   static const amber100 = Color(0xFFFEF3C7);
@@ -31,7 +32,7 @@ class _C {
   static const amber700 = Color(0xFFB45309); // CTA + accent
   static const amber800 = Color(0xFF92400E);
   static const amber900 = Color(0xFF78350F);
-  static const red = Color(0xFFDC2626);
+  static const red = Color(0xFFEF4444);
   static const redBg = Color(0xFFFEF2F2);
 }
 
@@ -67,6 +68,20 @@ class _CartScreenState extends State<CartScreen> {
   bool _isBusy = false; // clear-all in progress
   String? _error;
   int? _userId;
+
+  /// Cart item ids ticked for checkout. New items are ticked by default.
+  final Set<int> _selected = {};
+  final Set<int> _knownIds = {};
+
+  /// Cart item ids whose quantity is being saved.
+  final Set<int> _updating = {};
+
+  // ---- Live shipping estimate (no more fixed ₹500) ----
+  String _shipKey = ''; // ticked product ids the estimate belongs to
+  bool _shipLoading = false;
+  double? _shipEstimate; // null = calculated at checkout
+  String? _shipPincode;
+  String? _shipNote;
 
   @override
   void initState() {
@@ -118,6 +133,12 @@ class _CartScreenState extends State<CartScreen> {
       setState(() {
         if (response.status) {
           _cartItems = response.cartItems;
+          final ids = _cartItems.map((e) => e.id).toSet();
+          _selected.removeWhere((id) => !ids.contains(id));
+          for (final id in ids) {
+            if (_knownIds.add(id)) _selected.add(id); // first time seen -> ticked
+          }
+          _knownIds.removeWhere((id) => !ids.contains(id));
         } else {
           _error = 'Failed to load cart items';
         }
@@ -132,67 +153,143 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
-  double get _subtotal {
-    return _cartItems.fold(
-        0, (sum, item) => sum + (item.unitPrice * item.quantity));
-  }
+  List<CartItemModel> get _selectedItems =>
+      _cartItems.where((i) => _selected.contains(i.id)).toList();
+
+  bool get _allSelected =>
+      _cartItems.isNotEmpty && _selected.length == _cartItems.length;
+
+  int get _selectedUnits => _selectedItems.fold(0, (s, i) => s + i.quantity);
+
+  /// Totals are for the ticked items only.
+  double get _subtotal =>
+      _selectedItems.fold(0, (sum, item) => sum + item.lineTotal);
 
   double get _tax => _subtotal * 0.12;
-  double get _shipping => _cartItems.isEmpty ? 0.0 : 500.0;
+  /// Live courier estimate. Until it is known nothing is added to the total
+  /// (the backend fixes the real charge per order at checkout).
+  double get _shipping => _selectedItems.isEmpty ? 0.0 : (_shipEstimate ?? 0.0);
   double get _total => _subtotal + _tax + _shipping;
 
-  Future<void> _updateQuantity(int cartId, int newQuantity) async {
-    if (newQuantity <= 0) {
-      _removeItem(cartId);
+  /// Re-prices shipping whenever the set of ticked products changes.
+  void _syncShipping() {
+    final ids = _selectedItems.map((i) => i.productId).where((id) => id > 0).toSet().toList()..sort();
+    final key = ids.join(',');
+    if (key == _shipKey) return;
+    _shipKey = key;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchShipping(key, ids));
+  }
+
+  Future<void> _fetchShipping(String key, List<int> ids) async {
+    if (!mounted) return;
+    if (ids.isEmpty) {
+      setState(() {
+        _shipLoading = false;
+        _shipEstimate = null;
+        _shipNote = null;
+      });
+      return;
+    }
+    setState(() => _shipLoading = true);
+    final r = await CartService.shippingEstimate(ids);
+    if (!mounted || key != _shipKey) return; // selection changed meanwhile
+    setState(() {
+      _shipLoading = false;
+      _shipEstimate = r.amount;
+      _shipPincode = r.pincode;
+      _shipNote = r.note;
+    });
+  }
+
+  String get _shippingText {
+    if (_selectedItems.isEmpty) return '₹0';
+    if (_shipLoading) return 'Calculating…';
+    if (_shipEstimate != null) return '₹${_inr(_shipEstimate!)}';
+    return 'At checkout';
+  }
+
+  void _toggleSelect(CartItemModel item) => setState(() {
+    if (!_selected.remove(item.id)) _selected.add(item.id);
+  });
+
+  void _toggleSelectAll() => setState(() {
+    if (_allSelected) {
+      _selected.clear();
+    } else {
+      _selected
+        ..clear()
+        ..addAll(_cartItems.map((e) => e.id));
+    }
+  });
+
+  /// +1 / -1 using the add-to-cart API (the backend has no update API).
+  /// At quantity 1, "-" asks to remove the item instead.
+  Future<void> _changeQuantity(CartItemModel item, int delta) async {
+    if (_updating.contains(item.id)) return;
+    if (delta < 0 && item.quantity <= 1) {
+      await _confirmRemove(item);
       return;
     }
 
+    final index = _cartItems.indexWhere((e) => e.id == item.id);
+    if (index == -1) return;
+    final before = _cartItems[index];
+
     // Optimistic update
-    final previousItems = List<CartItemModel>.from(_cartItems);
     setState(() {
-      final index = _cartItems.indexWhere((item) => item.id == cartId);
-      if (index != -1) {
-        _cartItems[index] = CartItemModel(
-          id: _cartItems[index].id,
-          productId: _cartItems[index].productId,
-          productName: _cartItems[index].productName,
-          productCode: _cartItems[index].productCode,
-          thumbnail: _cartItems[index].thumbnail,
-          unitPrice: _cartItems[index].unitPrice,
-          quantity: newQuantity,
-          codAvailable: _cartItems[index].codAvailable,
-        );
-      }
+      _updating.add(item.id);
+      _cartItems[index] = before.copyWith(quantity: before.quantity + delta);
     });
 
     try {
-      final response = await CartService.updateCartQuantity(
-        UpdateCartQuantityRequest(
-          cartId: cartId,
-          quantity: newQuantity,
-        ),
-      );
-
-      if (!response.status) {
-        if (!mounted) return;
-        setState(() => _cartItems = previousItems);
-        _showSnackBar(response.message, isError: true);
-      }
+      await CartService.changeQuantity(productId: item.productId, delta: delta);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _cartItems = previousItems);
-      _showSnackBar(
-        e.toString().replaceFirst('Exception: ', ''),
-        isError: true,
-      );
+      setState(() {
+        final i = _cartItems.indexWhere((x) => x.id == item.id);
+        if (i != -1) _cartItems[i] = before;
+      });
+      _showSnackBar(e.toString().replaceFirst('Exception: ', ''), isError: true);
+    } finally {
+      if (mounted) setState(() => _updating.remove(item.id));
     }
+  }
+
+  Future<void> _confirmRemove(CartItemModel item) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text('Remove item?', style: _t(17, FontWeight.w800, _C.slate900)),
+        content: Text(
+          '${item.productName} will be removed from your cart.',
+          style: _t(13, FontWeight.w500, _C.slate500, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel', style: _t(13, FontWeight.w700, _C.slate600)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('Remove', style: _t(13, FontWeight.w800, _C.red)),
+          ),
+        ],
+      ),
+    );
+    if (ok == true && mounted) await _removeItem(item.id);
   }
 
   Future<void> _removeItem(int cartId) async {
     // Optimistic update
     final previousItems = List<CartItemModel>.from(_cartItems);
+    final wasSelected = _selected.contains(cartId);
     setState(() {
       _cartItems.removeWhere((item) => item.id == cartId);
+      _selected.remove(cartId);
+      _knownIds.remove(cartId);
     });
 
     try {
@@ -204,12 +301,20 @@ class _CartScreenState extends State<CartScreen> {
         _showSnackBar(response.message);
       } else {
         if (!mounted) return;
-        setState(() => _cartItems = previousItems);
+        setState(() {
+          _cartItems = previousItems;
+          _knownIds.add(cartId);
+          if (wasSelected) _selected.add(cartId);
+        });
         _showSnackBar(response.message, isError: true);
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() => _cartItems = previousItems);
+      setState(() {
+        _cartItems = previousItems;
+        _knownIds.add(cartId);
+        if (wasSelected) _selected.add(cartId);
+      });
       _showSnackBar(
         e.toString().replaceFirst('Exception: ', ''),
         isError: true,
@@ -267,7 +372,11 @@ class _CartScreenState extends State<CartScreen> {
       _showSnackBar('$failed item(s) could not be removed', isError: true);
       await _loadCartItems();
     } else {
-      setState(() => _cartItems = []);
+      setState(() {
+        _cartItems = [];
+        _selected.clear();
+        _knownIds.clear();
+      });
       _showSnackBar('Cart cleared');
     }
   }
@@ -438,7 +547,9 @@ class _CartScreenState extends State<CartScreen> {
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
               children: [
                 _buildTitleRow(),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
+                _buildSelectAllBar(),
+                const SizedBox(height: 12),
                 _buildGstBanner(),
                 const SizedBox(height: 14),
                 ..._cartItems.map(
@@ -490,6 +601,54 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
+  Widget _buildSelectAllBar() {
+    final n = _selected.length;
+    final total = _cartItems.length;
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: _toggleSelectAll,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(6, 6, 12, 6),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: n > 0 ? _C.blue200 : _C.slate200),
+          ),
+          child: Row(
+            children: [
+              Checkbox(
+                value: _allSelected ? true : (n == 0 ? false : null),
+                tristate: true,
+                onChanged: (_) => _toggleSelectAll(),
+                activeColor: _C.blue600,
+                side: const BorderSide(color: _C.slate300, width: 1.5),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                visualDensity: VisualDensity.compact,
+              ),
+              Expanded(
+                child: Text(
+                  _allSelected ? 'All items selected' : 'Select all',
+                  style: _t(13, FontWeight.w700, _C.slate900),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                decoration: BoxDecoration(
+                  color: n > 0 ? _C.blue50 : _C.slate100,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text('$n / $total selected',
+                    style: _t(11, FontWeight.w800, n > 0 ? _C.blue700 : _C.slate500)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildGstBanner() {
     return Container(
       padding: const EdgeInsets.all(14),
@@ -497,7 +656,7 @@ class _CartScreenState extends State<CartScreen> {
         gradient: const LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: [_C.blue900, _C.indigo950],
+          colors: [Color(0xFF4F46E5), Color(0xFF8B5CF6)],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
@@ -511,9 +670,9 @@ class _CartScreenState extends State<CartScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0x4D2563EB),
+              color: const Color(0x4D6366F1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0x4D60A5FA)),
+              border: Border.all(color: const Color(0x4D818CF8)),
             ),
             child: const Icon(Icons.receipt_long_outlined,
                 size: 22, color: _C.amber300),
@@ -573,139 +732,164 @@ class _CartScreenState extends State<CartScreen> {
   Widget _buildCartItem(CartItemModel item) {
     final qty = item.quantity;
     final cod = item.codAvailable;
+    final selected = _selected.contains(item.id);
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _C.slate200),
-        boxShadow: const [
-          BoxShadow(
-              color: Color(0x0A000000), blurRadius: 4, offset: Offset(0, 1)),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Thumbnail
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: _C.slate100,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: _C.slate200),
+    return GestureDetector(
+      onTap: () => _toggleSelect(item),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+              color: selected ? _C.blue600 : _C.slate200, width: selected ? 1.5 : 1),
+          boxShadow: const [
+            BoxShadow(
+                color: Color(0x0A000000), blurRadius: 4, offset: Offset(0, 1)),
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Select
+                Padding(
+                  padding: const EdgeInsets.only(top: 26, right: 4),
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: Checkbox(
+                      value: selected,
+                      onChanged: (_) => _toggleSelect(item),
+                      activeColor: _C.blue600,
+                      side: const BorderSide(color: _C.slate300, width: 1.5),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
                 ),
-                clipBehavior: Clip.antiAlias,
-                child: item.thumbnail.isNotEmpty
-                    ? Image.network(
-                  item.thumbnail,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _thumbPlaceholder(),
-                )
-                    : _thumbPlaceholder(),
-              ),
-              const SizedBox(width: 12),
+                const SizedBox(width: 6),
+                // Thumbnail
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: _C.slate100,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: _C.slate200),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: item.thumbnail.isNotEmpty
+                      ? Image.network(
+                    item.thumbnail,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _thumbPlaceholder(),
+                  )
+                      : _thumbPlaceholder(),
+                ),
+                const SizedBox(width: 12),
 
-              // Details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.productName,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: _t(14, FontWeight.w800, _C.slate900,
-                                height: 1.3),
+                // Details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              item.productName,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: _t(14, FontWeight.w800, _C.slate900,
+                                  height: 1.3),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        GestureDetector(
-                          onTap: () => _removeItem(item.id),
-                          behavior: HitTestBehavior.opaque,
-                          child: const Padding(
-                            padding: EdgeInsets.fromLTRB(6, 0, 0, 6),
-                            child: Icon(Icons.delete_outline,
-                                size: 20, color: _C.slate400),
+                          const SizedBox(width: 4),
+                          GestureDetector(
+                            onTap: () => _confirmRemove(item),
+                            behavior: HitTestBehavior.opaque,
+                            child: const Padding(
+                              padding: EdgeInsets.fromLTRB(6, 0, 0, 6),
+                              child: Icon(Icons.delete_outline,
+                                  size: 20, color: _C.slate400),
+                            ),
                           ),
+                        ],
+                      ),
+                      if (item.productCode.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          item.productCode,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.robotoMono(
+                              fontSize: 10, color: _C.slate500),
                         ),
                       ],
-                    ),
-                    if (item.productCode.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: [
+                          Text('₹${_inr(item.unitPrice)}',
+                              style: _t(16, FontWeight.w800, _C.slate900)),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: _C.amber100,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: _C.amber200),
+                            ),
+                            child: Text('B2B Price',
+                                style: _t(10, FontWeight.w700, _C.amber800)),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 3),
                       Text(
-                        item.productCode,
+                        '$qty × ₹${_inr(item.unitPrice)} = ₹${_inr(item.lineTotal)}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.robotoMono(
-                            fontSize: 10, color: _C.slate500),
+                        style: _t(11, FontWeight.w700, selected ? _C.blue700 : _C.slate500),
                       ),
                     ],
-                    const SizedBox(height: 8),
-                    Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 8,
-                      runSpacing: 4,
-                      children: [
-                        Text('₹${_inr(item.unitPrice)}',
-                            style: _t(16, FontWeight.w800, _C.slate900)),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: _C.amber100,
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: _C.amber200),
-                          ),
-                          child: Text('B2B Price',
-                              style: _t(10, FontWeight.w700, _C.amber800)),
-                        ),
-                      ],
-                    ),
-                    if (qty > 1) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        '$qty × ₹${_inr(item.unitPrice)} = ₹${_inr(item.unitPrice * qty)}',
-                        style: _t(11, FontWeight.w600, _C.slate500),
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
 
-          // Footer: COD note + stepper
-          const SizedBox(height: 12),
-          Container(height: 1, color: _C.slate100),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Icon(
-                cod ? Icons.payments_outlined : Icons.lock_outline,
-                size: 15,
-                color: cod ? _C.emerald600 : _C.slate400,
-              ),
-              const SizedBox(width: 5),
-              Expanded(
-                child: Text(
-                  cod ? 'COD Available' : 'Prepaid only',
-                  style: _t(11, FontWeight.w600,
-                      cod ? _C.emerald700 : _C.slate500),
+            // Footer: COD note + stepper
+            const SizedBox(height: 12),
+            Container(height: 1, color: _C.slate100),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(
+                  cod ? Icons.payments_outlined : Icons.lock_outline,
+                  size: 15,
+                  color: cod ? _C.emerald600 : _C.slate400,
                 ),
-              ),
-              _buildStepper(item),
-            ],
-          ),
-        ],
+                const SizedBox(width: 5),
+                Expanded(
+                  child: Text(
+                    cod ? 'COD Available' : 'Prepaid only',
+                    style: _t(11, FontWeight.w600,
+                        cod ? _C.emerald700 : _C.slate500),
+                  ),
+                ),
+                _buildStepper(item),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -718,6 +902,7 @@ class _CartScreenState extends State<CartScreen> {
 
   Widget _buildStepper(CartItemModel item) {
     final isLast = item.quantity <= 1;
+    final busy = _updating.contains(item.id);
     return Container(
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
@@ -732,11 +917,19 @@ class _CartScreenState extends State<CartScreen> {
             icon: isLast ? Icons.delete_outline : Icons.remove,
             color: isLast ? _C.red : _C.slate600,
             tooltip: isLast ? 'Remove item' : 'Decrease quantity',
-            onTap: () => _updateQuantity(item.id, item.quantity - 1),
+            onTap: busy ? null : () => _changeQuantity(item, -1),
           ),
           SizedBox(
-            width: 36,
-            child: Text(
+            width: 38,
+            child: busy
+                ? const Center(
+              child: SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2, color: _C.blue600),
+              ),
+            )
+                : Text(
               '${item.quantity}',
               textAlign: TextAlign.center,
               style: _t(13, FontWeight.w800, _C.slate900),
@@ -746,7 +939,7 @@ class _CartScreenState extends State<CartScreen> {
             icon: Icons.add,
             color: _C.blue600,
             tooltip: 'Increase quantity',
-            onTap: () => _updateQuantity(item.id, item.quantity + 1),
+            onTap: busy ? null : () => _changeQuantity(item, 1),
           ),
         ],
       ),
@@ -795,9 +988,11 @@ class _CartScreenState extends State<CartScreen> {
   // ---------------------------------------------------------------------------
 
   Widget _buildSummarySheet() {
-    final count = _cartItems.length;
+    _syncShipping();
+    final count = _selectedItems.length;
+    final units = _selectedUnits;
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 10), // tighter padding
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(top: BorderSide(color: _C.slate200)),
@@ -811,45 +1006,54 @@ class _CartScreenState extends State<CartScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 40,
-            height: 4,
+            width: 36,
+            height: 3,
             decoration: BoxDecoration(
               color: _C.slate200,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           _summaryRow(
-            label: 'Subtotal ($count ${count == 1 ? 'item' : 'items'})',
+            label: count == 0
+                ? 'Subtotal (no items selected)'
+                : 'Subtotal ($count ${count == 1 ? 'item' : 'items'} · $units qty)',
             value: '₹${_inr(_subtotal)}',
           ),
-          const SizedBox(height: 7),
+          const SizedBox(height: 4),
           _summaryRow(
             label: 'Tax (12% GST)',
             value: '₹${_inr(_tax)}',
             labelTrailing: const Tooltip(
               message: 'GST is calculated at 12% on the subtotal',
               triggerMode: TooltipTriggerMode.tap,
-              child: Icon(Icons.info_outline, size: 14, color: _C.slate400),
+              child: Icon(Icons.info_outline, size: 12, color: _C.slate400),
             ),
           ),
-          const SizedBox(height: 7),
+          const SizedBox(height: 4),
           _summaryRow(
-            label: 'Shipping & Freight',
-            value: '₹${_inr(_shipping)}',
-            labelTrailing: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-              decoration: BoxDecoration(
-                color: _C.amber50,
-                borderRadius: BorderRadius.circular(4),
+            label: _shipEstimate != null ? 'Shipping (estimated)' : 'Shipping & Freight',
+            value: _shippingText,
+            labelTrailing: _shipPincode == null && _shipNote == null
+                ? null
+                : Tooltip(
+              message: _shipNote ??
+                  'Live courier rate to your saved address. Final charge is confirmed at checkout.',
+              triggerMode: TooltipTriggerMode.tap,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(
+                  color: _C.amber50,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(_shipPincode != null && _shipPincode!.isNotEmpty ? 'to $_shipPincode' : 'info',
+                    style: _t(8.5, FontWeight.w700, _C.amber700)),
               ),
-              child: Text('Bulk Hub',
-                  style: _t(10, FontWeight.w700, _C.amber700)),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
           Container(height: 1, color: _C.slate200),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -857,40 +1061,76 @@ class _CartScreenState extends State<CartScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Total', style: _t(14, FontWeight.w800, _C.slate900)),
-                    Text('Including all statutory taxes',
-                        style: _t(10, FontWeight.w500, _C.slate400)),
+                    Text('Total', style: _t(12, FontWeight.w800, _C.slate900)),
+                    Text(
+                        _shipEstimate == null && count > 0
+                            ? 'Shipping added at checkout'
+                            : 'Including taxes & estimated shipping',
+                        style: _t(9, FontWeight.w500, _C.slate400)),
                   ],
                 ),
               ),
               Text('₹${_inr(_total)}',
-                  style: _t(22, FontWeight.w800, _C.slate900, ls: -0.5)),
+                  style: _t(18, FontWeight.w800, _C.slate900, ls: -0.5)),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: () {
-                // TODO: navigate to checkout
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _C.amber700,
-                foregroundColor: Colors.white,
-                elevation: 2,
-                shadowColor: const Color(0x66B45309),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+            height: 42, // reduced further from 46
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: count == 0
+                    ? null
+                    : const LinearGradient(
+                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6), Color(0xFFF97316)],
+                ),
+                color: count == 0 ? _C.slate200 : null,
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Proceed to Checkout',
-                      style: _t(15, FontWeight.w800, Colors.white)),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.arrow_forward, size: 19),
-                ],
+              child: ElevatedButton(
+                onPressed: count == 0 || _updating.isNotEmpty
+                    ? null
+                    : () async {
+                  final done = await Navigator.push<bool>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CheckoutScreen(items: _selectedItems),
+                    ),
+                  );
+                  if (!mounted) return;
+                  // A new address may have been added at checkout.
+                  CartService.resetShippingAddress();
+                  setState(() => _shipKey = '');
+                  if (done == true) _loadCartItems();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  disabledBackgroundColor: Colors.transparent,
+                  foregroundColor: Colors.white,
+                  disabledForegroundColor: _C.slate500,
+                  shadowColor: Colors.transparent,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        count == 0 ? 'Select items to checkout' : 'Proceed to Checkout ($count)',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: _t(13, FontWeight.w800, count == 0 ? _C.slate500 : Colors.white),
+                      ),
+                    ),
+                    if (count > 0) ...[
+                      const SizedBox(width: 5),
+                      const Icon(Icons.arrow_forward, size: 16),
+                    ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -907,14 +1147,14 @@ class _CartScreenState extends State<CartScreen> {
     return Row(
       children: [
         Flexible(
-          child: Text(label, style: _t(12.5, FontWeight.w500, _C.slate600)),
+          child: Text(label, style: _t(10.5, FontWeight.w500, _C.slate600)),
         ),
         if (labelTrailing != null) ...[
-          const SizedBox(width: 5),
+          const SizedBox(width: 4),
           labelTrailing,
         ],
         const Spacer(),
-        Text(value, style: _t(12.5, FontWeight.w700, _C.slate900)),
+        Text(value, style: _t(10.5, FontWeight.w700, _C.slate900)),
       ],
     );
   }
@@ -928,7 +1168,7 @@ class _StepperButton extends StatelessWidget {
   final IconData icon;
   final Color color;
   final String tooltip;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _StepperButton({
     required this.icon,
@@ -958,7 +1198,7 @@ class _StepperButton extends StatelessWidget {
                   offset: Offset(0, 1)),
             ],
           ),
-          child: Icon(icon, size: 16, color: color),
+          child: Icon(icon, size: 16, color: onTap == null ? _C.slate300 : color),
         ),
       ),
     );

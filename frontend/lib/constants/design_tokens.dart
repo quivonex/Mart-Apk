@@ -17,23 +17,26 @@ class DT {
   static const Color slate200 = Color(0xFFE2E8F0);
   static const Color slate100 = Color(0xFFF1F5F9);
   static const Color slate50 = Color(0xFFF8FAFC);
-  static const Color background = Color(0xFFF6F8FC);
+  static const Color background = Color(0xFFF8FAFC);
   static const Color card = Colors.white;
   static const Color border = Color(0xFFE2E8F0);
   static const Color borderSoft = Color(0xCCE2E8F0); // slate-200/80
 
   // ---------- Brand ----------
   // Brand (home screen palette)
-  static const Color brand = Color(0xFF1A68FA);
-  static const Color brandDark = Color(0xFF0D3880);
-  static const Color accent = Color(0xFFFF5722);
+  static const Color brand = Color(0xFF6366F1);
+  static const Color brandDark = Color(0xFF4338CA);
+  static const Color accent = Color(0xFFF97316);
+  static const Color secondary = Color(0xFF8B5CF6);
+  static const Color success = Color(0xFF10B981);
+  static const Color warning = Color(0xFFF59E0B);
 
-  static const Color blue900 = Color(0xFF0D3880);
-  static const Color blue800 = Color(0xFF1A68FA);
-  static const Color blue700 = Color(0xFF1557D0);
-  static const Color blue200 = Color(0xFFBFDBFE);
-  static const Color blue100 = Color(0xFFDBEAFE);
-  static const Color blue50 = Color(0xFFEFF6FF);
+  static const Color blue900 = Color(0xFF4338CA);
+  static const Color blue800 = Color(0xFF6366F1);
+  static const Color blue700 = Color(0xFF4F46E5);
+  static const Color blue200 = Color(0xFFC7D2FE);
+  static const Color blue100 = Color(0xFFE0E7FF);
+  static const Color blue50 = Color(0xFFEEF2FF);
 
   static const Color amber900 = Color(0xFF78350F);
   static const Color amber800 = Color(0xFF92400E);
@@ -66,7 +69,7 @@ class DT {
   static const Color purple800 = Color(0xFF6B21A8);
   static const Color purple50 = Color(0xFFFAF5FF);
 
-  static const Color error = Color(0xFFB91C1C);
+  static const Color error = Color(0xFFEF4444);
   static const Color errorBg = Color(0xFFFEF2F2);
   static const Color errorBorder = Color(0xFFFECACA);
 
@@ -74,13 +77,34 @@ class DT {
   static const LinearGradient heroGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF0F1E36), Color(0xFF1E3A5F), Color(0xFF115E59)],
+    colors: [Color(0xFF4F46E5), Color(0xFF6366F1), Color(0xFF8B5CF6)],
   );
 
   static const LinearGradient logoGradient = LinearGradient(
     begin: Alignment.bottomLeft,
     end: Alignment.topRight,
-    colors: [Color(0xFF0D3880), Color(0xFF1A68FA), Color(0xFFF59E0B)],
+    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6), Color(0xFFF97316)],
+  );
+
+  /// Header / app-bar gradient (indigo -> violet).
+  static const LinearGradient headerGradient = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [Color(0xFF4F46E5), Color(0xFF6366F1), Color(0xFF8B5CF6)],
+  );
+
+  /// Primary call-to-action gradient (indigo -> violet -> orange), like Login / Checkout.
+  static const LinearGradient ctaGradient = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6), Color(0xFFF97316)],
+  );
+
+  /// Orange stat card (Total revenue / registered companies).
+  static const LinearGradient accentGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFF97316), Color(0xFFEC4899)],
   );
 
   static const LinearGradient rfqGradient = LinearGradient(

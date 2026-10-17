@@ -15,7 +15,7 @@ import '../constants/design_tokens.dart';
 import '../services/api_urls.dart';
 import '../utils/shared_preferences_helper.dart';
 
-const _blue = Color(0xFF0D6EFD);
+const _blue = Color(0xFF6366F1);
 const _supportEmail = 'qnxmartb2b@gmail.com';
 const _website = 'https://qnxmartb2b.com';
 
@@ -25,7 +25,8 @@ class _Block {
   final String title;
   final String body;
   final IconData icon;
-  const _Block(this.icon, this.title, this.body);
+  final int? stepNumber; // Used for the Selling Tree Diagram
+  const _Block(this.icon, this.title, this.body, {this.stepNumber});
 }
 
 // =====================================================================
@@ -49,7 +50,7 @@ class HelpInfoScreen extends StatelessWidget {
     HelpTopic.buying =>
     'How to find products, contact sellers and place orders on QNXMart B2B.',
     HelpTopic.selling =>
-    'How to register your company and list products for B2B buyers.',
+    'Grow your business by reaching thousands of buyers on QNX Mart. Follow the steps below to start selling.',
     HelpTopic.faq => 'Answers to the questions we hear most often.',
     HelpTopic.about => 'Who we are and what QNXMart B2B offers.',
   };
@@ -69,17 +70,16 @@ class HelpInfoScreen extends StatelessWidget {
       _Block(Icons.account_balance_outlined, 'Business loans',
           'Need funds for your purchase? Use Get Your Loan on the home screen to send a loan enquiry to our banking partners.'),
     ],
+  // Tree Diagram Steps for Selling
     HelpTopic.selling => const [
-      _Block(Icons.domain_add_rounded, '1. Register your company',
-          'Open Add Company and fill in your business details, address and logo. A one-time registration fee is paid securely through Razorpay to activate the company.'),
-      _Block(Icons.category_outlined, '2. Set up your catalog',
-          'Add branches if you sell from more than one location, then create categories, subcategories, brands and units. You can also add them directly from the product form.'),
-      _Block(Icons.inventory_2_outlined, '3. Add products',
-          'Use Add Product to enter the name, price, discount, GST, stock, packed weight and size, photos and variants. Weight and size are used to calculate shipping.'),
-      _Block(Icons.verified_outlined, '4. Admin approval',
-          'Every new product is reviewed by our team before buyers can see it. Changes to a live product are also sent for approval, and the current listing stays visible until then.'),
-      _Block(Icons.insights_outlined, '5. Manage stock and enquiries',
-          'Open My Products to see approved, in-review and low-stock items, restock, or hide a product. Buyer enquiries reach you through the contact details you provided.'),
+      _Block(Icons.person_add_alt_1_rounded, 'Sign Up', 'Create your account', stepNumber: 1),
+      _Block(Icons.business_rounded, 'Create Company', 'Add company details', stepNumber: 2),
+      _Block(Icons.account_tree_rounded, 'Create Branch', 'Add branch details', stepNumber: 3),
+      _Block(Icons.local_offer_rounded, 'Add Category', 'Create categories', stepNumber: 4),
+      _Block(Icons.person_pin_rounded, 'Add Sub Category', 'Create sub categories', stepNumber: 5),
+      _Block(Icons.receipt_long_rounded, 'Add GST', 'Add tax details', stepNumber: 6),
+      _Block(Icons.inventory_2_rounded, 'Add Product', 'List your items', stepNumber: 7),
+      _Block(Icons.check_circle_rounded, 'Done', 'Start Selling', stepNumber: 8),
     ],
     HelpTopic.faq => const [
       _Block(Icons.help_outline_rounded, 'Do I need an account to browse?',
@@ -112,8 +112,12 @@ class HelpInfoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: Text(_title, style: DT.text(size: 18, weight: FontWeight.w700)),
         backgroundColor: Colors.white,
         foregroundColor: DT.onyx900,
@@ -128,12 +132,18 @@ class HelpInfoScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
           Text(_intro, style: DT.text(size: 14, color: DT.onyx600, height: 1.5)),
-          const SizedBox(height: 14),
-          for (final b in _blocks) ...[
-            topic == HelpTopic.faq ? _faqTile(b) : _card(b),
-            const SizedBox(height: 10),
-          ],
-          const SizedBox(height: 8),
+          const SizedBox(height: 20),
+
+          // Render Selling Guide as a Tree Diagram, others as list
+          if (topic == HelpTopic.selling)
+            _TreeDiagram(blocks: _blocks)
+          else
+            for (final b in _blocks) ...[
+              topic == HelpTopic.faq ? _faqTile(b) : _card(b),
+              const SizedBox(height: 10),
+            ],
+
+          const SizedBox(height: 24),
           _contactCard(context),
         ],
       ),
@@ -247,6 +257,232 @@ class HelpInfoScreen extends StatelessWidget {
       ],
     ),
   );
+}
+
+// =====================================================================
+// TREE DIAGRAM WIDGET (For Selling Guide)
+// =====================================================================
+class _TreeDiagram extends StatelessWidget {
+  final List<_Block> blocks;
+  const _TreeDiagram({required this.blocks});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // We calculate fixed dimensions to avoid overflows and ensure
+        // the CustomPainter lines align perfectly with the cards.
+        const double horizontalGap = 16.0;
+        const double verticalGap = 24.0;
+
+        // 2 columns layout
+        final double itemWidth = (constraints.maxWidth - horizontalGap) / 2;
+        // Fixed height for each card to keep the tree uniform
+        const double itemHeight = 130.0;
+
+        // Calculate total rows needed
+        final int totalRows = (blocks.length / 2).ceil();
+
+        // Total height of the diagram
+        final double totalHeight = (totalRows * itemHeight) + ((totalRows - 1) * verticalGap);
+
+        return SizedBox(
+          height: totalHeight,
+          width: constraints.maxWidth,
+          child: Stack(
+            children: [
+              // 1. Draw the connecting lines behind the cards
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _TreeLinePainter(
+                    itemCount: blocks.length,
+                    itemWidth: itemWidth,
+                    itemHeight: itemHeight,
+                    horizontalGap: horizontalGap,
+                    verticalGap: verticalGap,
+                  ),
+                ),
+              ),
+              // 2. Place the Cards on top
+              ...List.generate(blocks.length, (index) {
+                final row = index ~/ 2;
+                final col = index % 2;
+
+                final left = col * (itemWidth + horizontalGap);
+                final top = row * (itemHeight + verticalGap);
+
+                return Positioned(
+                  left: left,
+                  top: top,
+                  width: itemWidth,
+                  height: itemHeight,
+                  child: _TreeStepCard(block: blocks[index]),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _TreeStepCard extends StatelessWidget {
+  final _Block block;
+  const _TreeStepCard({required this.block});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Number Badge
+          Positioned(
+            top: 0,
+            right: 0,
+            child: Container(
+              width: 22,
+              height: 22,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                color: Color(0xFF212529), // Dark badge background
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                '${block.stepNumber}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          // Content
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withOpacity(0.15), // Light green circle
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    block.icon,
+                    color: const Color(0xFF10B981), // Green icon
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  block.title,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: DT.text(size: 13, weight: FontWeight.w700),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  block.body,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: DT.text(size: 10.5, color: DT.onyx600, height: 1.2),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TreeLinePainter extends CustomPainter {
+  final int itemCount;
+  final double itemWidth;
+  final double itemHeight;
+  final double horizontalGap;
+  final double verticalGap;
+
+  _TreeLinePainter({
+    required this.itemCount,
+    required this.itemWidth,
+    required this.itemHeight,
+    required this.horizontalGap,
+    required this.verticalGap,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFFCBD5E1) // Light grey lines
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    final int totalRows = (itemCount / 2).ceil();
+
+    for (int i = 0; i < itemCount; i++) {
+      final int row = i ~/ 2;
+      final int col = i % 2;
+
+      final double left = col * (itemWidth + horizontalGap);
+      final double top = row * (itemHeight + verticalGap);
+
+      // Draw Right Arrow if it's the left column AND there is a right column item
+      if (col == 0 && i + 1 < itemCount) {
+        final double startX = left + itemWidth;
+        final double startY = top + (itemHeight / 2);
+        final double endX = startX + horizontalGap;
+
+        // Line
+        canvas.drawLine(Offset(startX, startY), Offset(endX, startY), paint);
+
+        // Arrowhead
+        final path = Path()
+          ..moveTo(endX - 4, startY - 4)
+          ..lineTo(endX, startY)
+          ..lineTo(endX - 4, startY + 4);
+        canvas.drawPath(path, paint);
+      }
+
+      // Draw Down Arrow if it's the right column AND there is a next row
+      if (col == 1 && row < totalRows - 1) {
+        final double startX = left + (itemWidth / 2);
+        final double startY = top + itemHeight;
+        final double endY = startY + verticalGap;
+
+        // Line
+        canvas.drawLine(Offset(startX, startY), Offset(startX, endY), paint);
+
+        // Arrowhead
+        final path = Path()
+          ..moveTo(startX - 4, endY - 4)
+          ..lineTo(startX, endY)
+          ..lineTo(startX + 4, endY - 4);
+        canvas.drawPath(path, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // =====================================================================
@@ -374,8 +610,12 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: Text('Contact Us', style: DT.text(size: 18, weight: FontWeight.w700)),
         backgroundColor: Colors.white,
         foregroundColor: DT.onyx900,

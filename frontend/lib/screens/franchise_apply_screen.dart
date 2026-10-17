@@ -115,7 +115,7 @@ class _FranchiseApplyScreenState extends State<FranchiseApplyScreen> {
           ],
         ),
         backgroundColor:
-        response.isSuccess ? Colors.green : const Color(0xFFD32F2F),
+        response.isSuccess ? const Color(0xFF10B981) : Color(0xFFEF4444),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 4),
         margin: const EdgeInsets.all(16),
@@ -137,6 +137,7 @@ class _FranchiseApplyScreenState extends State<FranchiseApplyScreen> {
       backgroundColor: AppConstants.surfaceColor,
       appBar: AppBar(
         backgroundColor: AppConstants.primary,
+        flexibleSpace: Container(decoration: const BoxDecoration(gradient: AppConstants.appBarGradient)),
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(
@@ -346,6 +347,8 @@ class _FranchiseApplyScreenState extends State<FranchiseApplyScreen> {
 
   // -------- Plan Summary Card --------
 
+  // -------- Plan Summary Card --------
+
   Widget _buildPlanSummary() {
     return Container(
       width: double.infinity,
@@ -410,19 +413,19 @@ class _FranchiseApplyScreenState extends State<FranchiseApplyScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  '₹${widget.plan.amount}',
+                  widget.plan.amountLabel,
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+              ),                    // ← he `)` गायब होता
+            ],                      // ← Row children close
+          ),                        // ← Row close
+        ],                          // ← Column children close
+      ),                            // ← Column close
+    );                              // ← Container close + return
   }
 
   // -------- Helpers --------
@@ -486,11 +489,11 @@ class _FranchiseApplyScreenState extends State<FranchiseApplyScreen> {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red, width: 1),
+          borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
+          borderSide: const BorderSide(color: Color(0xFFEF4444), width: 2),
         ),
         contentPadding:
         const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

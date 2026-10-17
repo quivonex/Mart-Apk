@@ -6,36 +6,30 @@
 //
 // Home – matches the QNXMart website (mobile view):
 //
-//   Header      logo · "Go to Home" · EN · cart · profile
+//   Header      logo · cart · profile
 //   Pills       QNXMart — Shopping & Products | Real Estate — Buy, Sell & Rent |
 //               QNXRemart — Used & Resale            (with ‹ › arrows)
-//               Each pill swaps the page content (like the website):
-//                 QNXMart     -> everything below (banners, loans, products, reels)
-//                 Real Estate -> property grid   (real_estate/properties/approved/)
-//                 QNXRemart   -> used-item grid  (olx/listings/)
-//               Property and ReMart cards have auto-changing photo carousels.
-//   Search
 //   ☰ drawer + category chips (All Categories, …)     (with › arrow)
+//   Search bar (with filter icon at the end)
 //   Hero banner carousel        <- accounts/banners/ placement=home_hero, section=<pill>
 //   Bank / finance logo strip   <- accounts/banners/ placement=finance_partner
-//   Filters + "LOANS 9.99% INSTANT – Get Your Loan"
+//                                  (each card includes loan info + opens loan form)
+//   Filters button
+//   Live Reels & Demos          <- product videos from the same list
 //   Marketing Partner · Info Partner · Info Company
 //   Product grid (Franchise badge, stock, price/MRP, Enquiry, Cart)
-//                               <- product/product/approved-list/
-//   Live Reels & Demos          <- product videos from the same list
 //   ↑ scroll-to-top
-//
-// If the banner API is not deployed yet (or has no banners), built-in
-// fallback slides and bank names are shown so the page never looks empty.
 
 import 'dart:async';
 import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../constants/design_tokens.dart';
+import '../models/admin_image_model.dart';
 import '../models/home_models.dart';
 import '../models/product_model.dart';
 import '../models/property_model.dart';
+import '../services/admin_image_service.dart';
 import '../services/home_service.dart';
 import '../services/real_estate_service.dart';
 import '../utils/cart_helper.dart';
@@ -60,6 +54,7 @@ import 'order_screen.dart';
 import 'product_enquiry_screen.dart';
 import 'product_create_screen.dart';
 import 'product_reels_screen.dart';
+import 'property_create_screen.dart';
 import 'property_detail_screen.dart';
 import 'property_enquiry_screen.dart';
 import 'quick_add_flows.dart';
@@ -71,21 +66,21 @@ import 'terms_conditions_screen.dart';
 
 /// Colours from the QNXMart mobile design (code.html).
 class _HC {
-  static const blue = Color(0xFF1A68FA); // brand.blue
-  static const darkBlue = Color(0xFF0D3880); // brand.darkblue
-  static const accent = Color(0xFFFF5722); // brand.accent
-  static const blueText = Color(0xFF1A68FA);
-  static const pillBg = Color(0xFFEFF6FF); // blue-50
-  static const pillBorder = Color(0xFFDBEAFE); // blue-100
+  static const blue = Color(0xFF6366F1); // brand.blue
+  static const darkBlue = Color(0xFF4338CA); // brand.darkblue
+  static const accent = Color(0xFFF97316); // brand.accent
+  static const blueText = Color(0xFF6366F1);
+  static const pillBg = Color(0xFFEEF2FF); // blue-50
+  static const pillBorder = Color(0xFFE0E7FF); // blue-100
   static const slatePill = Color(0xFFF8FAFC); // slate-50
   static const line = Color(0xFFE2E8F0); // slate-200
   static const hairline = Color(0xFFF1F5F9); // slate-100
-  static const navy = Color(0xFF0C2F6D); // back-to-top
-  static const navy2 = Color(0xFF1557D0);
-  static const bg = Color(0xFFF6F8FC);
+  static const navy = Color(0xFF3730A3); // back-to-top
+  static const navy2 = Color(0xFF4F46E5);
+  static const bg = Color(0xFFF8FAFC);
   static const amber = Color(0xFFFBBF24); // amber-400
-  static const red = Color(0xFFDC2626); // red-600
-  static const green = Color(0xFF0E8A5F);
+  static const red = Color(0xFFEF4444); // red-600
+  static const green = Color(0xFF10B981);
   static const cardShadow = [
     BoxShadow(color: Color(0x0F0F172A), blurRadius: 6, offset: Offset(0, 2)),
   ];
@@ -155,6 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
     DrawerRoutes.addSubCategory,
     DrawerRoutes.addBrand,
     DrawerRoutes.addUnit,
+    DrawerRoutes.addProperty,
     'company_list',
     'my_products',
   };
@@ -220,9 +216,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // ── Property ──
       case DrawerRoutes.addProperty:
-      // The app has no property form yet; the website's form is used.
-        await launchUrl(Uri.parse('https://qnxmartb2b.com/property-create'),
-            mode: LaunchMode.externalApplication);
+      // In-app property form (photos + PDF documents).
+        final created = await Navigator.push<bool>(
+            context, MaterialPageRoute(builder: (_) => const PropertyCreateScreen()));
+        if (created == true) _showMarketplace(Marketplace.realEstate);
       case DrawerRoutes.allProperties:
         _showMarketplace(Marketplace.realEstate);
 
@@ -297,23 +294,27 @@ class _HomeScreenState extends State<HomeScreen> {
         onLogin: _login,
         onLogout: _logout,
       ),
+      // Home has its own header (inside HomeContent); other tabs use the same top bar.
       appBar: _currentIndex == 0
           ? null
-          : AppBarWidget(
-        showDivider: true,
-        actions: [
-          AppBarIconButton(
-            icon: Icons.menu_rounded,
-            tooltip: 'Menu',
-            onPressed: _openDrawer,
+          : PreferredSize(
+        preferredSize: Size.fromHeight(56 + MediaQuery.of(context).padding.top),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            boxShadow: [BoxShadow(color: Color(0x0A0F172A), blurRadius: 3, offset: Offset(0, 1))],
           ),
-          AppBarIconButton(
-            icon: Icons.shopping_cart_outlined,
-            tooltip: 'Cart',
-            badgeCount: _cartCount,
-            onPressed: () => _goToTab(2),
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _topBar(),
+                Container(height: 1, color: _HC.hairline),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
       // Home stays alive (keeps carousel/filter state); other tabs rebuild on each visit.
       body: IndexedStack(
@@ -341,6 +342,147 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+  // Same top bar as the Home screen header (logo · cart · profile).
+  Widget _topBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 9),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => _goToTab(0),
+            behavior: HitTestBehavior.opaque,
+            child: Image.asset(
+              'lib/assets/images/qnx_mart_logo.png',
+              height: 36,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('QNX', style: DT.text(size: 15, weight: FontWeight.w900, color: _HC.darkBlue, letterSpacing: -0.6)),
+                  const SizedBox(width: 3),
+                  Text('MART', style: DT.text(size: 15, weight: FontWeight.w800, color: _HC.accent, letterSpacing: -0.3)),
+                ],
+              ),
+            ),
+          ),
+          const Spacer(),
+          _roundIcon(
+            icon: Icons.shopping_cart_outlined,
+            badge: _cartCount,
+            onTap: () => _goToTab(2),
+          ),
+          const SizedBox(width: 8),
+          _profileButton(),
+        ],
+      ),
+    );
+  }
+
+  Widget _roundIcon({required IconData icon, required VoidCallback onTap, int badge = 0}) {
+    return InkWell(
+      onTap: onTap,
+      customBorder: const CircleBorder(),
+      child: SizedBox(
+        width: 36,
+        height: 36,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: const BoxDecoration(color: DT.slate100, shape: BoxShape.circle),
+              child: Icon(icon, size: 19, color: DT.onyx700),
+            ),
+            if (badge > 0)
+              Positioned(
+                right: -3,
+                top: -3,
+                child: Container(
+                  constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: _HC.red,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: Text(badge > 99 ? '99+' : '$badge',
+                      style: DT.text(size: 9, weight: FontWeight.w800, color: Colors.white)),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _profileButton() {
+    return PopupMenuButton<String>(
+      tooltip: 'Account',
+      offset: const Offset(0, 42),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      onSelected: (v) {
+        switch (v) {
+          case 'login':
+            _login();
+          case 'logout':
+            _logout();
+          default:
+            _navigate(v);
+        }
+      },
+      itemBuilder: (_) => [
+        if (_loggedIn)
+          PopupMenuItem(
+            enabled: false,
+            child: Text(_userName.isEmpty ? 'My account' : 'Hi, $_userName',
+                style: DT.text(size: 13, weight: FontWeight.w800, color: DT.onyx900)),
+          ),
+        _menu('account', Icons.person_outline_rounded, 'My account'),
+        _menu('orders', Icons.receipt_long_outlined, 'My orders'),
+        _menu('company_list', Icons.apartment_rounded, 'My companies'),
+        _menu('my_products', Icons.inventory_2_outlined, 'My products'),
+        const PopupMenuDivider(),
+        _loggedIn
+            ? _menu('logout', Icons.logout_rounded, 'Log out', color: DT.error)
+            : _menu('login', Icons.login_rounded, 'Login / Register', color: _HC.blue),
+      ],
+      child: Container(
+        height: 34,
+        padding: const EdgeInsets.fromLTRB(4, 4, 6, 4),
+        decoration: BoxDecoration(color: DT.slate100, borderRadius: BorderRadius.circular(999)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 26,
+              height: 26,
+              decoration: const BoxDecoration(color: DT.slate200, shape: BoxShape.circle),
+              child: Icon(
+                _loggedIn ? Icons.person_rounded : Icons.person_outline_rounded,
+                size: 16,
+                color: DT.onyx700,
+              ),
+            ),
+            const SizedBox(width: 2),
+            const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: DT.onyx600),
+          ],
+        ),
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _menu(String v, IconData icon, String label, {Color? color}) =>
+      PopupMenuItem(
+        value: v,
+        child: Row(children: [
+          Icon(icon, size: 19, color: color ?? DT.onyx700),
+          const SizedBox(width: 10),
+          Text(label, style: DT.text(size: 13.5, weight: FontWeight.w600, color: color ?? DT.onyx900)),
+        ]),
+      );
 }
 
 // =====================================================================
@@ -400,6 +542,10 @@ class HomeContentState extends State<HomeContent> {
   int _heroIndex = 0;
   Timer? _heroTimer;
 
+  // Admin-uploaded banner images (from admin_profile/upload_image_list/)
+  List<AdminImage> _adminImages = [];
+  bool _adminImagesLoading = true;
+
   // Finance logos
   List<HomeBanner> _finance = [];
   Timer? _financeTimer;
@@ -434,6 +580,7 @@ class HomeContentState extends State<HomeContent> {
   String? _rmSeller;
   bool _rmNegotiable = false;
   String _rmCity = '';
+  int? _myUserId; // to mark the user's own ReMart listings
 
   // Public for the drawer
   Marketplace get marketplace => _marketplace;
@@ -450,6 +597,10 @@ class HomeContentState extends State<HomeContent> {
     _pillScroll.addListener(() => setState(() {}));
     _chipScroll.addListener(() => setState(() {}));
     _refreshAll(cart: false);
+    _loadAdminImages();
+    SharedPreferencesHelper.getUserId().then((id) {
+      if (mounted) setState(() => _myUserId = id);
+    });
   }
 
   @override
@@ -530,6 +681,24 @@ class HomeContentState extends State<HomeContent> {
     _startHeroTimer();
   }
 
+  /// Admin-uploaded banner images (used when the banner API has none).
+  Future<void> _loadAdminImages() async {
+    setState(() => _adminImagesLoading = true);
+    final r = await AdminImageService.getUploadedImages();
+    if (!mounted) return;
+    setState(() {
+      _adminImagesLoading = false;
+      _adminImages = r.data;
+    });
+    // If the API banners are empty, the admin images become the slides:
+    // reset the page and (re)start the auto-rotate timer.
+    if (_hero.isEmpty && _adminImages.isNotEmpty) {
+      if (_heroPage.hasClients) _heroPage.jumpToPage(0);
+      setState(() => _heroIndex = 0);
+      _startHeroTimer();
+    }
+  }
+
   Future<void> _loadFinance() async {
     final r = await HomeService.getBanners(placement: 'finance_partner');
     if (!mounted) return;
@@ -553,7 +722,12 @@ class HomeContentState extends State<HomeContent> {
     if (mounted) setState(() => _categories = c.data);
   }
 
-  int get _heroCount => _hero.isNotEmpty ? _hero.length : _fallbackSlides.length;
+  /// Priority: API banners > admin-uploaded images > built-in fallback slides.
+  int get _heroCount {
+    if (_hero.isNotEmpty) return _hero.length;
+    if (_adminImages.isNotEmpty) return _adminImages.length;
+    return _fallbackSlides.length;
+  }
 
   void _startHeroTimer() {
     _heroTimer?.cancel();
@@ -570,7 +744,7 @@ class HomeContentState extends State<HomeContent> {
     _financeTimer = Timer.periodic(const Duration(milliseconds: 2600), (_) {
       if (!mounted || !_financeScroll.hasClients) return;
       final pos = _financeScroll.position;
-      final next = pos.pixels + 150; // card 140 + gap 10
+      final next = pos.pixels + 160; // card 150 + gap 10
       _financeScroll.animateTo(next >= pos.maxScrollExtent + 10 ? 0 : next,
           duration: const Duration(milliseconds: 600), curve: Curves.easeInOut);
     });
@@ -868,16 +1042,24 @@ class HomeContentState extends State<HomeContent> {
                   const SizedBox(height: 18),
                   SizedBox(
                     height: 48,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(ctx, true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _HC.blue,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: DT.ctaGradient,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
                       ),
-                      child: Text('Show products',
-                          style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: Text('Show products',
+                            style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
+                      ),
                     ),
                   ),
                 ],
@@ -925,13 +1107,11 @@ class HomeContentState extends State<HomeContent> {
                       const SizedBox(height: 16),
                       _financeStrip(),
                       const SizedBox(height: 16),
-                      _filtersAndLoan(),
+                      _reelsSection(),
                       const SizedBox(height: 16),
                       _partnerCards(),
                       const SizedBox(height: 20),
                       _productsSection(),
-                      const SizedBox(height: 16),
-                      _reelsSection(),
                     ],
                     Marketplace.realEstate => [_propertiesSection()],
                     Marketplace.remart => [_remartSection()],
@@ -952,7 +1132,7 @@ class HomeContentState extends State<HomeContent> {
               color: _HC.navy,
               shape: const CircleBorder(side: BorderSide(color: Color(0x33FFFFFF))),
               elevation: 8,
-              shadowColor: const Color(0x660C2F6D),
+              shadowColor: const Color(0x663730A3),
               child: InkWell(
                 customBorder: const CircleBorder(),
                 onTap: _scrollTop,
@@ -987,8 +1167,8 @@ class HomeContentState extends State<HomeContent> {
             Container(height: 1, color: _HC.hairline),
             _marketplacePills(),
             Container(height: 1, color: _HC.hairline),
-            _searchBar(),
             _categoryRow(),
+            _searchBar(),
             Container(height: 1, color: _HC.hairline),
           ],
         ),
@@ -1004,34 +1184,21 @@ class HomeContentState extends State<HomeContent> {
           GestureDetector(
             onTap: _goHome,
             behavior: HitTestBehavior.opaque,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image.asset(
-                  'lib/assets/images/qnx_mart_logo.png',
-                  height: 36,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('QNX', style: DT.text(size: 15, weight: FontWeight.w900, color: _HC.darkBlue, letterSpacing: -0.6)),
-                      const SizedBox(width: 3),
-                      Text('MART', style: DT.text(size: 15, weight: FontWeight.w800, color: _HC.accent, letterSpacing: -0.3)),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Container(
-                  width: 14, height: 14,
-                  decoration: BoxDecoration(color: _HC.blue, borderRadius: BorderRadius.circular(3)),
-                  child: const Icon(Icons.arrow_back_rounded, size: 12, color: Colors.white),
-                ),
-              ],
+            child: Image.asset(
+              'lib/assets/images/qnx_mart_logo.png',
+              height: 36,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('QNX', style: DT.text(size: 15, weight: FontWeight.w900, color: _HC.darkBlue, letterSpacing: -0.6)),
+                  const SizedBox(width: 3),
+                  Text('MART', style: DT.text(size: 15, weight: FontWeight.w800, color: _HC.accent, letterSpacing: -0.3)),
+                ],
+              ),
             ),
           ),
           const Spacer(),
-          _languageButton(),
-          const SizedBox(width: 8),
           _roundIcon(
             icon: Icons.shopping_cart_outlined,
             badge: widget.cartCount,
@@ -1040,44 +1207,6 @@ class HomeContentState extends State<HomeContent> {
           const SizedBox(width: 8),
           _profileButton(),
         ],
-      ),
-    );
-  }
-
-  Widget _languageButton() {
-    return PopupMenuButton<String>(
-      tooltip: 'Language',
-      offset: const Offset(0, 36),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      onSelected: (v) {
-        if (v != 'en') _snack('More languages are coming soon.');
-      },
-      itemBuilder: (_) => [
-        PopupMenuItem(
-          value: 'en',
-          child: Row(children: [
-            Text('English', style: DT.text(size: 13.5, weight: FontWeight.w600)),
-            const Spacer(),
-            const Icon(Icons.check_rounded, size: 18, color: _HC.blue),
-          ]),
-        ),
-        PopupMenuItem(value: 'hi', child: Text('हिन्दी  ·  soon', style: DT.text(size: 13.5, color: DT.slate400))),
-        PopupMenuItem(value: 'mr', child: Text('मराठी  ·  soon', style: DT.text(size: 13.5, color: DT.slate400))),
-      ],
-      child: Container(
-        height: 30,
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        decoration: BoxDecoration(color: DT.slate100, borderRadius: BorderRadius.circular(999)),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.language_rounded, size: 15, color: DT.onyx700),
-            const SizedBox(width: 4),
-            Text('EN', style: DT.text(size: 11.5, weight: FontWeight.w700, color: DT.onyx700)),
-            const SizedBox(width: 2),
-            const Icon(Icons.keyboard_arrow_down_rounded, size: 15, color: DT.onyx600),
-          ],
-        ),
       ),
     );
   }
@@ -1226,7 +1355,7 @@ class HomeContentState extends State<HomeContent> {
           color: sel ? _HC.blue : _HC.slatePill,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(color: sel ? _HC.blue : _HC.line),
-          boxShadow: sel ? const [BoxShadow(color: Color(0x331A68FA), blurRadius: 6, offset: Offset(0, 2))] : null,
+          boxShadow: sel ? const [BoxShadow(color: Color(0x336366F1), blurRadius: 6, offset: Offset(0, 2))] : null,
         ),
         // Active pill shows the full name, the others a short one (as in the design).
         child: Text(sel ? m.title : m.shortTitle,
@@ -1251,53 +1380,6 @@ class HomeContentState extends State<HomeContent> {
     ),
   );
 
-  // ── Search ──────────────────────────────────────────────
-  Widget _searchBar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
-      child: TextField(
-        controller: _searchCtrl,
-        textInputAction: TextInputAction.search,
-        onSubmitted: _applySearch,
-        onChanged: (v) => setState(() {
-          if (v.isEmpty) _query = ''; // also refreshes the clear (✕) button
-        }),
-        style: DT.text(size: 13, weight: FontWeight.w500),
-        decoration: InputDecoration(
-          hintText: switch (_marketplace) {
-            Marketplace.shopping => 'Search products, services...',
-            Marketplace.realEstate => 'Search city, area or property...',
-            Marketplace.remart => 'Search used & resale items...',
-          },
-          hintStyle: DT.text(size: 13, color: DT.slate400),
-          isDense: true,
-          prefixIcon: const Icon(Icons.search_rounded, color: DT.slate400, size: 20),
-          prefixIconConstraints: const BoxConstraints(minWidth: 42),
-          suffixIcon: _searchCtrl.text.isEmpty
-              ? null
-              : IconButton(
-            icon: const Icon(Icons.close_rounded, color: DT.slate400, size: 18),
-            onPressed: () {
-              _searchCtrl.clear();
-              setState(() => _query = '');
-            },
-          ),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(vertical: 12),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(999),
-            borderSide: const BorderSide(color: _HC.line),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(999),
-            borderSide: const BorderSide(color: _HC.blue, width: 1.5),
-          ),
-        ),
-      ),
-    );
-  }
-
   // ── ☰ + category chips ──────────────────────────────────
   Widget _categoryRow() {
     final chips = _marketChips();
@@ -1305,7 +1387,7 @@ class HomeContentState extends State<HomeContent> {
         !_chipScroll.hasClients || _chipScroll.offset < _chipScroll.position.maxScrollExtent - 4;
     final canLeft = _chipScroll.hasClients && _chipScroll.offset > 4;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 0, 0, 12),
+      padding: const EdgeInsets.fromLTRB(14, 0, 0, 8),
       child: SizedBox(
         height: 38,
         child: Row(
@@ -1347,6 +1429,92 @@ class HomeContentState extends State<HomeContent> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // ── Search bar (with Filter icon at the end) ────────────
+  Widget _searchBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _searchCtrl,
+              textInputAction: TextInputAction.search,
+              onSubmitted: _applySearch,
+              onChanged: (v) => setState(() {
+                if (v.isEmpty) _query = ''; // also refreshes the clear (✕) button
+              }),
+              style: DT.text(size: 13, weight: FontWeight.w500),
+              decoration: InputDecoration(
+                hintText: switch (_marketplace) {
+                  Marketplace.shopping => 'Search products, services...',
+                  Marketplace.realEstate => 'Search city, area or property...',
+                  Marketplace.remart => 'Search used & resale items...',
+                },
+                hintStyle: DT.text(size: 13, color: DT.slate400),
+                isDense: true,
+                prefixIcon: const Icon(Icons.search_rounded, color: DT.slate400, size: 20),
+                prefixIconConstraints: const BoxConstraints(minWidth: 42),
+                suffixIcon: _searchCtrl.text.isEmpty
+                    ? null
+                    : IconButton(
+                  icon: const Icon(Icons.close_rounded, color: DT.slate400, size: 18),
+                  onPressed: () {
+                    _searchCtrl.clear();
+                    setState(() => _query = '');
+                  },
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(999),
+                  borderSide: const BorderSide(color: _HC.line),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(999),
+                  borderSide: const BorderSide(color: _HC.blue, width: 1.5),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Filter icon moved into the search row
+          Material(
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: _hasFilters ? _HC.blue : _HC.line, width: _hasFilters ? 1.5 : 1),
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: _openFilters,
+              child: SizedBox(
+                width: 44,
+                height: 44,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    const Icon(Icons.tune_rounded, color: _HC.blue, size: 22),
+                    if (_hasFilters)
+                      Positioned(
+                        top: 8,
+                        right: 9,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(color: _HC.red, shape: BoxShape.circle),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1407,7 +1575,7 @@ class HomeContentState extends State<HomeContent> {
             borderRadius: BorderRadius.circular(999),
             border: Border.all(color: selected ? _HC.blue : _HC.pillBorder),
             boxShadow:
-            selected ? const [BoxShadow(color: Color(0x261A68FA), blurRadius: 4, offset: Offset(0, 1))] : null,
+            selected ? const [BoxShadow(color: Color(0x266366F1), blurRadius: 4, offset: Offset(0, 1))] : null,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -1444,8 +1612,11 @@ class HomeContentState extends State<HomeContent> {
     boxShadow: _HC.cardShadow,
   );
 
-  // ── Hero carousel ───────────────────────────────────────
+  // ── Hero carousel (contain fit, no zoom) ────────────────
   Widget _heroCarousel() {
+    final stillLoading = (_heroLoading || _adminImagesLoading) &&
+        _hero.isEmpty &&
+        _adminImages.isEmpty;
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
@@ -1455,7 +1626,7 @@ class HomeContentState extends State<HomeContent> {
         borderRadius: BorderRadius.circular(16),
         child: AspectRatio(
           aspectRatio: 1.2,
-          child: _heroLoading && _hero.isEmpty
+          child: stillLoading
               ? Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(colors: [Color(0xFFE2E8F0), Color(0xFFF1F5F9)]),
@@ -1467,7 +1638,16 @@ class HomeContentState extends State<HomeContent> {
                 controller: _heroPage,
                 itemCount: _heroCount,
                 onPageChanged: (i) => setState(() => _heroIndex = i),
-                itemBuilder: (_, i) => _hero.isNotEmpty ? _heroImage(_hero[i]) : _fallbackSlides[i](),
+                itemBuilder: (_, i) {
+                  // Priority: API banners > admin images > fallback slides.
+                  if (_hero.isNotEmpty && i < _hero.length) {
+                    return _heroImage(_hero[i]);
+                  }
+                  if (_adminImages.isNotEmpty && i < _adminImages.length) {
+                    return _adminImageSlide(_adminImages[i]);
+                  }
+                  return _fallbackSlides[i % _fallbackSlides.length]();
+                },
               ),
               if (_heroCount > 1) ...[
                 Positioned(
@@ -1522,18 +1702,82 @@ class HomeContentState extends State<HomeContent> {
 
   Widget _heroImage(HomeBanner b) => GestureDetector(
     onTap: () => _onBannerTap(b),
-    child: Image.network(
-      b.imageUrl,
-      fit: BoxFit.cover,
-      loadingBuilder: (c, child, p) => p == null ? child : Container(color: const Color(0xFFE2E8F0)),
-      errorBuilder: (_, __, ___) => Container(
-        color: const Color(0xFFE2E8F0),
-        alignment: Alignment.center,
-        child: Text(b.title.isEmpty ? 'QNXMart' : b.title,
-            style: DT.text(size: 16, weight: FontWeight.w700, color: DT.slate500)),
+    // Contain fit keeps the whole banner visible (no zoom/crop).
+    child: Container(
+      color: const Color(0xFFF1F5F9),
+      child: Image.network(
+        b.imageUrl,
+        fit: BoxFit.contain,
+        loadingBuilder: (c, child, p) => p == null ? child : Container(color: const Color(0xFFE2E8F0)),
+        errorBuilder: (_, __, ___) => Container(
+          color: const Color(0xFFE2E8F0),
+          alignment: Alignment.center,
+          child: Text(b.title.isEmpty ? 'QNXMart' : b.title,
+              style: DT.text(size: 16, weight: FontWeight.w700, color: DT.slate500)),
+        ),
       ),
     ),
   );
+
+  /// Slide built from an admin-uploaded image (admin_profile/upload_image_list/).
+  /// Shown when the banner API has no home_hero banners.
+  Widget _adminImageSlide(AdminImage img) {
+    return GestureDetector(
+      onTap: () => widget.onNavigate('products'),
+      child: Container(
+        color: const Color(0xFFF1F5F9),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
+              img.imageUrl,
+              fit: BoxFit.contain, // no zoom
+              loadingBuilder: (c, child, p) => p == null
+                  ? child
+                  : Container(
+                color: const Color(0xFFE2E8F0),
+                alignment: Alignment.center,
+                child: const CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: _HC.blue,
+                ),
+              ),
+              errorBuilder: (_, __, ___) => Container(
+                color: const Color(0xFFE2E8F0),
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.broken_image_outlined,
+                  color: Color(0xFF94A3B8),
+                  size: 40,
+                ),
+              ),
+            ),
+            if (img.title.isNotEmpty)
+              Positioned(
+                left: 12,
+                bottom: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.55),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    img.title.toUpperCase(),
+                    style: DT.text(
+                      size: 10,
+                      weight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 
   /// Shown until banners are added through the banner API / Django admin.
   List<Widget Function()> get _fallbackSlides => [
@@ -1547,16 +1791,16 @@ class HomeContentState extends State<HomeContent> {
       onTap: () => setMarketplace(Marketplace.realEstate),
     ),
         () => _fallbackSlide(
-      colors: const [Color(0xFF0D3880), Color(0xFF1A68FA)],
+      colors: const [Color(0xFF4338CA), Color(0xFF6366F1)],
       kicker: 'QNXMART B2B · Small business. Stronger together.',
-      kickerColor: const Color(0xFFBFDBFE),
+      kickerColor: const Color(0xFFC7D2FE),
       title: 'Fresh Look.\nBigger Possibilities.',
       subtitle: 'Trusted marketplace for products, services and properties.',
       icon: Icons.storefront_rounded,
       onTap: () => widget.onNavigate('products'),
     ),
         () => _fallbackSlide(
-      colors: const [Color(0xFF09348A), Color(0xFF1557D0)],
+      colors: const [Color(0xFF3730A3), Color(0xFF4F46E5)],
       kicker: 'Easy bank loans',
       kickerColor: const Color(0xFFFDE68A),
       title: '9.99% p.a.',
@@ -1583,7 +1827,6 @@ class HomeContentState extends State<HomeContent> {
         ),
         child: Stack(
           children: [
-            // decorative illustration, bottom-right (opacity 20%)
             Positioned(
               right: 14,
               bottom: 14,
@@ -1616,21 +1859,24 @@ class HomeContentState extends State<HomeContent> {
     );
   }
 
-  // ── Bank / finance partner strip ────────────────────────
-  static const _fallbackBanks = <(String, Color)>[
-    ('IndusInd Bank', Color(0xFF84191D)),
-    ('Kotak Mahindra\nBank', Color(0xFFED1C24)),
-    ('HDFC', Color(0xFF004C8F)),
-    ('ICICI Bank', Color(0xFFAE282E)),
-    ('L&T Finance', Color(0xFF0A3E8C)),
-    ('Mahindra Finance', Color(0xFFC8102E)),
+  static const _fallbackBanks = <(String, String)>[
+    ('Axis Bank', 'lib/assets/icon/axis bank.jpeg'),
+    ('Bajaj Finance', 'lib/assets/icon/bajaj finance.jpeg'),
+    ('Chola Finance', 'lib/assets/icon/chola finance.jpeg'),
+    ('HDFC Bank', 'lib/assets/icon/hdfc bank.jpeg'),
+    ('ICICI Bank', 'lib/assets/icon/icici bank.jpeg'),
+    ('IndusInd Bank', 'lib/assets/icon/indusland bank.jpeg'),
+    ('Kotak Bank', 'lib/assets/icon/kotak bank.jpeg'),
+    ('L&T Finance', 'lib/assets/icon/l&t finance.jpeg'),
+    ('Mahindra Finance', 'lib/assets/icon/mahindra finance.jpeg'),
+    ('Tata Capital', 'lib/assets/icon/tata capital.jpeg'),
   ];
 
   Widget _financeStrip() {
     final useApi = _finance.isNotEmpty;
     final count = useApi ? _finance.length : _fallbackBanks.length;
     return SizedBox(
-      height: 56,
+      height: 120, // logo + text + arrow fit होण्यासाठी
       child: ListView.separated(
         controller: _financeScroll,
         scrollDirection: Axis.horizontal,
@@ -1638,40 +1884,120 @@ class HomeContentState extends State<HomeContent> {
         itemCount: count,
         separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemBuilder: (_, i) {
-          final Widget inner;
-          VoidCallback onTap;
+          final String bankName;
+          final Widget logoWidget;
+          final VoidCallback onTap;
+
           if (useApi) {
             final b = _finance[i];
-            onTap = b.target == BannerTarget.none ? () => widget.onNavigate('loan_enquiry') : () => _onBannerTap(b);
-            inner = Image.network(b.imageUrl,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => Center(
-                  child: Text(b.title,
-                      textAlign: TextAlign.center,
-                      style: DT.text(size: 12.5, weight: FontWeight.w800, color: _HC.darkBlue)),
-                ));
-          } else {
-            final (name, color) = _fallbackBanks[i];
+            bankName = b.title;
             onTap = () => widget.onNavigate('loan_enquiry');
-            inner = Center(
-              child: Text(name,
+            logoWidget = Image.network(
+              b.imageUrl,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Center(
+                child: Text(
+                  b.title,
+                  textAlign: TextAlign.center,
+                  style: DT.text(size: 11, weight: FontWeight.w800, color: _HC.darkBlue),
+                ),
+              ),
+            );
+          } else {
+            final (name, path) = _fallbackBanks[i];
+            bankName = name;
+            onTap = () => widget.onNavigate('loan_enquiry');
+            logoWidget = Image.asset(
+              path,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Center(
+                child: Text(
+                  name,
                   textAlign: TextAlign.center,
                   maxLines: 2,
-                  style: DT.text(size: 12.5, weight: FontWeight.w800, color: color, height: 1.2)),
+                  style: DT.text(size: 10.5, weight: FontWeight.w800, color: _HC.darkBlue, height: 1.15),
+                ),
+              ),
             );
           }
+
           return GestureDetector(
+            // Tap anywhere on the card → loan enquiry form
             onTap: onTap,
             child: Container(
-              width: 140,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              width: 150,
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: _HC.line),
-                boxShadow: const [BoxShadow(color: Color(0x080F172A), blurRadius: 2, offset: Offset(0, 1))],
+                boxShadow: const [
+                  BoxShadow(color: Color(0x080F172A), blurRadius: 2, offset: Offset(0, 1)),
+                ],
               ),
-              child: inner,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // ── Bank logo (fixed height) ─────────────────
+                  SizedBox(
+                    height: 44,
+                    child: logoWidget,
+                  ),
+                  const SizedBox(height: 6),
+                  // ── Loan info + arrow ────────────────────────
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '9.99%',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: DT.text(
+                                size: 12,
+                                weight: FontWeight.w900,
+                                color: _HC.darkBlue,
+                              ),
+                            ),
+                            Text(
+                              'Get Your Loan',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: DT.text(
+                                size: 9.5,
+                                weight: FontWeight.w700,
+                                color: _HC.darkBlue,
+                              ),
+                            ),
+                            Text(
+                              'Fast approval',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: DT.text(size: 8.5, color: DT.slate500),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        width: 20,
+                        height: 20,
+                        decoration: const BoxDecoration(
+                          color: _HC.blue,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.arrow_forward_rounded,
+                          color: Colors.white,
+                          size: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -1679,178 +2005,46 @@ class HomeContentState extends State<HomeContent> {
     );
   }
 
-  // ── Filters + loan card ─────────────────────────────────
-  Widget _filtersAndLoan() {
-    return SizedBox(
-      height: 96,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Filters
-          Material(
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: _hasFilters ? _HC.blue : _HC.line, width: _hasFilters ? 1.5 : 1),
-            ),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: _openFilters,
-              child: SizedBox(
-                width: 64,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.tune_rounded, color: _HC.blue, size: 22),
-                        const SizedBox(height: 4),
-                        Text('Filters', style: DT.text(size: 11.5, weight: FontWeight.w800, color: _HC.blue)),
-                      ],
-                    ),
-                    if (_hasFilters)
-                      Positioned(
-                        top: 8,
-                        right: 9,
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(color: _HC.red, shape: BoxShape.circle),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          // Loan promo
-          Expanded(
-            child: GestureDetector(
-              onTap: () => widget.onNavigate('loan_enquiry'),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF09348A), Color(0xFF1557D0)],
-                    begin: Alignment(-1, -0.3),
-                    end: Alignment(1, 0.3),
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: const [BoxShadow(color: Color(0x3309348A), blurRadius: 8, offset: Offset(0, 3))],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0B2861),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0x4D60A5FA)),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text('LOANS',
-                              style: DT.text(
-                                  size: 9, weight: FontWeight.w800, color: DT.slate300, letterSpacing: 1.8)),
-                          Text.rich(TextSpan(
-                            text: '9.99',
-                            style: DT.text(size: 19, weight: FontWeight.w900, color: _HC.amber),
-                            children: [
-                              TextSpan(
-                                  text: '%', style: DT.text(size: 12, weight: FontWeight.w800, color: _HC.amber)),
-                            ],
-                          )),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(color: _HC.red, borderRadius: BorderRadius.circular(4)),
-                            child: Text('INSTANT',
-                                style: DT.text(
-                                    size: 9, weight: FontWeight.w800, color: Colors.white, letterSpacing: 0.6)),
-                          ),
-                          const SizedBox(height: 3),
-                          Text('Get Your Loan',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: DT.text(size: 14.5, weight: FontWeight.w800, color: Colors.white)),
-                          Text('Fast approval', style: DT.text(size: 10.5, color: const Color(0xFFBFDBFE))),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      width: 34,
-                      height: 34,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: Color(0x330F172A), blurRadius: 4)],
-                      ),
-                      child: const Icon(Icons.arrow_forward_rounded, color: _HC.blue, size: 18),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // ── Filters row (only Filters button now) ───────────────
+
 
   // ── Partner cards ───────────────────────────────────────
   Widget _partnerCards() {
-    return Column(
+    return Row(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _partnerCard(Icons.groups_rounded, 'Marketing Partner', 'Partner catalogs',
-                      () => widget.onNavigate('marketing_partner')),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _partnerCard(Icons.verified_user_outlined, 'Info Partner', 'DSA incentives', _openInfoPartner),
-            ),
-          ],
+        Expanded(
+          child: _partnerCard(Icons.groups_rounded, 'Marketing Partner', 'Partner catalogs',
+                  () => widget.onNavigate('marketing_partner'), big: true),
         ),
-        const SizedBox(height: 10),
-        _partnerCard(Icons.apartment_rounded, 'Info Company', 'Governance profile', _openInfoCompany, big: true),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _partnerCard(Icons.apartment_rounded, 'Info Company', 'Governance profile', _openInfoCompany, big: true),
+        ),
       ],
     );
   }
 
   Widget _partnerCard(IconData icon, String title, String subtitle, VoidCallback onTap, {bool big = false}) {
     return Material(
-      color: big ? const Color(0xFF0E3B7C) : const Color(0xFF0B2553),
+      color: big ? const Color(0xFF3730A3) : const Color(0xFF312E81),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Padding(
-          padding: EdgeInsets.all(big ? 14 : 12),
+          padding: EdgeInsets.all(big ? 10 : 12),
           child: Row(
             children: [
               Container(
-                width: big ? 42 : 38,
-                height: big ? 42 : 38,
+                width: big ? 36 : 38,
+                height: big ? 36 : 38,
                 decoration: BoxDecoration(
-                  color: big ? const Color(0x991D4ED8) : const Color(0xCC1E40AF),
+                  color: big ? const Color(0x994F46E5) : const Color(0xCC4338CA),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: Colors.white, size: big ? 22 : 19),
+                child: Icon(icon, color: Colors.white, size: big ? 18 : 19),
               ),
-              SizedBox(width: big ? 12 : 10),
+              SizedBox(width: big ? 8 : 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1858,14 +2052,14 @@ class HomeContentState extends State<HomeContent> {
                     Text(title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: DT.text(size: big ? 15 : 13, weight: FontWeight.w800, color: Colors.white)),
+                        style: DT.text(size: big ? 12 : 13, weight: FontWeight.w800, color: Colors.white)),
                     const SizedBox(height: 1),
                     Text(subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(
-                            size: big ? 11.5 : 10.5,
-                            color: big ? const Color(0xFFBFDBFE) : DT.slate300)),
+                            size: big ? 10 : 10.5,
+                            color: big ? const Color(0xFFC7D2FE) : DT.slate300)),
                   ],
                 ),
               ),
@@ -1938,20 +2132,6 @@ class HomeContentState extends State<HomeContent> {
     );
   }
 
-  void _openInfoPartner() => _infoSheet(
-    icon: Icons.handshake_rounded,
-    title: 'Info Partner (DSA)',
-    body: 'Refer businesses and loan customers to QNXMart and earn incentives on '
-        'successful sign-ups and disbursals. Register as a marketing partner to get your '
-        'referral link and track your referrals.',
-    actions: [
-      ('Become a Marketing Partner', Icons.person_add_alt_1_rounded,
-          () => widget.onNavigate('marketing_partner')),
-      ('Refer a loan enquiry', Icons.account_balance_rounded,
-          () => widget.onNavigate('loan_enquiry')),
-    ],
-  );
-
   void _openInfoCompany() => _infoSheet(
     icon: Icons.business_rounded,
     title: 'Info Company',
@@ -2020,8 +2200,8 @@ class HomeContentState extends State<HomeContent> {
                 const SizedBox(height: 12),
                 Center(
                   child: Material(
-                    color: const Color(0x80EFF6FF),
-                    shape: const StadiumBorder(side: BorderSide(color: Color(0xFFBFDBFE))),
+                    color: const Color(0x80EEF2FF),
+                    shape: const StadiumBorder(side: BorderSide(color: Color(0xFFC7D2FE))),
                     child: InkWell(
                       customBorder: const StadiumBorder(),
                       onTap: () => setState(() => _visibleCount += 10),
@@ -2041,7 +2221,6 @@ class HomeContentState extends State<HomeContent> {
 
   Widget _productGrid({required int itemCount, required Widget Function(int) builder}) {
     return LayoutBuilder(builder: (context, c) {
-      // Square image + three text lines + padding (matches the design card).
       final cardWidth = (c.maxWidth - 12) / 2;
       return GridView.builder(
         shrinkWrap: true,
@@ -2052,7 +2231,8 @@ class HomeContentState extends State<HomeContent> {
           crossAxisCount: 2,
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          mainAxisExtent: cardWidth + 64,
+          // ── UPDATED: Reduced the extra height so the buttons are closer to the price ──
+          mainAxisExtent: cardWidth + 105,
         ),
         itemBuilder: (_, i) => builder(i),
       );
@@ -2181,6 +2361,60 @@ class HomeContentState extends State<HomeContent> {
                   ],
                 ],
               ),
+              // ── UPDATED: Reduced the space before the buttons ──
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => _openEnquiry(p),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: DT.onyx800,
+                        side: const BorderSide(color: DT.slate300),
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        minimumSize: const Size(0, 28),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(DT.rMd),
+                        ),
+                      ),
+                      child: Text(
+                        'Enquiry',
+                        style: DT.text(
+                          size: 10,
+                          weight: FontWeight.w700,
+                          color: DT.onyx800,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => _addToCart(p),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: DT.onyx900,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        minimumSize: const Size(0, 28),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(DT.rMd),
+                        ),
+                      ),
+                      child: Text(
+                        'Cart',
+                        style: DT.text(
+                          size: 10,
+                          weight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -2188,7 +2422,7 @@ class HomeContentState extends State<HomeContent> {
     );
   }
 
-  /// Card tap: quick view with Enquiry / Add to cart (the design card has no buttons).
+  /// Opens a bottom sheet showing product details (no extra actions).
   Future<void> _openProductQuickView(Product p) {
     final fp = double.tryParse(p.finalPrice) ?? 0;
     final mrp = double.tryParse(p.price) ?? 0;
@@ -2202,7 +2436,8 @@ class HomeContentState extends State<HomeContent> {
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => SafeArea(
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.88),
+          // Height reduced to 60% of screen so it doesn't cover the whole screen
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.6),
           child: ListView(
             shrinkWrap: true,
             padding: const EdgeInsets.fromLTRB(18, 10, 18, 18),
@@ -2215,19 +2450,33 @@ class HomeContentState extends State<HomeContent> {
                 ),
               ),
               const SizedBox(height: 14),
+              // Product image – BoxFit.contain so the full product is visible
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: AspectRatio(
-                  aspectRatio: 4 / 3,
-                  child: p.thumbnail.isEmpty
-                      ? Container(
-                      color: DT.slate100,
-                      child: const Icon(Icons.inventory_2_outlined, size: 48, color: DT.slate300))
-                      : Image.network(p.thumbnail,
-                      fit: BoxFit.cover,
+                child: Container(
+                  color: Colors.white,
+                  child: AspectRatio(
+                    aspectRatio: 4 / 3, // wider, shorter image
+                    child: p.thumbnail.isEmpty
+                        ? Container(
+                        color: DT.slate100,
+                        child: const Icon(Icons.inventory_2_outlined, size: 48, color: DT.slate300))
+                        : Image.network(
+                      p.thumbnail,
+                      fit: BoxFit.contain, // full product visible
+                      loadingBuilder: (_, child, prog) => prog == null
+                          ? child
+                          : Container(
+                        color: DT.slate100,
+                        child: const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2, color: _HC.blue),
+                        ),
+                      ),
                       errorBuilder: (_, __, ___) => Container(
                           color: DT.slate100,
-                          child: const Icon(Icons.broken_image_outlined, size: 40, color: DT.slate300))),
+                          child: const Icon(Icons.broken_image_outlined, size: 40, color: DT.slate300)),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 14),
@@ -2298,60 +2547,6 @@ class HomeContentState extends State<HomeContent> {
                 ]),
               ],
               const SizedBox(height: 18),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        _openEnquiry(p);
-                      },
-                      icon: const Icon(Icons.mail_outline_rounded, size: 18),
-                      label: Text('Enquiry', style: DT.text(size: 14, weight: FontWeight.w700, color: DT.onyx900)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: DT.onyx900,
-                        side: const BorderSide(color: _HC.line),
-                        minimumSize: const Size.fromHeight(48),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: stock != null && stock <= 0
-                          ? null
-                          : () {
-                        Navigator.pop(ctx);
-                        _addToCart(p);
-                      },
-                      icon: const Icon(Icons.shopping_cart_outlined, size: 18),
-                      label: Text('Add to cart',
-                          style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _HC.blue,
-                        disabledBackgroundColor: DT.slate300,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        minimumSize: const Size.fromHeight(48),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              if (p.isFranchiseAvailable) ...[
-                const SizedBox(height: 8),
-                TextButton.icon(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    _openFranchise(p);
-                  },
-                  icon: const Icon(Icons.storefront_rounded, size: 18),
-                  label: Text('View franchise plans',
-                      style: DT.text(size: 13.5, weight: FontWeight.w700, color: _HC.blue)),
-                ),
-              ],
             ],
           ),
         ),
@@ -2426,7 +2621,7 @@ class HomeContentState extends State<HomeContent> {
     );
   }
 
-  // ── Live Reels & Demos ──────────────────────────────────
+  // ── Live Reels & Demos (now in the old loan section position) ──
   Widget _reelsSection() {
     final reels = buildReels(_products);
     if (reels.isEmpty) return const SizedBox.shrink();
@@ -2505,7 +2700,6 @@ class HomeContentState extends State<HomeContent> {
                             child: Icon(Icons.play_arrow_rounded, color: Colors.white, size: 30),
                           ),
                         ),
-                        // top row
                         Positioned(
                           left: 12,
                           right: 12,
@@ -2550,7 +2744,6 @@ class HomeContentState extends State<HomeContent> {
                             ],
                           ),
                         ),
-                        // bottom meta
                         Positioned(
                           left: 0,
                           right: 0,
@@ -2603,7 +2796,6 @@ class HomeContentState extends State<HomeContent> {
   // =================================================================
   static const _typeOrder = ['flat', 'villa', 'plot', 'commercial', 'shop', 'office', 'warehouse', 'other'];
 
-  /// Property types present in the loaded list, in the website's order.
   List<String> get _propertyTypes {
     final present = _props.map((p) => p.propertyType).where((t) => t.isNotEmpty).toSet();
     return [
@@ -2658,7 +2850,7 @@ class HomeContentState extends State<HomeContent> {
     if (result == null || !mounted) return;
     setState(() {
       _pf = result.withType(null);
-      _propType = result.type; // keeps the chips in sync
+      _propType = result.type;
     });
     if (_scroll.hasClients) _scroll.jumpTo(0);
   }
@@ -2711,7 +2903,6 @@ class HomeContentState extends State<HomeContent> {
     );
   }
 
-  /// Dark slate band used by Real Estate and QNXRemart: title, count, Filters.
   Widget _darkBand({
     required IconData icon,
     required String title,
@@ -2798,7 +2989,6 @@ class HomeContentState extends State<HomeContent> {
     );
   }
 
-  /// Frosted panel over the bottom of a photo card (website style).
   Widget _frostedPanel(Widget child) => ClipRRect(
     borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
     child: BackdropFilter(
@@ -2941,7 +3131,6 @@ class HomeContentState extends State<HomeContent> {
     );
   }
 
-  /// The enquiry form needs the full PropertyDetail, so load it first.
   Future<void> _openPropertyEnquiry(Property p) async {
     if (p.slug.isEmpty) return;
     showDialog(
@@ -3012,7 +3201,6 @@ class HomeContentState extends State<HomeContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // dark band: "Products · N products found · Filters"
         _darkBand(
           icon: Icons.storefront_outlined,
           title: 'Products',
@@ -3072,6 +3260,10 @@ class HomeContentState extends State<HomeContent> {
                     overflow: TextOverflow.ellipsis,
                     style: DT.text(size: 11, weight: FontWeight.w800, color: DT.onyx900)),
               ),
+              if (_myUserId != null && l.userId == _myUserId) ...[
+                _outlineChip('Your listing', fg: _HC.blue, border: _HC.pillBorder, bg: _HC.pillBg),
+                const SizedBox(width: 4),
+              ],
               if (l.conditionLabel.isNotEmpty)
                 _outlineChip(l.conditionLabel,
                     fg: const Color(0xFF15803D), border: const Color(0xFF86EFAC), bg: const Color(0xFFF0FDF4)),
@@ -3234,16 +3426,24 @@ class HomeContentState extends State<HomeContent> {
                     const SizedBox(height: 10),
                     SizedBox(
                       height: 48,
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.pop(ctx, true),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _HC.blue,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: DT.ctaGradient,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
                         ),
-                        child: Text('Show items',
-                            style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          child: Text('Show items',
+                              style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
+                        ),
                       ),
                     ),
                   ],
@@ -3265,8 +3465,6 @@ class HomeContentState extends State<HomeContent> {
       _rmCity = city;
     });
   }
-
-
 }
 
 // =====================================================================

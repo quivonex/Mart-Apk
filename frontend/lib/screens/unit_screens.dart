@@ -110,8 +110,12 @@ class _UnitManageScreenState extends State<UnitManageScreen> {
       },
       child: Scaffold(
         backgroundColor: DT.background,
-        appBar: const CompanyTopBar(
-            title: 'Units', subtitle: 'Kg, piece, box, litre…'),
+        // ✅ FIX: Wrapped in PreferredSize with height 65 to prevent 1px overflow
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(65),
+          child: const CompanyTopBar(
+              title: 'Units', subtitle: 'Kg, piece, box, litre…'),
+        ),
         floatingActionButton: _mine.isEmpty
             ? null
             : FloatingActionButton.extended(
@@ -164,7 +168,7 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
   late final _short = TextEditingController(text: widget.existing?.shortName ?? '');
   bool _saving = false;
 
-  static const _brand = Color(0xFF1A68FA);
+  static const _brand = Color(0xFF6366F1);
 
   bool get _isEdit => widget.existing != null;
 
@@ -283,11 +287,10 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
 
   PreferredSizeWidget _appBar() {
     return PreferredSize(
-      preferredSize: const Size.fromHeight(64),
+      preferredSize: const Size.fromHeight(65),
       child: Container(
         decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(bottom: BorderSide(color: DT.slate200)),
+          gradient: DT.headerGradient,
           boxShadow: [
             BoxShadow(
                 color: Color(0x0D0F172A), blurRadius: 2, offset: Offset(0, 1)),
@@ -296,7 +299,7 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
         child: SafeArea(
           bottom: false,
           child: SizedBox(
-            height: 64,
+            height: 65,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6),
               child: Row(
@@ -305,7 +308,7 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
                     tooltip: 'Back',
                     onPressed: () => Navigator.maybePop(context),
                     icon: const Icon(Icons.arrow_back_rounded,
-                        color: DT.onyx900, size: 24),
+                        color: Colors.white, size: 24),
                   ),
                   const SizedBox(width: 2),
                   Expanded(
@@ -318,7 +321,7 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
                           style: DT.text(
                               size: 18,
                               weight: FontWeight.w700,
-                              color: DT.onyx900,
+                              color: Colors.white,
                               letterSpacing: -0.3),
                         ),
                         Text(
@@ -328,7 +331,7 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
                           style: DT.text(
                               size: 12,
                               weight: FontWeight.w500,
-                              color: DT.slate500),
+                              color: const Color(0xFFE0E7FF)),
                         ),
                       ],
                     ),
@@ -541,37 +544,44 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
           child: SizedBox(
             height: 52,
-            child: ElevatedButton(
-              onPressed: _saving ? null : _save,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _brand,
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: _brand.withValues(alpha: 0.55),
-                elevation: 2,
-                shadowColor: const Color(0x401A68FA),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(DT.rMd)),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: DT.ctaGradient,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
               ),
-              child: _saving
-                  ? const SizedBox(
-                height: 22,
-                width: 22,
-                child: CircularProgressIndicator(
-                    color: Colors.white, strokeWidth: 2.5),
-              )
-                  : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.check_rounded, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    _isEdit ? 'Save changes' : 'Add unit',
-                    style: DT.text(
-                        size: 15,
-                        weight: FontWeight.w700,
-                        color: Colors.white),
-                  ),
-                ],
+              child: ElevatedButton(
+                onPressed: _saving ? null : _save,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: Colors.transparent,
+                  elevation: 0,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(DT.rMd)),
+                ),
+                child: _saving
+                    ? const SizedBox(
+                  height: 22,
+                  width: 22,
+                  child: CircularProgressIndicator(
+                      color: Colors.white, strokeWidth: 2.5),
+                )
+                    : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.check_rounded, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      _isEdit ? 'Save changes' : 'Add unit',
+                      style: DT.text(
+                          size: 15,
+                          weight: FontWeight.w700,
+                          color: Colors.white),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

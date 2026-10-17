@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import '../constants/design_tokens.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/property_model.dart';
 import '../services/real_estate_service.dart';
 import 'property_enquiry_screen.dart';
+import 'property_schedule_visit_sheet.dart';
+import 'property_video_screen.dart';
 
 // =============================================================================
 // PREMIUM design — immersive gallery, dark price card, configuration selector,
@@ -14,9 +17,9 @@ import 'property_enquiry_screen.dart';
 // =============================================================================
 
 class _C {
-  static const navy = Color(0xFF1E255E);
-  static const navyDeep = Color(0xFF141A45);
-  static const navyMid = Color(0xFF2B3480);
+  static const navy = Color(0xFF312E81);
+  static const navyDeep = Color(0xFF1E1B4B);
+  static const navyMid = Color(0xFF4338CA);
   static const gold = Color(0xFFE5B84B);
   static const goldSoft = Color(0xFFFFF4D6);
   static const surface = Color(0xFFF6F7FB);
@@ -27,11 +30,11 @@ class _C {
   static const slate500 = Color(0xFF64748B);
   static const slate700 = Color(0xFF334155);
   static const slate900 = Color(0xFF0F172A);
-  static const blue200 = Color(0xFFBFDBFE);
-  static const emerald = Color(0xFF059669);
+  static const blue200 = Color(0xFFC7D2FE);
+  static const emerald = Color(0xFF10B981);
   static const emeraldBg = Color(0xFFECFDF5);
   static const amber = Color(0xFFD97706);
-  static const red = Color(0xFFDC2626);
+  static const red = Color(0xFFEF4444);
   static const redBg = Color(0xFFFEF2F2);
 }
 
@@ -195,6 +198,46 @@ class _PremiumPropertyDetailScreenState
     );
   }
 
+  List<PropertyVideo> get _videos => _property == null
+      ? const []
+      : _property!.videos.where((v) => v.videoS3Key.trim().isNotEmpty).toList();
+
+  void _openVideos([int index = 0]) {
+    final p = _property;
+    if (p == null || _videos.isEmpty) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PropertyVideoScreen(
+          videos: _videos,
+          title: p.title.isNotEmpty ? p.title : '${p.area}, ${p.city}',
+          subtitle: '${p.area}, ${p.city}',
+          initialIndex: index,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _scheduleVisit() async {
+    final p = _property;
+    if (p == null) return;
+    final sent = await showScheduleVisitSheet(
+      context,
+      propertyId: p.id,
+      propertyTitle: p.title.isNotEmpty ? p.title : '${p.area}, ${p.city}',
+      location: '${p.area}, ${p.city}',
+    );
+    if (!sent || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Site visit requested. Our team will confirm shortly.'),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: _C.navy,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
   void _copyToClipboard(String text, String message) {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
@@ -265,7 +308,8 @@ class _PremiumPropertyDetailScreenState
 
   AppBar _simpleAppBar() {
     return AppBar(
-      backgroundColor: _C.navy,
+      backgroundColor: Colors.transparent,
+      flexibleSpace: Container(decoration: const BoxDecoration(gradient: DT.headerGradient)),
       foregroundColor: Colors.white,
       elevation: 0,
       title: Text(widget.previewName ?? 'Property Detail',
@@ -303,7 +347,37 @@ class _PremiumPropertyDetailScreenState
                     style: _t(19, FontWeight.w800, _C.navy, ls: -0.4)),
               ],
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
+            Tooltip(
+              message: 'Schedule a site visit',
+              child: Material(
+                color: const Color(0xFFFFF7ED),
+                borderRadius: BorderRadius.circular(16),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: _scheduleVisit,
+                  child: Container(
+                    width: 56,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFFED7AA)),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.event_available_rounded,
+                            size: 20, color: Color(0xFFF97316)),
+                        Text('Visit',
+                            style: _t(10, FontWeight.w700,
+                                const Color(0xFF9A3412))),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
             Expanded(
               child: SizedBox(
                 height: 52,
@@ -317,7 +391,7 @@ class _PremiumPropertyDetailScreenState
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: const [
                       BoxShadow(
-                          color: Color(0x401E255E),
+                          color: Color(0x40312E81),
                           blurRadius: 12,
                           offset: Offset(0, 6)),
                     ],
@@ -334,6 +408,8 @@ class _PremiumPropertyDetailScreenState
                     ),
                     icon: const Icon(Icons.mail_outline, size: 20),
                     label: Text('Enquire Now',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: _t(15, FontWeight.w700, Colors.white)),
                   ),
                 ),
@@ -366,6 +442,15 @@ class _PremiumPropertyDetailScreenState
                 _buildPriceCard(),
                 const SizedBox(height: 16),
                 _buildHighlights(),
+                if (_videos.isNotEmpty) ...[
+                  const SizedBox(height: 28),
+                  _sectionTitle('Video Tour',
+                      'Walk through the property before you visit'),
+                  const SizedBox(height: 14),
+                  _buildVideos(),
+                ],
+                const SizedBox(height: 16),
+                _buildVisitBanner(),
                 if (p.description.isNotEmpty) ...[
                   const SizedBox(height: 28),
                   _buildAbout(),
@@ -582,6 +667,45 @@ class _PremiumPropertyDetailScreenState
           ),
         ),
 
+        // video tour pill (bottom-right, above the photo counter)
+        if (_videos.isNotEmpty)
+          Positioned(
+            right: 16,
+            bottom: images.isNotEmpty ? 80 : 44,
+            child: GestureDetector(
+              onTap: _openVideos,
+              child: Container(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: const [
+                    BoxShadow(
+                        color: Color(0x55000000),
+                        blurRadius: 8,
+                        offset: Offset(0, 3)),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.play_circle_fill_rounded,
+                        size: 15, color: Colors.white),
+                    const SizedBox(width: 5),
+                    Text(
+                        _videos.length == 1
+                            ? 'Watch video'
+                            : 'Watch ${_videos.length} videos',
+                        style: _t(11.5, FontWeight.w700, Colors.white)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
         // photo counter (bottom-right)
         if (images.isNotEmpty)
           Positioned(
@@ -642,7 +766,7 @@ class _PremiumPropertyDetailScreenState
           spacing: 6,
           runSpacing: 6,
           children: [
-            _pill(p.formattedPropertyType, _C.navy, const Color(0x141E255E)),
+            _pill(p.formattedPropertyType, _C.navy, const Color(0x14312E81)),
             _pill(p.formattedTransactionType, _C.amber, const Color(0xFFFFF4E0)),
           ],
         ),
@@ -691,7 +815,7 @@ class _PremiumPropertyDetailScreenState
         borderRadius: BorderRadius.circular(22),
         boxShadow: const [
           BoxShadow(
-              color: Color(0x331E255E), blurRadius: 20, offset: Offset(0, 10)),
+              color: Color(0x33312E81), blurRadius: 20, offset: Offset(0, 10)),
         ],
       ),
       child: Stack(
@@ -842,7 +966,7 @@ class _PremiumPropertyDetailScreenState
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: const Color(0x141E255E),
+                      color: const Color(0x14312E81),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(h.icon, size: 17, color: _C.navy),
@@ -952,7 +1076,7 @@ class _PremiumPropertyDetailScreenState
                     boxShadow: selected
                         ? const [
                       BoxShadow(
-                          color: Color(0x331E255E),
+                          color: Color(0x33312E81),
                           blurRadius: 10,
                           offset: Offset(0, 4))
                     ]
@@ -1111,7 +1235,7 @@ class _PremiumPropertyDetailScreenState
                     width: 40,
                     height: 40,
                     decoration: const BoxDecoration(
-                      color: Color(0x141E255E),
+                      color: Color(0x14312E81),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(_amenityIcon(a.name),
@@ -1300,6 +1424,183 @@ class _PremiumPropertyDetailScreenState
   // ---------------------------------------------------------------------------
   // Shared bits
   // ---------------------------------------------------------------------------
+
+  // ---------------------------------------------------------------------------
+  // Video tour
+  // ---------------------------------------------------------------------------
+
+  Widget _buildVideos() {
+    final videos = _videos;
+    final cover = _property!.images.isNotEmpty
+        ? _property!.images.first.imageS3Key
+        : '';
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: () => _openVideos(0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (cover.isNotEmpty)
+                    Image.network(cover,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            Container(color: _C.navyDeep))
+                  else
+                    Container(color: _C.navyDeep),
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Color(0x401E1B4B), Color(0xCC1E1B4B)],
+                      ),
+                    ),
+                  ),
+                  Center(
+                    child: Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                        ),
+                        border: Border.all(
+                            color: const Color(0x66FFFFFF), width: 3),
+                        boxShadow: const [
+                          BoxShadow(
+                              color: Color(0x666366F1),
+                              blurRadius: 18,
+                              offset: Offset(0, 6)),
+                        ],
+                      ),
+                      child: const Icon(Icons.play_arrow_rounded,
+                          color: Colors.white, size: 38),
+                    ),
+                  ),
+                  Positioned(
+                    left: 14,
+                    right: 14,
+                    bottom: 12,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            videos.first.title.trim().isNotEmpty
+                                ? videos.first.title.trim()
+                                : 'Property walkthrough',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: _t(14, FontWeight.w700, Colors.white),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0x33FFFFFF),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                              videos.length == 1
+                                  ? '1 video'
+                                  : '${videos.length} videos',
+                              style: _t(10.5, FontWeight.w700, Colors.white)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (videos.length > 1) ...[
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 44,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: videos.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (_, i) => ActionChip(
+                onPressed: () => _openVideos(i),
+                avatar: const Icon(Icons.play_circle_outline_rounded,
+                    size: 16, color: _C.navy),
+                label: Text(
+                    videos[i].title.trim().isNotEmpty
+                        ? videos[i].title.trim()
+                        : 'Video ${i + 1}',
+                    style: _t(12, FontWeight.w700, _C.navy)),
+                backgroundColor: Colors.white,
+                side: const BorderSide(color: _C.slate200),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildVisitBanner() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFFED7AA)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.event_available_rounded,
+                color: Color(0xFFF97316), size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('See it in person',
+                    style: _t(14, FontWeight.w800, const Color(0xFF7C2D12))),
+                const SizedBox(height: 2),
+                Text('Pick a date & time — we will arrange your site visit.',
+                    style: _t(11.5, FontWeight.w500, const Color(0xFF9A3412))),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: _scheduleVisit,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF97316),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              minimumSize: const Size(0, 38),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            child: Text('Schedule',
+                style: _t(12.5, FontWeight.w700, Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _sectionTitle(String title, String? subtitle) {
     return Column(

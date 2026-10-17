@@ -103,6 +103,19 @@ class CartItemModel {
     );
   }
 
+  CartItemModel copyWith({int? quantity}) => CartItemModel(
+    id: id,
+    productId: productId,
+    productName: productName,
+    productCode: productCode,
+    thumbnail: thumbnail,
+    unitPrice: unitPrice,
+    quantity: quantity ?? this.quantity,
+    codAvailable: codAvailable,
+  );
+
+  double get lineTotal => unitPrice * quantity;
+
   static double _parseDouble(dynamic value) {
     if (value == null) return 0.0;
     if (value is double) return value;
@@ -153,51 +166,6 @@ class GetCartListResponse {
     return {
       'status': status,
       'cart_items': cartItems.map((item) => item.toJson()).toList(),
-    };
-  }
-}
-
-// ============ Update Cart Quantity Request ============
-
-class UpdateCartQuantityRequest {
-  final int cartId;
-  final int quantity;
-
-  UpdateCartQuantityRequest({
-    required this.cartId,
-    required this.quantity,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'cart_id': cartId,
-      'quantity': quantity,
-    };
-  }
-}
-
-// ============ Update Cart Quantity Response ============
-
-class UpdateCartQuantityResponse {
-  final bool status;
-  final String message;
-
-  UpdateCartQuantityResponse({
-    required this.status,
-    required this.message,
-  });
-
-  factory UpdateCartQuantityResponse.fromJson(Map<String, dynamic> json) {
-    return UpdateCartQuantityResponse(
-      status: _parseStatus(json['status']),
-      message: json['message'] ?? json['msg'] ?? 'Quantity updated',
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'status': status,
-      'message': message,
     };
   }
 }

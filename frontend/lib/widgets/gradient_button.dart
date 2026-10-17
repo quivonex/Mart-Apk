@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../constants/design_tokens.dart';
 
 /// Primary full-width button.
-/// Same API as before. Primary = deep onyx, accent = amber.
+/// Same API as before. Primary = indigo -> violet -> orange, accent = orange.
 /// No longer depends on GlossyDecoration.
 class GradientButton extends StatelessWidget {
   final String text;
@@ -28,12 +28,12 @@ class GradientButton extends StatelessWidget {
         ? const LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
-      colors: [DT.amber600, DT.amber700],
+      colors: [Color(0xFFF97316), Color(0xFFFB923C)],
     )
         : const LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
-      colors: [DT.onyx800, DT.onyx900],
+      colors: [Color(0xFF6366F1), Color(0xFF8B5CF6), Color(0xFFF97316)],
     );
 
     final bool disabled = isLoading;

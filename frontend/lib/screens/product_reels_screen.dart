@@ -268,7 +268,7 @@ class _ReelPageState extends State<_ReelPage> {
                           label: Text('Cart',
                               style: DT.text(size: 13.5, weight: FontWeight.w700, color: Colors.white)),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1D6BF3),
+                            backgroundColor: const Color(0xFF6366F1),
                             foregroundColor: Colors.white,
                             elevation: 0,
                             minimumSize: const Size.fromHeight(44),

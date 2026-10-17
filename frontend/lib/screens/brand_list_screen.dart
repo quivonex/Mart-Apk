@@ -106,7 +106,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
       SnackBar(
         content: Text(res.displayMessage),
         backgroundColor:
-        res.isSuccess ? Colors.green : const Color(0xFFD32F2F),
+        res.isSuccess ? const Color(0xFF10B981) : Color(0xFFEF4444),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -118,19 +118,6 @@ class _BrandListScreenState extends State<BrandListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppConstants.surfaceColor,
-      appBar: AppBar(
-        backgroundColor: AppConstants.primary,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: Text(
-          'Brands',
-          style: GoogleFonts.inter(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
-        ),
-      ),
       body: _buildBody(),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openCreate,
@@ -227,7 +214,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
                 padding:
                 const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: (b.isActive ? Colors.green : Colors.red)
+                  color: (b.isActive ? const Color(0xFF10B981) : Color(0xFFEF4444))
                       .withOpacity(0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
@@ -236,7 +223,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: b.isActive ? Colors.green : Colors.red,
+                    color: b.isActive ? const Color(0xFF10B981) : Color(0xFFEF4444),
                   ),
                 ),
               ),
@@ -299,7 +286,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor:
-                    b.isActive ? AppConstants.error : Colors.green,
+                    b.isActive ? AppConstants.error : const Color(0xFF10B981),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
