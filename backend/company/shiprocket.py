@@ -57,6 +57,19 @@ def generate_pickup_location_name(company):
     return name[:36]
 
 
+def save_shiprocket_pickup_location(company, pickup_location):
+    """Store Shiprocket's pickup-location nickname on the company.
+
+    Shiprocket's order API expects ``pickup_location`` to be the pickup
+    location nickname (also called the pickup code in its panel), not the
+    complete street address. The full address remains in ``company.address``
+    and is sent only while registering the location with Shiprocket.
+    """
+    if company.pickup_location != pickup_location:
+        company.pickup_location = pickup_location
+        company.save(update_fields=["pickup_location"])
+
+
 def create_company_pickup_location(company):
 
     token = get_shiprocket_token()
@@ -113,6 +126,10 @@ def create_company_pickup_location(company):
         )
 
         if existing_code == pickup_location:
+
+            # Keep the local record aligned when an earlier payment attempt
+            # has already registered this Shiprocket pickup location.
+            save_shiprocket_pickup_location(company, pickup_location)
 
             return {
                 "success": True,
@@ -213,6 +230,10 @@ def create_company_pickup_location(company):
         )
 
     data = response.json()
+
+    # Persist the exact nickname Shiprocket requires in order payloads.
+    # Do not store the human-readable street address in this field.
+    save_shiprocket_pickup_location(company, pickup_location)
 
     return {
         "success": True,
