@@ -61,6 +61,10 @@ def create_company_pickup_location(company):
 
     token = get_shiprocket_token()
 
+    # Shiprocket uses this short unique value as the pickup-location
+    # nickname when an order is created.  The Company's address remains
+    # stored in `company.address`; `company.pickup_location` must contain
+    # this nickname so order creation refers to a registered Shiprocket address.
     pickup_location = generate_pickup_location_name(company)
 
     # ==================================================
@@ -113,6 +117,13 @@ def create_company_pickup_location(company):
         )
 
         if existing_code == pickup_location:
+
+            # A previously-created Shiprocket location can be reused.  Persist
+            # its nickname locally so new orders send the Shiprocket identifier,
+            # not the human-readable street address.
+            if company.pickup_location != pickup_location:
+                company.pickup_location = pickup_location
+                company.save(update_fields=["pickup_location"])
 
             return {
                 "success": True,
@@ -213,6 +224,12 @@ def create_company_pickup_location(company):
         )
 
     data = response.json()
+
+    # Store the Shiprocket pickup-location nickname only after Shiprocket has
+    # accepted it. ShiprocketCreateOrderAPIView uses this exact field when
+    # it creates an order.
+    company.pickup_location = pickup_location
+    company.save(update_fields=["pickup_location"])
 
     return {
         "success": True,
