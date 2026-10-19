@@ -63,6 +63,12 @@ import 'products_screen.dart' as products;
 import 'seller_profile_screen.dart';
 import 'unit_screens.dart';
 import 'terms_conditions_screen.dart';
+import '../utils/login_gate.dart';
+import 'customer_subscription_screen.dart';
+import 'my_enquiries_screen.dart';
+import 'my_properties_screen.dart';
+import 'my_remart_screen.dart';
+import 'nearby_search_screen.dart';
 
 /// Colours from the QNXMart mobile design (code.html).
 class _HC {
@@ -151,6 +157,10 @@ class _HomeScreenState extends State<HomeScreen> {
     DrawerRoutes.addBrand,
     DrawerRoutes.addUnit,
     DrawerRoutes.addProperty,
+    DrawerRoutes.myEnquiries,
+    DrawerRoutes.mySubscription,
+    DrawerRoutes.myProperties,
+    DrawerRoutes.remartMine,
     'company_list',
     'my_products',
   };
@@ -228,6 +238,18 @@ class _HomeScreenState extends State<HomeScreen> {
         await openRemartPosting(context);
       case DrawerRoutes.remartAll:
         _showMarketplace(Marketplace.remart);
+      case DrawerRoutes.remartMine:
+        _push(const MyRemartScreen());
+
+    // ── My activity ──
+      case DrawerRoutes.myEnquiries:
+        _push(const MyEnquiriesScreen());
+      case DrawerRoutes.mySubscription:
+        await openCustomerSubscription(context);
+      case DrawerRoutes.myProperties:
+        _push(const MyPropertiesScreen());
+      case DrawerRoutes.nearbySearch:
+        _push(const NearbySearchScreen());
 
     // ── Help & Support ──
       case DrawerRoutes.forBuying:
@@ -274,7 +296,7 @@ class _HomeScreenState extends State<HomeScreen> {
     1 => const products.ProductsScreen(),
     2 => const CartScreen(),
     3 => const OrdersScreen(),
-    4 => const AccountScreen(),
+    4 => AccountScreen(onNavigate: _navigate),
     _ => const SizedBox.shrink(),
   };
 
@@ -2559,6 +2581,7 @@ class HomeContentState extends State<HomeContent> {
     required String label,
     required VoidCallback onTap,
     bool primary = false,
+    bool compact = false,
   }) {
     return Material(
       color: primary ? _HC.blue : Colors.white,
@@ -2570,14 +2593,15 @@ class HomeContentState extends State<HomeContent> {
         customBorder: const StadiumBorder(),
         onTap: onTap,
         child: SizedBox(
-          height: 34,
+          height: compact ? 28 : 34,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 15, color: primary ? Colors.white : DT.onyx900),
-              const SizedBox(width: 5),
+              Icon(icon, size: compact ? 13 : 15, color: primary ? Colors.white : DT.onyx900),
+              SizedBox(width: compact ? 3 : 5),
               Text(label,
-                  style: DT.text(size: 12.5, weight: FontWeight.w800, color: primary ? Colors.white : DT.onyx900)),
+                  style: DT.text(
+                      size: compact ? 11 : 12.5, weight: FontWeight.w800, color: primary ? Colors.white : DT.onyx900)),
             ],
           ),
         ),
@@ -2869,7 +2893,7 @@ class HomeContentState extends State<HomeContent> {
     final filtersOn = _activePropFilters.activeCount;
     Widget body;
     if (_propsLoading && _props.isEmpty) {
-      body = _cardGrid(itemCount: 4, extent: 420, builder: (_) => _skeletonCard());
+      body = _cardGrid(itemCount: 4, extent: 330, builder: (_) => _skeletonCard());
     } else if (_propsError != null && _props.isEmpty) {
       body = _messageCard(Icons.cloud_off_rounded, 'Could not load properties', _propsError!,
           action: 'Retry', onAction: _loadProperties);
@@ -2882,7 +2906,7 @@ class HomeContentState extends State<HomeContent> {
         onAction: _clearPropertyFilters,
       );
     } else {
-      body = _cardGrid(itemCount: list.length, extent: 420, builder: (i) => _propertyCard(list[i]));
+      body = _cardGrid(itemCount: list.length, extent: 330, builder: (i) => _propertyCard(list[i]));
     }
 
     return Column(
@@ -2989,7 +3013,7 @@ class HomeContentState extends State<HomeContent> {
     );
   }
 
-  Widget _frostedPanel(Widget child) => ClipRRect(
+  Widget _frostedPanel(Widget child, {double pad = 12}) => ClipRRect(
     borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
     child: BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
@@ -2999,7 +3023,7 @@ class HomeContentState extends State<HomeContent> {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
           border: const Border(top: BorderSide(color: Color(0x99FFFFFF))),
         ),
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+        padding: EdgeInsets.all(pad),
         child: child,
       ),
     ),
@@ -3039,39 +3063,42 @@ class HomeContentState extends State<HomeContent> {
             style: DT.text(size: 10.5, weight: FontWeight.w700, color: fg)),
       );
 
-  Widget _pinLine(String text) => Row(
+  Widget _pinLine(String text, {bool compact = false}) => Row(
     children: [
-      const Icon(Icons.location_on_rounded, size: 15, color: Color(0xFF0EA5E9)),
-      const SizedBox(width: 4),
+      Icon(Icons.location_on_rounded, size: compact ? 12 : 15, color: const Color(0xFF0EA5E9)),
+      SizedBox(width: compact ? 2 : 4),
       Expanded(
         child: Text(text,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: DT.text(size: 13, weight: FontWeight.w700, color: DT.onyx900)),
+            style: DT.text(size: compact ? 10.5 : 13, weight: FontWeight.w700, color: DT.onyx900)),
       ),
     ],
   );
 
-  Widget _detailsEnquiryRow({required VoidCallback onDetails, required VoidCallback onEnquiry}) => Row(
+  Widget _detailsEnquiryRow({required VoidCallback onDetails, required VoidCallback onEnquiry, bool compact = false}) => Row(
     children: [
-      Expanded(child: _cardButton(icon: Icons.visibility_outlined, label: 'Details', onTap: onDetails)),
-      const SizedBox(width: 6),
+      Expanded(
+          child: _cardButton(
+              icon: Icons.visibility_outlined, label: 'Details', compact: compact, onTap: onDetails)),
+      SizedBox(width: compact ? 4 : 6),
       Expanded(
         child: _cardButton(
-            icon: Icons.chat_bubble_outline_rounded, label: 'Enquiry', primary: true, onTap: onEnquiry),
+            icon: Icons.chat_bubble_outline_rounded,
+            label: 'Enquiry',
+            primary: true,
+            compact: compact,
+            onTap: onEnquiry),
       ),
     ],
   );
 
   Widget _propertyCard(Property p) {
-    final subtitle = [p.typeLabel, p.transactionLabel, if (p.area.isNotEmpty) p.area]
-        .where((s) => s.isNotEmpty)
-        .join(' • ');
     final location = [p.area, p.city].where((s) => s.trim().isNotEmpty).join(', ');
     return _photoCardShell(
       carousel: AutoImageCarousel(
         images: p.imageUrls,
-        bottomInset: 205,
+        bottomInset: 138,
         placeholderIcon: Icons.apartment_rounded,
         onTap: () => _openPropertyDetails(p),
       ),
@@ -3085,41 +3112,53 @@ class HomeContentState extends State<HomeContent> {
                 child: Text(p.typeLabel.toUpperCase(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: DT.text(size: 9.5, weight: FontWeight.w800, color: DT.onyx800)),
+                    style: DT.text(size: 8.5, weight: FontWeight.w800, color: DT.onyx800, letterSpacing: 0.3)),
               ),
-              if (p.transactionLabel.isNotEmpty) _outlineChip(p.transactionLabel),
+              if (p.transactionLabel.isNotEmpty) _miniChip(p.transactionLabel),
             ],
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 3),
           Text(p.displayTitle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: DT.text(size: 15.5, weight: FontWeight.w800, color: DT.onyx900)),
-          Text(subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: DT.text(size: 12.5, color: DT.onyx600)),
-          const SizedBox(height: 6),
-          _pinLine(location.isEmpty ? '—' : location),
+              style: DT.text(size: 12.5, weight: FontWeight.w800, color: DT.onyx900, height: 1.25)),
+          const SizedBox(height: 3),
+          _pinLine(location.isEmpty ? '—' : location, compact: true),
           const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
+            padding: EdgeInsets.symmetric(vertical: 5),
             child: Divider(height: 1, color: Color(0x33000000)),
           ),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
             child: Text(p.formattedMinPrice,
-                style: DT.text(size: 19, weight: FontWeight.w900, color: DT.onyx900)),
+                style: DT.text(size: 14.5, weight: FontWeight.w900, color: DT.onyx900)),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           _detailsEnquiryRow(
+            compact: true,
             onDetails: () => _openPropertyDetails(p),
             onEnquiry: () => _openPropertyEnquiry(p),
           ),
         ],
-      )),
+      ), pad: 9),
     );
   }
+
+  Widget _miniChip(String text) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(999),
+      border: Border.all(color: DT.slate300),
+    ),
+    child: Text(text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: DT.text(size: 9, weight: FontWeight.w700, color: DT.onyx700)),
+  );
+
+
 
   void _openPropertyDetails(Property p) {
     if (p.slug.isEmpty) return;
@@ -3133,6 +3172,8 @@ class HomeContentState extends State<HomeContent> {
 
   Future<void> _openPropertyEnquiry(Property p) async {
     if (p.slug.isEmpty) return;
+    if (!await ensureLoggedIn(context, reason: 'send an enquiry')) return;
+    if (!mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,

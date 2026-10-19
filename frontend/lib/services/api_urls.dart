@@ -1,8 +1,8 @@
 class ApiUrls {
   // Base URL - Change this to your actual server IP
 
-  //static const String baseUrl = 'http://192.168.31.248:16000';
-   static const String baseUrl = "https://api.qnxmartb2b.com";
+  static const String baseUrl = 'http://192.168.31.249:16000';
+  // static const String baseUrl = "https://api.qnxmartb2b.com";
 
   // Auth Endpoints
   static const String login = '/accounts/login/';
@@ -123,6 +123,13 @@ class ApiUrls {
   static const String createMarketingPartnerEnquiry = '/enquiry/marketing-partner/create/';
 // ✅ Admin uploaded images (home carousel)
   static const String adminImageList = '/admin_profile/upload_image_list/';
+
+
+
+
+
+
+
 
   // Full URL getters
   static String get loginUrl => '$baseUrl$login';

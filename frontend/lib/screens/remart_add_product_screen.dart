@@ -12,6 +12,7 @@
 //
 // Save -> olx/listings/create/ (draft) -> Razorpay -> olx/payment/verify/ -> listing is live.
 // If payment is cancelled the item stays saved; "Pay now" retries without creating it again.
+// First listing: the backend makes it live for free (no plan / payment needed).
 // Pops with `true` when an item was posted.
 
 import 'dart:async';
@@ -98,6 +99,19 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
     super.initState();
     _loadCategories();
     _prefillCity();
+    _checkFirstFree();
+  }
+
+  /// First ReMart listing is free (backend BazaarSettings.first_listing_free).
+  bool _firstFree = false;
+
+  Future<void> _checkFirstFree() async {
+    final first = await RemartPostService.isFirstListing();
+    if (!mounted || first != true) return;
+    setState(() {
+      _firstFree = true;
+      _planId = null;
+    });
   }
 
   Future<void> _prefillCity() async {
@@ -160,7 +174,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
       _loadingPlans = false;
       _plans = plans.data ?? [];
       final priced = _pricedPlans;
-      _planId = priced.isEmpty ? null : priced.first.id;
+      _planId = _firstFree || priced.isEmpty ? null : priced.first.id;
     });
   }
 
@@ -348,7 +362,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
       final v = _attrCtrls[a.key]?.text.trim() ?? _attrValues[a.key];
       if (v == null || (v is String && v.isEmpty)) return '${a.name} is required';
     }
-    if (_pricedPlans.isNotEmpty && _plan == null) return 'Choose a listing plan';
+    if (!_firstFree && _pricedPlans.isNotEmpty && _plan == null) return 'Choose a listing plan';
     return null;
   }
 
@@ -410,6 +424,29 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
       return;
     }
     _createdListingId = r.data;
+
+    // Free first listing → already live, skip the payment.
+    final info = RemartPostService.lastCreated;
+    if (info != null && info.id == r.data && info.isLive) {
+      await _done(
+        title: 'Your item is live!',
+        message: info.freePeriodDays > 0
+            ? '${_titleCtrl.text.trim()} is on QNX ReMart free for ${info.freePeriodDays} days.'
+            : (info.message.isNotEmpty ? info.message : '${_titleCtrl.text.trim()} is now on QNX ReMart.'),
+      );
+      return;
+    }
+    if (_firstFree && _plan == null && _pricedPlans.isNotEmpty) {
+      // Expected a free listing but the backend wants a plan – let the user pick one and pay.
+      setState(() {
+        _firstFree = false;
+        _planId = _pricedPlans.first.id;
+      });
+      await _paymentPending(info?.message.isNotEmpty == true
+          ? info!.message
+          : 'This item needs a listing plan to go live.');
+      return;
+    }
 
     if (_plan == null) {
       await _done(
@@ -733,7 +770,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
       ('Photos', _photos.isNotEmpty),
       ('Category', _categoryId != null),
       ('Details', _titleCtrl.text.trim().length >= 3 && _priceCtrl.text.trim().isNotEmpty),
-      ('Plan', _pricedPlans.isEmpty ? _categoryId != null : _plan != null),
+      ('Plan', _firstFree || (_pricedPlans.isEmpty ? _categoryId != null : _plan != null)),
     ];
     final doneCount = steps.where((s) => s.$2).length;
     return Container(
@@ -1507,7 +1544,34 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
   // ---------------------------------------------------------------- plan
   Widget _planSection() {
     Widget body;
-    if (_categoryId == null) {
+    if (_firstFree) {
+      body = Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: DT.emerald50,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFA7F3D0)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.celebration_rounded, color: _green, size: 26),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Your first listing is FREE',
+                      style: DT.text(size: 14, weight: FontWeight.w800, color: DT.emerald700)),
+                  const SizedBox(height: 2),
+                  Text('No plan or payment needed – it goes live as soon as you post.',
+                      style: DT.text(size: 12, color: DT.emerald700, height: 1.4)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    } else if (_categoryId == null) {
       body = const _Notice('Choose a category to see listing plans.');
     } else if (_loadingPlans) {
       body = const _Notice('Loading plans…', loading: true);
@@ -1588,7 +1652,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
     final locked = _createdListingId != null;
     final label = locked
         ? 'Pay ${_rupees(plan?.price ?? 0)} & go live'
-        : (plan != null ? 'Post & pay ${_rupees(plan.price ?? 0)}' : 'Post item');
+        : (plan != null ? 'Post & pay ${_rupees(plan.price ?? 0)}' : (_firstFree ? 'Post item for free' : 'Post item'));
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,

@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/property_model.dart';
 import '../services/real_estate_service.dart';
 import 'property_enquiry_screen.dart';
+import '../utils/login_gate.dart';
 import 'property_schedule_visit_sheet.dart';
 import 'property_video_screen.dart';
 
@@ -189,7 +190,9 @@ class _PremiumPropertyDetailScreenState
     });
   }
 
-  void _openEnquiry() {
+  Future<void> _openEnquiry() async {
+    if (!await ensureLoggedIn(context, reason: 'send an enquiry')) return;
+    if (!mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -438,6 +441,8 @@ class _PremiumPropertyDetailScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildTitleBlock(),
+                const SizedBox(height: 14),
+                _buildQuickActions(),
                 const SizedBox(height: 16),
                 _buildPriceCard(),
                 const SizedBox(height: 16),
@@ -449,8 +454,6 @@ class _PremiumPropertyDetailScreenState
                   const SizedBox(height: 14),
                   _buildVideos(),
                 ],
-                const SizedBox(height: 16),
-                _buildVisitBanner(),
                 if (p.description.isNotEmpty) ...[
                   const SizedBox(height: 28),
                   _buildAbout(),
@@ -1549,56 +1552,98 @@ class _PremiumPropertyDetailScreenState
     );
   }
 
-  Widget _buildVisitBanner() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF7ED),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFFED7AA)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+  /// Watch Video + Schedule Visit, right under the title.
+  Widget _buildQuickActions() {
+    final hasVideo = _videos.isNotEmpty;
+    Widget action({
+      required IconData icon,
+      required String title,
+      required String subtitle,
+      required Color fg,
+      required Color bg,
+      required Color border,
+      required VoidCallback onTap,
+    }) {
+      return Expanded(
+        child: Material(
+          color: bg,
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: onTap,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: border),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(11)),
+                    child: Icon(icon, color: fg, size: 22),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: _t(13.5, FontWeight.w800, _C.slate900)),
+                        Text(subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: _t(11, FontWeight.w600, _C.slate500)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: const Icon(Icons.event_available_rounded,
-                color: Color(0xFFF97316), size: 24),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('See it in person',
-                    style: _t(14, FontWeight.w800, const Color(0xFF7C2D12))),
-                const SizedBox(height: 2),
-                Text('Pick a date & time — we will arrange your site visit.',
-                    style: _t(11.5, FontWeight.w500, const Color(0xFF9A3412))),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          ElevatedButton(
-            onPressed: _scheduleVisit,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF97316),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              minimumSize: const Size(0, 38),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-            child: Text('Schedule',
-                style: _t(12.5, FontWeight.w700, Colors.white)),
-          ),
-        ],
-      ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        action(
+          icon: Icons.play_circle_fill_rounded,
+          title: 'Watch Video',
+          subtitle: hasVideo ? (_videos.length == 1 ? 'Video tour' : '${_videos.length} videos') : 'Not available',
+          fg: const Color(0xFF6366F1),
+          bg: const Color(0xFFEEF2FF),
+          border: const Color(0xFFC7D2FE),
+          onTap: () {
+            if (hasVideo) {
+              _openVideos();
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('No video tour has been uploaded for this property yet.'),
+                  behavior: SnackBarBehavior.floating,
+                  backgroundColor: _C.navy,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              );
+            }
+          },
+        ),
+        const SizedBox(width: 10),
+        action(
+          icon: Icons.event_available_rounded,
+          title: 'Schedule Visit',
+          subtitle: 'Pick date & time',
+          fg: const Color(0xFFF97316),
+          bg: const Color(0xFFFFF7ED),
+          border: const Color(0xFFFED7AA),
+          onTap: _scheduleVisit,
+        ),
+      ],
     );
   }
 

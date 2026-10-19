@@ -4,12 +4,13 @@
 //
 //   [blue header]  👤 <user>                                       ✕
 //   Home
-//   My Profile · Seller Profile
+//   🔍 Nearby Search  (NEW)
+//   My Profile · Seller Profile · My Enquiries · My Subscription
 //   Trending & Quick Links : All Products · Cart (n)
 //   Sell & Management      : Add Company · Add Product · Add Branch · Add Category
 //                            Add SubCategory · Add Brand · Add Unit
-//   Property               : Add Property · All Properties
-//   QNX ReMart             : Add Product · All Products
+//   Property               : Add Property · All Properties · My Properties
+//   QNX ReMart             : Add Product · All Products · My Items
 //   Help & Support         : For Buying · For Selling · FAQ · About Us · Contact Us
 //   Logout (at the very bottom)
 //   ✉ qnxmartb2b@gmail.com
@@ -43,6 +44,11 @@ class DrawerRoutes {
   static const faq = 'help_faq';
   static const aboutUs = 'help_about';
   static const contactUs = 'help_contact';
+  static const myEnquiries = 'my_enquiries';
+  static const mySubscription = 'my_subscription';
+  static const myProperties = 'my_properties';
+  static const remartMine = 'remart_mine';
+  static const nearbySearch = 'nearby_search';
 }
 
 class HomeDrawerData {
@@ -101,6 +107,7 @@ class HomeDrawer extends StatelessWidget {
   static const _iconFaq = Color(0xFF6366F1); // indigo
   static const _iconAbout = Color(0xFF6366F1); // blue
   static const _iconContact = Color(0xFFEF4444); // red
+  static const _iconNearby = Color(0xFFF97316); // orange
 
   @override
   Widget build(BuildContext context) {
@@ -124,11 +131,18 @@ class HomeDrawer extends StatelessWidget {
                 // ── Home ───────────────────────────────────────
                 _item(Icons.home_rounded, 'Home', () => go(DrawerRoutes.home),
                     bold: true, color: _iconHome),
+                // ── Nearby Search (Google Places) ──────────────
+                _item(Icons.travel_explore_rounded, 'Nearby Search', () => go(DrawerRoutes.nearbySearch),
+                    color: _iconNearby, badge: 'NEW'),
                 const Divider(height: 1, thickness: 1, indent: 18, endIndent: 18, color: _divider),
                 // ── Account ────────────────────────────────────
                 _item(Icons.person_rounded, 'My Profile', () => go(DrawerRoutes.myProfile),
                     color: _iconProfile),
                 _item(Icons.badge_rounded, 'Seller Profile', () => go(DrawerRoutes.sellerProfile),
+                    color: _iconSeller),
+                _item(Icons.forum_rounded, 'My Enquiries', () => go(DrawerRoutes.myEnquiries),
+                    color: _iconProfile),
+                _item(Icons.workspace_premium_rounded, 'My Subscription', () => go(DrawerRoutes.mySubscription),
                     color: _iconSeller),
 
                 _section('Trending & Quick Links'),
@@ -158,12 +172,16 @@ class HomeDrawer extends StatelessWidget {
                     color: _iconProperty),
                 _item(Icons.apps_outlined, 'All Properties', () => go(DrawerRoutes.allProperties),
                     color: _iconAllProperties),
+                _item(Icons.home_work_outlined, 'My Properties', () => go(DrawerRoutes.myProperties),
+                    color: _iconProperty),
 
                 _section('QNX ReMart'),
                 _item(Icons.add_box_outlined, 'Add Product', () => go(DrawerRoutes.remartAdd),
                     color: _iconRemartAdd),
                 _item(Icons.apps_outlined, 'All Products', () => go(DrawerRoutes.remartAll),
                     color: _iconRemartAll),
+                _item(Icons.inventory_outlined, 'My Items', () => go(DrawerRoutes.remartMine),
+                    color: _iconRemartAdd),
 
                 _section('Help & Support'),
                 _item(Icons.shopping_cart_checkout_rounded, 'For Buying',
@@ -267,7 +285,7 @@ class HomeDrawer extends StatelessWidget {
   );
 
   Widget _item(IconData icon, String label, VoidCallback onTap,
-      {bool bold = false, Color? color}) {
+      {bool bold = false, Color? color, String? badge}) {
     final iconColor = color ?? _iconHome;
     final textColor = _text;
     return InkWell(
@@ -285,6 +303,13 @@ class HomeDrawer extends StatelessWidget {
                       weight: bold ? FontWeight.w700 : FontWeight.w400,
                       color: textColor)),
             ),
+            if (badge != null)
+              Container(
+                margin: const EdgeInsets.only(right: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(color: iconColor, borderRadius: BorderRadius.circular(20)),
+                child: Text(badge, style: DT.text(size: 10, weight: FontWeight.w800, color: Colors.white)),
+              ),
             Icon(Icons.chevron_right_rounded, color: const Color(0xFF6C757D), size: 22),
           ],
         ),

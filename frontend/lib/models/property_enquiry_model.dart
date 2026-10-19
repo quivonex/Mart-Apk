@@ -68,7 +68,19 @@ class PropertyEnquiryResponse {
   final String? detail;              // DRF auth / 404 / 405 errors
   final int? statusCode;
 
+  /// Backend: website (user-posted) properties need an active customer
+  /// subscription → 403 {subscription_required: true}.
+  final bool subscriptionRequired;
+
+  /// Backend: 403 "Your enquiry limit has been exhausted."
+  final bool limitExhausted;
+
+  /// True when the user must buy / renew a subscription to continue.
+  bool get needsSubscription => subscriptionRequired || limitExhausted;
+
   PropertyEnquiryResponse({
+    this.subscriptionRequired = false,
+    this.limitExhausted = false,
     this.success,
     this.status,
     this.message,
@@ -114,6 +126,10 @@ class PropertyEnquiryResponse {
       error: json['error']?.toString(),
       detail: json['detail']?.toString(),
       statusCode: statusCode,
+      subscriptionRequired: json['subscription_required'] == true,
+      limitExhausted: statusCode == 403 &&
+          (json.containsKey('enquiry_limit') ||
+              '${json['message'] ?? ''}'.toLowerCase().contains('limit')),
     );
   }
 

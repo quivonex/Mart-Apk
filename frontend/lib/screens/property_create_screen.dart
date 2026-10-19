@@ -154,6 +154,8 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
   static const _maxPhotos = 10;
   static const _maxDocs = 10;
   static const _maxDocBytes = 10 * 1024 * 1024;
+  static const _maxVideos = 3;
+  static const _maxVideoBytes = 100 * 1024 * 1024;
 
   static const _types = <(String, String, String)>[
     ('flat', 'Flat / Apt', '🏢'),
@@ -217,6 +219,8 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
   final List<XFile> _photos = [];
   final List<Uint8List> _photoBytes = [];
   final List<PropertyDocumentUpload> _docs = [];
+  final List<XFile> _videos = [];
+  final List<int> _videoSizes = [];
 
   bool _submitAttempted = false;
   bool _saving = false;
@@ -345,6 +349,144 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
     } catch (e) {
       _snack('Could not pick photos: $e', error: true);
     }
+  }
+
+  // ---------------------------------------------------------------------
+  // VIDEOS  (camera or gallery, bytes based → works on web too)
+  // ---------------------------------------------------------------------
+  Future<ImageSource?> _askVideoSource() {
+    return showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: _PC.slate200,
+                      borderRadius: BorderRadius.circular(4)),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text('Add property video',
+                  style: DT.text(size: 16, weight: FontWeight.w800)),
+              const SizedBox(height: 2),
+              Text('Walkthrough, drone shot or sample flat tour',
+                  style: DT.text(size: 12, color: _PC.slate500)),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: _videoSourceTile(ctx, Icons.videocam_rounded,
+                        'Record video', ImageSource.camera),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _videoSourceTile(ctx, Icons.video_library_rounded,
+                        'From gallery', ImageSource.gallery),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _videoSourceTile(
+      BuildContext ctx, IconData icon, String label, ImageSource src) {
+    return Material(
+      color: _PC.blue50,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => Navigator.pop(ctx, src),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: _PC.blue200),
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: const BoxDecoration(
+                    gradient: DT.headerGradient, shape: BoxShape.circle),
+                child: Icon(icon, color: Colors.white, size: 22),
+              ),
+              const SizedBox(height: 8),
+              Text(label,
+                  style: DT.text(
+                      size: 12.5,
+                      weight: FontWeight.w700,
+                      color: _PC.slate800)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickVideo() async {
+    if (_videos.length >= _maxVideos) {
+      _snack('You can add up to $_maxVideos videos.', error: true);
+      return;
+    }
+    final src = await _askVideoSource();
+    if (src == null) return;
+    try {
+      final v = await _picker.pickVideo(
+          source: src, maxDuration: const Duration(minutes: 5));
+      if (v == null) return;
+      final size = await v.length();
+      if (size > _maxVideoBytes) {
+        _snack('Video is ${_fileSize(size)}. Max allowed is 100 MB.',
+            error: true);
+        return;
+      }
+      if (!mounted) return;
+      setState(() {
+        _videos.add(v);
+        _videoSizes.add(size);
+      });
+    } catch (e) {
+      _snack('Could not pick video: $e', error: true);
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // ADD AMENITY (small form → real_estate/amenity/create/)
+  // ---------------------------------------------------------------------
+  Future<void> _openAddAmenity() async {
+    final created = await showModalBottomSheet<Amenity>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => _AmenitySheet(existing: _amenities),
+    );
+    if (created == null || !mounted) return;
+    setState(() {
+      if (!_amenities.any((a) => a.id == created.id)) {
+        _amenities = [..._amenities, created]
+          ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      }
+      _selectedAmenities.add(created.id);
+    });
+    _snack('"${created.name}" added and selected');
   }
 
   Future<void> _pickDocuments() async {
@@ -597,6 +739,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
     final r = await PropertyCreateService.createProperty(
       fields: _buildFields(),
       images: _photos,
+      videos: _videos,
       documents: _docs,
     );
     if (!mounted) return;
@@ -673,6 +816,8 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                 _photos.clear();
                 _photoBytes.clear();
                 _docs.clear();
+                _videos.clear();
+                _videoSizes.clear();
                 _selectedAmenities.clear();
                 _type = 'flat';
                 _transaction = 'sale';
@@ -1977,10 +2122,33 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
     return _card(
       title: 'Amenities & Features',
       icon: Icons.auto_awesome_rounded,
+      trailing: _addSmallButton('Add Amenity', _openAddAmenity),
       children: [
-        Text(
-          'Select available conveniences to boost listing visibility',
-          style: DT.text(size: 11.5, color: _PC.slate500),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Select available conveniences to boost listing visibility',
+                style: DT.text(size: 11.5, color: _PC.slate500),
+              ),
+            ),
+            if (_selectedAmenities.isNotEmpty)
+              Container(
+                margin: const EdgeInsets.only(left: 8),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: _PC.emerald50,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: _PC.emerald200),
+                ),
+                child: Text('${_selectedAmenities.length} selected',
+                    style: DT.text(
+                        size: 10.5,
+                        weight: FontWeight.w700,
+                        color: _PC.emerald700)),
+              ),
+          ],
         ),
         const SizedBox(height: 12),
         if (_loadingAmenities)
@@ -1991,7 +2159,11 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                     color: _PC.blue600, strokeWidth: 2),
               ))
         else if (_amenities.isEmpty)
-          _emptyPlaceholder('No amenities available')
+          GestureDetector(
+            onTap: _openAddAmenity,
+            child: _emptyPlaceholder(
+                'No amenities yet — tap "Add Amenity" to create one'),
+          )
         else
           LayoutBuilder(
             builder: (context, c) {
@@ -2160,6 +2332,8 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           ),
         ],
         const SizedBox(height: 14),
+        _videosBlock(),
+        const SizedBox(height: 14),
         GestureDetector(
           onTap: _pickDocuments,
           child: Container(
@@ -2216,6 +2390,136 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           ],
         ],
       ],
+    );
+  }
+
+  Widget _videosBlock() {
+    final full = _videos.length >= _maxVideos;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GestureDetector(
+          onTap: full ? null : _pickVideo,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F3FF),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFDDD6FE)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    gradient: DT.headerGradient,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.videocam_rounded,
+                      size: 22, color: Colors.white),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Property Videos',
+                          style: DT.text(
+                              size: 12.5,
+                              weight: FontWeight.w700,
+                              color: _PC.slate700)),
+                      Text(
+                          'MP4 / MOV up to 100MB · ${_videos.length}/$_maxVideos added',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: DT.text(size: 10.5, color: _PC.slate400)),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: full ? _PC.slate100 : Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color: full ? _PC.slate200 : const Color(0xFFC4B5FD)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add_rounded,
+                          size: 14,
+                          color: full ? _PC.slate400 : DT.secondary),
+                      const SizedBox(width: 2),
+                      Text(full ? 'Max' : 'Add Video',
+                          style: DT.text(
+                              size: 11,
+                              weight: FontWeight.w700,
+                              color: full ? _PC.slate400 : DT.secondary)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        for (var i = 0; i < _videos.length; i++) ...[
+          const SizedBox(height: 8),
+          _videoTile(i),
+        ],
+      ],
+    );
+  }
+
+  Widget _videoTile(int i) {
+    final v = _videos[i];
+    final name = v.name.isNotEmpty ? v.name : 'Video ${i + 1}';
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _PC.slate200),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 52,
+            height: 38,
+            decoration: BoxDecoration(
+              color: _PC.navy,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.play_circle_fill_rounded,
+                color: Colors.white, size: 22),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: DT.text(size: 12.5, weight: FontWeight.w700)),
+                Text(_fileSize(_videoSizes[i]),
+                    style: DT.text(size: 10.5, color: _PC.slate500)),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Remove',
+            onPressed: () => setState(() {
+              _videos.removeAt(i);
+              _videoSizes.removeAt(i);
+            }),
+            icon: const Icon(Icons.delete_outline_rounded,
+                size: 18, color: _PC.rose600),
+          ),
+        ],
+      ),
     );
   }
 
@@ -3507,6 +3811,299 @@ class _InteractiveMapViewState extends State<_InteractiveMapView> {
           width: 40,
           height: 40,
           child: Icon(icon, size: 20, color: _PC.slate800),
+        ),
+      ),
+    );
+  }
+}
+
+// =====================================================================
+// ADD AMENITY SHEET
+// =====================================================================
+class _AmenitySheet extends StatefulWidget {
+  final List<Amenity> existing;
+  const _AmenitySheet({required this.existing});
+
+  @override
+  State<_AmenitySheet> createState() => _AmenitySheetState();
+}
+
+class _AmenitySheetState extends State<_AmenitySheet> {
+  static const _icons = <(String, IconData, String)>[
+    ('pool', Icons.pool_rounded, 'Pool'),
+    ('gym', Icons.fitness_center_rounded, 'Gym'),
+    ('parking', Icons.local_parking_rounded, 'Parking'),
+    ('garden', Icons.park_rounded, 'Garden'),
+    ('security', Icons.security_rounded, 'Security'),
+    ('lift', Icons.elevator_rounded, 'Lift'),
+    ('power', Icons.bolt_rounded, 'Power'),
+    ('clubhouse', Icons.weekend_rounded, 'Club'),
+    ('play', Icons.child_care_rounded, 'Play area'),
+    ('wifi', Icons.wifi_rounded, 'Wi-Fi'),
+    ('cctv', Icons.videocam_outlined, 'CCTV'),
+    ('star', Icons.auto_awesome_rounded, 'Other'),
+  ];
+
+  final _formKey = GlobalKey<FormState>();
+  final _name = TextEditingController();
+  String _icon = 'star';
+  bool _saving = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    FocusScope.of(context).unfocus();
+    if (!_formKey.currentState!.validate()) return;
+    final name = _name.text.trim();
+    // Already in the list? Just select it – no duplicate on the server.
+    for (final a in widget.existing) {
+      if (a.name.trim().toLowerCase() == name.toLowerCase()) {
+        Navigator.pop(context, a);
+        return;
+      }
+    }
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    final r = await PropertyCreateService.createAmenity(name: name, icon: _icon);
+    if (!mounted) return;
+    if (r.ok && r.amenity != null) {
+      Navigator.pop(context, r.amenity);
+    } else {
+      setState(() {
+        _saving = false;
+        _error = r.message;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    return Padding(
+      padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
+      child: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            shrinkWrap: true,
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: _PC.slate200,
+                      borderRadius: BorderRadius.circular(4)),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      gradient: DT.headerGradient,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.add_task_rounded,
+                        color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Add amenity',
+                            style: DT.text(size: 17, weight: FontWeight.w800)),
+                        Text('It will be added to the list and selected',
+                            style: DT.text(size: 11.5, color: _PC.slate500)),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close_rounded,
+                        color: _PC.slate400),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              RichText(
+                text: TextSpan(
+                  text: 'Amenity name',
+                  style: DT.text(
+                      size: 12, weight: FontWeight.w600, color: _PC.slate700),
+                  children: [
+                    TextSpan(
+                        text: ' *',
+                        style: DT.text(
+                            size: 12,
+                            weight: FontWeight.w700,
+                            color: _PC.rose500)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 6),
+              TextFormField(
+                controller: _name,
+                autofocus: true,
+                textCapitalization: TextCapitalization.words,
+                inputFormatters: [LengthLimitingTextInputFormatter(100)],
+                style: DT.text(size: 13.5),
+                onFieldSubmitted: (_) => _save(),
+                validator: (v) {
+                  final t = (v ?? '').trim();
+                  if (t.isEmpty) return 'Enter the amenity name';
+                  if (t.length < 2) return 'Too short';
+                  return null;
+                },
+                decoration: InputDecoration(
+                  hintText: 'e.g. Rooftop Garden',
+                  hintStyle: DT.text(size: 12.5, color: _PC.slate400),
+                  prefixIcon: const Icon(Icons.edit_outlined,
+                      size: 16, color: _PC.slate400),
+                  isDense: true,
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _PC.slate200),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                    const BorderSide(color: _PC.blue600, width: 1.6),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: DT.error),
+                  ),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: DT.error, width: 1.6),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text('Icon',
+                  style: DT.text(
+                      size: 12, weight: FontWeight.w600, color: _PC.slate700)),
+              const SizedBox(height: 8),
+              LayoutBuilder(builder: (context, c) {
+                const gap = 8.0;
+                final w = (c.maxWidth - gap * 3) / 4;
+                return Wrap(
+                  spacing: gap,
+                  runSpacing: gap,
+                  children: [
+                    for (final it in _icons)
+                      _iconTile(it.$1, it.$2, it.$3, w),
+                  ],
+                );
+              }),
+              if (_error != null) ...[
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: DT.errorBg,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: DT.errorBorder),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline_rounded,
+                          size: 16, color: DT.error),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(_error!,
+                            style: DT.text(
+                                size: 12,
+                                weight: FontWeight.w600,
+                                color: DT.error)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 18),
+              SizedBox(
+                height: 50,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: DT.ctaGradient,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: _saving ? null : _save,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      disabledBackgroundColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                    ),
+                    icon: _saving
+                        ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                        : const Icon(Icons.check_rounded,
+                        size: 18, color: Colors.white),
+                    label: Text(_saving ? 'Saving…' : 'Save amenity',
+                        style: DT.text(
+                            size: 14,
+                            weight: FontWeight.w700,
+                            color: Colors.white)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _iconTile(String key, IconData icon, String label, double width) {
+    final sel = _icon == key;
+    return GestureDetector(
+      onTap: () => setState(() => _icon = key),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        width: width,
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: sel ? _PC.blue50 : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+              color: sel ? _PC.blue600 : _PC.slate200, width: sel ? 1.5 : 1),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 20, color: sel ? _PC.blue600 : _PC.slate500),
+            const SizedBox(height: 4),
+            Text(label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: DT.text(
+                    size: 10.5,
+                    weight: FontWeight.w600,
+                    color: sel ? _PC.blue600 : _PC.slate600)),
+          ],
         ),
       ),
     );

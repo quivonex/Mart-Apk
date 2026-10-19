@@ -21,6 +21,7 @@ import '../constants/design_tokens.dart';
 import '../models/product_model.dart';
 import '../services/api_urls.dart';
 import '../utils/cart_helper.dart';
+import '../utils/shared_preferences_helper.dart';
 import 'product_enquiry_screen.dart';
 import 'franchise_plans_screen.dart';
 
@@ -114,6 +115,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       if (c != _collapsed) setState(() => _collapsed = c);
     });
     _loadFullDetail();
+    _loadExtras();
   }
 
   @override
@@ -158,6 +160,121 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
     if (mounted) setState(() => _refreshing = false);
   }
+
+  // ---------------------------------------------------------------- extras
+  //   POST product/related_products/        {product_id}  -> {products:[{id,name,slug,price,thumbnail}]}
+  //   POST product/product/track-view/      {product_id}  (login)
+  //   POST product/product/recently-viewed/ {}            (login) -> {data:[product]}
+  List<Product> _related = [];
+  List<Product> _recent = [];
+
+  Future<void> _loadExtras() async {
+    final id = widget.product.id;
+    if (id <= 0) return;
+    final token = await SharedPreferencesHelper.getAccessToken();
+    final auth = token != null && token.isNotEmpty;
+    Future<dynamic> post(String path, Map<String, dynamic> body, {bool withAuth = false}) async {
+      try {
+        final res = await http
+            .post(
+          Uri.parse('${ApiUrls.baseUrl}$path'),
+          headers: {
+            'Content-Type': 'application/json',
+            if (withAuth && auth) 'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(body),
+        )
+            .timeout(const Duration(seconds: 20));
+        return res.statusCode == 200 ? jsonDecode(res.body) : null;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    if (auth) {
+      // Record this view first so it shows up in "recently viewed" next time.
+      await post('/product/product/track-view/', {'product_id': id}, withAuth: true);
+    }
+    final results = await Future.wait([
+      post('/product/related_products/', {'product_id': id}),
+      if (auth) post('/product/product/recently-viewed/', {}, withAuth: true),
+    ]);
+    if (!mounted) return;
+
+    List<Product> parse(dynamic j, String key) {
+      if (j is! Map || j[key] is! List) return const [];
+      return [
+        for (final e in (j[key] as List).whereType<Map>())
+          Product.fromJson({
+            ...Map<String, dynamic>.from(e),
+            if (e['final_price'] == null && e['price'] != null) 'final_price': e['price'],
+          })
+      ].where((p) => p.id > 0 && p.id != id).toList();
+    }
+
+    setState(() {
+      _related = parse(results[0], 'products');
+      if (results.length > 1) _recent = parse(results[1], 'data');
+    });
+  }
+
+  void _openProduct(Product p) => Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => ProductDetailScreen(product: p)),
+  );
+
+  Widget _productStrip(List<Product> items) => SizedBox(
+    height: 214,
+    child: ListView.separated(
+      scrollDirection: Axis.horizontal,
+      itemCount: items.length,
+      separatorBuilder: (_, __) => const SizedBox(width: 10),
+      itemBuilder: (_, i) {
+        final p = items[i];
+        return SizedBox(
+          width: 148,
+          child: Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: () => _openProduct(p),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: _PD.line),
+                ),
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: SizedBox(
+                        height: 120,
+                        width: double.infinity,
+                        child: p.thumbnail.isEmpty
+                            ? Container(color: _PD.tint, child: const Icon(Icons.image_outlined, color: _PD.hint))
+                            : Image.network(p.thumbnail,
+                            fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: _PD.tint)),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(p.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: DT.text(size: 12.5, weight: FontWeight.w700, color: _PD.ink, height: 1.25)),
+                    const Spacer(),
+                    Text(_inr(p.finalPrice), style: DT.text(size: 14, weight: FontWeight.w900, color: _PD.brandDark)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    ),
+  );
 
   List<String> get _gallery => _p.gallery;
 
@@ -351,6 +468,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     if (_p.isFranchiseAvailable) ...[
                       const SizedBox(height: 14),
                       _franchiseCard(),
+                    ],
+                    if (_related.isNotEmpty) ...[
+                      const SizedBox(height: 22),
+                      _title('Similar products', Icons.auto_awesome_outlined),
+                      const SizedBox(height: 10),
+                      _productStrip(_related),
+                    ],
+                    if (_recent.isNotEmpty) ...[
+                      const SizedBox(height: 22),
+                      _title('Recently viewed', Icons.history_rounded),
+                      const SizedBox(height: 10),
+                      _productStrip(_recent),
                     ],
                     const SizedBox(height: 8),
                   ],

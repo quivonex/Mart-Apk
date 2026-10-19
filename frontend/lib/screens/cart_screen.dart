@@ -165,7 +165,9 @@ class _CartScreenState extends State<CartScreen> {
   double get _subtotal =>
       _selectedItems.fold(0, (sum, item) => sum + item.lineTotal);
 
-  double get _tax => _subtotal * 0.12;
+  /// Product prices (final_price) already include each product's GST on the
+  /// backend, so nothing is added here – the row just says "Included".
+  double get _tax => 0;
   /// Live courier estimate. Until it is known nothing is added to the total
   /// (the backend fixes the real charge per order at checkout).
   double get _shipping => _selectedItems.isEmpty ? 0.0 : (_shipEstimate ?? 0.0);
@@ -697,7 +699,7 @@ class _CartScreenState extends State<CartScreen> {
                         color: const Color(0x33FFFFFF),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Text('12% ITC',
+                      child: Text('GST invoice',
                           style: _t(10, FontWeight.w600, Colors.white)),
                     ),
                   ],
@@ -708,12 +710,12 @@ class _CartScreenState extends State<CartScreen> {
                     style: _t(11, FontWeight.w400, const Color(0xFFE2E8F0),
                         height: 1.4),
                     children: [
-                      const TextSpan(text: 'Claim up to '),
+                      const TextSpan(text: 'Prices include GST. '),
                       TextSpan(
-                        text: '₹${_inr(_tax)} ITC',
+                        text: 'Claim input tax credit',
                         style: _t(11, FontWeight.w800, Colors.white),
                       ),
-                      const TextSpan(text: ' on your GST invoice for this order'),
+                      const TextSpan(text: ' on the GST invoice for this order'),
                     ],
                   ),
                 ),
@@ -1022,10 +1024,10 @@ class _CartScreenState extends State<CartScreen> {
           ),
           const SizedBox(height: 4),
           _summaryRow(
-            label: 'Tax (12% GST)',
-            value: '₹${_inr(_tax)}',
+            label: 'GST',
+            value: 'Included',
             labelTrailing: const Tooltip(
-              message: 'GST is calculated at 12% on the subtotal',
+              message: 'Each product price already includes its GST',
               triggerMode: TooltipTriggerMode.tap,
               child: Icon(Icons.info_outline, size: 12, color: _C.slate400),
             ),

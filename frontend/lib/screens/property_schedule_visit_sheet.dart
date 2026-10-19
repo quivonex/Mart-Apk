@@ -16,7 +16,9 @@ import 'package:flutter/services.dart';
 import '../constants/design_tokens.dart';
 import '../models/property_enquiry_model.dart';
 import '../services/property_enquiry_service.dart';
+import '../utils/login_gate.dart';
 import '../utils/shared_preferences_helper.dart';
+import 'customer_subscription_screen.dart';
 
 class _SV {
   static const brand = Color(0xFF6366F1);
@@ -57,6 +59,9 @@ Future<bool> showScheduleVisitSheet(
       required String propertyTitle,
       String? location,
     }) async {
+  // The enquiry API needs a logged-in user.
+  if (!await ensureLoggedIn(context, reason: 'schedule a site visit')) return false;
+  if (!context.mounted) return false;
   final r = await showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
@@ -219,6 +224,10 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
         _error = r.displayMessage;
       }
     });
+    if (r.needsSubscription) {
+      final bought = await openCustomerSubscription(context, reason: r.displayMessage);
+      if (bought && mounted) await _submit();
+    }
   }
 
   // ---------------------------------------------------------------- build

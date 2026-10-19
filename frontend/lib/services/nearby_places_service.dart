@@ -1,0 +1,195 @@
+// lib/services/nearby_places_service.dart
+//
+// Google Places "Nearby Search" through the QNX backend (the Google API key
+// stays on the server – it is NOT stored in the app).
+// The API needs the login token: `Authorization: Bearer <access token>`.
+//
+//   POST admin_profile/places/nearby/  {lat, lng, radius, keyword}
+//   -> {status, count, results:[{place_id, name, vicinity, rating, user_ratings_total,
+//        geometry{location{lat,lng}}, opening_hours{open_now}, international_phone_number,
+//        business_status, types, icon, icon_background_color}]}
+//
+// The backend fetches up to 3 Google pages (≈2 s pause between pages), keeps
+// rating ≥ 3.5 and sorts by rating – so a search can take a few seconds.
+
+import 'dart:async';
+import 'dart:convert';
+import 'dart:math' as math;
+import 'package:flutter/material.dart' show Color;
+import 'package:http/http.dart' as http;
+import 'api_urls.dart';
+import '../utils/shared_preferences_helper.dart';
+
+class NearbyPlace {
+  final String placeId;
+  final String name;
+  final String address;
+  final double rating;
+  final int ratingsTotal;
+  final double lat;
+  final double lng;
+  final bool? openNow;
+  final String phone;
+  final String businessStatus;
+  final List<String> types;
+  final String iconUrl;
+  final Color iconBg;
+
+  /// Distance from the search point in km (set by the service).
+  double distanceKm;
+
+  NearbyPlace({
+    required this.placeId,
+    required this.name,
+    required this.address,
+    required this.rating,
+    required this.ratingsTotal,
+    required this.lat,
+    required this.lng,
+    required this.openNow,
+    required this.phone,
+    required this.businessStatus,
+    required this.types,
+    required this.iconUrl,
+    required this.iconBg,
+    this.distanceKm = 0,
+  });
+
+  factory NearbyPlace.fromJson(Map<String, dynamic> j) {
+    final loc = (j['geometry'] is Map && j['geometry']['location'] is Map)
+        ? Map<String, dynamic>.from(j['geometry']['location'])
+        : const <String, dynamic>{};
+    final hours = j['opening_hours'] is Map ? Map<String, dynamic>.from(j['opening_hours']) : null;
+    Color bg = const Color(0xFF6366F1);
+    final hex = '${j['icon_background_color'] ?? ''}'.replaceAll('#', '');
+    if (hex.length == 6) {
+      final v = int.tryParse('FF$hex', radix: 16);
+      if (v != null) bg = Color(v);
+    }
+    return NearbyPlace(
+      placeId: '${j['place_id'] ?? ''}',
+      name: '${j['name'] ?? ''}',
+      address: '${j['vicinity'] ?? j['formatted_address'] ?? ''}',
+      rating: (j['rating'] as num?)?.toDouble() ?? 0,
+      ratingsTotal: (j['user_ratings_total'] as num?)?.toInt() ?? 0,
+      lat: (loc['lat'] as num?)?.toDouble() ?? 0,
+      lng: (loc['lng'] as num?)?.toDouble() ?? 0,
+      openNow: hours?['open_now'] is bool ? hours!['open_now'] as bool : null,
+      phone: '${j['international_phone_number'] ?? j['formatted_phone_number'] ?? ''}',
+      businessStatus: '${j['business_status'] ?? ''}',
+      types: [for (final t in (j['types'] as List? ?? const [])) '$t'],
+      iconUrl: '${j['icon'] ?? ''}',
+      iconBg: bg,
+    );
+  }
+
+  /// Opens this exact place in Google Maps (app or browser).
+  Uri get mapsUri => Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=$lat,$lng&query_place_id=${Uri.encodeComponent(placeId)}');
+
+  /// Turn-by-turn directions in Google Maps.
+  Uri get directionsUri => Uri.parse(
+      'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&destination_place_id=${Uri.encodeComponent(placeId)}');
+
+  /// Digits for wa.me (e.g. 919876543210). Empty when the place has no phone.
+  String get whatsappNumber {
+    var d = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    if (d.length == 11 && d.startsWith('0')) d = d.substring(1);
+    if (d.length == 10) d = '91$d';
+    return d.length >= 11 ? d : '';
+  }
+
+  /// "Moving company" style label from Google types (skips generic ones).
+  String get category {
+    const skip = {'point_of_interest', 'establishment', 'store', 'premise'};
+    final t = types.firstWhere((e) => !skip.contains(e), orElse: () => '');
+    if (t.isEmpty) return '';
+    final s = t.replaceAll('_', ' ');
+    return s[0].toUpperCase() + s.substring(1);
+  }
+}
+
+class NearbyResult {
+  final bool ok;
+  final String message;
+  final List<NearbyPlace> places;
+
+  /// True when the server said 401 / "Authentication required" – user must log in again.
+  final bool needsLogin;
+  const NearbyResult(this.ok, this.message, this.places, {this.needsLogin = false});
+}
+
+class NearbyPlacesService {
+  static double _km(double lat1, double lng1, double lat2, double lng2) {
+    const r = 6371.0;
+    double rad(double d) => d * math.pi / 180;
+    final dLat = rad(lat2 - lat1);
+    final dLng = rad(lng2 - lng1);
+    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(rad(lat1)) * math.cos(rad(lat2)) * math.sin(dLng / 2) * math.sin(dLng / 2);
+    return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+  }
+
+  static Future<NearbyResult> search({
+    required double lat,
+    required double lng,
+    required String keyword,
+    int radiusMeters = 10000,
+  }) async {
+    final token = await SharedPreferencesHelper.getAccessToken();
+    if (token == null || token.isEmpty) {
+      return const NearbyResult(false, 'Please log in to search nearby places.', [], needsLogin: true);
+    }
+    try {
+      final res = await http
+          .post(
+        Uri.parse('${ApiUrls.baseUrl}/admin_profile/places/nearby/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'lat': double.parse(lat.toStringAsFixed(6)),
+          'lng': double.parse(lng.toStringAsFixed(6)),
+          'radius': radiusMeters,
+          'keyword': keyword.trim(),
+        }),
+      )
+          .timeout(const Duration(seconds: 45));
+      if (res.statusCode == 401 || res.statusCode == 403) {
+        return const NearbyResult(false, 'Your login session has expired. Please log in again.', [],
+            needsLogin: true);
+      }
+      Map<String, dynamic> j;
+      try {
+        final d = jsonDecode(res.body);
+        j = d is Map ? Map<String, dynamic>.from(d) : {};
+      } catch (_) {
+        return NearbyResult(false, 'Server error (${res.statusCode}). Please try again.', const []);
+      }
+      if (res.statusCode != 200 || j['status'] == false) {
+        return NearbyResult(false, '${j['message'] ?? 'Search failed (${res.statusCode}).'}', const []);
+      }
+      final places = [
+        for (final e in (j['results'] as List? ?? const []).whereType<Map>())
+          NearbyPlace.fromJson(Map<String, dynamic>.from(e))
+      ].where((p) => p.placeId.isNotEmpty && p.name.isNotEmpty).toList();
+      for (final p in places) {
+        p.distanceKm = _km(lat, lng, p.lat, p.lng);
+      }
+      return NearbyResult(true, '', places);
+    } on TimeoutException {
+      return const NearbyResult(false, 'The search took too long. Try a smaller radius.', []);
+    } catch (e) {
+      final s = e.toString();
+      return NearbyResult(
+        false,
+        s.contains('SocketException') || s.contains('ClientException')
+            ? 'Could not reach the server.'
+            : 'Something went wrong: $s',
+        const [],
+      );
+    }
+  }
+}

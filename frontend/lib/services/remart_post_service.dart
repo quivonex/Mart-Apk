@@ -98,6 +98,28 @@ class RemartPlan {
       RemartPlan(id: id, name: name, durationDays: durationDays, description: description, price: p);
 }
 
+/// What the backend said about a freshly created listing.
+class RemartCreatedInfo {
+  final int id;
+  final String status; // active | pending | draft
+  final bool subscriptionRequired;
+  final bool isFirstListing;
+  final int freePeriodDays;
+  final String message;
+
+  const RemartCreatedInfo({
+    required this.id,
+    required this.status,
+    required this.subscriptionRequired,
+    required this.isFirstListing,
+    required this.freePeriodDays,
+    required this.message,
+  });
+
+  /// Free first listing – already live, no payment needed.
+  bool get isLive => status == 'active' && !subscriptionRequired;
+}
+
 class RemartResult<T> {
   final bool ok;
   final String message;
@@ -106,6 +128,26 @@ class RemartResult<T> {
 }
 
 class RemartPostService {
+  /// Details of the last listing created by [createListing].
+  static RemartCreatedInfo? lastCreated;
+
+  /// True when the user has never posted on ReMart (first listing is free).
+  /// null when it could not be checked.
+  static Future<bool?> isFirstListing() async {
+    try {
+      final token = await SharedPreferencesHelper.getAccessToken();
+      if (token == null || token.isEmpty) return null;
+      final res = await http
+          .post(Uri.parse('${ApiUrls.baseUrl}/olx/my-listings/'),
+          headers: {..._json, 'Authorization': 'Bearer $token'}, body: '{}')
+          .timeout(const Duration(seconds: 20));
+      final j = jsonDecode(res.body);
+      if (res.statusCode != 200 || j is! Map || j['data'] is! List) return null;
+      return (j['data'] as List).isEmpty;
+    } catch (_) {
+      return null;
+    }
+  }
   static const _json = {'Content-Type': 'application/json', 'Accept': 'application/json'};
 
   static Future<Map<String, String>> _headers() async {
@@ -286,6 +328,18 @@ class RemartPostService {
       if (res.statusCode >= 200 && res.statusCode < 300 && j['success'] == true) {
         final d = j['data'] is Map ? Map<String, dynamic>.from(j['data']) : const <String, dynamic>{};
         final id = d['id'] is int ? d['id'] as int : int.tryParse('${d['id']}');
+        lastCreated = id == null
+            ? null
+            : RemartCreatedInfo(
+          id: id,
+          status: '${d['status'] ?? ''}',
+          subscriptionRequired: d['subscription_required'] == true,
+          isFirstListing: d['is_first_listing'] == true,
+          freePeriodDays: d['free_period_days'] is int
+              ? d['free_period_days'] as int
+              : int.tryParse('${d['free_period_days']}') ?? 0,
+          message: '${j['message'] ?? ''}',
+        );
         return RemartResult(true, '${j['message'] ?? 'Listing created'}', id);
       }
       return RemartResult(false, _message(j, 'Could not create the listing.'));

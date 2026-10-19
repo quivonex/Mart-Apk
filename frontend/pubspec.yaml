@@ -51,9 +51,11 @@ dependencies:
   file_picker: ^8.0.6
   flutter_launcher_icons: ^0.14.1
   flutter_native_splash: ^2.4.4
- # 🆕 Map packages (OpenStreetMap tiles, no API key needed)
+  # 🆕 Map packages (OpenStreetMap tiles, no API key needed)
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
+  # 🆕 Google Map (Nearby Search screen)
+  google_maps_flutter: ^2.9.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -92,7 +94,7 @@ flutter:
     - lib/assets/icon/mahindra finance.jpeg
     - lib/assets/icon/tata capital.jpeg
 
-      #   - images/a_dot_ham.jpeg
+    #   - images/a_dot_ham.jpeg
 
 flutter_launcher_icons:
   android: "launcher_icon"

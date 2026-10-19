@@ -5,6 +5,8 @@ import '../constants/app_constants.dart';
 import '../models/property_model.dart';
 import '../models/property_enquiry_model.dart';
 import '../services/property_enquiry_service.dart';
+import '../utils/login_gate.dart';
+import 'customer_subscription_screen.dart';
 
 class PropertyEnquiryScreen extends StatefulWidget {
   final PropertyDetail property;
@@ -43,10 +45,19 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
     super.dispose();
   }
 
+  /// Website properties need a customer subscription. Offer to buy one and
+  /// re-send the enquiry when it is bought.
+  Future<void> _offerSubscription(String reason) async {
+    final bought = await openCustomerSubscription(context, reason: reason);
+    if (bought && mounted) await _submit();
+  }
+
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     setState(() => _error = null);
     if (!_formKey.currentState!.validate()) return;
+    if (!await ensureLoggedIn(context, reason: 'send an enquiry')) return;
+    if (!mounted) return;
 
     // Validate budget range
     final budgetMin = _budgetMinCtrl.text.trim().isEmpty
@@ -88,6 +99,11 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
       _isLoading = false;
       _error = response.isSuccess ? null : response.displayMessage;
     });
+
+    if (response.needsSubscription) {
+      await _offerSubscription(response.displayMessage);
+      return;
+    }
 
     // Snackbar
     ScaffoldMessenger.of(context).showSnackBar(
