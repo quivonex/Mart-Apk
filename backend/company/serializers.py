@@ -25,7 +25,10 @@ class CompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
         fields = "__all__"
-        read_only_fields = ["is_active"]
+        # This is the Shiprocket pickup-location nickname, not an editable
+        # street-address field. It is set after Shiprocket creates (or finds)
+        # the pickup location.
+        read_only_fields = ["is_active", "pickup_location"]
 
     def validate(self, attrs):
         unique_fields = {
@@ -85,4 +88,3 @@ class SupplierSerializer(serializers.ModelSerializer):
     class Meta:
         model = suppliers
         fields = '__all__'
-     
