@@ -9,12 +9,23 @@ import 'package:flutter/services.dart';
 import '../constants/design_tokens.dart';
 import '../services/checkout_service.dart';
 import '../utils/shared_preferences_helper.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kRed = Color(0xFFC62828);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 class _SA {
-  static const brand = Color(0xFF6366F1);
+  static const brand = Color(0xFF093C71);
   static const bg = Color(0xFFF8FAFC);
   static const line = Color(0xFFE2E8F0);
-  static const tint = Color(0xFFEEF2FF);
+  static const tint = Color(0xFFEAF1F9);
   static const ink = Color(0xFF0F172A);
   static const muted = Color(0xFF64748B);
   static const hint = Color(0xFF94A3B8);
@@ -75,14 +86,14 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
       backgroundColor: _SA.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        flexibleSpace: Container(decoration: const BoxDecoration(gradient: DT.headerGradient)),
+        flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)),
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text('Saved addresses', style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _add,
-        backgroundColor: _SA.brand,
+        backgroundColor: _kBrand, // buttons: only #093C71
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_location_alt_outlined),
         label: Text('Add address', style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
@@ -279,7 +290,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(18, 10, 8, 14),
-                  decoration: const BoxDecoration(gradient: DT.headerGradient),
+                  decoration: const BoxDecoration(gradient: _kHeader),
                   child: Column(
                     children: [
                       Container(
@@ -343,7 +354,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
                       ]),
                       if (_error != null) ...[
                         const SizedBox(height: 12),
-                        Text(_error!, style: DT.text(size: 12.5, weight: FontWeight.w600, color: DT.error)),
+                        Text(_error!, style: DT.text(size: 12.5, weight: FontWeight.w600, color: _kRed)),
                       ],
                     ],
                   ),
@@ -356,7 +367,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
                       width: double.infinity,
                       height: 50,
                       child: DecoratedBox(
-                        decoration: BoxDecoration(gradient: DT.ctaGradient, borderRadius: BorderRadius.circular(14)),
+                        decoration: BoxDecoration(color: _kBrand, borderRadius: BorderRadius.circular(14)),
                         child: ElevatedButton(
                           onPressed: _saving ? null : _save,
                           style: ElevatedButton.styleFrom(

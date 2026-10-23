@@ -16,6 +16,25 @@ import '../widgets/catalog_widgets.dart';
 import '../widgets/company_ui.dart';
 import '../widgets/product_ui.dart';
 import 'subcategory_screens.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kTint = Color(0xFFEAF1F9);
+const _kLine = Color(0xFFC9DBEE);
+const _kRed = Color(0xFFC62828);
+const _kRedBg = Color(0xFFFEF2F2);
+const _kRedLine = Color(0xFFFECACA);
+const _kOrange = Color(0xFFF7931E);
+const _kOrangeDark = Color(0xFFC2410C);
+const _kOrangeBg = Color(0xFFFFF7ED);
+const _kOrangeLine = Color(0xFFFED7AA);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 class CategoryManageScreen extends StatefulWidget {
   final int companyId;
@@ -86,12 +105,12 @@ class _CategoryManageScreenState extends State<CategoryManageScreen> {
               child: Text(c.name, style: DT.text(size: 16, weight: FontWeight.w800)),
             ),
             ListTile(
-              leading: const Icon(Icons.edit_outlined, color: DT.blue800),
+              leading: const Icon(Icons.edit_outlined, color: _kBrand),
               title: Text('Edit category', style: DT.text(size: 14, weight: FontWeight.w600)),
               onTap: () => Navigator.pop(ctx, 'edit'),
             ),
             ListTile(
-              leading: const Icon(Icons.account_tree_outlined, color: DT.blue800),
+              leading: const Icon(Icons.account_tree_outlined, color: _kBrand),
               title: Text('Subcategories', style: DT.text(size: 14, weight: FontWeight.w600)),
               onTap: () => Navigator.pop(ctx, 'subs'),
             ),
@@ -141,7 +160,7 @@ class _CategoryManageScreenState extends State<CategoryManageScreen> {
             ? null
             : FloatingActionButton.extended(
           onPressed: () => _openForm(),
-          backgroundColor: DT.blue800,
+          backgroundColor: _kBrand,
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add_rounded),
           label: Text('Add category',
@@ -207,7 +226,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
   String? _branchError;
   bool _saving = false;
 
-  static const _brand = Color(0xFF6366F1);
+  static const _brand = Color(0xFF093C71);
 
   bool get _isEdit => widget.existing != null;
 
@@ -457,7 +476,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
       preferredSize: const Size.fromHeight(64),
       child: Container(
         decoration: const BoxDecoration(
-          gradient: DT.headerGradient,
+          gradient: _kHeader,
           boxShadow: [
             BoxShadow(
                 color: Color(0x0D0F172A), blurRadius: 2, offset: Offset(0, 1)),
@@ -500,7 +519,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                           style: DT.text(
                               size: 12,
                               weight: FontWeight.w500,
-                              color: const Color(0xFFE0E7FF)),
+                              color: const Color(0xFFC9DBEE)),
                         ),
                       ],
                     ),
@@ -542,18 +561,18 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: DT.errorBg,
+          color: _kRedBg,
           borderRadius: BorderRadius.circular(DT.rMd),
-          border: Border.all(color: DT.errorBorder),
+          border: Border.all(color: _kRedLine),
         ),
         child: Row(
           children: [
-            const Icon(Icons.error_outline, color: DT.error, size: 18),
+            const Icon(Icons.error_outline, color: _kRed, size: 18),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 _companiesError!,
-                style: DT.text(size: 12, color: DT.error),
+                style: DT.text(size: 12, color: _kRed),
               ),
             ),
             TextButton(
@@ -562,7 +581,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                   style: DT.text(
                       size: 12,
                       weight: FontWeight.w700,
-                      color: DT.error)),
+                      color: _kRed)),
             ),
           ],
         ),
@@ -573,18 +592,18 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: DT.errorBg,
+          color: _kOrangeBg,
           borderRadius: BorderRadius.circular(DT.rMd),
-          border: Border.all(color: DT.errorBorder),
+          border: Border.all(color: _kOrangeLine),
         ),
         child: Row(
           children: [
-            const Icon(Icons.error_outline, color: DT.error, size: 18),
+            const Icon(Icons.warning_amber_rounded, color: _kOrange, size: 18),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 'No companies found. Please create a company first.',
-                style: DT.text(size: 12, color: DT.error),
+                style: DT.text(size: 12, weight: FontWeight.w600, color: _kOrangeDark),
               ),
             ),
           ],
@@ -634,9 +653,9 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: DT.blue50,
+        color: _kTint,
         borderRadius: BorderRadius.circular(DT.rLg),
-        border: Border.all(color: DT.blue200),
+        border: Border.all(color: _kLine),
       ),
       child: Row(
         children: [
@@ -698,7 +717,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: DT.blue50,
+                    color: _kTint,
                     borderRadius: BorderRadius.circular(DT.rMd),
                   ),
                   child: Icon(icon, size: 20, color: _brand),
@@ -751,9 +770,9 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
             height: 52,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                gradient: DT.ctaGradient,
+                color: _kBrand, // buttons: only #093C71
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
+                boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 12, offset: Offset(0, 4))],
               ),
               child: ElevatedButton(
                 onPressed: _saving ? null : _save,

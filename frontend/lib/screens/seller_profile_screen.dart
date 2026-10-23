@@ -3,22 +3,37 @@ import 'package:flutter/services.dart';
 import '../constants/design_tokens.dart';
 import '../models/seller_model.dart';
 import '../services/seller_service.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kTint = Color(0xFFEAF1F9);
+const _kLine = Color(0xFFC9DBEE);
+const _kRed = Color(0xFFC62828);
+const _kRedBg = Color(0xFFFEF2F2);
+const _kOrange = Color(0xFFF7931E);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 // Colours used only on this screen (the rest come from DT).
 class _C {
-  static const navy1 = Color(0xFF1E1B4B);
-  static const navy2 = Color(0xFF312E81);
-  static const navy3 = Color(0xFF312E81);
-  static const navy4 = Color(0xFF1E1B4B);
-  static const blue600 = Color(0xFF6366F1);
-  static const blue400 = Color(0xFF818CF8);
-  static const indigo600 = Color(0xFF4F46E5);
+  static const navy1 = Color(0xFF062A50);
+  static const navy2 = Color(0xFF062A50);
+  static const navy3 = Color(0xFF062A50);
+  static const navy4 = Color(0xFF062A50);
+  static const blue600 = Color(0xFF093C71);
+  static const blue400 = Color(0xFF6E97C4);
+  static const indigo600 = Color(0xFF062A50);
   static const teal600 = Color(0xFF0D9488);
   static const emerald600 = Color(0xFF10B981);
   static const emerald300 = Color(0xFF6EE7B7);
   static const amber300 = Color(0xFFFCD34D);
   // Header blue colour (matching the QNXMart brand blue)
-  static const headerBlue = Color(0xFF6366F1);
+  static const headerBlue = Color(0xFF093C71);
 }
 
 /// Business categories accepted by the backend (seller/models.py
@@ -268,7 +283,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
               ),
             ],
           ),
-          backgroundColor: success ? _C.emerald600 : DT.error,
+          backgroundColor: success ? _C.emerald600 : _kRed,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 4),
           margin: const EdgeInsets.all(16),
@@ -326,9 +341,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
       child: Container(
         decoration: const BoxDecoration(
           // Header colour changed to Blue
-          gradient: LinearGradient(
-            colors: [_C.headerBlue, Color(0xFF8B5CF6)],
-          ),
+          gradient: _kHeader,
           boxShadow: [
             BoxShadow(
                 color: Color(0x33000000), blurRadius: 8, offset: Offset(0, 2)),
@@ -479,9 +492,9 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
               width: 56,
               height: 56,
               decoration: const BoxDecoration(
-                  color: DT.errorBg, shape: BoxShape.circle),
+                  color: _kRedBg, shape: BoxShape.circle),
               child: const Icon(Icons.cloud_off_rounded,
-                  color: DT.error, size: 28),
+                  color: _kRed, size: 28),
             ),
             const SizedBox(height: 14),
             Text("Couldn't load your seller details",
@@ -499,7 +512,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                   style: DT.text(
                       size: 13, weight: FontWeight.w700, color: Colors.white)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: _C.headerBlue,
+                backgroundColor: _kBrand, // buttons: only #093C71
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding:
@@ -576,7 +589,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [_C.headerBlue, Color(0xFF8B5CF6)],
+              colors: [_C.headerBlue, Color(0xFF1E5A9C)],
             ),
             borderRadius: BorderRadius.circular(DT.rLg),
             border: Border.all(color: const Color(0x33FFFFFF)),
@@ -654,10 +667,10 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                           complete ? Colors.white : _C.amber300,
                           complete
                               ? const Color(0x33FFFFFF)
-                              : const Color(0x33FBBF24),
+                              : const Color(0x33F7931E),
                           complete
                               ? const Color(0x4DFFFFFF)
-                              : const Color(0x4DFBBF24),
+                              : const Color(0x4DF7931E),
                         ),
                       ],
                     ),
@@ -753,7 +766,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
   Widget _buildBusinessSection() {
     return _SectionCard(
       icon: Icons.work_outline_rounded,
-      iconBg: DT.blue50,
+      iconBg: _kTint,
       iconFg: _C.blue600,
       title: 'Business Information',
       tag: _Tag.required,
@@ -821,7 +834,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                   width: 30,
                   height: 30,
                   decoration: BoxDecoration(
-                    color: DT.blue50,
+                    color: _kTint,
                     borderRadius: BorderRadius.circular(DT.rSm),
                   ),
                   child: Icon(c.$3, size: 17, color: _C.blue600),
@@ -877,7 +890,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
   Widget _buildContactSection() {
     return _SectionCard(
       icon: Icons.person_outline_rounded,
-      iconBg: DT.indigo50,
+      iconBg: _kTint,
       iconFg: _C.indigo600,
       title: 'Contact Person Details',
       tag: _Tag.required,
@@ -1142,9 +1155,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
       opacity: _isSubmitting ? 0.8 : 1,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [_C.headerBlue, Color(0xFF8B5CF6)],
-          ),
+          color: _kBrand, // buttons: only #093C71
           borderRadius: BorderRadius.circular(DT.rLg),
           boxShadow: const [
             BoxShadow(
@@ -1235,7 +1246,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
       labelStyle: DT.text(size: 13, weight: FontWeight.w600, color: DT.onyx600),
       floatingLabelStyle: WidgetStateTextStyle.resolveWith((states) {
         final color = states.contains(WidgetState.error)
-            ? DT.error
+            ? _kRed
             : states.contains(WidgetState.focused)
             ? _C.blue600
             : DT.onyx600;
@@ -1257,12 +1268,12 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
       isDense: true,
       contentPadding: EdgeInsets.symmetric(
           horizontal: 12, vertical: compact ? 14 : 16),
-      errorStyle: DT.text(size: 11, weight: FontWeight.w500, color: DT.error),
+      errorStyle: DT.text(size: 11, weight: FontWeight.w500, color: _kRed),
       errorMaxLines: 2,
       enabledBorder: border(DT.slate300),
       focusedBorder: border(_C.blue600, 1.8),
-      errorBorder: border(DT.error),
-      focusedErrorBorder: border(DT.error, 1.8),
+      errorBorder: border(_kRed),
+      focusedErrorBorder: border(_kRed, 1.8),
       border: border(DT.slate300),
     );
   }
@@ -1386,7 +1397,7 @@ class _SectionCard extends StatelessWidget {
                   padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: isRequired ? DT.blue50 : DT.slate100,
+                    color: isRequired ? _kTint : DT.slate100,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -1482,13 +1493,13 @@ class _BankSummary extends StatelessWidget {
                 height: 38,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: DT.blue100,
+                  color: _kLine,
                   borderRadius: BorderRadius.circular(DT.rSm),
                 ),
                 child: Text(
                   _initials(name),
                   style: DT.text(
-                      size: 11, weight: FontWeight.w800, color: DT.blue800),
+                      size: 11, weight: FontWeight.w800, color: _kBrand),
                 ),
               ),
               const SizedBox(width: 12),
@@ -1517,7 +1528,7 @@ class _BankSummary extends StatelessWidget {
                 width: 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  color: br.isEmpty ? DT.amber500 : const Color(0xFF10B981),
+                  color: br.isEmpty ? _kOrange : const Color(0xFF10B981),
                   shape: BoxShape.circle,
                 ),
               ),

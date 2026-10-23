@@ -9,6 +9,9 @@
 //        -> {success, subscription:{…}}
 //   POST payment/customer-subscriptions/my/            {}          (login)
 //        -> {success, current_subscription, subscriptions:[…]}
+//
+// All URLs come from ApiUrls (customerSubscription…Url). This plan is separate
+// from the ReMart Communication Plan (communication_plan_service.dart).
 
 import 'dart:async';
 import 'dart:convert';
@@ -94,7 +97,7 @@ class SubscriptionResult<T> {
 }
 
 class CustomerSubscriptionService {
-  static Future<(int, Map<String, dynamic>)> _post(String path, Map<String, dynamic> body,
+  static Future<(int, Map<String, dynamic>)> _post(String url, Map<String, dynamic> body,
       {bool auth = true}) async {
     final token = await SharedPreferencesHelper.getAccessToken();
     if (auth && (token == null || token.isEmpty)) {
@@ -102,7 +105,7 @@ class CustomerSubscriptionService {
     }
     final res = await http
         .post(
-      Uri.parse('${ApiUrls.baseUrl}$path'),
+      Uri.parse(url),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -136,7 +139,7 @@ class CustomerSubscriptionService {
   /// Active plans (public).
   static Future<SubscriptionResult<List<CustomerPlan>>> plans() async {
     try {
-      final (code, j) = await _post('/payment/customer-subscription-plans/', {}, auth: false);
+      final (code, j) = await _post(ApiUrls.customerSubscriptionPlansUrl, {}, auth: false);
       if (!_ok(code, j)) return SubscriptionResult(false, _msg(code, j, 'Could not load plans'), const []);
       final list = (j['data'] as List? ?? [])
           .whereType<Map>()
@@ -153,7 +156,7 @@ class CustomerSubscriptionService {
   /// (current active subscription or null, history)
   static Future<SubscriptionResult<(CustomerSubscriptionInfo?, List<CustomerSubscriptionInfo>)>> mySubscriptions() async {
     try {
-      final (code, j) = await _post('/payment/customer-subscriptions/my/', {});
+      final (code, j) = await _post(ApiUrls.customerMySubscriptionsUrl, {});
       if (!_ok(code, j)) return SubscriptionResult(false, _msg(code, j, 'Could not load your subscriptions'));
       final cur = j['current_subscription'] is Map
           ? CustomerSubscriptionInfo.fromJson(Map<String, dynamic>.from(j['current_subscription']))
@@ -171,7 +174,7 @@ class CustomerSubscriptionService {
   /// Razorpay order for [planId] → {order_id, amount_paise, key, plan_name}
   static Future<SubscriptionResult<Map<String, dynamic>>> createOrder(int planId) async {
     try {
-      final (code, j) = await _post('/payment/customer-subscription/create-order/', {'plan_id': planId});
+      final (code, j) = await _post(ApiUrls.customerSubscriptionCreateOrderUrl, {'plan_id': planId});
       if (!_ok(code, j)) return SubscriptionResult(false, _msg(code, j, 'Could not start the payment'));
       final o = j['order'] is Map ? Map<String, dynamic>.from(j['order']) : const <String, dynamic>{};
       final rz = j['razorpay'] is Map ? Map<String, dynamic>.from(j['razorpay']) : const <String, dynamic>{};
@@ -192,7 +195,7 @@ class CustomerSubscriptionService {
     required String signature,
   }) async {
     try {
-      final (code, j) = await _post('/payment/customer-subscription/verify-payment/', {
+      final (code, j) = await _post(ApiUrls.customerSubscriptionVerifyUrl, {
         'razorpay_order_id': orderId,
         'razorpay_payment_id': paymentId,
         'razorpay_signature': signature,

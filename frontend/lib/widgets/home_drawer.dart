@@ -5,7 +5,7 @@
 //   [blue header]  👤 <user>                                       ✕
 //   Home
 //   🔍 Nearby Search  (NEW)
-//   My Profile · Seller Profile · My Enquiries · My Subscription
+//   My Profile · Seller Profile · My Chats · My Enquiries · My Subscription
 //   Trending & Quick Links : All Products · Cart (n)
 //   Sell & Management      : Add Company · Add Product · Add Branch · Add Category
 //                            Add SubCategory · Add Brand · Add Unit
@@ -20,6 +20,9 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../constants/design_tokens.dart';
+import '../screens/chat_list_screen.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
 
 /// Route keys handled by HomeScreen._navigate.
 class DrawerRoutes {
@@ -80,34 +83,34 @@ class HomeDrawer extends StatelessWidget {
   static const String supportEmail = 'qnxmartb2b@gmail.com';
 
   // Header background (brand blue)
-  static const _headerBg = Color(0xFF6366F1);
-  static const _red = Color(0xFFDC3545);
+  static const _headerBg = Color(0xFF093C71);
+  static const _red = Color(0xFFC62828);
   static const _text = Color(0xFF212529);
   static const _divider = Color(0xFFDEE2E6);
 
   // Different colours for each icon
-  static const _iconHome = Color(0xFF6366F1); // blue
-  static const _iconProfile = Color(0xFF8B5CF6); // violet
+  static const _iconHome = Color(0xFF093C71); // brand
+  static const _iconProfile = Color(0xFF1E5A9C); // brand light
   static const _iconSeller = Color(0xFF10B981); // green
-  static const _iconProducts = Color(0xFFF59E0B); // amber
-  static const _iconCart = Color(0xFFEF4444); // red
-  static const _iconCompany = Color(0xFF6366F1); // blue-500
-  static const _iconProduct = Color(0xFF8B5CF6); // violet
+  static const _iconProducts = Color(0xFFF7931E); // orange
+  static const _iconCart = Color(0xFFC62828); // red
+  static const _iconCompany = Color(0xFF093C71); // brand
+  static const _iconProduct = Color(0xFF1E5A9C); // brand light
   static const _iconBranch = Color(0xFF06B6D4); // cyan
-  static const _iconCategory = Color(0xFFF97316); // orange
+  static const _iconCategory = Color(0xFFF7931E); // orange
   static const _iconSubCategory = Color(0xFF14B8A6); // teal
   static const _iconBrand = Color(0xFFEC4899); // pink
-  static const _iconUnit = Color(0xFF6366F1); // indigo
+  static const _iconUnit = Color(0xFF093C71); // brand
   static const _iconProperty = Color(0xFF0EA5E9); // sky
   static const _iconAllProperties = Color(0xFF22C55E); // green
-  static const _iconRemartAdd = Color(0xFFA855F7); // purple
-  static const _iconRemartAll = Color(0xFFF43F5E); // rose
+  static const _iconRemartAdd = Color(0xFF1E5A9C); // brand light
+  static const _iconRemartAll = Color(0xFFC62828); // red
   static const _iconBuying = Color(0xFF10B981); // emerald
-  static const _iconSelling = Color(0xFFF59E0B); // amber
-  static const _iconFaq = Color(0xFF6366F1); // indigo
-  static const _iconAbout = Color(0xFF6366F1); // blue
-  static const _iconContact = Color(0xFFEF4444); // red
-  static const _iconNearby = Color(0xFFF97316); // orange
+  static const _iconSelling = Color(0xFFF7931E); // orange
+  static const _iconFaq = Color(0xFF093C71); // brand
+  static const _iconAbout = Color(0xFF093C71); // brand
+  static const _iconContact = Color(0xFFC62828); // red
+  static const _iconNearby = Color(0xFFF7931E); // orange
 
   @override
   Widget build(BuildContext context) {
@@ -140,6 +143,12 @@ class HomeDrawer extends StatelessWidget {
                     color: _iconProfile),
                 _item(Icons.badge_rounded, 'Seller Profile', () => go(DrawerRoutes.sellerProfile),
                     color: _iconSeller),
+                // Opens the chat list directly (no HomeScreen route needed).
+                _item(Icons.chat_rounded, 'My Chats', () {
+                  final nav = Navigator.of(context);
+                  nav.pop();
+                  nav.push(MaterialPageRoute(builder: (_) => const ChatListScreen()));
+                }, color: _iconHome, badge: 'NEW'),
                 _item(Icons.forum_rounded, 'My Enquiries', () => go(DrawerRoutes.myEnquiries),
                     color: _iconProfile),
                 _item(Icons.workspace_premium_rounded, 'My Subscription', () => go(DrawerRoutes.mySubscription),
@@ -316,4 +325,4 @@ class HomeDrawer extends StatelessWidget {
       ),
     );
   }
-}
+}

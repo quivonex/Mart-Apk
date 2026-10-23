@@ -4,6 +4,17 @@ import '../constants/app_constants.dart';
 import '../models/unit_model.dart';
 import '../services/unit_service.dart';
 import 'unit_create_edit_screen.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kRed = Color(0xFFC62828);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 class UnitListScreen extends StatefulWidget {
   const UnitListScreen({super.key});
@@ -85,8 +96,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor:
-              u.isActive ? AppConstants.error : AppConstants.primary,
+              backgroundColor: _kBrand, // buttons: only #093C71
             ),
             child: Text(u.isActive ? 'Deactivate' : 'Reactivate'),
           ),
@@ -106,7 +116,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
       SnackBar(
         content: Text(res.displayMessage),
         backgroundColor:
-        res.isSuccess ? const Color(0xFF10B981) : Color(0xFFEF4444),
+        res.isSuccess ? const Color(0xFF10B981) : Color(0xFFC62828),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -119,8 +129,8 @@ class _UnitListScreenState extends State<UnitListScreen> {
     return Scaffold(
       backgroundColor: AppConstants.surfaceColor,
       appBar: AppBar(
-        backgroundColor: AppConstants.primary,
-        flexibleSpace: Container(decoration: const BoxDecoration(gradient: AppConstants.appBarGradient)),
+        backgroundColor: _kBrand,
+        flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)),
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(
@@ -135,7 +145,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
       body: _buildBody(),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openCreate,
-        backgroundColor: AppConstants.primary,
+        backgroundColor: _kBrand,
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text(
           'Add Unit',
@@ -153,7 +163,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(AppConstants.primary),
+          valueColor: AlwaysStoppedAnimation<Color>(_kBrand),
         ),
       );
     }
@@ -195,12 +205,12 @@ class _UnitListScreenState extends State<UnitListScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppConstants.primary.withOpacity(0.1),
+                    color: _kBrand.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     Icons.straighten_outlined,
-                    color: AppConstants.primary,
+                    color: _kBrand,
                     size: 22,
                   ),
                 ),
@@ -232,7 +242,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
                   padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: (u.isActive ? const Color(0xFF10B981) : Color(0xFFEF4444))
+                    color: (u.isActive ? const Color(0xFF10B981) : Color(0xFFC62828))
                         .withOpacity(0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
@@ -241,7 +251,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
                     style: GoogleFonts.inter(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
-                      color: u.isActive ? const Color(0xFF10B981) : Color(0xFFEF4444),
+                      color: u.isActive ? const Color(0xFF10B981) : Color(0xFFC62828),
                     ),
                   ),
                 ),
@@ -269,9 +279,9 @@ class _UnitListScreenState extends State<UnitListScreen> {
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppConstants.primary,
+                      foregroundColor: _kBrand,
                       side: BorderSide(
-                          color: AppConstants.primary.withOpacity(0.4)),
+                          color: _kBrand.withOpacity(0.4)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -297,8 +307,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                      u.isActive ? AppConstants.error : const Color(0xFF10B981),
+                      backgroundColor: _kBrand, // buttons: only #093C71
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -324,14 +333,14 @@ class _UnitListScreenState extends State<UnitListScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: (isErr ? AppConstants.error : AppConstants.primary)
+                color: (isErr ? _kRed : _kBrand)
                     .withOpacity(0.08),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 isErr ? Icons.error_outline : Icons.straighten_outlined,
                 size: 56,
-                color: (isErr ? AppConstants.error : AppConstants.primary)
+                color: (isErr ? _kRed : _kBrand)
                     .withOpacity(0.6),
               ),
             ),
@@ -357,8 +366,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
             ElevatedButton.icon(
               onPressed: isErr ? _load : _openCreate,
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                isErr ? AppConstants.error : AppConstants.primary,
+                backgroundColor: _kBrand, // buttons: only #093C71
                 padding: const EdgeInsets.symmetric(
                     horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(

@@ -18,28 +18,40 @@ import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 import '../constants/design_tokens.dart';
+import '../models/chat_models.dart';
 import '../models/product_model.dart';
 import '../services/api_urls.dart';
 import '../utils/cart_helper.dart';
+import '../utils/chat_launcher.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'product_enquiry_screen.dart';
 import 'franchise_plans_screen.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 // Colours used only on this screen (palette: indigo / violet / orange).
 class _PD {
-  static const brand = Color(0xFF6366F1);
-  static const brandDark = Color(0xFF4338CA);
-  static const violet = Color(0xFF8B5CF6);
-  static const orange = Color(0xFFF97316);
+  static const brand = Color(0xFF093C71);
+  static const brandDark = Color(0xFF062A50);
+  static const violet = Color(0xFF1E5A9C);
+  static const orange = Color(0xFFF7931E);
   static const green = Color(0xFF10B981);
   static const greenDark = Color(0xFF047857);
   static const greenBg = Color(0xFFECFDF5);
-  static const red = Color(0xFFEF4444);
-  static const amber = Color(0xFFF59E0B);
+  static const red = Color(0xFFC62828);
+  static const amber = Color(0xFFF7931E);
   static const bg = Color(0xFFF8FAFC);
   static const line = Color(0xFFE2E8F0);
-  static const tint = Color(0xFFEEF2FF);
-  static const tintLine = Color(0xFFC7D2FE);
+  static const tint = Color(0xFFEAF1F9);
+  static const tintLine = Color(0xFFC9DBEE);
   static const ink = Color(0xFF0F172A);
   static const body = Color(0xFF334155);
   static const muted = Color(0xFF64748B);
@@ -511,7 +523,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             child: AnimatedOpacity(
               opacity: _collapsed ? 1 : 0,
               duration: const Duration(milliseconds: 180),
-              child: const DecoratedBox(decoration: BoxDecoration(gradient: DT.headerGradient)),
+              child: const DecoratedBox(decoration: BoxDecoration(gradient: _kHeader)),
             ),
           ),
         ],
@@ -739,10 +751,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF312E81), _PD.brandDark, _PD.violet],
+          colors: [Color(0xFF062A50), _PD.brandDark, _PD.violet],
         ),
         borderRadius: BorderRadius.circular(18),
-        boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 18, offset: Offset(0, 8))],
+        boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 18, offset: Offset(0, 8))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1158,7 +1170,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         gradient: const LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [Color(0xFF312E81), _PD.violet],
+                          colors: [Color(0xFF062A50), _PD.violet],
                         ),
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -1293,6 +1305,25 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
+  // ---------------------------------------------------------------- chat
+  /// "Chat with seller" → olx/chats/create/ {other_user_id: company_user_id, product_id}
+  void _chatWithSeller() {
+    if (_p.companyUserId == null && _refreshing) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(const SnackBar(content: Text('Loading seller details… please try again in a moment.')));
+      return;
+    }
+    ChatLauncher.start(
+      context,
+      kind: ChatItemKind.product,
+      itemId: _p.id,
+      otherUserId: _p.companyUserId,
+      title: _p.name,
+      otherName: _p.companyName,
+    );
+  }
+
   // ---------------------------------------------------------------- bottom bar
   Widget _bottomBar() {
     return Container(
@@ -1306,6 +1337,34 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         top: false,
         child: Row(
           children: [
+            // Chat with seller
+            Tooltip(
+              message: 'Chat with seller',
+              child: Material(
+                color: _PD.tint,
+                borderRadius: BorderRadius.circular(14),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: _chatWithSeller,
+                  child: Container(
+                    width: 56,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: _PD.tintLine, width: 1.4),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.chat_bubble_outline_rounded, size: 19, color: _kBrand),
+                        Text('Chat', style: DT.text(size: 10, weight: FontWeight.w800, color: _kBrand)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
             Expanded(
               flex: 2,
               child: SizedBox(
@@ -1319,9 +1378,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   label: Text('Enquiry',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: DT.text(size: 14, weight: FontWeight.w800, color: _PD.brandDark)),
+                      style: DT.text(size: 14, weight: FontWeight.w800, color: _kBrand)),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: _PD.brandDark,
+                    foregroundColor: _kBrand,
                     backgroundColor: _PD.tint,
                     side: const BorderSide(color: _PD.tintLine, width: 1.4),
                     padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -1337,8 +1396,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 height: 52,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    gradient: _outOfStock ? null : DT.ctaGradient,
-                    color: _outOfStock ? _PD.line : null,
+                    color: _outOfStock ? _PD.line : _kBrand, // buttons: only #093C71
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: ElevatedButton.icon(
@@ -1529,7 +1587,7 @@ class _VideoPageState extends State<_VideoPage> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        flexibleSpace: Container(decoration: const BoxDecoration(gradient: DT.headerGradient)),
+        flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)),
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(widget.title,
@@ -1560,7 +1618,7 @@ class _VideoPageState extends State<_VideoPage> {
                     icon: const Icon(Icons.open_in_new_rounded, size: 16),
                     label: const Text('Open in browser'),
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: _PD.brand, foregroundColor: Colors.white, elevation: 0),
+                        backgroundColor: _kBrand, foregroundColor: Colors.white, elevation: 0),
                   ),
                 ],
               )
@@ -1579,7 +1637,7 @@ class _VideoPageState extends State<_VideoPage> {
                         height: 64,
                         decoration: const BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: LinearGradient(colors: [_PD.brand, _PD.violet]),
+                          color: _kBrand,
                         ),
                         child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 38),
                       ),
@@ -1616,7 +1674,7 @@ class _VideoPageState extends State<_VideoPage> {
                     selected: i == _i,
                     onSelected: (_) => i == _i ? null : _load(i),
                     selectedColor: _PD.brand,
-                    backgroundColor: const Color(0xFF1E1B4B),
+                    backgroundColor: const Color(0xFF062A50),
                     labelStyle: DT.text(size: 12, weight: FontWeight.w700, color: Colors.white),
                     showCheckmark: false,
                     side: BorderSide.none,

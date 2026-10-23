@@ -3,6 +3,11 @@ import '../constants/design_tokens.dart';
 import '../models/product_model.dart';
 import '../screens/product_enquiry_screen.dart';
 import '../utils/cart_helper.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kTint = Color(0xFFEAF1F9);
+const _kLine = Color(0xFFC9DBEE);
 
 /// Product card.
 /// Overflow-safe in both situations:
@@ -109,28 +114,28 @@ class ProductCard extends StatelessWidget {
                   padding:
                   const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                   decoration: BoxDecoration(
-                    color: DT.blue50,
+                    color: _kTint,
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: DT.blue200),
+                    border: Border.all(color: _kLine),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.storefront_outlined,
-                          size: 10, color: DT.blue700),
+                          size: 10, color: _kBrand),
                       const SizedBox(width: 3),
                       Text(
                         'Franchise',
                         style: DT.text(
                           size: 9,
                           weight: FontWeight.w700,
-                          color: DT.blue700,
+                          color: _kBrand,
                         ),
                       ),
                       if (onFranchiseTap != null) ...[
                         const SizedBox(width: 1),
                         const Icon(Icons.chevron_right_rounded,
-                            size: 11, color: DT.blue700),
+                            size: 11, color: _kBrand),
                       ],
                     ],
                   ),
@@ -280,7 +285,7 @@ class ProductCard extends StatelessWidget {
                       product: product,
                     ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: DT.onyx900,
+                  backgroundColor: _kBrand, // buttons: only #093C71
                   foregroundColor: Colors.white,
                   elevation: 0,
                   padding: EdgeInsets.zero,

@@ -5,6 +5,19 @@
 
 import 'package:flutter/material.dart';
 import '../constants/design_tokens.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kTint = Color(0xFFEAF1F9);
+const _kRed = Color(0xFFC62828);
+const _kRedBg = Color(0xFFFEF2F2);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 // ---------------------------------------------------------------------------
 // App bar: white, bottom border, back button, title + optional subtitle.
@@ -30,7 +43,7 @@ class CompanyTopBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        gradient: DT.headerGradient,
+        gradient: _kHeader,
       ),
       child: SafeArea(
         bottom: false,
@@ -65,7 +78,7 @@ class CompanyTopBar extends StatelessWidget implements PreferredSizeWidget {
                             Text(subtitle!,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: DT.text(size: 12, color: const Color(0xFFE0E7FF))),
+                                style: DT.text(size: 12, color: const Color(0xFFC9DBEE))),
                         ],
                       ),
                     ),
@@ -165,7 +178,7 @@ class InfoLine extends StatelessWidget {
               style: DT.text(
                 size: 12.5,
                 weight: FontWeight.w600,
-                color: onTap != null ? DT.blue800 : DT.onyx800,
+                color: onTap != null ? _kBrand : DT.onyx800,
                 height: 1.4,
               ),
             ),
@@ -173,7 +186,7 @@ class InfoLine extends StatelessWidget {
           if (onTap != null)
             const Padding(
               padding: EdgeInsets.only(left: 6, top: 1),
-              child: Icon(Icons.open_in_new_rounded, size: 14, color: DT.blue800),
+              child: Icon(Icons.open_in_new_rounded, size: 14, color: _kBrand),
             ),
         ],
       ),
@@ -216,10 +229,10 @@ class StateView extends StatelessWidget {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: isError ? DT.errorBg : DT.blue50,
+                color: isError ? _kRedBg : _kTint,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 30, color: isError ? DT.error : DT.blue800),
+              child: Icon(icon, size: 30, color: isError ? _kRed : _kBrand),
             ),
             const SizedBox(height: 16),
             Text(title,
@@ -237,7 +250,7 @@ class StateView extends StatelessWidget {
                 label: Text(actionLabel!,
                     style: DT.text(size: 13.5, weight: FontWeight.w700, color: Colors.white)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: DT.blue800,
+                  backgroundColor: _kBrand,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
@@ -272,10 +285,10 @@ class CompanyLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fallback = Container(
-      color: DT.blue50,
+      color: _kTint,
       alignment: Alignment.center,
       child: Text(_initials,
-          style: DT.text(size: size * 0.36, weight: FontWeight.w800, color: DT.blue800)),
+          style: DT.text(size: size * 0.36, weight: FontWeight.w800, color: _kBrand)),
     );
     return Container(
       width: size,
@@ -303,7 +316,7 @@ void showCompanySnack(BuildContext context, String msg, {bool error = false}) {
     ..showSnackBar(SnackBar(
       content: Text(msg,
           style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
-      backgroundColor: error ? DT.error : DT.onyx900,
+      backgroundColor: error ? _kRed : DT.onyx900,
       behavior: SnackBarBehavior.floating,
       margin: const EdgeInsets.all(16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
@@ -333,7 +346,7 @@ Future<bool> confirmAction(
         ElevatedButton(
           onPressed: () => Navigator.pop(ctx, true),
           style: ElevatedButton.styleFrom(
-            backgroundColor: destructive ? DT.error : DT.blue800,
+            backgroundColor: _kBrand, // buttons: only #093C71
             foregroundColor: Colors.white,
             elevation: 0,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),

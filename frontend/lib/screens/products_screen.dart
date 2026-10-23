@@ -6,12 +6,22 @@ import '../widgets/product_card.dart';
 import '../utils/cart_helper.dart';
 import 'franchise_plans_screen.dart';
 import 'product_enquiry_screen.dart';
-import 'product_detail_screen.dart';   // 🆕 add this line
+import 'product_detail_screen.dart'; // 🆕 IMPORT ADD KELA
+
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kTint = Color(0xFFEAF1F9);
+const _kLine = Color(0xFFC9DBEE);
+const _kRed = Color(0xFFC62828);
+const _kRedBg = Color(0xFFFEF2F2);
+const _kRedLine = Color(0xFFFECACA);
+const _kOrange = Color(0xFFF7931E);
 
 // Colours used only on this screen (the rest come from DT).
 class _C {
-  static const navy3 = Color(0xFF312E81);
-  static const blue600 = Color(0xFF6366F1);
+  static const navy3 = Color(0xFF062A50);
+  static const blue600 = Color(0xFF093C71);
 }
 
 enum _Sort { recommended, priceLow, priceHigh, nameAz, discount }
@@ -44,7 +54,6 @@ class ProductsScreen extends StatefulWidget {
 
 class _ProductsScreenState extends State<ProductsScreen> {
   static const int _pageSize = 10;
-  static const double _cardExtent = 292;
 
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -224,6 +233,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
     );
   }
 
+  void _openEnquiry(Product product) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProductEnquiryScreen(product: product),
+      ),
+    );
+  }
+
+  // 🆕 Detail Screen la navigate karnyachi method add keli
   void _openDetail(Product product) {
     Navigator.push(
       context,
@@ -233,11 +252,114 @@ class _ProductsScreenState extends State<ProductsScreen> {
     );
   }
 
-  void _openEnquiry(Product product) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ProductEnquiryScreen(product: product),
+  void _openProductQuickView(Product p) {
+    final fp = double.tryParse(p.finalPrice) ?? 0;
+    final mrp = double.tryParse(p.price) ?? 0;
+    final off = (mrp > fp && fp > 0) ? (((mrp - fp) / mrp) * 100).round() : 0;
+    final stock = p.stockQuantity;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.6),
+          child: ListView(
+            shrinkWrap: true,
+            padding: const EdgeInsets.fromLTRB(18, 10, 18, 18),
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(color: DT.slate300, borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+              const SizedBox(height: 14),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  color: Colors.white,
+                  child: AspectRatio(
+                    aspectRatio: 4 / 3,
+                    child: p.thumbnail.isEmpty
+                        ? Container(color: DT.slate100, child: const Icon(Icons.inventory_2_outlined, size: 48, color: DT.slate300))
+                        : Image.network(
+                      p.thumbnail,
+                      fit: BoxFit.contain,
+                      loadingBuilder: (_, child, prog) => prog == null
+                          ? child
+                          : Container(color: DT.slate100, child: const Center(child: CircularProgressIndicator(strokeWidth: 2, color: _kBrand))),
+                      errorBuilder: (_, __, ___) => Container(color: DT.slate100, child: const Icon(Icons.broken_image_outlined, size: 40, color: DT.slate300)),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      [p.categoryName, p.brandName].where((s) => s.isNotEmpty).join(' · ').toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: DT.text(size: 10.5, weight: FontWeight.w800, color: DT.slate500, letterSpacing: 0.6),
+                    ),
+                  ),
+                  if (p.isFranchiseAvailable)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(color: _kTint, borderRadius: BorderRadius.circular(999)),
+                      child: Text('🏪 Franchise', style: DT.text(size: 10.5, weight: FontWeight.w800, color: _kBrand)),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(p.name, style: DT.text(size: 18, weight: FontWeight.w800, color: DT.onyx900, height: 1.25)),
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('₹${p.finalPrice}', style: DT.text(size: 22, weight: FontWeight.w900, color: DT.onyx900)),
+                  if (off > 0) ...[
+                    const SizedBox(width: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 3),
+                      child: Text('₹${p.price}', style: DT.text(size: 13, color: DT.slate400, decoration: TextDecoration.lineThrough)),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 3),
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(color: DT.emerald50, borderRadius: BorderRadius.circular(4)),
+                      child: Text('$off% off', style: DT.text(size: 11, weight: FontWeight.w800, color: DT.emerald700)),
+                    ),
+                  ],
+                ],
+              ),
+              if (stock != null) ...[
+                const SizedBox(height: 6),
+                Text(
+                  stock <= 0 ? 'Out of stock' : 'In stock: $stock${p.unitName.isEmpty ? '' : ' ${p.unitName.toUpperCase()}'}',
+                  style: DT.text(size: 12.5, weight: FontWeight.w700, color: stock <= 0 ? _kRed : DT.emerald700),
+                ),
+              ],
+              if (p.companyName.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Row(children: [
+                  const Icon(Icons.storefront_outlined, size: 15, color: DT.slate400),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: Text('Sold by ${p.companyName}', maxLines: 1, overflow: TextOverflow.ellipsis, style: DT.text(size: 12.5, color: DT.onyx600)),
+                  ),
+                ]),
+              ],
+              const SizedBox(height: 18),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -315,7 +437,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   child: Row(
                     children: [
                       const Icon(Icons.storefront_outlined,
-                          size: 20, color: DT.blue700),
+                          size: 20, color: _kBrand),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
@@ -344,7 +466,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context, true),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: DT.onyx900,
+                      backgroundColor: _kBrand, // buttons: only #093C71
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
@@ -477,10 +599,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
     return Tooltip(
       message: 'Sort & filter',
       child: Material(
-        color: active ? DT.onyx900 : DT.slate100,
+        color: active ? _kBrand : DT.slate100,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(DT.rLg),
-          side: BorderSide(color: active ? DT.onyx900 : DT.slate200),
+          side: BorderSide(color: active ? _kBrand : DT.slate200),
         ),
         child: InkWell(
           onTap: _openSortSheet,
@@ -501,9 +623,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       width: 8,
                       height: 8,
                       decoration: BoxDecoration(
-                        color: DT.amber500,
+                        color: _kOrange,
                         shape: BoxShape.circle,
-                        border: Border.all(color: DT.onyx900, width: 1.5),
+                        border: Border.all(color: _kBrand, width: 1.5),
                       ),
                     ),
                   ),
@@ -547,25 +669,17 @@ class _ProductsScreenState extends State<ProductsScreen> {
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   mainAxisSpacing: 12,
                   crossAxisSpacing: 12,
-                  mainAxisExtent: _cardExtent, // fixed height = no overflow
+                  // 🆕 Home screen sarkha height kela ahe jene image pori disel aani buttns khali basatil
+                  mainAxisExtent: (MediaQuery.of(context).size.width - 44) / 2 + 105,
                 ),
                 delegate: SliverChildBuilderDelegate(
                       (context, i) {
                     final p = shown[i];
-                    return ProductCard(
-                      product: p,
-                      onTap: () => _openDetail(p),
-                      onEnquiry: () => _openEnquiry(p),
-                      onAddToCart: () =>
-                          CartHelper.addToCart(context: context, product: p),
-                      onFranchiseTap: p.isFranchiseAvailable
-                          ? () => _openFranchise(p)
-                          : null,
-                    );
+                    return _productCard(p); // 🆕 Home screen sarkha custom card
                   },
                   childCount: shown.length,
                 ),
@@ -574,6 +688,171 @@ class _ProductsScreenState extends State<ProductsScreen> {
             SliverToBoxAdapter(child: _buildListFooter()),
           ],
         ],
+      ),
+    );
+  }
+
+  // 🆕 Home Screen sarkha Product Card (Image purni disnya sathi BoxFit.contain) AANI DETAIL VAR NAVIGATE KARNAYCHA ONTAP ADD KELA
+  Widget _productCard(Product p) {
+    final fp = double.tryParse(p.finalPrice) ?? 0;
+    final mrp = double.tryParse(p.price) ?? 0;
+    final showMrp = mrp > fp && fp > 0;
+    final stock = p.stockQuantity;
+    final sub = [
+      if (p.brandName.isNotEmpty) p.brandName,
+      if (stock != null)
+        stock <= 0 ? 'Out of stock' : '$stock${p.unitName.isEmpty ? '' : ' ${p.unitName.toUpperCase()}'}'
+      else if (p.categoryName.isNotEmpty)
+        p.categoryName,
+    ].join(' · ');
+
+    Widget placeholder() => Container(
+      color: DT.slate100,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.all(8),
+      child: Text(
+        p.brandName.isNotEmpty ? p.brandName : p.name,
+        textAlign: TextAlign.center,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: DT.text(size: 22, weight: FontWeight.w900, color: DT.onyx800, letterSpacing: -1),
+      ),
+    );
+
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        // 🆕 Ithe onTap madhe _openDetail(p) add kela ahe
+        onTap: () => _openDetail(p),
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _kLine),
+            boxShadow: const [BoxShadow(color: Color(0x080F172A), blurRadius: 2, offset: Offset(0, 1))],
+          ),
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AspectRatio(
+                aspectRatio: 1,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      p.thumbnail.isEmpty
+                          ? placeholder()
+                          : Image.network(p.thumbnail,
+                          fit: BoxFit.contain, // Image purni disnya sathi
+                          loadingBuilder: (_, child, prog) => prog == null ? child : Container(color: DT.slate100),
+                          errorBuilder: (_, __, ___) => placeholder()),
+                      if (p.isFranchiseAvailable)
+                        Positioned(
+                          left: 6,
+                          top: 6,
+                          child: GestureDetector(
+                            onTap: () => _openFranchise(p),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: _kBrand,
+                                borderRadius: BorderRadius.circular(999),
+                                boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 3)],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text('🏪', style: TextStyle(fontSize: 9)),
+                                  const SizedBox(width: 4),
+                                  Text('Franchise',
+                                      style: DT.text(size: 9.5, weight: FontWeight.w800, color: Colors.white)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(p.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: DT.text(size: 12.5, weight: FontWeight.w800, color: DT.onyx800)),
+              const SizedBox(height: 1),
+              Text(sub.isEmpty ? ' ' : sub,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: DT.text(size: 10.5, color: stock != null && stock <= 0 ? _kRed : DT.slate400)),
+              const SizedBox(height: 3),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Flexible(
+                    child: Text('₹${p.finalPrice}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: DT.text(size: 13, weight: FontWeight.w900, color: DT.onyx900)),
+                  ),
+                  if (showMrp) ...[
+                    const SizedBox(width: 5),
+                    Flexible(
+                      child: Text('₹${p.price}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: DT.text(size: 10, color: DT.slate400, decoration: TextDecoration.lineThrough)),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => _openEnquiry(p),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: DT.onyx800,
+                        side: const BorderSide(color: DT.slate300),
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        minimumSize: const Size(0, 28),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(DT.rMd),
+                        ),
+                      ),
+                      child: Text('Enquiry',
+                          style: DT.text(size: 10, weight: FontWeight.w700, color: DT.onyx800)),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => CartHelper.addToCart(context: context, product: p),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _kBrand,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        minimumSize: const Size(0, 28),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(DT.rMd),
+                        ),
+                      ),
+                      child: Text('Add',
+                          style: DT.text(size: 10, weight: FontWeight.w700, color: Colors.white)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -673,11 +952,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
     return GridView.builder(
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 44, 16, 16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        mainAxisExtent: _cardExtent,
+        // 🆕 Same as new size
+        mainAxisExtent: (MediaQuery.of(context).size.width - 44) / 2 + 105,
       ),
       itemCount: 6,
       itemBuilder: (_, __) => Container(
@@ -760,8 +1040,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
             OutlinedButton(
               onPressed: _clearAll,
               style: OutlinedButton.styleFrom(
-                foregroundColor: DT.onyx800,
-                side: const BorderSide(color: DT.slate300),
+                foregroundColor: _kBrand,
+                side: const BorderSide(color: _kBrand),
                 padding:
                 const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
@@ -770,7 +1050,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
               ),
               child: Text('Clear search & filters',
                   style: DT.text(
-                      size: 12.5, weight: FontWeight.w700, color: DT.onyx800)),
+                      size: 12.5, weight: FontWeight.w700, color: _kBrand)),
             ),
           ],
         ],
@@ -797,9 +1077,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       width: 80,
                       height: 80,
                       decoration: const BoxDecoration(
-                          color: DT.errorBg, shape: BoxShape.circle),
+                          color: _kRedBg, shape: BoxShape.circle),
                       child: const Icon(Icons.cloud_off_rounded,
-                          size: 38, color: DT.error),
+                          size: 38, color: _kRed),
                     ),
                     const SizedBox(height: 16),
                     Text("Couldn't load products",
@@ -821,7 +1101,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                               weight: FontWeight.w700,
                               color: Colors.white)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _C.navy3,
+                        backgroundColor: _kBrand, // buttons: only #093C71
                         foregroundColor: Colors.white,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(
@@ -845,25 +1125,25 @@ class _ProductsScreenState extends State<ProductsScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 6, 4, 6),
       decoration: BoxDecoration(
-        color: DT.errorBg,
+        color: _kRedBg,
         borderRadius: BorderRadius.circular(DT.rMd),
-        border: Border.all(color: DT.errorBorder),
+        border: Border.all(color: _kRedLine),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline_rounded, color: DT.error, size: 18),
+          const Icon(Icons.error_outline_rounded, color: _kRed, size: 18),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               "Couldn't refresh. Showing the last loaded products.",
-              style: DT.text(size: 12, weight: FontWeight.w500, color: DT.error),
+              style: DT.text(size: 12, weight: FontWeight.w500, color: _kRed),
             ),
           ),
           TextButton(
             onPressed: _loadProducts,
             child: Text('Retry',
                 style: DT.text(
-                    size: 12, weight: FontWeight.w700, color: DT.error)),
+                    size: 12, weight: FontWeight.w700, color: _kRed)),
           ),
         ],
       ),
@@ -895,9 +1175,9 @@ class _CategoryChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? DT.onyx900 : Colors.white,
+          color: selected ? _kBrand : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: selected ? DT.onyx900 : DT.slate200),
+          border: Border.all(color: selected ? _kBrand : DT.slate200),
           boxShadow: DT.shadowXs,
         ),
         child: Text(
@@ -927,18 +1207,18 @@ class _ActivePill extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.fromLTRB(10, 4, 6, 4),
         decoration: BoxDecoration(
-          color: DT.blue50,
+          color: _kTint,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: DT.blue200),
+          border: Border.all(color: _kLine),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(label,
                 style: DT.text(
-                    size: 11, weight: FontWeight.w600, color: DT.blue700)),
+                    size: 11, weight: FontWeight.w600, color: _kBrand)),
             const SizedBox(width: 2),
-            const Icon(Icons.close_rounded, size: 13, color: DT.blue700),
+            const Icon(Icons.close_rounded, size: 13, color: _kBrand),
           ],
         ),
       ),
@@ -962,7 +1242,7 @@ class _SortOption extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Material(
-        color: selected ? DT.blue50 : Colors.white,
+        color: selected ? _kTint : Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(DT.rMd),
           side: BorderSide(
@@ -986,7 +1266,7 @@ class _SortOption extends StatelessWidget {
                     style: DT.text(
                       size: 13,
                       weight: selected ? FontWeight.w700 : FontWeight.w500,
-                      color: selected ? DT.blue700 : DT.onyx800,
+                      color: selected ? _kBrand : DT.onyx800,
                     ),
                   ),
                 ),

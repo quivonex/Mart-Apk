@@ -18,10 +18,25 @@ import '../models/order_model.dart';
 import '../services/cart_service.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'checkout_screen.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kTint = Color(0xFFEAF1F9);
+const _kRed = Color(0xFFC62828);
+const _kOrangeDark = Color(0xFFC2410C);
+const _kOrangeBg = Color(0xFFFFF7ED);
+const _kOrangeLine = Color(0xFFFED7AA);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
-const _brand = Color(0xFF6366F1);
-const _violet = Color(0xFF8B5CF6);
-const _accent = Color(0xFFF97316);
+const _brand = Color(0xFF093C71);
+const _violet = Color(0xFF1E5A9C);
+const _accent = Color(0xFFF7931E);
 const _green = Color(0xFF10B981);
 
 class ReorderScreen extends StatefulWidget {
@@ -129,7 +144,7 @@ class _ReorderScreenState extends State<ReorderScreen> {
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
         content: Text(msg, style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
-        backgroundColor: error ? DT.error : DT.onyx900,
+        backgroundColor: error ? _kRed : DT.onyx900,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -177,7 +192,7 @@ class _ReorderScreenState extends State<ReorderScreen> {
                   onPressed: () => Navigator.pop(ctx, true),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size.fromHeight(46),
-                    backgroundColor: _brand,
+                    backgroundColor: _kBrand, // buttons: only #093C71
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -223,7 +238,7 @@ class _ReorderScreenState extends State<ReorderScreen> {
     preferredSize: const Size.fromHeight(64),
     child: Container(
       decoration: const BoxDecoration(
-        gradient: LinearGradient(colors: [Color(0xFF4F46E5), _brand, _violet]),
+        gradient: _kHeader,
       ),
       child: SafeArea(
         bottom: false,
@@ -247,7 +262,7 @@ class _ReorderScreenState extends State<ReorderScreen> {
                     Text('From order ${_o.orderNumber}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: DT.text(size: 12, color: const Color(0xFFE0E7FF))),
+                        style: DT.text(size: 12, color: const Color(0xFFC9DBEE))),
                   ],
                 ),
               ),
@@ -331,7 +346,7 @@ class _ReorderScreenState extends State<ReorderScreen> {
         Container(
           width: 40,
           height: 40,
-          decoration: BoxDecoration(color: DT.blue50, borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(color: _kTint, borderRadius: BorderRadius.circular(12)),
           child: const Icon(Icons.history_rounded, color: _brand, size: 22),
         ),
         const SizedBox(width: 12),
@@ -404,7 +419,7 @@ class _ReorderScreenState extends State<ReorderScreen> {
 
   Widget _stepper() {
     Widget btn(IconData icon, VoidCallback? onTap) => Material(
-      color: onTap == null ? DT.slate100 : DT.blue50,
+      color: onTap == null ? DT.slate100 : _kTint,
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),
@@ -433,19 +448,19 @@ class _ReorderScreenState extends State<ReorderScreen> {
   Widget _priceNote() => Container(
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: DT.amber50,
+      color: _kOrangeBg,
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: DT.amber200),
+      border: Border.all(color: _kOrangeLine),
     ),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(Icons.info_outline_rounded, size: 18, color: DT.amber700),
+        const Icon(Icons.info_outline_rounded, size: 18, color: _kOrangeDark),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
             'The estimate uses your last price. Checkout shows today\'s price, tax and delivery.',
-            style: DT.text(size: 12, color: DT.amber900, height: 1.45),
+            style: DT.text(size: 12, color: _kOrangeDark, height: 1.45),
           ),
         ),
       ],
@@ -503,7 +518,7 @@ class _ReorderScreenState extends State<ReorderScreen> {
                     height: 50,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [_brand, _violet, _accent]),
+                        color: _kBrand, // buttons: only #093C71
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: ElevatedButton.icon(

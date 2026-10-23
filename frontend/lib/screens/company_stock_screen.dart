@@ -9,6 +9,15 @@ import '../models/company_model.dart';
 import '../models/company_stock_model.dart';
 import '../services/company_service.dart';
 import '../widgets/company_ui.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kRed = Color(0xFFC62828);
+const _kRedBg = Color(0xFFFEF2F2);
+const _kRedLine = Color(0xFFFECACA);
+const _kOrangeDark = Color(0xFFC2410C);
+const _kOrangeBg = Color(0xFFFFF7ED);
+const _kOrangeLine = Color(0xFFFED7AA);
 
 class CompanyStockScreen extends StatefulWidget {
   final Company company;
@@ -69,9 +78,9 @@ class _CompanyStockScreenState extends State<CompanyStockScreen> {
             ),
           ],
           bottom: TabBar(
-            labelColor: DT.blue800,
+            labelColor: _kBrand,
             unselectedLabelColor: DT.slate500,
-            indicatorColor: DT.blue800,
+            indicatorColor: _kBrand,
             indicatorWeight: 2.5,
             labelStyle: DT.text(size: 13, weight: FontWeight.w700),
             unselectedLabelStyle: DT.text(size: 13, weight: FontWeight.w600),
@@ -82,7 +91,7 @@ class _CompanyStockScreenState extends State<CompanyStockScreen> {
           ),
         ),
         body: _loading
-            ? const Center(child: CircularProgressIndicator(color: DT.blue800))
+            ? const Center(child: CircularProgressIndicator(color: _kBrand))
             : TabBarView(children: [_allTab(), _lowTab()]),
       ),
     );
@@ -114,7 +123,7 @@ class _CompanyStockScreenState extends State<CompanyStockScreen> {
     final sorted = [...s.products]..sort((a, b) => a.remainingStock.compareTo(b.remainingStock));
 
     return RefreshIndicator(
-      color: DT.blue800,
+      color: _kBrand,
       onRefresh: _load,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -154,7 +163,7 @@ class _CompanyStockScreenState extends State<CompanyStockScreen> {
       child: Row(children: [
         cell('Total stock', s.totalStock, DT.onyx900),
         cell('Sold', s.totalSold, DT.emerald700),
-        cell('Remaining', s.totalRemaining, DT.blue800),
+        cell('Remaining', s.totalRemaining, _kBrand),
       ]),
     );
   }
@@ -162,14 +171,14 @@ class _CompanyStockScreenState extends State<CompanyStockScreen> {
   Widget _mismatchNote(String backendName) => Container(
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: DT.amber50,
+      color: _kOrangeBg,
       borderRadius: BorderRadius.circular(DT.rMd),
-      border: Border.all(color: DT.amber200),
+      border: Border.all(color: _kOrangeLine),
     ),
     child: Text(
       'Showing stock for $backendName. The server currently returns stock for '
           'your first company only.',
-      style: DT.text(size: 12, color: DT.amber900, height: 1.45),
+      style: DT.text(size: 12, color: _kOrangeDark, height: 1.45),
     ),
   );
 
@@ -197,7 +206,7 @@ class _CompanyStockScreenState extends State<CompanyStockScreen> {
     }
     final sorted = [...l.products]..sort((a, b) => a.stockQuantity.compareTo(b.stockQuantity));
     return RefreshIndicator(
-      color: DT.blue800,
+      color: _kBrand,
       onRefresh: _load,
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -218,9 +227,9 @@ class _StockRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = item.isOut
-        ? DT.error
+        ? _kRed
         : item.isLow
-        ? DT.amber700
+        ? _kOrangeDark
         : DT.emerald700;
     return Container(
       padding: const EdgeInsets.all(14),
@@ -252,7 +261,7 @@ class _StockRow extends StatelessWidget {
               value: item.soldRatio,
               minHeight: 6,
               backgroundColor: DT.slate100,
-              color: DT.blue800,
+              color: _kBrand,
             ),
           ),
           const SizedBox(height: 6),
@@ -283,7 +292,7 @@ class _LowStockRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(DT.rMd),
-        border: Border.all(color: out ? DT.errorBorder : DT.border),
+        border: Border.all(color: out ? _kRedLine : DT.border),
       ),
       child: Row(
         children: [
@@ -329,7 +338,7 @@ class _LowStockRow extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: out ? DT.errorBg : DT.amber50,
+              color: out ? _kRedBg : _kOrangeBg,
               borderRadius: BorderRadius.circular(DT.rSm),
             ),
             child: Column(
@@ -338,9 +347,9 @@ class _LowStockRow extends StatelessWidget {
                     style: DT.text(
                         size: 16,
                         weight: FontWeight.w800,
-                        color: out ? DT.error : DT.amber800)),
+                        color: out ? _kRed : _kOrangeDark)),
                 Text('left',
-                    style: DT.text(size: 10, color: out ? DT.error : DT.amber800)),
+                    style: DT.text(size: 10, color: out ? _kRed : _kOrangeDark)),
               ],
             ),
           ),

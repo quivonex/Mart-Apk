@@ -33,30 +33,43 @@ import '../services/property_create_service.dart';
 import '../services/real_estate_service.dart';
 import '../widgets/catalog_widgets.dart' show DecimalInputFormatter;
 import '../widgets/product_ui.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kRed = Color(0xFFC62828);
+const _kRedBg = Color(0xFFFEF2F2);
+const _kRedLine = Color(0xFFFECACA);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 // ─────────────────────────────────────────────────────────────────────
 // Local palette (matches code.html / app theme)
 // ─────────────────────────────────────────────────────────────────────
 class _PC {
-  static const navy = Color(0xFF122036);
+  static const navy = Color(0xFF062A50);
   static const navyDeep = Color(0xFF0F172A);
-  static const blue600 = Color(0xFF2563EB);
-  static const blue500 = Color(0xFF1A68FA);
-  static const blue50 = Color(0xFFEFF6FF);
-  static const blue100 = Color(0xFFDBEAFE);
-  static const blue200 = Color(0xFFBFDBFE);
-  static const indigo50 = Color(0xFFEEF2FF);
-  static const indigo600 = Color(0xFF4F46E5);
+  static const blue600 = Color(0xFF093C71);
+  static const blue500 = Color(0xFF093C71);
+  static const blue50 = Color(0xFFEAF1F9);
+  static const blue100 = Color(0xFFC9DBEE);
+  static const blue200 = Color(0xFFC9DBEE);
+  static const indigo50 = Color(0xFFEAF1F9);
+  static const indigo600 = Color(0xFF062A50);
   static const emerald50 = Color(0xFFECFDF5);
   static const emerald100 = Color(0xFFD1FAE5);
   static const emerald200 = Color(0xFFA7F3D0);
   static const emerald600 = Color(0xFF059669);
   static const emerald700 = Color(0xFF047857);
-  static const rose50 = Color(0xFFFFF1F2);
-  static const rose200 = Color(0xFFFECDD3);
-  static const rose500 = Color(0xFFF43F5E);
-  static const rose600 = Color(0xFFE11D48);
-  static const amber500 = Color(0xFFF59E0B);
+  static const rose50 = Color(0xFFFEF2F2);
+  static const rose200 = Color(0xFFFECACA);
+  static const rose500 = Color(0xFFC62828);
+  static const rose600 = Color(0xFFC62828);
+  static const amber500 = Color(0xFFF7931E);
   static const slate50 = Color(0xFFF8FAFC);
   static const slate100 = Color(0xFFF1F5F9);
   static const slate200 = Color(0xFFE2E8F0);
@@ -261,7 +274,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
         content: Text(msg),
-        backgroundColor: error ? DT.error : null,
+        backgroundColor: error ? _kRed : null,
       ));
   }
 
@@ -423,7 +436,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                 width: 44,
                 height: 44,
                 decoration: const BoxDecoration(
-                    gradient: DT.headerGradient, shape: BoxShape.circle),
+                    gradient: _kHeader, shape: BoxShape.circle),
                 child: Icon(icon, color: Colors.white, size: 22),
               ),
               const SizedBox(height: 8),
@@ -771,6 +784,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: _kBrand, foregroundColor: Colors.white),
                 onPressed: () => Navigator.pop(ctx),
                 child: const Text('Done')),
           ),
@@ -861,7 +875,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                   child: const Text('Keep editing')),
               ElevatedButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                style: ElevatedButton.styleFrom(backgroundColor: DT.error),
+                style: ElevatedButton.styleFrom(backgroundColor: _kBrand), // buttons: only #093C71
                 child: const Text('Discard'),
               ),
             ],
@@ -947,7 +961,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                         style: DT.text(
                             size: 18,
                             weight: FontWeight.w900,
-                            color: const Color(0xFF1E3A8A),
+                            color: const Color(0xFF093C71),
                             letterSpacing: -0.6),
                       ),
                       TextSpan(
@@ -955,7 +969,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                         style: DT.text(
                             size: 18,
                             weight: FontWeight.w800,
-                            color: _PC.orange500,
+                            color: _kRed,
                             letterSpacing: -0.3),
                       ),
                     ],
@@ -992,7 +1006,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                                 horizontal: 4, vertical: 1),
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFDC2626),
+                              color: const Color(0xFFC62828),
                               borderRadius: BorderRadius.circular(999),
                               border:
                               Border.all(color: Colors.white, width: 2),
@@ -1396,7 +1410,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           boxShadow: selected
               ? const [
             BoxShadow(
-                color: Color(0x332563EB),
+                color: Color(0x33093C71),
                 blurRadius: 6,
                 offset: Offset(0, 2))
           ]
@@ -2403,9 +2417,9 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF5F3FF),
+              color: const Color(0xFFEAF1F9),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFDDD6FE)),
+              border: Border.all(color: const Color(0xFFC9DBEE)),
             ),
             child: Row(
               children: [
@@ -2413,7 +2427,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    gradient: DT.headerGradient,
+                    gradient: _kHeader,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.videocam_rounded,
@@ -2444,20 +2458,20 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                     color: full ? _PC.slate100 : Colors.white,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                        color: full ? _PC.slate200 : const Color(0xFFC4B5FD)),
+                        color: full ? _PC.slate200 : const Color(0xFFA3C1E0)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.add_rounded,
                           size: 14,
-                          color: full ? _PC.slate400 : DT.secondary),
+                          color: full ? _PC.slate400 : _kBrandLight),
                       const SizedBox(width: 2),
                       Text(full ? 'Max' : 'Add Video',
                           style: DT.text(
                               size: 11,
                               weight: FontWeight.w700,
-                              color: full ? _PC.slate400 : DT.secondary)),
+                              color: full ? _PC.slate400 : _kBrandLight)),
                     ],
                   ),
                 ),
@@ -2619,7 +2633,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                   child: ElevatedButton(
                     onPressed: _saving ? null : _submit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _PC.blue600,
+                      backgroundColor: _kBrand, // buttons: only #093C71
                       foregroundColor: Colors.white,
                       elevation: 4,
                       shadowColor: _PC.blue500.withValues(alpha: 0.25),
@@ -2791,13 +2805,13 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: DT.error),
+          borderSide: const BorderSide(color: _kRed),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: DT.error, width: 1.6),
+          borderSide: const BorderSide(color: _kRed, width: 1.6),
         ),
-        errorStyle: DT.text(size: 11, color: DT.error),
+        errorStyle: DT.text(size: 11, color: _kRed),
       ),
     );
   }
@@ -2854,7 +2868,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           style: DT.text(
               size: 12, weight: FontWeight.w700, color: Colors.white)),
       style: ElevatedButton.styleFrom(
-        backgroundColor: _PC.emerald600,
+        backgroundColor: _kBrand, // buttons: only #093C71
         foregroundColor: Colors.white,
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -3164,7 +3178,7 @@ class _UnitSheetState extends State<_UnitSheet> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _PC.blue600,
+                    backgroundColor: _kBrand, // buttons: only #093C71
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
@@ -3247,11 +3261,11 @@ class _UnitSheetState extends State<_UnitSheet> {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: DT.error),
+          borderSide: const BorderSide(color: _kRed),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: DT.error, width: 1.6),
+          borderSide: const BorderSide(color: _kRed, width: 1.6),
         ),
       ),
     );
@@ -3342,7 +3356,7 @@ class _FloorSheetState extends State<_FloorSheet> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _PC.blue600,
+                    backgroundColor: _kBrand, // buttons: only #093C71
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
@@ -3426,11 +3440,11 @@ class _FloorSheetState extends State<_FloorSheet> {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: DT.error),
+          borderSide: const BorderSide(color: _kRed),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: DT.error, width: 1.6),
+          borderSide: const BorderSide(color: _kRed, width: 1.6),
         ),
       ),
     );
@@ -3561,7 +3575,7 @@ class _SlabSheetState extends State<_SlabSheet> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _PC.blue600,
+                    backgroundColor: _kBrand, // buttons: only #093C71
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
@@ -3645,11 +3659,11 @@ class _SlabSheetState extends State<_SlabSheet> {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: DT.error),
+          borderSide: const BorderSide(color: _kRed),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: DT.error, width: 1.6),
+          borderSide: const BorderSide(color: _kRed, width: 1.6),
         ),
       ),
     );
@@ -3746,7 +3760,7 @@ class _InteractiveMapViewState extends State<_InteractiveMapView> {
                   child: const Icon(
                     Icons.location_on,
                     size: 44,
-                    color: Color(0xFFE11D48),
+                    color: Color(0xFFC62828),
                     shadows: [
                       Shadow(color: Colors.black38, blurRadius: 6),
                     ],
@@ -3911,7 +3925,7 @@ class _AmenitySheetState extends State<_AmenitySheet> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      gradient: DT.headerGradient,
+                      gradient: _kHeader,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(Icons.add_task_rounded,
@@ -3987,11 +4001,11 @@ class _AmenitySheetState extends State<_AmenitySheet> {
                   ),
                   errorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: DT.error),
+                    borderSide: const BorderSide(color: _kRed),
                   ),
                   focusedErrorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: DT.error, width: 1.6),
+                    borderSide: const BorderSide(color: _kRed, width: 1.6),
                   ),
                 ),
               ),
@@ -4017,21 +4031,21 @@ class _AmenitySheetState extends State<_AmenitySheet> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: DT.errorBg,
+                    color: _kRedBg,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: DT.errorBorder),
+                    border: Border.all(color: _kRedLine),
                   ),
                   child: Row(
                     children: [
                       const Icon(Icons.error_outline_rounded,
-                          size: 16, color: DT.error),
+                          size: 16, color: _kRed),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(_error!,
                             style: DT.text(
                                 size: 12,
                                 weight: FontWeight.w600,
-                                color: DT.error)),
+                                color: _kRed)),
                       ),
                     ],
                   ),
@@ -4042,7 +4056,7 @@ class _AmenitySheetState extends State<_AmenitySheet> {
                 height: 50,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    gradient: DT.ctaGradient,
+                    color: _kBrand, // buttons: only #093C71
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: ElevatedButton.icon(

@@ -15,16 +15,28 @@ import '../services/my_property_service.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'property_create_screen.dart';
 import 'property_detail_screen.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kRed = Color(0xFFC62828);
+const _kRedBg = Color(0xFFFEF2F2);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 class _MP {
-  static const brand = Color(0xFF6366F1);
-  static const brandDark = Color(0xFF4338CA);
-  static const violet = Color(0xFF8B5CF6);
-  static const orange = Color(0xFFF97316);
+  static const brand = Color(0xFF093C71);
+  static const brandDark = Color(0xFF062A50);
+  static const violet = Color(0xFF1E5A9C);
+  static const orange = Color(0xFFF7931E);
   static const bg = Color(0xFFF8FAFC);
   static const line = Color(0xFFE2E8F0);
-  static const tint = Color(0xFFEEF2FF);
-  static const tintLine = Color(0xFFC7D2FE);
+  static const tint = Color(0xFFEAF1F9);
+  static const tintLine = Color(0xFFC9DBEE);
   static const ink = Color(0xFF0F172A);
   static const muted = Color(0xFF64748B);
   static const hint = Color(0xFF94A3B8);
@@ -90,7 +102,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
         content: Text(msg, style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
-        backgroundColor: error ? DT.error : _MP.ink,
+        backgroundColor: error ? _kRed : _MP.ink,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -159,7 +171,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
         'name': 'QNX Mart Real Estate',
         'description': '${plan.name} · ${p.title}',
         'prefill': {if (email != null && email.isNotEmpty) 'email': email},
-        'theme': {'color': '#6366F1'},
+        'theme': {'color': '#093C71'},
       });
     } catch (e) {
       razorpay.clear();
@@ -199,7 +211,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
       backgroundColor: _MP.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        flexibleSpace: Container(decoration: const BoxDecoration(gradient: DT.headerGradient)),
+        flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)),
         foregroundColor: Colors.white,
         elevation: 0,
         title: Column(
@@ -213,7 +225,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _add,
-        backgroundColor: _MP.orange,
+        backgroundColor: _kBrand, // buttons: only #093C71
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_home_work_outlined),
         label: Text('Add property', style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
@@ -256,7 +268,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
       const SizedBox(height: 18),
       Center(
         child: FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: _MP.brand),
+          style: FilledButton.styleFrom(backgroundColor: _kBrand), // buttons: only #093C71
           onPressed: retry ? _load : _add,
           child: Text(retry ? 'Try again' : 'Add property'),
         ),
@@ -320,8 +332,8 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                           runSpacing: 4,
                           children: [
                             _pill(approvalText, approvalFg, approvalBg),
-                            _pill(running ? 'Live' : 'Not live', running ? const Color(0xFF047857) : DT.error,
-                                running ? const Color(0xFFECFDF5) : DT.errorBg),
+                            _pill(running ? 'Live' : 'Not live', running ? const Color(0xFF047857) : _kRed,
+                                running ? const Color(0xFFECFDF5) : _kRedBg),
                           ],
                         ),
                         const SizedBox(height: 6),
@@ -383,7 +395,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                     child: FilledButton(
                       onPressed: _payingId != null ? null : () => _activate(p),
                       style: FilledButton.styleFrom(
-                        backgroundColor: running ? _MP.brand : _MP.orange,
+                        backgroundColor: _kBrand, // buttons: only #093C71
                         padding: const EdgeInsets.symmetric(horizontal: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
@@ -457,7 +469,7 @@ class _PlanSheetState extends State<_PlanSheet> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(18, 10, 8, 16),
-              decoration: const BoxDecoration(gradient: DT.headerGradient),
+              decoration: const BoxDecoration(gradient: _kHeader),
               child: Column(
                 children: [
                   Container(
@@ -523,8 +535,7 @@ class _PlanSheetState extends State<_PlanSheet> {
                   height: 50,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      gradient: sel == null ? null : DT.ctaGradient,
-                      color: sel == null ? _MP.line : null,
+                      color: sel == null ? _MP.line : _kBrand, // buttons: only #093C71
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: ElevatedButton(

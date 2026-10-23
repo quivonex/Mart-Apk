@@ -18,19 +18,33 @@ import '../constants/design_tokens.dart';
 import '../services/customer_subscription_service.dart';
 import '../utils/login_gate.dart';
 import '../utils/shared_preferences_helper.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kRed = Color(0xFFC62828);
+const _kRedBg = Color(0xFFFEF2F2);
+const _kRedLine = Color(0xFFFECACA);
+const _kOrange = Color(0xFFF7931E);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 class _CS {
-  static const brand = Color(0xFF6366F1);
-  static const brandDark = Color(0xFF4338CA);
-  static const violet = Color(0xFF8B5CF6);
-  static const orange = Color(0xFFF97316);
+  static const brand = Color(0xFF093C71);
+  static const brandDark = Color(0xFF062A50);
+  static const violet = Color(0xFF1E5A9C);
+  static const orange = Color(0xFFF7931E);
   static const green = Color(0xFF10B981);
   static const greenDark = Color(0xFF047857);
   static const greenBg = Color(0xFFECFDF5);
   static const bg = Color(0xFFF8FAFC);
   static const line = Color(0xFFE2E8F0);
-  static const tint = Color(0xFFEEF2FF);
-  static const tintLine = Color(0xFFC7D2FE);
+  static const tint = Color(0xFFEAF1F9);
+  static const tintLine = Color(0xFFC9DBEE);
   static const ink = Color(0xFF0F172A);
   static const muted = Color(0xFF64748B);
   static const hint = Color(0xFF94A3B8);
@@ -122,7 +136,7 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
         content: Text(msg, style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
-        backgroundColor: error ? DT.error : _CS.ink,
+        backgroundColor: error ? _kRed : _CS.ink,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -170,7 +184,7 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
         'name': 'QNX Mart',
         'description': '${plan.name} · ${plan.enquiryLimit} enquiries',
         'prefill': {if (email != null && email.isNotEmpty) 'email': email},
-        'theme': {'color': '#6366F1'},
+        'theme': {'color': '#093C71'},
       });
     } catch (e) {
       razorpay.clear();
@@ -221,7 +235,7 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
             width: double.infinity,
             child: FilledButton(
               style: FilledButton.styleFrom(
-                  backgroundColor: _CS.brand, minimumSize: const Size.fromHeight(46)),
+                  backgroundColor: _kBrand, minimumSize: const Size.fromHeight(46)),
               onPressed: () => Navigator.pop(ctx),
               child: const Text('Continue'),
             ),
@@ -249,7 +263,7 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
         backgroundColor: _CS.bg,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
-          flexibleSpace: Container(decoration: const BoxDecoration(gradient: DT.headerGradient)),
+          flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)),
           foregroundColor: Colors.white,
           elevation: 0,
           title: Text('My Subscription', style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
@@ -304,15 +318,15 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
   Widget _errorBox(String text) => Container(
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: DT.errorBg,
+      color: _kRedBg,
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: DT.errorBorder),
+      border: Border.all(color: _kRedLine),
     ),
     child: Row(
       children: [
-        const Icon(Icons.error_outline_rounded, color: DT.error, size: 18),
+        const Icon(Icons.error_outline_rounded, color: _kRed, size: 18),
         const SizedBox(width: 8),
-        Expanded(child: Text(text, style: DT.text(size: 12.5, weight: FontWeight.w600, color: DT.error))),
+        Expanded(child: Text(text, style: DT.text(size: 12.5, weight: FontWeight.w600, color: _kRed))),
         TextButton(onPressed: _load, child: const Text('Retry')),
       ],
     ),
@@ -383,10 +397,10 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF312E81), _CS.brandDark, _CS.violet],
+          colors: [Color(0xFF062A50), _CS.brandDark, _CS.violet],
         ),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 18, offset: Offset(0, 8))],
+        boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 18, offset: Offset(0, 8))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -479,7 +493,7 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
           SizedBox(
             height: 48,
             child: DecoratedBox(
-              decoration: BoxDecoration(gradient: DT.ctaGradient, borderRadius: BorderRadius.circular(14)),
+              decoration: BoxDecoration(color: _kBrand, borderRadius: BorderRadius.circular(14)),
               child: ElevatedButton(
                 onPressed: _buyingPlanId != null ? null : () => _buy(p),
                 style: ElevatedButton.styleFrom(
@@ -515,7 +529,7 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
   );
 
   Widget _historyRow(CustomerSubscriptionInfo h) {
-    final color = h.isActive ? _CS.green : (h.status == 'expired' ? _CS.hint : DT.amber500);
+    final color = h.isActive ? _CS.green : (h.status == 'expired' ? _CS.hint : _kOrange);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),

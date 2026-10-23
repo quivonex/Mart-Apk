@@ -3,6 +3,16 @@
 import 'package:flutter/material.dart';
 import '../constants/design_tokens.dart';
 import 'package:google_fonts/google_fonts.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 class TermsConditionsScreen extends StatelessWidget {
   const TermsConditionsScreen({super.key});
@@ -12,8 +22,8 @@ class TermsConditionsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF4338CA),
-        flexibleSpace: Container(decoration: const BoxDecoration(gradient: DT.headerGradient)),
+        backgroundColor: const Color(0xFF062A50),
+        flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)),
         foregroundColor: Colors.white,
         elevation: 0,
         title: Column(
@@ -116,7 +126,7 @@ class TermsConditionsScreen extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF047857),
+                  backgroundColor: _kBrand, // buttons: only #093C71
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -156,7 +166,7 @@ class TermsConditionsScreen extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF4338CA),
+              color: const Color(0xFF062A50),
             ),
           ),
           const SizedBox(height: 4),

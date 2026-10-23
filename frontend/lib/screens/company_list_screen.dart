@@ -5,12 +5,31 @@ import '../services/company_service.dart';
 import '../utils/company_payment_helper.dart';
 import 'company_create_edit_screen.dart';
 import 'company_detail_screen.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kTint = Color(0xFFEAF1F9);
+const _kLine = Color(0xFFC9DBEE);
+const _kRed = Color(0xFFC62828);
+const _kRedBg = Color(0xFFFEF2F2);
+const _kRedLine = Color(0xFFFECACA);
+const _kOrange = Color(0xFFF7931E);
+const _kOrangeDark = Color(0xFFC2410C);
+const _kOrangeBg = Color(0xFFFFF7ED);
+const _kOrangeLine = Color(0xFFFED7AA);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 // Colours used only on this screen (the rest come from DT).
 class _C {
-  static const navy1 = Color(0xFF4338CA);
-  static const navy3 = Color(0xFF6366F1);
-  static const blue600 = Color(0xFF6366F1);
+  static const navy1 = Color(0xFF062A50);
+  static const navy3 = Color(0xFF093C71);
+  static const blue600 = Color(0xFF093C71);
   static const emerald600 = Color(0xFF10B981);
   static const emerald700 = Color(0xFF047857);
 }
@@ -146,7 +165,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
       floatingActionButton: showFab
           ? FloatingActionButton.extended(
         onPressed: _openCreate,
-        backgroundColor: _C.navy3,
+        backgroundColor: _kBrand, // buttons: only #093C71
         foregroundColor: Colors.white,
         elevation: 2,
         shape: RoundedRectangleBorder(
@@ -169,7 +188,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
       preferredSize: const Size.fromHeight(64),
       child: Container(
         decoration: const BoxDecoration(
-          gradient: DT.headerGradient,
+          gradient: _kHeader,
         ),
         child: SafeArea(
           bottom: false,
@@ -208,7 +227,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                           style: DT.text(
                               size: 11.5,
                               weight: FontWeight.w500,
-                              color: const Color(0xFFE0E7FF)),
+                              color: const Color(0xFFC9DBEE)),
                         ),
                       ],
                     ),
@@ -220,7 +239,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: DT.blue50,
+                        color: _kTint,
                         borderRadius: BorderRadius.circular(DT.rMd),
                       ),
                       child: const Icon(Icons.add_business_outlined,
@@ -283,9 +302,9 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: DT.blue50,
+        color: _kTint,
         borderRadius: BorderRadius.circular(DT.rLg),
-        border: Border.all(color: DT.blue200),
+        border: Border.all(color: _kLine),
       ),
       padding: const EdgeInsets.symmetric(vertical: 14),
       child: IntrinsicHeight(
@@ -295,7 +314,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
             _divider(),
             _stat('Paid', _paidCount, _C.emerald600),
             _divider(),
-            _stat('Payment pending', _pendingCount, DT.amber600),
+            _stat('Payment pending', _pendingCount, _kOrange),
           ],
         ),
       ),
@@ -327,7 +346,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
     );
   }
 
-  Widget _divider() => Container(width: 1, color: DT.blue200);
+  Widget _divider() => Container(width: 1, color: _kLine);
 
   // ---------- Search ----------
   Widget _buildSearch() {
@@ -400,7 +419,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                   padding:
                   const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                   decoration: BoxDecoration(
-                    color: selected ? const Color(0x33FFFFFF) : DT.blue50,
+                    color: selected ? const Color(0x33FFFFFF) : _kTint,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -501,7 +520,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
   Widget _buildEmptyState() {
     return _StateView(
       icon: Icons.business_outlined,
-      iconBg: DT.blue50,
+      iconBg: _kTint,
       iconFg: _C.blue600,
       title: 'No companies yet',
       message:
@@ -516,8 +535,8 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
   Widget _buildErrorState() {
     return _StateView(
       icon: Icons.cloud_off_rounded,
-      iconBg: DT.errorBg,
-      iconFg: DT.error,
+      iconBg: _kRedBg,
+      iconFg: _kRed,
       title: "Couldn't load your companies",
       message: _error ?? '',
       buttonLabel: 'Try again',
@@ -531,25 +550,25 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: DT.errorBg,
+        color: _kRedBg,
         borderRadius: BorderRadius.circular(DT.rMd),
-        border: Border.all(color: DT.errorBorder),
+        border: Border.all(color: _kRedLine),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline_rounded, color: DT.error, size: 18),
+          const Icon(Icons.error_outline_rounded, color: _kRed, size: 18),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               "Couldn't refresh. Showing your last loaded list.",
-              style: DT.text(size: 12, weight: FontWeight.w500, color: DT.error),
+              style: DT.text(size: 12, weight: FontWeight.w500, color: _kRed),
             ),
           ),
           TextButton(
             onPressed: _load,
             child: Text('Retry',
                 style: DT.text(
-                    size: 12, weight: FontWeight.w700, color: DT.error)),
+                    size: 12, weight: FontWeight.w700, color: _kRed)),
           ),
         ],
       ),
@@ -702,9 +721,9 @@ class _CompanyCard extends StatelessWidget {
               margin: const EdgeInsets.symmetric(horizontal: 14),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: DT.blue50,
+                color: _kTint,
                 borderRadius: BorderRadius.circular(DT.rMd),
-                border: Border.all(color: DT.blue100),
+                border: Border.all(color: _kLine),
               ),
               child: Column(
                 children: [
@@ -746,7 +765,7 @@ class _CompanyCard extends StatelessWidget {
                                 color: _C.blue600)),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: _C.blue600,
-                          side: const BorderSide(color: DT.blue200),
+                          side: const BorderSide(color: _kLine),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(DT.rMd),
                           ),
@@ -768,7 +787,7 @@ class _CompanyCard extends StatelessWidget {
                                   weight: FontWeight.w700,
                                   color: Colors.white)),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: _C.blue600,
+                            backgroundColor: _kBrand, // buttons: only #093C71
                             foregroundColor: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
@@ -853,9 +872,9 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = isPaid ? _C.emerald700 : DT.amber800;
-    final bg = isPaid ? DT.emerald50 : DT.amber50;
-    final border = isPaid ? DT.emerald200 : DT.amber200;
+    final fg = isPaid ? _C.emerald700 : _kOrangeDark;
+    final bg = isPaid ? DT.emerald50 : _kOrangeBg;
+    final border = isPaid ? DT.emerald200 : _kOrangeLine;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -870,7 +889,7 @@ class _StatusPill extends StatelessWidget {
           Icon(
             isPaid ? Icons.check_circle_rounded : Icons.schedule_rounded,
             size: 12,
-            color: isPaid ? _C.emerald600 : DT.amber600,
+            color: isPaid ? _C.emerald600 : _kOrange,
           ),
           const SizedBox(width: 4),
           Text(
@@ -986,7 +1005,7 @@ class _StateView extends StatelessWidget {
                                 weight: FontWeight.w700,
                                 color: Colors.white)),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _C.navy3,
+                          backgroundColor: _kBrand, // buttons: only #093C71
                           foregroundColor: Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(horizontal: 24),

@@ -1,0 +1,1 @@
+bool googleMapsReady() => true;

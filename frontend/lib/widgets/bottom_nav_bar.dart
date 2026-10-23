@@ -1,16 +1,18 @@
 // lib/widgets/bottom_nav_bar.dart
 //
 // Colourful bottom navigation (QNXMart mobile design):
-//   * every tab has its own colour (Home blue, Products violet, Cart orange,
+//   * every tab has its own colour (Home #093C71, Products brand light, Cart orange,
 //     Orders teal, Account pink)
 //   * inactive: outlined icon in the tab colour, grey label
 //   * active:   filled icon on a tinted pill, bold coloured label, small bounce
-//   * cart badge in amber
+//   * cart badge in orange
 //
 // Same API as before: BottomNavBar(currentIndex:, onTap:, cartCount:)
 
 import 'package:flutter/material.dart';
 import '../constants/design_tokens.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
 
 class _NavTab {
   final String label;
@@ -33,9 +35,9 @@ class BottomNavBar extends StatelessWidget {
   });
 
   static const _tabs = <_NavTab>[
-    _NavTab('Home', Icons.home_outlined, Icons.home_rounded, Color(0xFF6366F1)), // blue
-    _NavTab('Products', Icons.storefront_outlined, Icons.storefront_rounded, Color(0xFF7C3AED)), // violet
-    _NavTab('Cart', Icons.shopping_cart_outlined, Icons.shopping_cart_rounded, Color(0xFFF97316)), // orange
+    _NavTab('Home', Icons.home_outlined, Icons.home_rounded, Color(0xFF093C71)), // brand
+    _NavTab('Products', Icons.storefront_outlined, Icons.storefront_rounded, Color(0xFF1E5A9C)), // brand light
+    _NavTab('Cart', Icons.shopping_cart_outlined, Icons.shopping_cart_rounded, Color(0xFFF7931E)), // orange
     _NavTab('Orders', Icons.local_shipping_outlined, Icons.local_shipping_rounded, Color(0xFF0D9488)), // teal
     _NavTab('Account', Icons.person_outline_rounded, Icons.person_rounded, Color(0xFFDB2777)), // pink
   ];
@@ -127,7 +129,7 @@ class _NavItem extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF59E0B), // amber-500
+                            color: const Color(0xFFF7931E), // logo orange
                             borderRadius: BorderRadius.circular(999),
                             border: Border.all(color: Colors.white, width: 1.5),
                           ),

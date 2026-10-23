@@ -1,7 +1,9 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
 
-/// Slowly rotating gradient background (navy -> teal palette by default).
+/// Slowly rotating gradient background (QNX navy #093C71 palette by default).
 class AnimatedGradientBackground extends StatefulWidget {
   final Widget child;
   final List<Color> colors;
@@ -13,10 +15,10 @@ class AnimatedGradientBackground extends StatefulWidget {
     super.key,
     required this.child,
     this.colors = const [
-      Color(0xFF1E1B4B),
-      Color(0xFF312E81),
-      Color(0xFF4338CA),
-      Color(0xFF115E59),
+      Color(0xFF062A50),
+      Color(0xFF093C71),
+      Color(0xFF1E5A9C),
+      Color(0xFF062A50),
     ],
     this.duration = const Duration(seconds: 10),
     this.isDark = false,
@@ -107,10 +109,10 @@ class AnimatedGradientContainer extends StatelessWidget {
     super.key,
     required this.child,
     this.colors = const [
-      Color(0xFF1E1B4B),
-      Color(0xFF312E81),
-      Color(0xFF4338CA),
-      Color(0xFF115E59),
+      Color(0xFF062A50),
+      Color(0xFF093C71),
+      Color(0xFF1E5A9C),
+      Color(0xFF062A50),
     ],
     this.duration = const Duration(seconds: 8),
     this.borderRadius = 24,

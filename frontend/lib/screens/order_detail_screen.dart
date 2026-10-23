@@ -5,6 +5,16 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../models/order_model.dart';
 import '../services/order_service.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 // =====================================================================
 //  OnyxMart M3 design tokens (mirrors the HTML / Tailwind config)
@@ -12,14 +22,14 @@ import '../services/order_service.dart';
 
 class _C {
   // Brand
-  static const brand50 = Color(0xFFEEF2FF);
-  static const brand100 = Color(0xFFE0E7FF);
-  static const brand200 = Color(0xFFC7D2FE);
-  static const brand600 = Color(0xFF6366F1);
-  static const brand700 = Color(0xFF4F46E5);
+  static const brand50 = Color(0xFFEAF1F9);
+  static const brand100 = Color(0xFFC9DBEE);
+  static const brand200 = Color(0xFFC9DBEE);
+  static const brand600 = Color(0xFF093C71);
+  static const brand700 = Color(0xFF062A50);
 
   // Onyx
-  static const onyx900 = Color(0xFF1E1B4B);
+  static const onyx900 = Color(0xFF062A50);
 
   // Slate
   static const slate50 = Color(0xFFF8FAFC);
@@ -40,19 +50,19 @@ class _C {
   static const emerald700 = Color(0xFF047857);
 
   // Amber
-  static const amber50 = Color(0xFFFFFBEB);
-  static const amber200 = Color(0xFFFDE68A);
+  static const amber50 = Color(0xFFFFF7ED);
+  static const amber200 = Color(0xFFFED7AA);
   static const amber300 = Color(0xFFFCD34D);
-  static const amber600 = Color(0xFFD97706);
-  static const amber700 = Color(0xFFB45309);
-  static const amber800 = Color(0xFF92400E);
+  static const amber600 = Color(0xFFF7931E);
+  static const amber700 = Color(0xFFC2410C);
+  static const amber800 = Color(0xFFC2410C);
 
   // Red
   static const red50 = Color(0xFFFEF2F2);
   static const red200 = Color(0xFFFECACA);
   static const red300 = Color(0xFFFCA5A5);
-  static const red600 = Color(0xFFEF4444);
-  static const red700 = Color(0xFFEF4444);
+  static const red600 = Color(0xFFC62828);
+  static const red700 = Color(0xFFC62828);
 }
 
 TextStyle _ts(
@@ -152,7 +162,7 @@ PreferredSizeWidget _onyxAppBar(
     }) {
   return AppBar(
     backgroundColor: Colors.transparent,
-    flexibleSpace: Container(decoration: const BoxDecoration(gradient: DT.headerGradient)),
+    flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)),
     surfaceTintColor: Colors.transparent,
     elevation: 0,
     scrolledUnderElevation: 0,
@@ -179,7 +189,7 @@ PreferredSizeWidget _onyxAppBar(
           const SizedBox(height: 2),
           Text(
             subtitle,
-            style: _ts(11, color: const Color(0xFFE0E7FF), spacing: 0.6),
+            style: _ts(11, color: const Color(0xFFC9DBEE), spacing: 0.6),
           ),
         ],
       ],
@@ -519,7 +529,7 @@ class _ErrorView extends StatelessWidget {
                     style: _ts(14,
                         weight: FontWeight.w700, color: Colors.white)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _C.brand600,
+                  backgroundColor: _kBrand, // buttons: only #093C71
                   foregroundColor: Colors.white,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 22),
@@ -634,7 +644,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context, true),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _C.red600,
+                      backgroundColor: _kBrand, // buttons: only #093C71
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
@@ -1328,17 +1338,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           label: 'Track Order',
           icon: Icons.local_shipping_outlined,
           background: Colors.white,
-          foreground: _C.brand700,
-          border: _C.brand200,
+          foreground: _kBrand,
+          border: _kBrand,
           onPressed: _openTracking,
         ),
       if (order.canCancel && hasShipment)
         _ActionButton(
           label: _isCancelling ? 'Cancelling...' : 'Cancel Order',
           icon: Icons.cancel_outlined,
-          background: _C.red50,
-          foreground: _C.red700,
-          border: _C.red300,
+          background: Colors.white,
+          foreground: _kBrand,
+          border: _kBrand,
           loading: _isCancelling,
           onPressed: _isCancelling ? null : _cancelOrder,
         ),
@@ -1347,9 +1357,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         _ActionButton(
           label: 'Return Order',
           icon: Icons.assignment_return_outlined,
-          background: _C.amber50,
-          foreground: _C.amber800,
-          border: _C.amber300,
+          background: Colors.white,
+          foreground: _kBrand,
+          border: _kBrand,
           onPressed: _openReturn,
         ),
     ];
@@ -2024,7 +2034,7 @@ class _ReturnOrderScreenState extends State<ReturnOrderScreen> {
               child: ElevatedButton(
                 onPressed: _isSubmitting ? null : _submitReturn,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _C.brand600,
+                  backgroundColor: _kBrand, // buttons: only #093C71
                   disabledBackgroundColor: _C.brand600.withOpacity(0.6),
                   foregroundColor: Colors.white,
                   elevation: 0,

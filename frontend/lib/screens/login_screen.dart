@@ -1,7 +1,7 @@
 // lib/screens/login_screen.dart
 //
-// Login – designed to match the home screen (brand blue #1A68FA, dark blue
-// #0D3880, accent #FF5722, page #F6F8FC, white cards, slate inputs).
+// Login – colours matched to the QNX MART logo:
+//   brand blue #093C71 (primary, logo "QNX") · red "MART" (errors) · orange arrow (permission / condition)
 // Logic unchanged: LoginService.login -> save session -> HomeScreen.
 
 import 'package:flutter/material.dart';
@@ -9,11 +9,30 @@ import '../constants/design_tokens.dart';
 import '../models/login_model.dart';
 import '../services/login_service.dart';
 import '../utils/shared_preferences_helper.dart';
-import '../widgets/product_ui.dart';
 import 'forgot_password_screen.dart';
 import 'home_screen.dart';
 import 'register_screen.dart';
 import 'terms_conditions_screen.dart';
+
+/// Logo-matched palette (private to this screen).
+class _C {
+  static const brand = Color(0xFF093C71); // #093C71 – primary (logo "QNX" blue)
+  static const brandDark = Color(0xFF062A50);
+  static const brandLight = Color(0xFF1E5A9C);
+  static const brandLine = Color(0xFFC9DBEE);
+  static const navy = Color(0xFF093C71); // logo "QNX"
+  static const red = Color(0xFFC62828); // logo "MART" – errors
+  static const redBg = Color(0xFFFEF2F2);
+  static const redLine = Color(0xFFFECACA);
+  static const orange = Color(0xFFF7931E); // logo arrow – permission / condition
+  static const orangeBg = Color(0xFFFFF7ED);
+
+  static const hero = LinearGradient(
+    colors: [brandDark, brand, brandLight],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+}
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -29,10 +48,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordFocus = FocusNode();
   bool _obscurePassword = true;
   bool _isLoading = false;
-
-  static const _brand = Color(0xFF6366F1);
-  static const _brandDark = Color(0xFF4338CA);
-  static const _accent = Color(0xFFF97316);
 
   @override
   void dispose() {
@@ -77,18 +92,37 @@ class _LoginScreenState extends State<LoginScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        icon: Container(
-          width: 52,
-          height: 52,
-          decoration: const BoxDecoration(color: DT.errorBg, shape: BoxShape.circle),
-          child: const Icon(Icons.lock_outline_rounded, color: DT.error, size: 26),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: _C.redLine),
         ),
-        title: Text(title, textAlign: TextAlign.center),
-        content: Text(message, textAlign: TextAlign.center),
+        icon: Container(
+          width: 56,
+          height: 56,
+          decoration: const BoxDecoration(color: _C.redBg, shape: BoxShape.circle),
+          child: const Icon(Icons.lock_outline_rounded, color: _C.red, size: 28),
+        ),
+        title: Text(title,
+            textAlign: TextAlign.center, style: DT.text(size: 17, weight: FontWeight.w800, color: _C.red)),
+        content: Text(message,
+            textAlign: TextAlign.center, style: DT.text(size: 13.5, color: DT.slate500, height: 1.5)),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton(onPressed: () => Navigator.pop(ctx), child: const Text('Try again')),
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _C.brand,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                minimumSize: const Size.fromHeight(46),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text('Try again', style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
+            ),
           ),
         ],
       ),
@@ -135,11 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(22, top + 22, 22, 62),
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF4F46E5), _brand, Color(0xFF8B5CF6)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: _C.hero,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
       ),
       child: Stack(
@@ -170,9 +200,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       errorBuilder: (_, __, ___) => Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('QNX', style: DT.text(size: 20, weight: FontWeight.w900, color: _brandDark, letterSpacing: -0.8)),
+                          Text('QNX', style: DT.text(size: 20, weight: FontWeight.w900, color: _C.navy, letterSpacing: -0.8)),
                           const SizedBox(width: 3),
-                          Text('MART', style: DT.text(size: 20, weight: FontWeight.w800, color: _accent, letterSpacing: -0.4)),
+                          Text('MART', style: DT.text(size: 20, weight: FontWeight.w800, color: _C.red, letterSpacing: -0.4)),
                         ],
                       ),
                     ),
@@ -181,9 +211,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.16),
+                      color: _C.orange,
                       borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: Colors.white24),
                     ),
                     child: Text('B2B',
                         style: DT.text(size: 10, weight: FontWeight.w800, color: Colors.white, letterSpacing: 1)),
@@ -193,13 +222,13 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 4),
 
               Text('Market chalega nahi, daudega',
-                  style: DT.text(size: 11, weight: FontWeight.w600, color: Colors.white60)),
+                  style: DT.text(size: 11, weight: FontWeight.w700, color: const Color(0xFFFFD8A8))),
               const SizedBox(height: 26),
               Text('Welcome back 👋',
                   style: DT.text(size: 26, weight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5)),
               const SizedBox(height: 6),
               Text('Log in to buy, sell and manage your business on QNXMart.',
-                  style: DT.text(size: 13.5, color: const Color(0xFFC7D2FE), height: 1.45)),
+                  style: DT.text(size: 13.5, color: _C.brandLine, height: 1.45)),
               const SizedBox(height: 16),
               Wrap(
                 spacing: 8,
@@ -253,30 +282,32 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 2),
             Text('Use your QNXMart username and password', style: DT.text(size: 12, color: DT.slate500)),
             const SizedBox(height: 18),
-            const PxLabel('Username', required: true),
+            _label('Username'),
             TextFormField(
               controller: _usernameController,
               textInputAction: TextInputAction.next,
               autofillHints: const [AutofillHints.username],
               onFieldSubmitted: (_) => _passwordFocus.requestFocus(),
               style: DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
-              decoration: pxInputDecoration(
-                hint: 'Enter your username',
-                icon: Icons.person_outline_rounded,
-                iconColor: _brand,
-              ),
+              decoration: _input(hint: 'Enter your username', icon: Icons.person_outline_rounded),
               validator: (v) => (v == null || v.isEmpty) ? 'Please enter your username' : null,
             ),
             const SizedBox(height: 14),
-            PxLabel(
+            _label(
               'Password',
-              required: true,
-              trailing: PxLinkButton(
-                label: 'Forgot password?',
-                onTap: () => Navigator.push(
+              trailing: TextButton(
+                onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
                 ),
+                style: TextButton.styleFrom(
+                  foregroundColor: _C.brand,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  minimumSize: const Size(0, 28),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text('Forgot password?',
+                    style: DT.text(size: 12.5, weight: FontWeight.w700, color: _C.brand)),
               ),
             ),
             TextFormField(
@@ -289,10 +320,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 if (!_isLoading) _login();
               },
               style: DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
-              decoration: pxInputDecoration(
+              decoration: _input(
                 hint: 'Enter your password',
                 icon: Icons.lock_outline_rounded,
-                iconColor: _brand,
                 suffix: IconButton(
                   tooltip: _obscurePassword ? 'Show password' : 'Hide password',
                   onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
@@ -314,9 +344,9 @@ class _LoginScreenState extends State<LoginScreen> {
               height: 50,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  gradient: DT.ctaGradient,
+                  color: _C.brand, // buttons: only #093C71
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
+                  boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 12, offset: Offset(0, 4))],
                 ),
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _login,
@@ -377,8 +407,8 @@ class _LoginScreenState extends State<LoginScreen> {
               Container(
                 width: 42,
                 height: 42,
-                decoration: BoxDecoration(color: const Color(0xFFFFF1EB), borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.person_add_alt_1_rounded, color: _accent, size: 22),
+                decoration: BoxDecoration(color: _C.orangeBg, borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.person_add_alt_1_rounded, color: _C.orange, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -393,11 +423,10 @@ class _LoginScreenState extends State<LoginScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEEF2FF),
+                  color: _C.brand,
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: const Color(0xFFE0E7FF)),
                 ),
-                child: Text('Register', style: DT.text(size: 12.5, weight: FontWeight.w800, color: _brand)),
+                child: Text('Register', style: DT.text(size: 12.5, weight: FontWeight.w800, color: Colors.white)),
               ),
             ],
           ),
@@ -428,7 +457,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextSpan(
                   text: 'Terms & Conditions',
                   style: DT.text(
-                      size: 11.5, weight: FontWeight.w700, color: _brand, decoration: TextDecoration.underline),
+                      size: 11.5, weight: FontWeight.w700, color: _C.brand, decoration: TextDecoration.underline),
                 ),
               ],
             ),
@@ -437,6 +466,47 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 24),
       ],
+    );
+  }
+
+  // ── Small helpers (private to this screen) ─────────────────
+  Widget _label(String text, {Widget? trailing}) => Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text.rich(
+            TextSpan(
+              text: text,
+              style: DT.text(size: 12, weight: FontWeight.w600, color: DT.onyx700),
+              children: [TextSpan(text: ' *', style: DT.text(size: 12, color: _C.red))],
+            ),
+          ),
+        ),
+        if (trailing != null) trailing,
+      ],
+    ),
+  );
+
+  InputDecoration _input({required String hint, required IconData icon, Widget? suffix}) {
+    OutlineInputBorder b(Color c, [double w = 1]) =>
+        OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: c, width: w));
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: DT.text(size: 13.5, color: DT.slate400),
+      prefixIcon: Icon(icon, size: 19, color: _C.brand),
+      prefixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 20),
+      suffixIcon: suffix,
+      filled: true,
+      fillColor: Colors.white,
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      enabledBorder: b(DT.slate200),
+      focusedBorder: b(_C.brand, 2),
+      errorBorder: b(_C.red),
+      focusedErrorBorder: b(_C.red, 2),
+      errorStyle: DT.text(size: 11.5, weight: FontWeight.w600, color: _C.red),
+      errorMaxLines: 2,
     );
   }
 }

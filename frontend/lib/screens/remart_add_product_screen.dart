@@ -25,9 +25,27 @@ import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../constants/design_tokens.dart';
 import '../services/remart_post_service.dart';
 import '../utils/shared_preferences_helper.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kTint = Color(0xFFEAF1F9);
+const _kLine = Color(0xFFC9DBEE);
+const _kRed = Color(0xFFC62828);
+const _kRedBg = Color(0xFFFEF2F2);
+const _kRedLine = Color(0xFFFECACA);
+const _kOrangeDark = Color(0xFFC2410C);
+const _kOrangeBg = Color(0xFFFFF7ED);
+const _kOrangeLine = Color(0xFFFED7AA);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
-const _brand = Color(0xFF6366F1);
-const _brandDark = Color(0xFF4338CA);
+const _brand = Color(0xFF093C71);
+const _brandDark = Color(0xFF062A50);
 const _green = Color(0xFF10B981);
 const _maxPhotos = 10;
 
@@ -308,7 +326,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
   }
 
   Widget _sourceTile(BuildContext ctx, IconData icon, String label, ImageSource src) => Material(
-    color: DT.blue50,
+    color: _kTint,
     borderRadius: BorderRadius.circular(16),
     child: InkWell(
       borderRadius: BorderRadius.circular(16),
@@ -347,7 +365,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
         content: Text(msg, style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
-        backgroundColor: error ? DT.error : DT.onyx900,
+        backgroundColor: error ? _kRed : DT.onyx900,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -557,8 +575,8 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
         icon: Container(
           width: 56,
           height: 56,
-          decoration: const BoxDecoration(color: DT.amber50, shape: BoxShape.circle),
-          child: const Icon(Icons.hourglass_top_rounded, color: DT.amber700, size: 28),
+          decoration: const BoxDecoration(color: _kOrangeBg, shape: BoxShape.circle),
+          child: const Icon(Icons.hourglass_top_rounded, color: _kOrangeDark, size: 28),
         ),
         title: Text('Item saved – payment pending',
             textAlign: TextAlign.center, style: DT.text(size: 17, weight: FontWeight.w800)),
@@ -589,7 +607,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                   onPressed: () => Navigator.pop(ctx, true),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size.fromHeight(46),
-                    backgroundColor: _brand,
+                    backgroundColor: _kBrand, // buttons: only #093C71
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -633,7 +651,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
               onPressed: () => Navigator.pop(ctx),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size.fromHeight(48),
-                backgroundColor: _brand,
+                backgroundColor: _kBrand, // buttons: only #093C71
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -659,7 +677,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Keep editing')),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Discard', style: DT.text(size: 14, weight: FontWeight.w700, color: DT.error)),
+            child: Text('Discard', style: DT.text(size: 14, weight: FontWeight.w700, color: _kRed)),
           ),
         ],
       ),
@@ -727,7 +745,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
     preferredSize: const Size.fromHeight(64),
     child: Container(
       decoration: const BoxDecoration(
-        gradient: DT.headerGradient,
+        gradient: _kHeader,
       ),
       child: SafeArea(
         bottom: false,
@@ -753,7 +771,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                     Text('Used & resale items',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: DT.text(size: 12, color: const Color(0xFFE0E7FF))),
+                        style: DT.text(size: 12, color: const Color(0xFFC9DBEE))),
                   ],
                 ),
               ),
@@ -779,10 +797,10 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF4F46E5), _brand, Color(0xFF8B5CF6)],
+          colors: [Color(0xFF062A50), _brand, Color(0xFF1E5A9C)],
         ),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: const [BoxShadow(color: Color(0x336366F1), blurRadius: 18, offset: Offset(0, 8))],
+        boxShadow: const [BoxShadow(color: Color(0x33093C71), blurRadius: 18, offset: Offset(0, 8))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -808,7 +826,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                     Text('Good photos and a clear price sell faster',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: DT.text(size: 12, color: const Color(0xFFE0E7FF))),
+                        style: DT.text(size: 12, color: const Color(0xFFC9DBEE))),
                   ],
                 ),
               ),
@@ -832,7 +850,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                   child: Row(
                     children: [
                       Icon(s.$2 ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                          size: 14, color: s.$2 ? Colors.white : const Color(0xFFA5B4FC)),
+                          size: 14, color: s.$2 ? Colors.white : const Color(0xFFA3C1E0)),
                       const SizedBox(width: 4),
                       Flexible(
                         child: Text(s.$1,
@@ -841,7 +859,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                             style: DT.text(
                                 size: 11,
                                 weight: FontWeight.w700,
-                                color: s.$2 ? Colors.white : const Color(0xFFC7D2FE))),
+                                color: s.$2 ? Colors.white : const Color(0xFFC9DBEE))),
                       ),
                     ],
                   ),
@@ -856,17 +874,17 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
   Widget _lockedNote() => Container(
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: DT.amber50,
+      color: _kOrangeBg,
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: DT.amber200),
+      border: Border.all(color: _kOrangeLine),
     ),
     child: Row(
       children: [
-        const Icon(Icons.lock_clock_outlined, color: DT.amber700, size: 20),
+        const Icon(Icons.lock_clock_outlined, color: _kOrangeDark, size: 20),
         const SizedBox(width: 10),
         Expanded(
           child: Text('Item saved. Complete the plan payment to make it live.',
-              style: DT.text(size: 12.5, weight: FontWeight.w600, color: DT.amber900)),
+              style: DT.text(size: 12.5, weight: FontWeight.w600, color: _kOrangeDark)),
         ),
       ],
     ),
@@ -896,17 +914,17 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                   width: size,
                   height: size,
                   decoration: BoxDecoration(
-                    color: missing ? DT.errorBg : DT.blue50,
+                    color: missing ? _kRedBg : _kTint,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: missing ? DT.errorBorder : DT.blue200, width: 1.4),
+                    border: Border.all(color: missing ? _kRedLine : _kLine, width: 1.4),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.add_a_photo_outlined, color: missing ? DT.error : _brand, size: 26),
+                      Icon(Icons.add_a_photo_outlined, color: missing ? _kRed : _brand, size: 26),
                       const SizedBox(height: 6),
                       Text(_photos.isEmpty ? 'Add photos' : 'Add more',
-                          style: DT.text(size: 12, weight: FontWeight.w700, color: missing ? DT.error : _brand)),
+                          style: DT.text(size: 12, weight: FontWeight.w700, color: missing ? _kRed : _brand)),
                     ],
                   ),
                 ),
@@ -1050,7 +1068,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
   }
 
   Widget _createAttributeButton() => Material(
-    color: DT.blue50,
+    color: _kTint,
     borderRadius: BorderRadius.circular(10),
     child: InkWell(
       borderRadius: BorderRadius.circular(10),
@@ -1059,7 +1077,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: DT.blue200),
+          border: Border.all(color: _kLine),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -1085,7 +1103,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
         Container(
           width: 44,
           height: 44,
-          decoration: BoxDecoration(color: DT.blue50, borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(color: _kTint, borderRadius: BorderRadius.circular(12)),
           child: const Icon(Icons.playlist_add_rounded, color: _brand, size: 24),
         ),
         const SizedBox(height: 10),
@@ -1101,7 +1119,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
           SizedBox(
             height: 40,
             child: DecoratedBox(
-              decoration: BoxDecoration(gradient: DT.ctaGradient, borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: _kBrand, borderRadius: BorderRadius.circular(12)),
               child: ElevatedButton.icon(
                 onPressed: _openCreateAttribute,
                 style: ElevatedButton.styleFrom(
@@ -1145,20 +1163,20 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
   Widget _createdSummary(List<RemartAttribute> created) => Container(
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: const Color(0xFFF5F3FF),
+      color: const Color(0xFFEAF1F9),
       borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: const Color(0xFFDDD6FE)),
+      border: Border.all(color: const Color(0xFFC9DBEE)),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
           children: [
-            const Icon(Icons.auto_awesome_rounded, size: 16, color: Color(0xFF7C3AED)),
+            const Icon(Icons.auto_awesome_rounded, size: 16, color: Color(0xFF1E5A9C)),
             const SizedBox(width: 6),
             Expanded(
               child: Text('Attributes you added (${created.length})',
-                  style: DT.text(size: 12.5, weight: FontWeight.w800, color: const Color(0xFF5B21B6))),
+                  style: DT.text(size: 12.5, weight: FontWeight.w800, color: const Color(0xFF062A50))),
             ),
           ],
         ),
@@ -1180,12 +1198,12 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFDDD6FE)),
+        border: Border.all(color: const Color(0xFFC9DBEE)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 15, color: const Color(0xFF7C3AED)),
+          Icon(icon, size: 15, color: const Color(0xFF1E5A9C)),
           const SizedBox(width: 6),
           Flexible(
             child: Text(
@@ -1247,7 +1265,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                     label: Text(o, maxLines: 1, overflow: TextOverflow.ellipsis),
                     selected: sel == o,
                     showCheckmark: false,
-                    selectedColor: DT.blue50,
+                    selectedColor: _kTint,
                     backgroundColor: Colors.white,
                     side: BorderSide(color: sel == o ? _brand : DT.slate200, width: sel == o ? 1.4 : 1),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -1598,7 +1616,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
   Widget _planCard(RemartPlan p) {
     final sel = p.id == _planId;
     return Material(
-      color: sel ? DT.blue50 : Colors.white,
+      color: sel ? _kTint : Colors.white,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
@@ -1682,9 +1700,9 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                   height: 52,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      gradient: DT.ctaGradient,
+                      color: _kBrand, // buttons: only #093C71
                       borderRadius: BorderRadius.circular(12),
-                      boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
+                      boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 12, offset: Offset(0, 4))],
                     ),
                     child: ElevatedButton(
                       onPressed: _busy || (locked && plan == null) ? null : _submit,
@@ -1776,8 +1794,8 @@ InputDecoration _input({String? hint, IconData? icon, bool tinted = false}) {
     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
     enabledBorder: b(DT.slate200),
     focusedBorder: b(_brand, 2),
-    errorBorder: b(DT.error),
-    focusedErrorBorder: b(DT.error, 2),
+    errorBorder: b(_kRed),
+    focusedErrorBorder: b(_kRed, 2),
     errorMaxLines: 2,
   );
 }
@@ -1806,7 +1824,7 @@ class _Section extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: error != null ? DT.errorBorder : DT.slate200),
+        border: Border.all(color: error != null ? _kRedLine : DT.slate200),
         boxShadow: const [BoxShadow(color: Color(0x0A0F172A), blurRadius: 10, offset: Offset(0, 2))],
       ),
       child: Column(
@@ -1817,7 +1835,7 @@ class _Section extends StatelessWidget {
               Container(
                 width: 36,
                 height: 36,
-                decoration: BoxDecoration(color: DT.blue50, borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: _kTint, borderRadius: BorderRadius.circular(12)),
                 child: Icon(icon, size: 19, color: _brand),
               ),
               const SizedBox(width: 12),
@@ -1845,9 +1863,9 @@ class _Section extends StatelessWidget {
             const SizedBox(height: 10),
             Row(
               children: [
-                const Icon(Icons.error_outline_rounded, size: 15, color: DT.error),
+                const Icon(Icons.error_outline_rounded, size: 15, color: _kRed),
                 const SizedBox(width: 6),
-                Expanded(child: Text(error!, style: DT.text(size: 12, weight: FontWeight.w600, color: DT.error))),
+                Expanded(child: Text(error!, style: DT.text(size: 12, weight: FontWeight.w600, color: _kRed))),
               ],
             ),
           ],
@@ -1870,7 +1888,7 @@ class _Label extends StatelessWidget {
         text: text,
         style: DT.text(size: 12, weight: FontWeight.w600, color: DT.onyx700),
         children: [
-          if (required) TextSpan(text: ' *', style: DT.text(size: 12, color: const Color(0xFFF43F5E))),
+          if (required) TextSpan(text: ' *', style: DT.text(size: 12, color: const Color(0xFFC62828))),
         ],
       ),
       maxLines: 1,
@@ -1890,9 +1908,9 @@ class _Notice extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     decoration: BoxDecoration(
-      color: error ? DT.errorBg : DT.blue50,
+      color: error ? _kRedBg : _kTint,
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: error ? DT.errorBorder : DT.blue200),
+      border: Border.all(color: error ? _kRedLine : _kLine),
     ),
     child: Row(
       children: [
@@ -1900,11 +1918,11 @@ class _Notice extends StatelessWidget {
           const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: _brand))
         else
           Icon(error ? Icons.error_outline_rounded : Icons.info_outline_rounded,
-              size: 18, color: error ? DT.error : DT.blue700),
+              size: 18, color: error ? _kRed : _kBrand),
         const SizedBox(width: 10),
         Expanded(
           child: Text(text,
-              style: DT.text(size: 12.5, color: error ? DT.error : DT.blue900, height: 1.4)),
+              style: DT.text(size: 12.5, color: error ? _kRed : _kBrandDark, height: 1.4)),
         ),
         if (onRetry != null)
           TextButton(
@@ -1914,7 +1932,7 @@ class _Notice extends StatelessWidget {
               minimumSize: const Size(0, 32),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: Text('Retry', style: DT.text(size: 12.5, weight: FontWeight.w700, color: error ? DT.error : _brand)),
+            child: Text('Retry', style: DT.text(size: 12.5, weight: FontWeight.w700, color: error ? _kRed : _brand)),
           ),
       ],
     ),
@@ -2103,7 +2121,7 @@ class _CreateAttributeSheetState extends State<_CreateAttributeSheet> {
                               child: ElevatedButton(
                                 onPressed: () => _addOptions(),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: _brand,
+                                  backgroundColor: _kBrand, // buttons: only #093C71
                                   foregroundColor: Colors.white,
                                   elevation: 0,
                                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -2127,8 +2145,8 @@ class _CreateAttributeSheetState extends State<_CreateAttributeSheet> {
                                 InputChip(
                                   label: Text(_options[i], maxLines: 1, overflow: TextOverflow.ellipsis),
                                   labelStyle: DT.text(size: 12, weight: FontWeight.w600, color: _brandDark),
-                                  backgroundColor: DT.blue50,
-                                  side: const BorderSide(color: DT.blue200),
+                                  backgroundColor: _kTint,
+                                  side: const BorderSide(color: _kLine),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                   deleteIconColor: _brandDark,
                                   onDeleted: () => setState(() => _options.removeAt(i)),
@@ -2187,7 +2205,7 @@ class _CreateAttributeSheetState extends State<_CreateAttributeSheet> {
 
   Widget _header() => Container(
     padding: const EdgeInsets.fromLTRB(18, 10, 8, 16),
-    decoration: const BoxDecoration(gradient: DT.headerGradient),
+    decoration: const BoxDecoration(gradient: _kHeader),
     child: Column(
       children: [
         Container(
@@ -2246,7 +2264,7 @@ class _CreateAttributeSheetState extends State<_CreateAttributeSheet> {
         width: width,
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: sel ? DT.blue50 : Colors.white,
+          color: sel ? _kTint : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: sel ? _brand : DT.slate200, width: sel ? 1.5 : 1),
         ),
@@ -2290,7 +2308,7 @@ class _CreateAttributeSheetState extends State<_CreateAttributeSheet> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: i == 0 ? DT.blue50 : Colors.white,
+                      color: i == 0 ? _kTint : Colors.white,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: i == 0 ? _brand : DT.slate200),
                     ),
@@ -2367,7 +2385,7 @@ class _CreateAttributeSheetState extends State<_CreateAttributeSheet> {
         height: 52,
         width: double.infinity,
         child: DecoratedBox(
-          decoration: BoxDecoration(gradient: DT.ctaGradient, borderRadius: BorderRadius.circular(14)),
+          decoration: BoxDecoration(color: _kBrand, borderRadius: BorderRadius.circular(14)),
           child: ElevatedButton.icon(
             onPressed: _saving ? null : _save,
             style: ElevatedButton.styleFrom(

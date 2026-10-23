@@ -4,6 +4,18 @@ import '../constants/app_constants.dart';
 import '../models/franchise_plan_model.dart';
 import '../services/franchise_plan_service.dart';
 import 'franchise_apply_screen.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kRed = Color(0xFFC62828);
+const _kOrange = Color(0xFFF7931E);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 class FranchisePlansScreen extends StatefulWidget {
   final String productSlug;
@@ -89,8 +101,8 @@ class _FranchisePlansScreenState extends State<FranchisePlansScreen> {
     return Scaffold(
       backgroundColor: AppConstants.surfaceColor,
       appBar: AppBar(
-        backgroundColor: AppConstants.primary,
-        flexibleSpace: Container(decoration: const BoxDecoration(gradient: AppConstants.appBarGradient)),
+        backgroundColor: _kBrand,
+        flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)),
         foregroundColor: Colors.white,
         elevation: 0,
         title: Column(
@@ -124,7 +136,7 @@ class _FranchisePlansScreenState extends State<FranchisePlansScreen> {
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(AppConstants.primary),
+          valueColor: AlwaysStoppedAnimation<Color>(_kBrand),
         ),
       );
     }
@@ -147,7 +159,7 @@ class _FranchisePlansScreenState extends State<FranchisePlansScreen> {
 
   Widget _buildPlanCard(FranchisePlan plan, int index) {
     final Color accent =
-    index % 2 == 0 ? AppConstants.primary : AppConstants.accent;
+    index % 2 == 0 ? _kBrand : _kOrange;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -314,7 +326,7 @@ class _FranchisePlansScreenState extends State<FranchisePlansScreen> {
               child: ElevatedButton(
                 onPressed: () => _handleApplyPlan(plan),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: accent,
+                  backgroundColor: _kBrand, // buttons: only #093C71
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -350,12 +362,12 @@ class _FranchisePlansScreenState extends State<FranchisePlansScreen> {
     final bool isNoPlansCase = _isApiSuccess;
 
     final Color iconColor = isNoPlansCase
-        ? AppConstants.primary.withOpacity(0.5)
-        : AppConstants.error.withOpacity(0.5);
+        ? _kBrand.withOpacity(0.5)
+        : _kRed.withOpacity(0.5);
 
     final Color iconBgColor = isNoPlansCase
-        ? AppConstants.primary.withOpacity(0.08)
-        : AppConstants.error.withOpacity(0.08);
+        ? _kBrand.withOpacity(0.08)
+        : _kRed.withOpacity(0.08);
 
     return Center(
       child: Padding(
@@ -402,8 +414,7 @@ class _FranchisePlansScreenState extends State<FranchisePlansScreen> {
             ElevatedButton.icon(
               onPressed: _loadFranchisePlans,
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                isNoPlansCase ? AppConstants.primary : AppConstants.error,
+                backgroundColor: _kBrand, // buttons: only #093C71
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 12,

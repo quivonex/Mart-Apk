@@ -2,12 +2,17 @@
 //
 // Google Places "Nearby Search" through the QNX backend (the Google API key
 // stays on the server – it is NOT stored in the app).
-// The API needs the login token: `Authorization: Bearer <access token>`.
+// The API needs the login token: `Authorization: Bearer <access token>`
+// AND an active Nearby subscription (see nearby_subscription_service.dart).
 //
-//   POST admin_profile/places/nearby/  {lat, lng, radius, keyword}
-//   -> {status, count, results:[{place_id, name, vicinity, rating, user_ratings_total,
-//        geometry{location{lat,lng}}, opening_hours{open_now}, international_phone_number,
-//        business_status, types, icon, icon_background_color}]}
+//   POST admin_profile/places/nearby/  {lat, lng, radius(METERS), keyword}
+//   200 -> {status:true | "OK", results:[{place_id, name, vicinity, rating, user_ratings_total,
+//           geometry{location{lat,lng}}, opening_hours{open_now}, international_phone_number,
+//           business_status, types, …}], next_page_token}
+//   200 -> {status:false, message:"Keyword is required."}     (validation)
+//   401 -> {message:"Session expired."}                        (token removed → login)
+//   403 -> {subscription_required:true, message:"No active subscription found…"}
+//          (token kept → user buys a plan from the Subscription button)
 //
 // The backend fetches up to 3 Google pages (≈2 s pause between pages), keeps
 // rating ≥ 3.5 and sorts by rating – so a search can take a few seconds.
@@ -19,6 +24,7 @@ import 'package:flutter/material.dart' show Color;
 import 'package:http/http.dart' as http;
 import 'api_urls.dart';
 import '../utils/shared_preferences_helper.dart';
+import 'nearby_subscription_service.dart';
 
 class NearbyPlace {
   final String placeId;
@@ -35,7 +41,10 @@ class NearbyPlace {
   final String iconUrl;
   final Color iconBg;
 
-  /// Distance from the search point in km (set by the service).
+  /// False when geometry.location is missing → listed, but not shown on the map.
+  final bool hasLocation;
+
+  /// Distance from the search point in km (set by the service, -1 = unknown).
   double distanceKm;
 
   NearbyPlace({
@@ -52,8 +61,14 @@ class NearbyPlace {
     required this.types,
     required this.iconUrl,
     required this.iconBg,
+    this.hasLocation = true,
     this.distanceKm = 0,
   });
+
+  /// Rows without place_id are listed but cannot be opened.
+  bool get canOpen => placeId.isNotEmpty;
+
+  bool get isOperational => businessStatus.toUpperCase() == 'OPERATIONAL';
 
   factory NearbyPlace.fromJson(Map<String, dynamic> j) {
     final loc = (j['geometry'] is Map && j['geometry']['location'] is Map)
@@ -66,14 +81,18 @@ class NearbyPlace {
       final v = int.tryParse('FF$hex', radix: 16);
       if (v != null) bg = Color(v);
     }
+    final lat = (loc['lat'] as num?)?.toDouble();
+    final lng = (loc['lng'] as num?)?.toDouble();
+    final name = '${j['name'] ?? ''}'.trim();
     return NearbyPlace(
       placeId: '${j['place_id'] ?? ''}',
-      name: '${j['name'] ?? ''}',
+      name: name.isEmpty ? 'Unnamed place' : name,
       address: '${j['vicinity'] ?? j['formatted_address'] ?? ''}',
       rating: (j['rating'] as num?)?.toDouble() ?? 0,
       ratingsTotal: (j['user_ratings_total'] as num?)?.toInt() ?? 0,
-      lat: (loc['lat'] as num?)?.toDouble() ?? 0,
-      lng: (loc['lng'] as num?)?.toDouble() ?? 0,
+      lat: lat ?? 0,
+      lng: lng ?? 0,
+      hasLocation: lat != null && lng != null,
       openNow: hours?['open_now'] is bool ? hours!['open_now'] as bool : null,
       phone: '${j['international_phone_number'] ?? j['formatted_phone_number'] ?? ''}',
       businessStatus: '${j['business_status'] ?? ''}',
@@ -114,9 +133,13 @@ class NearbyResult {
   final String message;
   final List<NearbyPlace> places;
 
-  /// True when the server said 401 / "Authentication required" – user must log in again.
+  /// 401 – session expired, token removed, user must log in again.
   final bool needsLogin;
-  const NearbyResult(this.ok, this.message, this.places, {this.needsLogin = false});
+
+  /// 403 subscription_required – user must buy a plan (token kept).
+  final bool needsSubscription;
+  const NearbyResult(this.ok, this.message, this.places,
+      {this.needsLogin = false, this.needsSubscription = false});
 }
 
 class NearbyPlacesService {
@@ -140,43 +163,73 @@ class NearbyPlacesService {
     if (token == null || token.isEmpty) {
       return const NearbyResult(false, 'Please log in to search nearby places.', [], needsLogin: true);
     }
+    final q = keyword.trim();
+    if (q.isEmpty) return const NearbyResult(false, 'Keyword is required.', []);
     try {
       final res = await http
           .post(
-        Uri.parse('${ApiUrls.baseUrl}/admin_profile/places/nearby/'),
+        Uri.parse(ApiUrls.nearbyPlacesUrl),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode({
-          'lat': double.parse(lat.toStringAsFixed(6)),
-          'lng': double.parse(lng.toStringAsFixed(6)),
-          'radius': radiusMeters,
-          'keyword': keyword.trim(),
+          'lat': double.parse(lat.clamp(-90.0, 90.0).toStringAsFixed(6)),
+          'lng': double.parse(lng.clamp(-180.0, 180.0).toStringAsFixed(6)),
+          'radius': radiusMeters.clamp(5000, 50000), // METERS (5–50 km)
+          'keyword': q,
         }),
       )
           .timeout(const Duration(seconds: 45));
-      if (res.statusCode == 401 || res.statusCode == 403) {
-        return const NearbyResult(false, 'Your login session has expired. Please log in again.', [],
-            needsLogin: true);
-      }
-      Map<String, dynamic> j;
+
+      Map<String, dynamic> j = {};
+      bool parsed = true;
       try {
         final d = jsonDecode(res.body);
-        j = d is Map ? Map<String, dynamic>.from(d) : {};
+        if (d is Map) j = Map<String, dynamic>.from(d);
       } catch (_) {
+        parsed = false;
+      }
+      String msg(String fallback) {
+        final m = j['message'] ?? j['error_message'] ?? j['detail'];
+        final t = m == null ? '' : '$m'.trim();
+        return t.isEmpty ? fallback : t;
+      }
+
+      // 401 → session expired: remove token, ask to log in again.
+      if (res.statusCode == 401) {
+        await SharedPreferencesHelper.clearAll();
+        return NearbyResult(false, msg('Your session has expired. Please log in again.'), const [],
+            needsLogin: true);
+      }
+      // 403 → no active subscription: keep the token, show the plans.
+      if (res.statusCode == 403) {
+        if (j['subscription_required'] == true || j.isEmpty || '${j['message'] ?? ''}'.toLowerCase().contains('subscri')) {
+          await NearbySubscriptionStore.serverSaysNone();
+          return NearbyResult(false, msg('No active subscription found. Please purchase a plan.'), const [],
+              needsSubscription: true);
+        }
+        return NearbyResult(false, msg('You are not allowed to use Nearby Search.'), const []);
+      }
+      if (!parsed) {
         return NearbyResult(false, 'Server error (${res.statusCode}). Please try again.', const []);
       }
-      if (res.statusCode != 200 || j['status'] == false) {
-        return NearbyResult(false, '${j['message'] ?? 'Search failed (${res.statusCode}).'}', const []);
+
+      // Option A {status:true} or Option B Google style {status:"OK" | "ZERO_RESULTS"}.
+      final st = j['status'];
+      final okStatus = st == true || st == 'OK' || st == 'ZERO_RESULTS' || (st == null && j['results'] is List);
+      if (res.statusCode < 200 || res.statusCode >= 300 || !okStatus) {
+        return NearbyResult(false, msg('Search failed (${res.statusCode}).'), const []);
       }
-      final places = [
-        for (final e in (j['results'] as List? ?? const []).whereType<Map>())
-          NearbyPlace.fromJson(Map<String, dynamic>.from(e))
-      ].where((p) => p.placeId.isNotEmpty && p.name.isNotEmpty).toList();
-      for (final p in places) {
-        p.distanceKm = _km(lat, lng, p.lat, p.lng);
+
+      final seen = <String>{};
+      final places = <NearbyPlace>[];
+      for (final e in (j['results'] as List? ?? const []).whereType<Map>()) {
+        final p = NearbyPlace.fromJson(Map<String, dynamic>.from(e));
+        if (p.placeId.isNotEmpty && !seen.add(p.placeId)) continue; // dedupe
+        p.distanceKm = p.hasLocation ? _km(lat, lng, p.lat, p.lng) : -1;
+        places.add(p);
       }
       return NearbyResult(true, '', places);
     } on TimeoutException {

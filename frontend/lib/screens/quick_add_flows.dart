@@ -18,15 +18,18 @@ import 'category_screens.dart';
 import 'company_create_edit_screen.dart';
 import 'subcategory_create_edit_screen.dart';
 import 'subcategory_screens.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kRed = Color(0xFFC62828);
 
-const _blue = Color(0xFF6366F1);
+const _blue = Color(0xFF093C71);
 
 void _snack(BuildContext context, String msg, {bool error = false}) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(
       content: Text(msg),
-      backgroundColor: error ? DT.error : null,
+      backgroundColor: error ? _kRed : null,
       behavior: SnackBarBehavior.floating,
     ));
 }

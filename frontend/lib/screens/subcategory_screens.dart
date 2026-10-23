@@ -9,6 +9,9 @@ import '../models/catalog_models.dart';
 import '../services/catalog_service.dart';
 import '../widgets/catalog_widgets.dart';
 import '../widgets/company_ui.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
 
 class SubCategoryManageScreen extends StatefulWidget {
   final CatalogCategory category;
@@ -89,7 +92,7 @@ class _SubCategoryManageScreenState extends State<SubCategoryManageScreen> {
             ? null
             : FloatingActionButton.extended(
           onPressed: () => _openForm(),
-          backgroundColor: DT.blue800,
+          backgroundColor: _kBrand,
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add_rounded),
           label: Text('Add subcategory',

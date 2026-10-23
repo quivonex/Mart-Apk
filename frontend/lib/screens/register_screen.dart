@@ -1,6 +1,7 @@
 // lib/screens/register_screen.dart
 //
-// Register – brand blue #1A68FA, dark blue #0D3880, accent #FF5722, page #F6F8FC.
+// Register – colours matched to the QNX MART logo:
+//   brand blue #093C71 (primary, logo "QNX") · red "MART" = errors · orange arrow = permission / condition
 //
 // Flow on one card:
 //   1. Email      -> "Send OTP"           (RegistrationService.sendOtp)
@@ -16,10 +17,27 @@ import '../services/registration_service.dart';
 import 'login_screen.dart';
 import 'terms_conditions_screen.dart';
 
-const _brand = Color(0xFF6366F1);
-const _brandDark = Color(0xFF4338CA);
-const _accent = Color(0xFFF97316);
+// ── Logo-matched palette (private to this screen) ─────────────
+const _brand = Color(0xFF093C71); // #093C71 – primary (logo "QNX" blue)
+const _brandDark = Color(0xFF062A50);
+const _brandLight = Color(0xFF1E5A9C);
+const _brandTint = Color(0xFFEAF1F9);
+const _brandLine = Color(0xFFC9DBEE);
+const _brandSoft = Color(0xFFA3C1E0);
+const _navy = Color(0xFF093C71); // logo "QNX"
+const _red = Color(0xFFC62828); // logo "MART" – errors
+const _redBg = Color(0xFFFEF2F2);
+const _orange = Color(0xFFF7931E); // logo arrow – permission / condition
+const _orangeDark = Color(0xFFC2410C);
+const _orangeBg = Color(0xFFFFF7ED);
+const _orangeLine = Color(0xFFFED7AA);
 const _green = Color(0xFF10B981);
+
+const _heroGradient = LinearGradient(
+  colors: [_brandDark, _brand, _brandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 const _otpLength = 6;
 const _resendSeconds = 30;
 
@@ -173,7 +191,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _showTermsError = !_agreeTerms);
     if (!ok) return;
     if (!_agreeTerms) {
-      _showErrorDialog('Terms required', 'Please agree to the Terms & Conditions to continue.');
+      _showConditionDialog('Terms required', 'Please agree to the Terms & Conditions to continue.');
       return;
     }
 
@@ -229,7 +247,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Stay')),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Leave', style: DT.text(size: 14, weight: FontWeight.w700, color: DT.error)),
+            child: Text('Leave', style: DT.text(size: 14, weight: FontWeight.w700, color: _red)),
           ),
         ],
       ),
@@ -258,10 +276,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ));
   }
 
+  /// Real errors (server / OTP / registration) → logo red.
   void _showErrorDialog(String title, String message) => _dialog(
     icon: Icons.error_outline_rounded,
-    iconColor: DT.error,
-    iconBg: DT.errorBg,
+    iconColor: _red,
+    iconBg: _redBg,
+    title: title,
+    message: message,
+  );
+
+  /// Permission / condition not met (terms, rules) → logo orange.
+  void _showConditionDialog(String title, String message) => _dialog(
+    icon: Icons.warning_amber_rounded,
+    iconColor: _orange,
+    iconBg: _orangeBg,
     title: title,
     message: message,
   );
@@ -290,6 +318,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       barrierDismissible: dismissible,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         icon: Container(
           width: 56,
@@ -311,7 +340,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 onOk?.call();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: _brand,
+                backgroundColor: _brand, // buttons: only #093C71
                 foregroundColor: Colors.white,
                 elevation: 0,
                 minimumSize: const Size.fromHeight(46),
@@ -376,11 +405,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(22, top + 18, 22, 62),
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF4F46E5), _brand, Color(0xFF8B5CF6)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: _heroGradient,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
       ),
       child: Stack(
@@ -428,10 +453,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text('QNX',
-                              style: DT.text(size: 19, weight: FontWeight.w900, color: _brandDark, letterSpacing: -0.8)),
+                              style: DT.text(size: 19, weight: FontWeight.w900, color: _navy, letterSpacing: -0.8)),
                           const SizedBox(width: 3),
                           Text('MART',
-                              style: DT.text(size: 19, weight: FontWeight.w800, color: _accent, letterSpacing: -0.4)),
+                              style: DT.text(size: 19, weight: FontWeight.w800, color: _red, letterSpacing: -0.4)),
                         ],
                       ),
                     ),
@@ -440,9 +465,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.16),
+                      color: _orange,
                       borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: Colors.white24),
                     ),
                     child: Text('B2B',
                         style: DT.text(size: 10, weight: FontWeight.w800, color: Colors.white, letterSpacing: 1)),
@@ -451,7 +475,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 6),
               Text('Market chalega nahi, daudega',
-                  style: DT.text(size: 11, weight: FontWeight.w600, color: Colors.white60)),
+                  style: DT.text(size: 11, weight: FontWeight.w700, color: const Color(0xFFFFD8A8))),
               const SizedBox(height: 22),
               Text('Create your account ✨',
                   style: DT.text(size: 26, weight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5)),
@@ -462,7 +486,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   _Stage.otp => 'Check your inbox and enter the 6-digit code.',
                   _Stage.details => 'Almost done! Tell us a little about you.',
                 },
-                style: DT.text(size: 13.5, color: const Color(0xFFC7D2FE), height: 1.45),
+                style: DT.text(size: 13.5, color: _brandLine, height: 1.45),
               ),
             ],
           ),
@@ -522,7 +546,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 shape: BoxShape.circle,
                 color: done ? _green : (active ? _brand : DT.slate100),
                 boxShadow: active
-                    ? const [BoxShadow(color: Color(0x406366F1), blurRadius: 10, offset: Offset(0, 3))]
+                    ? const [BoxShadow(color: Color(0x40093C71), blurRadius: 10, offset: Offset(0, 3))]
                     : null,
               ),
               child: Icon(done ? Icons.check_rounded : icon,
@@ -645,9 +669,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBFF),
+        color: const Color(0xFFF7FAFD),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DT.blue100),
+        border: Border.all(color: _brandLine),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -657,7 +681,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Container(
                 width: 38,
                 height: 38,
-                decoration: BoxDecoration(color: DT.blue50, borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: _brandTint, borderRadius: BorderRadius.circular(12)),
                 child: const Icon(Icons.mark_email_read_outlined, color: _brand, size: 20),
               ),
               const SizedBox(width: 10),
@@ -699,9 +723,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(Icons.error_outline_rounded, size: 15, color: DT.error),
+                const Icon(Icons.error_outline_rounded, size: 15, color: _red),
                 const SizedBox(width: 6),
-                Expanded(child: Text(_otpError!, style: DT.text(size: 12, weight: FontWeight.w600, color: DT.error))),
+                Expanded(child: Text(_otpError!, style: DT.text(size: 12, weight: FontWeight.w600, color: _red))),
               ],
             ),
           ],
@@ -872,27 +896,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
     ('1 special character', (p) => RegExp(r'[!@#$%^&*(),.?":{}|<>_\-+=~`\[\]\\/;]').hasMatch(p)),
   ];
 
-  Widget _ruleChip(String label, bool ok) => AnimatedContainer(
-    duration: const Duration(milliseconds: 180),
-    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-    decoration: BoxDecoration(
-      color: ok ? DT.emerald50 : DT.slate50,
-      borderRadius: BorderRadius.circular(999),
-      border: Border.all(color: ok ? DT.emerald200 : DT.slate200),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(ok ? Icons.check_rounded : Icons.circle_outlined, size: 13, color: ok ? _green : DT.slate400),
-        const SizedBox(width: 4),
-        Text(label, style: DT.text(size: 11, weight: FontWeight.w700, color: ok ? DT.emerald700 : DT.slate500)),
-      ],
-    ),
-  );
+  /// Green = rule met · orange = condition still missing (after typing starts) · grey = not started.
+  Widget _ruleChip(String label, bool ok) {
+    final pending = !ok && _passwordController.text.isNotEmpty;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: ok ? DT.emerald50 : (pending ? _orangeBg : DT.slate50),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: ok ? DT.emerald200 : (pending ? _orangeLine : DT.slate200)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(ok ? Icons.check_rounded : (pending ? Icons.priority_high_rounded : Icons.circle_outlined),
+              size: 13, color: ok ? _green : (pending ? _orange : DT.slate400)),
+          const SizedBox(width: 4),
+          Text(label,
+              style: DT.text(
+                  size: 11,
+                  weight: FontWeight.w700,
+                  color: ok ? DT.emerald700 : (pending ? _orangeDark : DT.slate500))),
+        ],
+      ),
+    );
+  }
 
   Widget _termsRow() {
     final err = _showTermsError && !_agreeTerms;
-    return InkWell(
+    final row = InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: () => setState(() {
         _agreeTerms = !_agreeTerms;
@@ -901,9 +934,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: Container(
         padding: const EdgeInsets.fromLTRB(10, 10, 12, 10),
         decoration: BoxDecoration(
-          color: err ? DT.errorBg : DT.slate50,
+          color: err ? _orangeBg : DT.slate50,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: err ? DT.errorBorder : DT.slate200),
+          border: Border.all(color: err ? _orange : DT.slate200, width: err ? 1.4 : 1),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -918,7 +951,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   if (_agreeTerms) _showTermsError = false;
                 }),
                 activeColor: _brand,
-                side: BorderSide(color: err ? DT.error : DT.slate400, width: 1.4),
+                side: BorderSide(color: err ? _orange : DT.slate400, width: 1.4),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 visualDensity: VisualDensity.compact,
@@ -969,6 +1002,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       ),
     );
+    if (!err) return row;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        row,
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, size: 15, color: _orange),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text('Please accept the Terms & Conditions to continue',
+                  style: DT.text(size: 12, weight: FontWeight.w600, color: _orangeDark)),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
   // ── Login card ──────────────────────────────────────────
@@ -990,7 +1041,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Container(
                 width: 42,
                 height: 42,
-                decoration: BoxDecoration(color: DT.blue50, borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: _brandTint, borderRadius: BorderRadius.circular(12)),
                 child: const Icon(Icons.login_rounded, color: _brand, size: 22),
               ),
               const SizedBox(width: 12),
@@ -1010,11 +1061,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: DT.blue50,
+                  color: _brand,
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: DT.blue100),
                 ),
-                child: Text('Login', style: DT.text(size: 12.5, weight: FontWeight.w800, color: _brand)),
+                child: Text('Login', style: DT.text(size: 12.5, weight: FontWeight.w800, color: Colors.white)),
               ),
             ],
           ),
@@ -1061,8 +1111,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       enabledBorder: b(DT.slate200),
       focusedBorder: b(_brand, 2),
-      errorBorder: b(DT.error),
-      focusedErrorBorder: b(DT.error, 2),
+      errorBorder: b(_red),
+      focusedErrorBorder: b(_red, 2),
+      errorStyle: DT.text(size: 11.5, weight: FontWeight.w600, color: _red),
       errorMaxLines: 2,
     );
   }
@@ -1080,7 +1131,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         text: text,
         style: DT.text(size: 12, weight: FontWeight.w600, color: DT.onyx700),
         children: [
-          if (required) TextSpan(text: ' *', style: DT.text(size: 12, color: const Color(0xFFF43F5E))),
+          if (required) TextSpan(text: ' *', style: DT.text(size: 12, color: _red)),
         ],
       ),
     ),
@@ -1091,7 +1142,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       Container(
         width: 30,
         height: 30,
-        decoration: BoxDecoration(color: DT.blue50, borderRadius: BorderRadius.circular(9)),
+        decoration: BoxDecoration(color: _brandTint, borderRadius: BorderRadius.circular(9)),
         child: Icon(icon, size: 17, color: _brand),
       ),
       const SizedBox(width: 10),
@@ -1124,9 +1175,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         height: 50,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            gradient: DT.ctaGradient,
+            color: _brand, // buttons: only #093C71
             borderRadius: BorderRadius.circular(12),
-            boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
+            boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 12, offset: Offset(0, 4))],
           ),
           child: ElevatedButton(
             onPressed: onPressed,
@@ -1223,20 +1274,20 @@ class _OtpBoxes extends StatelessWidget {
   Widget _box(int i, String text) {
     final filled = i < text.length;
     final active = focusNode.hasFocus && (i == text.length || (i == length - 1 && text.length == length));
-    final color = hasError ? DT.error : (active ? _brand : (filled ? DT.blue200 : DT.slate200));
+    final color = hasError ? _red : (active ? _brand : (filled ? _brandSoft : DT.slate200));
     return AspectRatio(
       aspectRatio: 0.9,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: hasError ? DT.errorBg : (filled ? DT.blue50 : Colors.white),
+          color: hasError ? _redBg : (filled ? _brandTint : Colors.white),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: color, width: active || hasError ? 2 : 1.2),
         ),
         child: Text(
           filled ? text[i] : '',
-          style: DT.text(size: 22, weight: FontWeight.w800, color: hasError ? DT.error : DT.onyx900),
+          style: DT.text(size: 22, weight: FontWeight.w800, color: hasError ? _red : DT.onyx900),
         ),
       ),
     );

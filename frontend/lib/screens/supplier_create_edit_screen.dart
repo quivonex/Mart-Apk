@@ -15,6 +15,11 @@ import '../models/supplier_model.dart';
 import '../services/company_locations_service.dart';
 import '../services/supplier_service.dart';
 import '../widgets/company_ui.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kLine = Color(0xFFC9DBEE);
+const _kRed = Color(0xFFC62828);
 
 class SupplierCreateEditScreen extends StatefulWidget {
   final Company company;
@@ -320,10 +325,10 @@ class _SupplierCreateEditScreenState extends State<SupplierCreateEditScreen> {
                           : const Icon(Icons.my_location_rounded, size: 16),
                       label: Text(_lat.isEmpty ? 'Use current' : 'Update',
                           style: DT.text(
-                              size: 12.5, weight: FontWeight.w700, color: DT.blue800)),
+                              size: 12.5, weight: FontWeight.w700, color: _kBrand)),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: DT.blue800,
-                        side: const BorderSide(color: DT.blue200),
+                        foregroundColor: _kBrand,
+                        side: const BorderSide(color: _kLine),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(DT.rMd)),
                       ),
@@ -346,9 +351,9 @@ class _SupplierCreateEditScreenState extends State<SupplierCreateEditScreen> {
             height: 48,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                gradient: DT.ctaGradient,
+                color: _kBrand, // buttons: only #093C71
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
+                boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 12, offset: Offset(0, 4))],
               ),
               child: ElevatedButton(
                 onPressed: _saving ? null : _submit,
@@ -412,15 +417,15 @@ class _SupplierCreateEditScreenState extends State<SupplierCreateEditScreen> {
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(DT.rMd),
-      borderSide: const BorderSide(color: DT.blue800, width: 1.4),
+      borderSide: const BorderSide(color: _kBrand, width: 1.4),
     ),
     errorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(DT.rMd),
-      borderSide: const BorderSide(color: DT.error),
+      borderSide: const BorderSide(color: _kRed),
     ),
     focusedErrorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(DT.rMd),
-      borderSide: const BorderSide(color: DT.error, width: 1.4),
+      borderSide: const BorderSide(color: _kRed, width: 1.4),
     ),
   );
 
@@ -468,7 +473,7 @@ class _SupplierCreateEditScreenState extends State<SupplierCreateEditScreen> {
           if (loading)
             const Padding(
               padding: EdgeInsets.only(top: 3),
-              child: LinearProgressIndicator(minHeight: 2, color: DT.blue800),
+              child: LinearProgressIndicator(minHeight: 2, color: _kBrand),
             ),
         ],
       ),

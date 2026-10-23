@@ -25,6 +25,18 @@ import '../services/company_locations_service.dart';
 import '../services/company_service.dart';
 import '../widgets/product_ui.dart';
 import 'terms_conditions_screen.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kTint = Color(0xFFEAF1F9);
+const _kLine = Color(0xFFC9DBEE);
+const _kRed = Color(0xFFC62828);
+const _kRedBg = Color(0xFFFEF2F2);
+const _kRedLine = Color(0xFFFECACA);
+const _kOrangeDark = Color(0xFFC2410C);
+const _kOrangeBg = Color(0xFFFFF7ED);
+const _kOrangeLine = Color(0xFFFED7AA);
 
 enum _Step { details, payment, done }
 
@@ -875,7 +887,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
       ..showSnackBar(
         SnackBar(
           content: Text(msg),
-          backgroundColor: isError ? const Color(0xFFEF4444) : const Color(0xFF047857),
+          backgroundColor: isError ? const Color(0xFFC62828) : const Color(0xFF047857),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 3),
           margin: const EdgeInsets.all(16),
@@ -932,7 +944,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                 ElevatedButton(
                   onPressed: () => Navigator.pop(ctx, true),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: DT.error,
+                    backgroundColor: _kBrand, // buttons: only #093C71
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -1047,7 +1059,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
               decoration: BoxDecoration(
                 color: complete
                     ? PX.emerald500
-                    : (active ? PX.royal600 : DT.slate200),
+                    : (active ? _kBrand : DT.slate200),
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
@@ -1060,7 +1072,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                       : Icons.radio_button_checked_rounded,
                   size: 14,
                   color:
-                  complete ? PX.emerald600 : (active ? PX.royal600 : DT.slate300),
+                  complete ? PX.emerald600 : (active ? _kBrand : DT.slate300),
                 ),
                 const SizedBox(width: 4),
                 Text('Step $n · $label',
@@ -1185,10 +1197,10 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             height: 38,
             alignment: Alignment.center,
             decoration: const BoxDecoration(
-                color: PX.royal50, shape: BoxShape.circle),
+                color: _kTint, shape: BoxShape.circle),
             child: Text('$pct%',
                 style: DT.text(
-                    size: 11, weight: FontWeight.w800, color: PX.royal600)),
+                    size: 11, weight: FontWeight.w800, color: _kBrand)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1216,7 +1228,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                 value: pct / 100,
                 minHeight: 8,
                 backgroundColor: DT.slate100,
-                color: left == 0 ? PX.emerald500 : PX.royal600,
+                color: left == 0 ? PX.emerald500 : _kBrand,
               ),
             ),
           ),
@@ -1229,13 +1241,13 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: DT.amber50,
+        color: _kOrangeBg,
         borderRadius: BorderRadius.circular(DT.rMd),
-        border: Border.all(color: DT.amber200),
+        border: Border.all(color: _kOrangeLine),
       ),
       child: Row(
         children: [
-          const Icon(Icons.payments_outlined, color: DT.amber700),
+          const Icon(Icons.payments_outlined, color: _kOrangeDark),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -1245,10 +1257,10 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                     style: DT.text(
                         size: 13.5,
                         weight: FontWeight.w800,
-                        color: DT.amber900)),
+                        color: _kOrangeDark)),
                 Text(
                     'Pay to activate your admin panel and shipping pickup.',
-                    style: DT.text(size: 12, color: DT.amber800, height: 1.4)),
+                    style: DT.text(size: 12, color: _kOrangeDark, height: 1.4)),
               ],
             ),
           ),
@@ -1256,7 +1268,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
           ElevatedButton(
             onPressed: () => _goToPayment(widget.existing!),
             style: ElevatedButton.styleFrom(
-              backgroundColor: DT.amber600,
+              backgroundColor: _kBrand, // buttons: only #093C71
               foregroundColor: Colors.white,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -1311,7 +1323,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                       const Padding(
                         padding: EdgeInsets.only(top: 1),
                         child: Icon(Icons.info_outline_rounded,
-                            size: 15, color: PX.royal600),
+                            size: 15, color: _kBrand),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -1333,7 +1345,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 6),
               child: Text('Company logo is required',
-                  style: DT.text(size: 11.5, color: DT.error)),
+                  style: DT.text(size: 11.5, color: _kRed)),
             ),
           const SizedBox(height: 16),
           PxLabel(_isEdit ? 'Add more photos' : 'Shop / warehouse photos',
@@ -1362,14 +1374,14 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             ? null
             : _DashedRRectPainter(
             color: error
-                ? DT.error
-                : PX.royal600.withValues(alpha: 0.6),
+                ? _kRed
+                : _kBrand.withValues(alpha: 0.6),
             radius: DT.rLg),
         child: Container(
           width: 112,
           height: 112,
           decoration: BoxDecoration(
-            color: has ? Colors.white : PX.royal50.withValues(alpha: 0.6),
+            color: has ? Colors.white : _kTint.withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(DT.rLg),
             border: has ? Border.all(color: DT.slate200) : null,
           ),
@@ -1410,15 +1422,15 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
         width: 38,
         height: 38,
         decoration: BoxDecoration(
-            color: PX.royal600.withValues(alpha: 0.1),
+            color: _kBrand.withValues(alpha: 0.1),
             shape: BoxShape.circle),
         child: const Icon(Icons.add_a_photo_outlined,
-            color: PX.royal600, size: 20),
+            color: _kBrand, size: 20),
       ),
       const SizedBox(height: 6),
       Text(_isEdit ? 'Logo' : 'Logo *',
           style: DT.text(
-              size: 12, weight: FontWeight.w700, color: PX.royal600)),
+              size: 12, weight: FontWeight.w700, color: _kBrand)),
     ],
   );
 
@@ -1509,7 +1521,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             controller: _nameCtrl,
             hint: 'e.g. ABC Industries Pvt Ltd',
             icon: Icons.business_outlined,
-            iconColor: PX.royal600,
+            iconColor: _kBrand,
             capitalization: TextCapitalization.words,
             validator: (v) => _required(v, 'Company name'),
           ),
@@ -1525,7 +1537,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             controller: _ownerCtrl,
             hint: 'e.g. Rahul Patil',
             icon: Icons.person_outline_rounded,
-            iconColor: PX.royal600,
+            iconColor: _kBrand,
             capitalization: TextCapitalization.words,
             validator: (v) {
               if (v == null || v.trim().isEmpty) return 'Owner name required';
@@ -1541,7 +1553,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             controller: _emailCtrl,
             hint: 'name@company.com',
             icon: Icons.mail_outline_rounded,
-            iconColor: PX.royal600,
+            iconColor: _kBrand,
             keyboardType: TextInputType.emailAddress,
             validator: (v) {
               if (v == null || v.trim().isEmpty) return 'Email required';
@@ -1565,7 +1577,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                       controller: _phoneCtrl,
                       hint: '10-digit',
                       icon: Icons.phone_outlined,
-                      iconColor: PX.royal600,
+                      iconColor: _kBrand,
                       keyboardType: TextInputType.phone,
                       inputFormatters: _phoneFormatters,
                       validator: (v) => _validatePhone(v, 'Phone'),
@@ -1767,7 +1779,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: PX.royal600))
+                          strokeWidth: 2, color: _kBrand))
                       : const Icon(Icons.my_location_rounded, size: 18),
                   label: Text(
                       _isFetchingLocation
@@ -1776,11 +1788,11 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                       style: DT.text(
                           size: 13.5,
                           weight: FontWeight.w700,
-                          color: PX.royal600)),
+                          color: _kBrand)),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: PX.royal600,
+                    foregroundColor: _kBrand,
                     backgroundColor: Colors.white,
-                    side: const BorderSide(color: PX.royal200),
+                    side: const BorderSide(color: _kLine),
                     minimumSize: const Size.fromHeight(44),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(DT.rMd)),
@@ -2002,7 +2014,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             icon: icon,
             suffix: IconButton(
               tooltip: 'Add',
-              icon: const Icon(Icons.add_circle_rounded, color: PX.royal600),
+              icon: const Icon(Icons.add_circle_rounded, color: _kBrand),
               onPressed: onSubmitted,
             ),
           ),
@@ -2157,13 +2169,13 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.fromLTRB(12, 8, 6, 8),
       decoration: BoxDecoration(
-        color: value ? PX.royal50 : const Color(0x99F8FAFC),
+        color: value ? _kTint : const Color(0x99F8FAFC),
         borderRadius: BorderRadius.circular(DT.rMd),
-        border: Border.all(color: value ? PX.royal200 : DT.slate200),
+        border: Border.all(color: value ? _kLine : DT.slate200),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: value ? PX.royal600 : DT.slate400),
+          Icon(icon, size: 20, color: value ? _kBrand : DT.slate400),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -2180,7 +2192,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             value: value,
             onChanged: onChanged,
             activeThumbColor: Colors.white,
-            activeTrackColor: PX.royal600,
+            activeTrackColor: _kBrand,
             inactiveThumbColor: Colors.white,
             inactiveTrackColor: DT.slate300,
             trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
@@ -2212,12 +2224,12 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             child: Container(
               padding: const EdgeInsets.fromLTRB(6, 6, 12, 6),
               decoration: BoxDecoration(
-                color: _acceptTerms ? PX.royal50 : Colors.white,
+                color: _acceptTerms ? _kTint : Colors.white,
                 borderRadius: BorderRadius.circular(DT.rMd),
                 border: Border.all(
                     color: termsMissing
-                        ? DT.error
-                        : (_acceptTerms ? PX.royal200 : DT.slate200)),
+                        ? _kRed
+                        : (_acceptTerms ? _kLine : DT.slate200)),
               ),
               child: Row(
                 children: [
@@ -2225,7 +2237,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                     value: _acceptTerms,
                     onChanged: (v) =>
                         setState(() => _acceptTerms = v ?? false),
-                    activeColor: PX.royal600,
+                    activeColor: _kBrand,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(4)),
                   ),
@@ -2247,7 +2259,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                                   style: DT.text(
                                       size: 13,
                                       weight: FontWeight.w700,
-                                      color: PX.royal600,
+                                      color: _kBrand,
                                       decoration: TextDecoration.underline)),
                             ),
                           ),
@@ -2266,7 +2278,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 6, left: 4),
               child: Text('Please accept the terms to continue',
-                  style: DT.text(size: 11.5, color: DT.error)),
+                  style: DT.text(size: 11.5, color: _kRed)),
             ),
         ],
       ),
@@ -2293,11 +2305,11 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                 height: 50,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    gradient: DT.ctaGradient,
+                    color: _kBrand, // buttons: only #093C71
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: const [
                       BoxShadow(
-                          color: Color(0x406366F1),
+                          color: Color(0x40093C71),
                           blurRadius: 12,
                           offset: Offset(0, 4))
                     ],
@@ -2425,7 +2437,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                     padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Color(0xFF4F46E5), Color(0xFF8B5CF6)],
+                        colors: [Color(0xFF062A50), Color(0xFF1E5A9C)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -2483,20 +2495,20 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: DT.errorBg,
+                  color: _kRedBg,
                   borderRadius: BorderRadius.circular(DT.rMd),
-                  border: Border.all(color: DT.errorBorder),
+                  border: Border.all(color: _kRedLine),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Icon(Icons.error_outline_rounded,
-                        color: DT.error, size: 20),
+                        color: _kRed, size: 20),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(_paymentError!,
                           style: DT.text(
-                              size: 12.5, color: DT.error, height: 1.45)),
+                              size: 12.5, color: _kRed, height: 1.45)),
                     ),
                   ],
                 ),
@@ -2507,11 +2519,11 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
               height: 52,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  gradient: DT.ctaGradient,
+                  color: _kBrand, // buttons: only #093C71
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: const [
                     BoxShadow(
-                        color: Color(0x406366F1),
+                        color: Color(0x40093C71),
                         blurRadius: 12,
                         offset: Offset(0, 4))
                   ],
@@ -2597,7 +2609,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                         width: 22,
                         height: 22,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2.5, color: PX.royal600)),
+                            strokeWidth: 2.5, color: _kBrand)),
                     const SizedBox(width: 16),
                     Text('Confirming payment…',
                         style: DT.text(size: 14, weight: FontWeight.w700)),
@@ -2619,9 +2631,9 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
           width: 30,
           height: 30,
           decoration: BoxDecoration(
-              color: PX.royal50,
+              color: _kTint,
               borderRadius: BorderRadius.circular(DT.rSm)),
-          child: Icon(icon, size: 17, color: PX.royal600),
+          child: Icon(icon, size: 17, color: _kBrand),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -2701,14 +2713,14 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: PX.royal50,
+                color: _kTint,
                 borderRadius: BorderRadius.circular(DT.rMd),
-                border: Border.all(color: PX.royal200),
+                border: Border.all(color: _kLine),
               ),
               child: Row(
                 children: [
                   const Icon(Icons.mark_email_read_outlined,
-                      color: PX.royal600, size: 20),
+                      color: _kBrand, size: 20),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -2716,7 +2728,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                           ? 'Admin panel login details were sent to ${company.email}.'
                           : 'Admin panel login details were sent to your email.',
                       style: DT.text(
-                          size: 12.5, color: DT.blue900, height: 1.45),
+                          size: 12.5, color: _kBrandDark, height: 1.45),
                     ),
                   ),
                 ],
@@ -2728,11 +2740,11 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
               height: 50,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  gradient: DT.ctaGradient,
+                  color: _kBrand, // buttons: only #093C71
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: const [
                     BoxShadow(
-                        color: Color(0x406366F1),
+                        color: Color(0x40093C71),
                         blurRadius: 12,
                         offset: Offset(0, 4))
                   ],
@@ -2770,11 +2782,11 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
 
   Widget _companyAvatar(Company c) {
     Widget initials() => Container(
-      color: PX.royal50,
+      color: _kTint,
       alignment: Alignment.center,
       child: Text(c.name.isEmpty ? '?' : c.name[0].toUpperCase(),
           style: DT.text(
-              size: 22, weight: FontWeight.w800, color: PX.royal600)),
+              size: 22, weight: FontWeight.w800, color: _kBrand)),
     );
     return Container(
       width: 58,
@@ -2835,8 +2847,8 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             borderRadius: BorderRadius.circular(DT.rMd),
             side: BorderSide(
               color: error != null || missing
-                  ? DT.error
-                  : (selected != null ? PX.royal600 : DT.slate200),
+                  ? _kRed
+                  : (selected != null ? _kBrand : DT.slate200),
               width: selected != null ? 1.4 : 1,
             ),
           ),
@@ -2857,7 +2869,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                 children: [
                   Icon(icon,
                       size: 19,
-                      color: !enabled ? DT.slate300 : PX.royal600),
+                      color: !enabled ? DT.slate300 : _kBrand),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -2876,7 +2888,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2, color: PX.royal600))
+                            strokeWidth: 2, color: _kBrand))
                   else
                     Icon(Icons.expand_more_rounded,
                         color: canOpen ? DT.slate500 : DT.slate300),
@@ -2891,18 +2903,18 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             child: Row(
               children: [
                 const Icon(Icons.error_outline_rounded,
-                    size: 14, color: DT.error),
+                    size: 14, color: _kRed),
                 const SizedBox(width: 4),
                 Expanded(
                     child: Text(error,
-                        style: DT.text(size: 11.5, color: DT.error))),
+                        style: DT.text(size: 11.5, color: _kRed))),
                 GestureDetector(
                   onTap: onRetry,
                   child: Text('Retry',
                       style: DT.text(
                           size: 11.5,
                           weight: FontWeight.w700,
-                          color: PX.royal600)),
+                          color: _kBrand)),
                 ),
               ],
             ),
@@ -2911,7 +2923,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
           Padding(
             padding: const EdgeInsets.only(top: 5, left: 2),
             child: Text('$label is required',
-                style: DT.text(size: 11.5, color: DT.error)),
+                style: DT.text(size: 11.5, color: _kRed)),
           ),
       ],
     );
@@ -2999,12 +3011,12 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                                         ? FontWeight.w700
                                         : FontWeight.w500,
                                     color: sel
-                                        ? PX.royal600
+                                        ? _kBrand
                                         : DT.onyx900)),
                             trailing: sel
                                 ? const Icon(
                                 Icons.check_circle_rounded,
-                                color: PX.royal600)
+                                color: _kBrand)
                                 : null,
                             onTap: () => Navigator.pop(ctx, item),
                           );
@@ -3048,7 +3060,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             child: Row(
               children: [
                 const Icon(Icons.info_outline_rounded,
-                    size: 14, color: PX.royal600),
+                    size: 14, color: _kBrand),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -3079,7 +3091,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             child: Row(
               children: [
                 const Icon(Icons.location_on_rounded,
-                    size: 16, color: PX.royal600),
+                    size: 16, color: _kBrand),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
@@ -3253,7 +3265,7 @@ class _InteractiveMapViewState extends State<_InteractiveMapView> {
                   child: const Icon(
                     Icons.location_on,
                     size: 44,
-                    color: Color(0xFFE11D48),
+                    color: Color(0xFFC62828),
                     shadows: [
                       Shadow(color: Colors.black38, blurRadius: 6),
                     ],
@@ -3339,7 +3351,7 @@ Future<ImageSource?> _pickMediaSource(BuildContext context,
       ImageSource src) =>
       Expanded(
         child: Material(
-          color: PX.royal50,
+          color: _kTint,
           borderRadius: BorderRadius.circular(DT.rLg),
           child: InkWell(
             borderRadius: BorderRadius.circular(DT.rLg),
@@ -3348,7 +3360,7 @@ Future<ImageSource?> _pickMediaSource(BuildContext context,
               padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
               child: Column(
                 children: [
-                  Icon(icon, color: PX.royal600, size: 28),
+                  Icon(icon, color: _kBrand, size: 28),
                   const SizedBox(height: 6),
                   Text(label,
                       style: DT.text(

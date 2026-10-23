@@ -16,6 +16,17 @@ import 'company_photos_screen.dart';
 import 'company_products_list_screen.dart';
 import 'company_stock_screen.dart';
 import 'supplier_list_screen.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kTint = Color(0xFFEAF1F9);
+const _kLine = Color(0xFFC9DBEE);
+const _kRed = Color(0xFFC62828);
+const _kRedBg = Color(0xFFFEF2F2);
+const _kRedLine = Color(0xFFFECACA);
+const _kOrangeDark = Color(0xFFC2410C);
+const _kOrangeBg = Color(0xFFFFF7ED);
 
 class CompanyDetailScreen extends StatefulWidget {
   final Company company;
@@ -123,7 +134,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
       body: Stack(
         children: [
           RefreshIndicator(
-            color: DT.blue800,
+            color: _kBrand,
             onRefresh: _load,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -157,7 +168,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
             const Positioned.fill(
               child: ColoredBox(
                 color: Color(0x66FFFFFF),
-                child: Center(child: CircularProgressIndicator(color: DT.blue800)),
+                child: Center(child: CircularProgressIndicator(color: _kBrand)),
               ),
             ),
         ],
@@ -171,14 +182,14 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
         ? _pill('Inactive', DT.slate100, DT.onyx600)
         : _c.isPaid
         ? _pill('Paid', DT.emerald50, DT.emerald700)
-        : _pill('Payment pending', DT.amber50, DT.amber800);
+        : _pill('Payment pending', _kOrangeBg, _kOrangeDark);
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: DT.blue50,
+        color: _kTint,
         borderRadius: BorderRadius.circular(DT.rLg),
-        border: Border.all(color: DT.blue200),
+        border: Border.all(color: _kLine),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,9 +218,9 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
                   runSpacing: 6,
                   children: [
                     pill,
-                    if (_c.isoCertified) _pill('ISO', Colors.white, DT.blue800),
-                    if (_c.isiCertified) _pill('ISI', Colors.white, DT.blue800),
-                    if (_c.codAvailable) _pill('COD', Colors.white, DT.blue800),
+                    if (_c.isoCertified) _pill('ISO', Colors.white, _kBrand),
+                    if (_c.isiCertified) _pill('ISI', Colors.white, _kBrand),
+                    if (_c.codAvailable) _pill('COD', Colors.white, _kBrand),
                   ],
                 ),
               ],
@@ -230,20 +241,20 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: DT.blue50,
+        color: _kTint,
         borderRadius: BorderRadius.circular(DT.rLg),
-        border: Border.all(color: DT.blue200),
+        border: Border.all(color: _kLine),
       ),
       child: Row(
         children: [
-          const Icon(Icons.payments_outlined, color: DT.blue800),
+          const Icon(Icons.payments_outlined, color: _kBrand),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Registration fee not paid',
-                    style: DT.text(size: 13.5, weight: FontWeight.w700, color: DT.blue900)),
+                    style: DT.text(size: 13.5, weight: FontWeight.w700, color: _kBrandDark)),
                 const SizedBox(height: 2),
                 Text('Pay to activate the admin panel and shipping pickup.',
                     style: DT.text(size: 12, color: DT.onyx600, height: 1.4)),
@@ -254,7 +265,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
           ElevatedButton(
             onPressed: _pay,
             style: ElevatedButton.styleFrom(
-              backgroundColor: DT.blue800,
+              backgroundColor: _kBrand,
               foregroundColor: Colors.white,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -287,7 +298,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
           TextButton(
             onPressed: _toggleActive,
             child: Text('Restore',
-                style: DT.text(size: 13, weight: FontWeight.w700, color: DT.blue800)),
+                style: DT.text(size: 13, weight: FontWeight.w700, color: _kBrand)),
           ),
         ],
       ),
@@ -297,22 +308,22 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
   Widget _errorBanner() => Container(
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: DT.errorBg,
+      color: _kRedBg,
       borderRadius: BorderRadius.circular(DT.rMd),
-      border: Border.all(color: DT.errorBorder),
+      border: Border.all(color: _kRedLine),
     ),
     child: Row(
       children: [
-        const Icon(Icons.error_outline_rounded, size: 18, color: DT.error),
+        const Icon(Icons.error_outline_rounded, size: 18, color: _kRed),
         const SizedBox(width: 8),
         Expanded(
           child: Text('$_error. Showing saved details.',
-              style: DT.text(size: 12, color: DT.error, weight: FontWeight.w600)),
+              style: DT.text(size: 12, color: _kRed, weight: FontWeight.w600)),
         ),
         GestureDetector(
           onTap: _load,
           child: Text('Retry',
-              style: DT.text(size: 12, weight: FontWeight.w700, color: DT.error)),
+              style: DT.text(size: 12, weight: FontWeight.w700, color: _kRed)),
         ),
       ],
     ),
@@ -357,10 +368,10 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: DT.blue50,
+                      color: _kTint,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(t.icon, color: DT.blue800, size: 20),
+                    child: Icon(t.icon, color: _kBrand, size: 20),
                   ),
                   const SizedBox(height: 6),
                   Text(t.label,
@@ -423,9 +434,9 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
             'https://www.google.com/maps/search/?api=1&query=${_c.latitude},${_c.longitude}'),
         icon: const Icon(Icons.map_outlined, size: 16),
         label: Text('Map',
-            style: DT.text(size: 12, weight: FontWeight.w700, color: DT.blue800)),
+            style: DT.text(size: 12, weight: FontWeight.w700, color: _kBrand)),
         style: TextButton.styleFrom(
-          foregroundColor: DT.blue800,
+          foregroundColor: _kBrand,
           padding: const EdgeInsets.symmetric(horizontal: 8),
           minimumSize: const Size(0, 32),
         ),
@@ -511,7 +522,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
       trailing: TextButton(
         onPressed: () => _open(CompanyPhotosScreen(company: _c)),
         child: Text(_c.images.isEmpty ? 'Add' : 'Manage',
-            style: DT.text(size: 12.5, weight: FontWeight.w700, color: DT.blue800)),
+            style: DT.text(size: 12.5, weight: FontWeight.w700, color: _kBrand)),
       ),
       child: _c.images.isEmpty
           ? _emptyLine('Add photos of your shop, warehouse or products.')
@@ -551,10 +562,10 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
           style: DT.text(
               size: 13.5,
               weight: FontWeight.w700,
-              color: deactivate ? DT.error : DT.blue800)),
+              color: _kBrand)), // buttons: only #093C71
       style: OutlinedButton.styleFrom(
-        foregroundColor: deactivate ? DT.error : DT.blue800,
-        side: BorderSide(color: deactivate ? DT.errorBorder : DT.blue200),
+        foregroundColor: _kBrand,
+        side: const BorderSide(color: _kBrand),
         minimumSize: const Size.fromHeight(46),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
       ),

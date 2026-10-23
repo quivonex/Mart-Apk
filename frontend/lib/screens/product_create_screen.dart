@@ -41,6 +41,21 @@ import 'branch_screens.dart';
 import 'category_screens.dart';
 import 'subcategory_screens.dart';
 import 'unit_screens.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kTint = Color(0xFFEAF1F9);
+const _kRed = Color(0xFFC62828);
+const _kOrangeDark = Color(0xFFC2410C);
+const _kOrangeBg = Color(0xFFFFF7ED);
+const _kOrangeLine = Color(0xFFFED7AA);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 class ProductCreateScreen extends StatefulWidget {
   /// Create mode: preselect this company.
@@ -1117,7 +1132,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
           child: ElevatedButton(
             onPressed: () => Navigator.pop(ctx),
             style: ElevatedButton.styleFrom(
-              backgroundColor: PX.royal600,
+              backgroundColor: _kBrand,
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
@@ -1213,7 +1228,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
       preferredSize: const Size.fromHeight(64),
       child: Container(
         decoration: const BoxDecoration(
-          gradient: DT.headerGradient,
+          gradient: _kHeader,
           boxShadow: [BoxShadow(color: Color(0x0D0F172A), blurRadius: 2, offset: Offset(0, 1))],
         ),
         child: SafeArea(
@@ -1252,7 +1267,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                         _isEdit ? widget.existing!.name : 'New B2B product listing',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: DT.text(size: 12, weight: FontWeight.w500, color: const Color(0xFFE0E7FF)),
+                        style: DT.text(size: 12, weight: FontWeight.w500, color: const Color(0xFFC9DBEE)),
                       ),
                     ],
                   ),
@@ -1261,7 +1276,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                   TextButton(
                     onPressed: _saving ? null : _reset,
                     child: Text('Reset',
-                        style: DT.text(size: 12.5, weight: FontWeight.w600, color: PX.royal600)),
+                        style: DT.text(size: 12.5, weight: FontWeight.w600, color: _kBrand)),
                   ),
                 const SizedBox(width: 8),
               ],
@@ -1326,19 +1341,19 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: warn ? DT.amber50 : const Color(0xB3EEF2FF),
+        color: warn ? _kOrangeBg : const Color(0xB3EAF1F9),
         borderRadius: BorderRadius.circular(DT.rMd),
-        border: Border.all(color: warn ? DT.amber200 : const Color(0xCCC7D2FE)),
+        border: Border.all(color: warn ? _kOrangeLine : const Color(0xCCC9DBEE)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: warn ? DT.amber700 : PX.royal600),
+          Icon(icon, size: 18, color: warn ? _kOrangeDark : _kBrand),
           const SizedBox(width: 10),
           Expanded(
             child: Text(text,
                 style: DT.text(
-                    size: 12, color: warn ? DT.amber900 : DT.blue900, height: 1.5)),
+                    size: 12, color: warn ? _kOrangeDark : _kBrandDark, height: 1.5)),
           ),
           if (action != null)
             GestureDetector(
@@ -1346,7 +1361,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
               child: Padding(
                 padding: const EdgeInsets.only(left: 8),
                 child: Text(action,
-                    style: DT.text(size: 12, weight: FontWeight.w700, color: PX.royal600)),
+                    style: DT.text(size: 12, weight: FontWeight.w700, color: _kBrand)),
               ),
             ),
         ],
@@ -1372,9 +1387,9 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
             width: 36,
             height: 36,
             alignment: Alignment.center,
-            decoration: const BoxDecoration(color: PX.royal50, shape: BoxShape.circle),
+            decoration: const BoxDecoration(color: _kTint, shape: BoxShape.circle),
             child: Text('$pct%',
-                style: DT.text(size: 11, weight: FontWeight.w800, color: PX.royal600)),
+                style: DT.text(size: 11, weight: FontWeight.w800, color: _kBrand)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1400,7 +1415,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                 value: pct / 100,
                 minHeight: 8,
                 backgroundColor: DT.slate100,
-                color: PX.royal600,
+                color: _kBrand,
               ),
             ),
           ),
@@ -1658,7 +1673,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                       style: DT.text(
                           size: 12,
                           weight: FontWeight.w600,
-                          color: fp > 0 ? PX.emerald600 : DT.error),
+                          color: fp > 0 ? PX.emerald600 : _kRed),
                     ),
                   ),
               ],
@@ -1759,7 +1774,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
             controller: _stock,
             hint: 'Stock quantity',
             icon: Icons.inventory_outlined,
-            iconColor: PX.royal600,
+            iconColor: _kBrand,
             bold: true,
             suffixText: unit,
             keyboardType: TextInputType.number,
@@ -1776,7 +1791,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
             decoration: BoxDecoration(
               color: const Color(0xB3F8FAFC),
               borderRadius: BorderRadius.circular(DT.rMd),
-              border: Border.all(color: dimsMissing ? DT.error : DT.slate200),
+              border: Border.all(color: dimsMissing ? _kRed : DT.slate200),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1805,7 +1820,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                     const SizedBox(width: 8),
                     PxSegmented<String>(
                       small: true,
-                      selectedColor: PX.royal600,
+                      selectedColor: _kBrand,
                       options: const [('kg', 'kg'), ('g', 'g')],
                       value: _weightUnit,
                       onChanged: (v) {
@@ -1830,7 +1845,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                   alignment: Alignment.centerRight,
                   child: PxSegmented<String>(
                     small: true,
-                    selectedColor: PX.royal600,
+                    selectedColor: _kBrand,
                     options: const [('cm', 'cm'), ('mm', 'mm')],
                     value: _dimUnit,
                     onChanged: (v) {
@@ -1846,7 +1861,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 6, left: 2),
               child: Text('Enter weight, length, width and height',
-                  style: DT.text(size: 11.5, color: DT.error)),
+                  style: DT.text(size: 11.5, color: _kRed)),
             ),
         ],
       ),
@@ -1873,16 +1888,16 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: PX.royal600.withValues(alpha: 0.1),
+              color: _kBrand.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.photo_camera_outlined, color: PX.royal600, size: 22),
+            child: const Icon(Icons.photo_camera_outlined, color: _kBrand, size: 22),
           ),
           const SizedBox(height: 6),
           Text('Main photo *',
-              style: DT.text(size: 12, weight: FontWeight.w700, color: PX.royal600)),
+              style: DT.text(size: 12, weight: FontWeight.w700, color: _kBrand)),
           Text('Primary angle',
-              style: DT.text(size: 10, color: PX.royal600.withValues(alpha: 0.8))),
+              style: DT.text(size: 10, color: _kBrand.withValues(alpha: 0.8))),
         ],
       );
     }
@@ -1912,14 +1927,14 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                   foregroundPainter: hasThumb
                       ? null
                       : _DashedRRectPainter(
-                    color: thumbMissing ? DT.error : PX.royal600.withValues(alpha: 0.6),
+                    color: thumbMissing ? _kRed : _kBrand.withValues(alpha: 0.6),
                     radius: DT.rLg,
                   ),
                   child: Container(
                     width: 128,
                     height: 128,
                     decoration: BoxDecoration(
-                      color: hasThumb ? DT.slate100 : PX.royal50.withValues(alpha: 0.5),
+                      color: hasThumb ? DT.slate100 : _kTint.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(DT.rLg),
                       border: hasThumb ? Border.all(color: DT.slate200) : null,
                     ),
@@ -1966,7 +1981,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                     children: [
                       const Padding(
                         padding: EdgeInsets.only(top: 1),
-                        child: Icon(Icons.info_outline_rounded, size: 15, color: PX.royal600),
+                        child: Icon(Icons.info_outline_rounded, size: 15, color: _kBrand),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -1985,7 +2000,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
           if (thumbMissing)
             Padding(
               padding: const EdgeInsets.only(top: 6),
-              child: Text('Main photo is required', style: DT.text(size: 11.5, color: DT.error)),
+              child: Text('Main photo is required', style: DT.text(size: 11.5, color: _kRed)),
             ),
           const SizedBox(height: 16),
           const PxLabel('More photos'),
@@ -2050,7 +2065,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
               padding: const EdgeInsets.only(top: 8),
               child: Text(
                   '${_deleteImageIds.length} photo(s) will be removed once the update is approved.',
-                  style: DT.text(size: 11.5, color: DT.error)),
+                  style: DT.text(size: 11.5, color: _kRed)),
             ),
         ],
       ),
@@ -2071,7 +2086,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
         decoration: BoxDecoration(
           color: DT.slate100,
           borderRadius: BorderRadius.circular(DT.rMd),
-          border: Border.all(color: marked ? DT.error : DT.slate200),
+          border: Border.all(color: marked ? _kRed : DT.slate200),
         ),
         clipBehavior: Clip.antiAlias,
         child: Stack(
@@ -2079,7 +2094,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
           children: [
             Opacity(opacity: marked ? 0.35 : 1, child: child),
             if (marked)
-              const Center(child: Icon(Icons.delete_outline_rounded, color: DT.error)),
+              const Center(child: Icon(Icons.delete_outline_rounded, color: _kRed)),
             if (isNew)
               Positioned(
                 left: 4,
@@ -2103,7 +2118,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                   width: 20,
                   height: 20,
                   decoration: BoxDecoration(
-                    color: marked ? PX.royal600 : DT.onyx900.withValues(alpha: 0.7),
+                    color: marked ? _kBrand : DT.onyx900.withValues(alpha: 0.7),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(marked ? Icons.undo_rounded : Icons.close_rounded,
@@ -2145,11 +2160,11 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
               onTap: _pickVideo,
               child: CustomPaint(
                 foregroundPainter:
-                _DashedRRectPainter(color: PX.royal600.withValues(alpha: 0.6), radius: DT.rMd),
+                _DashedRRectPainter(color: _kBrand.withValues(alpha: 0.6), radius: DT.rMd),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                   decoration: BoxDecoration(
-                    color: PX.royal50.withValues(alpha: 0.5),
+                    color: _kTint.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(DT.rMd),
                   ),
                   child: Row(
@@ -2158,10 +2173,10 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: PX.royal600.withValues(alpha: 0.12),
+                          color: _kBrand.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.video_call_outlined, color: PX.royal600, size: 22),
+                        child: const Icon(Icons.video_call_outlined, color: _kBrand, size: 22),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -2170,7 +2185,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                           children: [
                             Text(_videos.isEmpty ? 'Add a video' : 'Add another video',
                                 style: DT.text(
-                                    size: 13.5, weight: FontWeight.w700, color: PX.royal600)),
+                                    size: 13.5, weight: FontWeight.w700, color: _kBrand)),
                             const SizedBox(height: 2),
                             Text('Record or upload · MP4 / MOV · up to 2 min, ${_maxVideoBytes ~/ (1024 * 1024)}MB',
                                 maxLines: 2,
@@ -2213,7 +2228,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
             height: 52,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF4F46E5), Color(0xFF8B5CF6)],
+                colors: [Color(0xFF062A50), Color(0xFF1E5A9C)],
               ),
               borderRadius: BorderRadius.circular(DT.rSm + 2),
             ),
@@ -2256,7 +2271,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
               _videos.removeAt(i);
               _videoSizes.removeAt(i);
             }),
-            icon: const Icon(Icons.close_rounded, color: DT.error, size: 20),
+            icon: const Icon(Icons.close_rounded, color: _kRed, size: 20),
           ),
         ],
       ),
@@ -2442,11 +2457,11 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
           if (onEdit != null)
             IconButton(
                 onPressed: onEdit,
-                icon: const Icon(Icons.edit_outlined, size: 18, color: PX.royal600)),
+                icon: const Icon(Icons.edit_outlined, size: 18, color: _kBrand)),
           if (onDelete != null)
             IconButton(
                 onPressed: onDelete,
-                icon: const Icon(Icons.delete_outline_rounded, size: 18, color: DT.error)),
+                icon: const Icon(Icons.delete_outline_rounded, size: 18, color: _kRed)),
         ],
       ),
     );
@@ -2516,7 +2531,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(icon, size: 16, color: PX.royal600),
+                      Icon(icon, size: 16, color: _kBrand),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(label,
@@ -2640,9 +2655,9 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                 height: 50,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    gradient: DT.ctaGradient,
+                    color: _kBrand, // buttons: only #093C71
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
+                    boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 12, offset: Offset(0, 4))],
                   ),
                   child: ElevatedButton(
                     onPressed: _saving ? null : _submit,
@@ -2856,9 +2871,9 @@ class _SpecSheetState extends State<_SpecSheet> {
                   height: 48,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      gradient: DT.ctaGradient,
+                      color: _kBrand, // buttons: only #093C71
                       borderRadius: BorderRadius.circular(12),
-                      boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
+                      boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 12, offset: Offset(0, 4))],
                     ),
                     child: ElevatedButton(
                       onPressed: _save,
@@ -3038,7 +3053,7 @@ class _VariantSheetState extends State<_VariantSheet> {
                             k.dispose();
                             v.dispose();
                           }),
-                          icon: const Icon(Icons.remove_circle_outline, color: DT.error),
+                          icon: const Icon(Icons.remove_circle_outline, color: _kRed),
                         ),
                     ],
                   ),
@@ -3127,7 +3142,7 @@ class _VariantSheetState extends State<_VariantSheet> {
                       clipBehavior: Clip.antiAlias,
                       child: _imageBytes != null
                           ? Image.memory(_imageBytes!, fit: BoxFit.cover)
-                          : const Icon(Icons.add_photo_alternate_outlined, color: PX.royal600),
+                          : const Icon(Icons.add_photo_alternate_outlined, color: _kBrand),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -3142,7 +3157,7 @@ class _VariantSheetState extends State<_VariantSheet> {
                         _imageBytes = null;
                       }),
                       child: Text('Remove',
-                          style: DT.text(size: 12.5, weight: FontWeight.w700, color: DT.error)),
+                          style: DT.text(size: 12.5, weight: FontWeight.w700, color: _kRed)),
                     ),
                 ],
               ),
@@ -3151,9 +3166,9 @@ class _VariantSheetState extends State<_VariantSheet> {
                 height: 48,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    gradient: DT.ctaGradient,
+                    color: _kBrand, // buttons: only #093C71
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
+                    boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 12, offset: Offset(0, 4))],
                   ),
                   child: ElevatedButton(
                     onPressed: _save,
@@ -3184,7 +3199,7 @@ Future<ImageSource?> pickMediaSource(BuildContext context, {bool video = false})
   Widget tile(BuildContext ctx, IconData icon, String label, String hint, ImageSource src) =>
       Expanded(
         child: Material(
-          color: PX.royal50,
+          color: _kTint,
           borderRadius: BorderRadius.circular(DT.rLg),
           child: InkWell(
             borderRadius: BorderRadius.circular(DT.rLg),
@@ -3193,7 +3208,7 @@ Future<ImageSource?> pickMediaSource(BuildContext context, {bool video = false})
               padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
               child: Column(
                 children: [
-                  Icon(icon, color: PX.royal600, size: 28),
+                  Icon(icon, color: _kBrand, size: 28),
                   const SizedBox(height: 6),
                   Text(label,
                       style: DT.text(size: 13.5, weight: FontWeight.w700, color: DT.onyx900)),

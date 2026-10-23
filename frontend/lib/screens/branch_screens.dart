@@ -2,7 +2,7 @@
 //
 // BranchManageScreen  - list a company's branches (active / inactive), add, edit, (de)activate
 // BranchFormScreen    - create / edit. Pops with the saved CatalogBranch.
-// Redesigned to match the app (brand blue #1A68FA, white cards, slate borders).
+// Colours: QNX MART brand #093C71 (all buttons), white cards, slate borders.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +12,18 @@ import '../services/catalog_service.dart';
 import '../widgets/catalog_widgets.dart';
 import '../widgets/company_ui.dart';
 import '../widgets/product_ui.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kTint = Color(0xFFEAF1F9);
+const _kLine = Color(0xFFC9DBEE);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 class BranchManageScreen extends StatefulWidget {
   final int companyId;
@@ -93,7 +105,7 @@ class _BranchManageScreenState extends State<BranchManageScreen> {
             ? null
             : FloatingActionButton.extended(
           onPressed: () => _openForm(),
-          backgroundColor: DT.blue800,
+          backgroundColor: _kBrand, // buttons: only #093C71
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add_rounded),
           label: Text('Add branch',
@@ -143,7 +155,7 @@ class _BranchFormScreenState extends State<BranchFormScreen> {
   late final _address = TextEditingController(text: widget.existing?.address ?? '');
   bool _saving = false;
 
-  static const _brand = Color(0xFF6366F1);
+  static const _brand = _kBrand; // #093C71
 
   bool get _isEdit => widget.existing != null;
 
@@ -305,7 +317,7 @@ class _BranchFormScreenState extends State<BranchFormScreen> {
       preferredSize: const Size.fromHeight(64),
       child: Container(
         decoration: const BoxDecoration(
-          gradient: DT.headerGradient,
+          gradient: _kHeader,
           boxShadow: [
             BoxShadow(
                 color: Color(0x0D0F172A), blurRadius: 2, offset: Offset(0, 1)),
@@ -346,7 +358,7 @@ class _BranchFormScreenState extends State<BranchFormScreen> {
                           style: DT.text(
                               size: 12,
                               weight: FontWeight.w500,
-                              color: const Color(0xFFE0E7FF)),
+                              color: _kLine),
                         ),
                       ],
                     ),
@@ -368,9 +380,9 @@ class _BranchFormScreenState extends State<BranchFormScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: DT.blue50,
+        color: _kTint,
         borderRadius: BorderRadius.circular(DT.rLg),
-        border: Border.all(color: DT.blue200),
+        border: Border.all(color: _kLine),
       ),
       child: Row(
         children: [
@@ -431,7 +443,7 @@ class _BranchFormScreenState extends State<BranchFormScreen> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: DT.blue50,
+                    color: _kTint,
                     borderRadius: BorderRadius.circular(DT.rMd),
                   ),
                   child: Icon(icon, size: 20, color: _brand),
@@ -483,9 +495,9 @@ class _BranchFormScreenState extends State<BranchFormScreen> {
             height: 52,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                gradient: DT.ctaGradient,
+                color: _kBrand, // buttons: only #093C71
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
+                boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 12, offset: Offset(0, 4))],
               ),
               child: ElevatedButton(
                 onPressed: _saving ? null : _save,

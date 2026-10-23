@@ -8,6 +8,10 @@ import '../models/supplier_model.dart';
 import '../services/supplier_service.dart';
 import '../widgets/company_ui.dart';
 import 'supplier_create_edit_screen.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kRed = Color(0xFFC62828);
 
 class SupplierListScreen extends StatefulWidget {
   final Company company;
@@ -109,7 +113,7 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
           ? null
           : FloatingActionButton.extended(
         onPressed: () => _openForm(),
-        backgroundColor: DT.blue800,
+        backgroundColor: _kBrand,
         foregroundColor: Colors.white,
         elevation: 3,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rLg)),
@@ -123,7 +127,7 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
 
   Widget _body() {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: DT.blue800));
+      return const Center(child: CircularProgressIndicator(color: _kBrand));
     }
     if (_error != null && _items.isEmpty) {
       return StateView(
@@ -147,7 +151,7 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
 
     final visible = _visible;
     return RefreshIndicator(
-      color: DT.blue800,
+      color: _kBrand,
       onRefresh: _load,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -179,7 +183,7 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(DT.rMd),
-                borderSide: const BorderSide(color: DT.blue800, width: 1.4),
+                borderSide: const BorderSide(color: _kBrand, width: 1.4),
               ),
             ),
           ),
@@ -276,7 +280,7 @@ class _SupplierCard extends StatelessWidget {
                         value: 'delete',
                         child: Text('Delete',
                             style: DT.text(
-                                size: 13.5, weight: FontWeight.w600, color: DT.error)),
+                                size: 13.5, weight: FontWeight.w600, color: _kRed)),
                       ),
                     ],
                   ),

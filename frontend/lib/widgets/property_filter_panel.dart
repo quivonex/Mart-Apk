@@ -21,6 +21,17 @@ import '../models/company_locations_models.dart';
 import '../models/property_model.dart';
 import '../services/company_locations_service.dart';
 import '../services/real_estate_service.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kRed = Color(0xFFC62828);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 // =====================================================================
 // FILTER VALUE
@@ -143,11 +154,9 @@ class PropertyFilterPanel extends StatefulWidget {
 }
 
 class _PropertyFilterPanelState extends State<PropertyFilterPanel> {
-  static const _headerTop = Color(0xFF334155);
-  static const _headerBottom = Color(0xFF475569);
   static const _label = Color(0xFF334155);
   static const _border = Color(0xFFCBD5E1);
-  static const _blue = Color(0xFF6366F1);
+  static const _blue = Color(0xFF093C71);
 
   // Loaded once per app run.
   static List<LocationItem>? _statesCache;
@@ -405,7 +414,7 @@ class _PropertyFilterPanelState extends State<PropertyFilterPanel> {
   // ── pieces ──────────────────────────────────────────────
   Widget _header() => Container(
     decoration: const BoxDecoration(
-      gradient: LinearGradient(colors: [_headerTop, _headerBottom]),
+      gradient: _kHeader,
     ),
     child: SafeArea(
       bottom: false,
@@ -529,7 +538,7 @@ class _PropertyFilterPanelState extends State<PropertyFilterPanel> {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 12),
         child: Center(
-            child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.2))),
+            child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.2, color: _kBrand))),
       );
     }
     if (_amenities.isEmpty) {
@@ -537,10 +546,14 @@ class _PropertyFilterPanelState extends State<PropertyFilterPanel> {
         children: [
           Expanded(
             child: Text(_amenitiesError ?? 'No amenities available',
-                style: DT.text(size: 13, color: DT.slate500)),
+                style: DT.text(size: 13, color: _amenitiesError != null ? _kRed : DT.slate500)),
           ),
           if (_amenitiesError != null)
-            TextButton(onPressed: _loadAmenities, child: const Text('Retry')),
+            TextButton(
+              onPressed: _loadAmenities,
+              style: TextButton.styleFrom(foregroundColor: _kBrand),
+              child: const Text('Retry'),
+            ),
         ],
       );
     }
@@ -605,7 +618,7 @@ class _PropertyFilterPanelState extends State<PropertyFilterPanel> {
               child: ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(_current),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _blue,
+                  backgroundColor: _kBrand, // buttons: only #093C71
                   foregroundColor: Colors.white,
                   elevation: 0,
                   minimumSize: const Size.fromHeight(46),

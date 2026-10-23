@@ -4,6 +4,10 @@ import '../constants/app_constants.dart';
 import '../models/brand_model.dart';
 import '../services/brand_service.dart';
 import 'brand_create_edit_screen.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kRed = Color(0xFFC62828);
 
 class BrandListScreen extends StatefulWidget {
   const BrandListScreen({super.key});
@@ -86,7 +90,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
               backgroundColor:
-              b.isActive ? AppConstants.error : AppConstants.primary,
+              b.isActive ? _kRed : _kBrand,
             ),
             child: Text(b.isActive ? 'Deactivate' : 'Reactivate'),
           ),
@@ -106,7 +110,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
       SnackBar(
         content: Text(res.displayMessage),
         backgroundColor:
-        res.isSuccess ? const Color(0xFF10B981) : Color(0xFFEF4444),
+        res.isSuccess ? const Color(0xFF10B981) : _kRed,
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -121,7 +125,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
       body: _buildBody(),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openCreate,
-        backgroundColor: AppConstants.primary,
+        backgroundColor: _kBrand,
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text(
           'Add Brand',
@@ -139,7 +143,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(AppConstants.primary),
+          valueColor: AlwaysStoppedAnimation<Color>(_kBrand),
         ),
       );
     }
@@ -175,12 +179,12 @@ class _BrandListScreenState extends State<BrandListScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppConstants.primary.withOpacity(0.1),
+                  color: _kBrand.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   Icons.branding_watermark_outlined,
-                  color: AppConstants.primary,
+                  color: _kBrand,
                   size: 22,
                 ),
               ),
@@ -214,7 +218,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
                 padding:
                 const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: (b.isActive ? const Color(0xFF10B981) : Color(0xFFEF4444))
+                  color: (b.isActive ? const Color(0xFF10B981) : _kRed)
                       .withOpacity(0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
@@ -223,7 +227,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: b.isActive ? const Color(0xFF10B981) : Color(0xFFEF4444),
+                    color: b.isActive ? const Color(0xFF10B981) : _kRed,
                   ),
                 ),
               ),
@@ -257,9 +261,9 @@ class _BrandListScreenState extends State<BrandListScreen> {
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppConstants.primary,
+                    foregroundColor: _kBrand,
                     side: BorderSide(
-                        color: AppConstants.primary.withOpacity(0.4)),
+                        color: _kBrand.withOpacity(0.4)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -285,8 +289,8 @@ class _BrandListScreenState extends State<BrandListScreen> {
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                    b.isActive ? AppConstants.error : const Color(0xFF10B981),
+                    backgroundColor: _kBrand, // buttons: only #093C71
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -311,7 +315,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: (isErr ? AppConstants.error : AppConstants.primary)
+                color: (isErr ? _kRed : _kBrand)
                     .withOpacity(0.08),
                 shape: BoxShape.circle,
               ),
@@ -320,7 +324,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
                     ? Icons.error_outline
                     : Icons.branding_watermark_outlined,
                 size: 56,
-                color: (isErr ? AppConstants.error : AppConstants.primary)
+                color: (isErr ? _kRed : _kBrand)
                     .withOpacity(0.6),
               ),
             ),
@@ -346,8 +350,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
             ElevatedButton.icon(
               onPressed: isErr ? _load : _openCreate,
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                isErr ? AppConstants.error : AppConstants.primary,
+                backgroundColor: _kBrand, // buttons: only #093C71
                 padding: const EdgeInsets.symmetric(
                     horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(

@@ -11,6 +11,18 @@ import '../services/catalog_service.dart';
 import '../widgets/catalog_widgets.dart';
 import '../widgets/company_ui.dart';
 import '../widgets/product_ui.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kTint = Color(0xFFEAF1F9);
+const _kLine = Color(0xFFC9DBEE);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 class UnitManageScreen extends StatefulWidget {
   const UnitManageScreen({super.key});
@@ -76,9 +88,9 @@ class _UnitManageScreenState extends State<UnitManageScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: DT.blue50,
+        color: _kTint,
         borderRadius: BorderRadius.circular(DT.rMd),
-        border: Border.all(color: DT.blue200),
+        border: Border.all(color: _kLine),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,14 +98,14 @@ class _UnitManageScreenState extends State<UnitManageScreen> {
           const Padding(
             padding: EdgeInsets.only(top: 1),
             child: Icon(Icons.info_outline_rounded,
-                size: 16, color: DT.blue800),
+                size: 16, color: _kBrand),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               'Standard units available to everyone: '
                   '${_standard.map((u) => u.shortName.isEmpty ? u.name : u.shortName).join(', ')}',
-              style: DT.text(size: 12, color: DT.blue900, height: 1.45),
+              style: DT.text(size: 12, color: _kBrandDark, height: 1.45),
             ),
           ),
         ],
@@ -120,7 +132,7 @@ class _UnitManageScreenState extends State<UnitManageScreen> {
             ? null
             : FloatingActionButton.extended(
           onPressed: () => _openForm(),
-          backgroundColor: DT.blue800,
+          backgroundColor: _kBrand,
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add_rounded),
           label: Text('Add unit',
@@ -168,7 +180,7 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
   late final _short = TextEditingController(text: widget.existing?.shortName ?? '');
   bool _saving = false;
 
-  static const _brand = Color(0xFF6366F1);
+  static const _brand = Color(0xFF093C71);
 
   bool get _isEdit => widget.existing != null;
 
@@ -290,7 +302,7 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
       preferredSize: const Size.fromHeight(65),
       child: Container(
         decoration: const BoxDecoration(
-          gradient: DT.headerGradient,
+          gradient: _kHeader,
           boxShadow: [
             BoxShadow(
                 color: Color(0x0D0F172A), blurRadius: 2, offset: Offset(0, 1)),
@@ -331,7 +343,7 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
                           style: DT.text(
                               size: 12,
                               weight: FontWeight.w500,
-                              color: const Color(0xFFE0E7FF)),
+                              color: const Color(0xFFC9DBEE)),
                         ),
                       ],
                     ),
@@ -353,9 +365,9 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: DT.blue50,
+        color: _kTint,
         borderRadius: BorderRadius.circular(DT.rLg),
-        border: Border.all(color: DT.blue200),
+        border: Border.all(color: _kLine),
       ),
       child: Row(
         children: [
@@ -411,7 +423,7 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: DT.blue50,
+                    color: _kTint,
                     borderRadius: BorderRadius.circular(DT.rMd),
                   ),
                   child: const Icon(Icons.bolt_rounded,
@@ -494,7 +506,7 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: DT.blue50,
+                    color: _kTint,
                     borderRadius: BorderRadius.circular(DT.rMd),
                   ),
                   child: Icon(icon, size: 20, color: _brand),
@@ -546,9 +558,9 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
             height: 52,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                gradient: DT.ctaGradient,
+                color: _kBrand, // buttons: only #093C71
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
+                boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 12, offset: Offset(0, 4))],
               ),
               child: ElevatedButton(
                 onPressed: _saving ? null : _save,

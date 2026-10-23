@@ -189,7 +189,7 @@ class CheckoutService {
     String notes = '',
   }) async {
     try {
-      final (code, j) = await _post('/shiprocket/create-order/', {
+      final (code, j) = await _post('/shipping/create-order/', {
         'product_id': productId,
         'address_id': addressId,
         'quantity': quantity,

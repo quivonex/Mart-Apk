@@ -8,13 +8,23 @@
 import 'package:flutter/material.dart';
 import '../constants/design_tokens.dart';
 import 'remart_screens.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 class _MR {
-  static const brand = Color(0xFF6366F1);
-  static const brandDark = Color(0xFF4338CA);
+  static const brand = Color(0xFF093C71);
+  static const brandDark = Color(0xFF062A50);
   static const bg = Color(0xFFF8FAFC);
   static const line = Color(0xFFE2E8F0);
-  static const tint = Color(0xFFEEF2FF);
+  static const tint = Color(0xFFEAF1F9);
   static const ink = Color(0xFF0F172A);
   static const muted = Color(0xFF64748B);
   static const hint = Color(0xFF94A3B8);
@@ -38,11 +48,11 @@ String _date(String iso) {
 
 (Color, Color, String) _statusStyle(String s) => switch (s.toLowerCase()) {
   'active' => (const Color(0xFF047857), const Color(0xFFECFDF5), 'Live'),
-  'pending' => (const Color(0xFFB45309), const Color(0xFFFFFBEB), 'Pending'),
+  'pending' => (const Color(0xFFC2410C), const Color(0xFFFFF7ED), 'Pending'),
   'draft' => (const Color(0xFF475569), const Color(0xFFF1F5F9), 'Draft'),
-  'expired' => (const Color(0xFFB91C1C), const Color(0xFFFEF2F2), 'Expired'),
-  'sold' => (const Color(0xFF4338CA), const Color(0xFFEEF2FF), 'Sold'),
-  'rejected' => (const Color(0xFFB91C1C), const Color(0xFFFEF2F2), 'Rejected'),
+  'expired' => (const Color(0xFFC62828), const Color(0xFFFEF2F2), 'Expired'),
+  'sold' => (const Color(0xFF062A50), const Color(0xFFEAF1F9), 'Sold'),
+  'rejected' => (const Color(0xFFC62828), const Color(0xFFFEF2F2), 'Rejected'),
   '' => (const Color(0xFF475569), const Color(0xFFF1F5F9), '—'),
   _ => (const Color(0xFF475569), const Color(0xFFF1F5F9), s[0].toUpperCase() + s.substring(1)),
 };
@@ -112,7 +122,7 @@ class _MyRemartScreenState extends State<MyRemartScreen> {
         backgroundColor: _MR.bg,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
-          flexibleSpace: Container(decoration: const BoxDecoration(gradient: DT.headerGradient)),
+          flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)),
           foregroundColor: Colors.white,
           elevation: 0,
           title: Column(
@@ -134,7 +144,7 @@ class _MyRemartScreenState extends State<MyRemartScreen> {
         ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: _sell,
-          backgroundColor: const Color(0xFFF97316),
+          backgroundColor: _kBrand, // buttons: only #093C71
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add_rounded),
           label: Text('Sell item', style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
@@ -329,7 +339,7 @@ class _MyRemartScreenState extends State<MyRemartScreen> {
           const SizedBox(height: 18),
           Center(
             child: FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: _MR.brand),
+              style: FilledButton.styleFrom(backgroundColor: _kBrand), // buttons: only #093C71
               onPressed: onRetry ?? onAction,
               child: Text(onRetry != null ? 'Try again' : actionLabel ?? 'OK'),
             ),

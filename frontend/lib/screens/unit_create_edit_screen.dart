@@ -3,6 +3,16 @@ import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_constants.dart';
 import '../models/unit_model.dart';
 import '../services/unit_service.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 class UnitCreateEditScreen extends StatefulWidget {
   final Unit? existing;
@@ -74,7 +84,7 @@ class _UnitCreateEditScreenState extends State<UnitCreateEditScreen> {
       SnackBar(
         content: Text(msg),
         backgroundColor:
-        isError ? const Color(0xFFEF4444) : Color(0xFF10B981),
+        isError ? const Color(0xFFC62828) : Color(0xFF10B981),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 3),
         margin: const EdgeInsets.all(16),
@@ -90,8 +100,8 @@ class _UnitCreateEditScreenState extends State<UnitCreateEditScreen> {
     return Scaffold(
       backgroundColor: AppConstants.surfaceColor,
       appBar: AppBar(
-        backgroundColor: AppConstants.primary,
-        flexibleSpace: Container(decoration: const BoxDecoration(gradient: AppConstants.appBarGradient)),
+        backgroundColor: _kBrand,
+        flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)),
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(
@@ -152,7 +162,7 @@ class _UnitCreateEditScreenState extends State<UnitCreateEditScreen> {
                 child: ElevatedButton(
                   onPressed: _isSubmitting ? null : _submit,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppConstants.primary,
+                    backgroundColor: _kBrand,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -203,7 +213,7 @@ class _UnitCreateEditScreenState extends State<UnitCreateEditScreen> {
   }) {
     return InputDecoration(
       labelText: label,
-      prefixIcon: Icon(icon, color: AppConstants.primary),
+      prefixIcon: Icon(icon, color: _kBrand),
       filled: true,
       fillColor: Colors.white,
       border: OutlineInputBorder(
@@ -217,15 +227,15 @@ class _UnitCreateEditScreenState extends State<UnitCreateEditScreen> {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide:
-        const BorderSide(color: AppConstants.primary, width: 2),
+        const BorderSide(color: _kBrand, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1),
+        borderSide: const BorderSide(color: Color(0xFFC62828), width: 1),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFEF4444), width: 2),
+        borderSide: const BorderSide(color: Color(0xFFC62828), width: 2),
       ),
       contentPadding:
       const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

@@ -7,28 +7,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../constants/design_tokens.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kRed = Color(0xFFC62828);
 
 class PX {
   PX._();
-  static const Color royal600 = Color(0xFF6366F1); // brand primary
-  static const Color royal700 = Color(0xFF4F46E5); // brand dark
-  static const Color royal50 = Color(0xFFEEF2FF);
-  static const Color royal200 = Color(0xFFC7D2FE);
+  static const Color royal600 = Color(0xFF093C71); // brand primary
+  static const Color royal700 = Color(0xFF062A50); // brand dark
+  static const Color royal50 = Color(0xFFEAF1F9);
+  static const Color royal200 = Color(0xFFC9DBEE);
   static const Color onyx950 = Color(0xFF090D16);
   static const Color emerald600 = Color(0xFF10B981);
   static const Color emerald100 = Color(0xFFD1FAE5);
   static const Color emerald500 = Color(0xFF10B981);
-  static const Color amber400 = Color(0xFFFBBF24);
-  static const Color rose500 = Color(0xFFF43F5E);
+  static const Color amber400 = Color(0xFFF7931E);
+  static const Color rose500 = Color(0xFFC62828);
   static const Color rose400 = Color(0xFFFB7185);
-  static const Color rose50 = Color(0xFFFFF1F2);
+  static const Color rose50 = Color(0xFFFEF2F2);
 
   static const List<BoxShadow> cardShadow = [
     BoxShadow(color: Color(0x0D0F172A), blurRadius: 3, offset: Offset(0, 1)),
     BoxShadow(color: Color(0x0D0F172A), blurRadius: 2, offset: Offset(0, 1), spreadRadius: -1),
   ];
   static const List<BoxShadow> fabShadow = [
-    BoxShadow(color: Color(0x666366F1), blurRadius: 16, offset: Offset(0, 6), spreadRadius: -2),
+    BoxShadow(color: Color(0x66093C71), blurRadius: 16, offset: Offset(0, 6), spreadRadius: -2),
     BoxShadow(color: Color(0x400F172A), blurRadius: 8, offset: Offset(0, 3), spreadRadius: -2),
   ];
   static const List<BoxShadow> stickyShadow = [
@@ -103,7 +107,7 @@ class PxSection extends StatelessWidget {
                 if (icon != null) ...[
                   Padding(
                     padding: const EdgeInsets.only(top: 1),
-                    child: Icon(icon, size: 18, color: PX.royal600),
+                    child: Icon(icon, size: 18, color: _kBrand),
                   ),
                   const SizedBox(width: 8),
                 ],
@@ -185,7 +189,7 @@ class PxLinkButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final i = icon == null ? null : Icon(icon, size: 14, color: PX.royal600);
+    final i = icon == null ? null : Icon(icon, size: 14, color: _kBrand);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(DT.rSm),
@@ -195,7 +199,7 @@ class PxLinkButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (i != null && !iconAfter) ...[i, const SizedBox(width: 3)],
-            Text(label, style: DT.text(size: 12, weight: FontWeight.w700, color: PX.royal600)),
+            Text(label, style: DT.text(size: 12, weight: FontWeight.w700, color: _kBrand)),
             if (i != null && iconAfter) ...[const SizedBox(width: 3), i],
           ],
         ),
@@ -235,10 +239,10 @@ InputDecoration pxInputDecoration({
     isDense: true,
     contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: dense ? 10 : 13),
     enabledBorder: b(DT.slate200),
-    focusedBorder: b(PX.royal600, 2),
-    errorBorder: b(DT.error),
-    focusedErrorBorder: b(DT.error, 2),
-    errorStyle: DT.text(size: 11.5, color: DT.error),
+    focusedBorder: b(_kBrand, 2),
+    errorBorder: b(_kRed),
+    focusedErrorBorder: b(_kRed, 2),
+    errorStyle: DT.text(size: 11.5, color: _kRed),
   );
 }
 

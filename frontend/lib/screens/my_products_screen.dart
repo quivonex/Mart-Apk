@@ -22,6 +22,15 @@ import 'category_screens.dart';
 import 'product_create_screen.dart';
 import 'unit_screens.dart';
 import 'branch_screens.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kTint = Color(0xFFEAF1F9);
+const _kLine = Color(0xFFC9DBEE);
+const _kRed = Color(0xFFC62828);
+const _kOrangeDark = Color(0xFFC2410C);
+const _kOrangeBg = Color(0xFFFFF7ED);
 
 enum _Filter { all, approved, review, rejected, hidden, lowStock }
 
@@ -142,7 +151,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
             TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: Text('OK',
-                  style: DT.text(size: 14, weight: FontWeight.w700, color: PX.royal600)),
+                  style: DT.text(size: 14, weight: FontWeight.w700, color: _kBrand)),
             ),
           ],
         ),
@@ -214,14 +223,14 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
       ),
       builder: (ctx) {
         Widget opt(_Sort s, String label, IconData icon) => ListTile(
-          leading: Icon(icon, color: _sort == s ? PX.royal600 : DT.slate500),
+          leading: Icon(icon, color: _sort == s ? _kBrand : DT.slate500),
           title: Text(label,
               style: DT.text(
                   size: 14,
                   weight: _sort == s ? FontWeight.w700 : FontWeight.w500,
-                  color: _sort == s ? PX.royal600 : DT.onyx900)),
+                  color: _sort == s ? _kBrand : DT.onyx900)),
           trailing: _sort == s
-              ? const Icon(Icons.check_circle_rounded, color: PX.royal600)
+              ? const Icon(Icons.check_circle_rounded, color: _kBrand)
               : null,
           onTap: () => Navigator.pop(ctx, s),
         );
@@ -268,24 +277,24 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
             const SizedBox(height: 10),
             if (companyId != null) ...[
               ListTile(
-                leading: const Icon(Icons.category_outlined, color: PX.royal600),
+                leading: const Icon(Icons.category_outlined, color: _kBrand),
                 title: Text('Categories & subcategories',
                     style: DT.text(size: 14, weight: FontWeight.w600)),
                 onTap: () => Navigator.pop(ctx, 'categories'),
               ),
               ListTile(
-                leading: const Icon(Icons.store_mall_directory_outlined, color: PX.royal600),
+                leading: const Icon(Icons.store_mall_directory_outlined, color: _kBrand),
                 title: Text('Branches', style: DT.text(size: 14, weight: FontWeight.w600)),
                 onTap: () => Navigator.pop(ctx, 'branches'),
               ),
             ],
             ListTile(
-              leading: const Icon(Icons.straighten_rounded, color: PX.royal600),
+              leading: const Icon(Icons.straighten_rounded, color: _kBrand),
               title: Text('Units', style: DT.text(size: 14, weight: FontWeight.w600)),
               onTap: () => Navigator.pop(ctx, 'units'),
             ),
             ListTile(
-              leading: const Icon(Icons.refresh_rounded, color: PX.royal600),
+              leading: const Icon(Icons.refresh_rounded, color: _kBrand),
               title: Text('Refresh', style: DT.text(size: 14, weight: FontWeight.w600)),
               onTap: () => Navigator.pop(ctx, 'refresh'),
             ),
@@ -369,7 +378,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                               decoration: BoxDecoration(
-                                color: PX.royal600,
+                                color: _kBrand,
                                 borderRadius: BorderRadius.circular(999),
                               ),
                               child: Text('B2B',
@@ -401,7 +410,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                             width: 8,
                             height: 8,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF6366F1),
+                              color: const Color(0xFF093C71),
                               shape: BoxShape.circle,
                               border: Border.all(color: DT.onyx900, width: 2),
                             ),
@@ -426,7 +435,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                       DT.emerald300, const Color(0xFFD1FAE5)),
                   _metric('In review', '${_count(_Filter.review)}', PX.amber400, _Filter.review,
                       const Color(0x99451A03), const Color(0x9992400E), DT.amber300,
-                      DT.amber100),
+                      _kOrangeBg),
                   _metric('Low stock', '${_count(_Filter.lowStock)}', PX.rose400,
                       _Filter.lowStock, const Color(0xCC1E293B), const Color(0x99334155),
                       const Color(0xFFFDA4AF), const Color(0xFFFFE4E6)),
@@ -523,7 +532,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(DT.rMd),
-                  borderSide: const BorderSide(color: PX.royal600, width: 2),
+                  borderSide: const BorderSide(color: _kBrand, width: 2),
                 ),
               ),
             ),
@@ -558,9 +567,9 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 12),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: sel ? PX.royal600 : DT.slate100,
+          color: sel ? _kBrand : DT.slate100,
           borderRadius: BorderRadius.circular(DT.rSm),
-          border: Border.all(color: sel ? PX.royal600 : DT.slate200),
+          border: Border.all(color: sel ? _kBrand : DT.slate200),
           boxShadow: sel ? const [BoxShadow(color: Color(0x1A0F172A), blurRadius: 2)] : null,
         ),
         child: Row(
@@ -572,7 +581,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
               decoration: BoxDecoration(
-                color: sel ? const Color(0xFF4338CA) : Colors.white,
+                color: sel ? const Color(0xFF062A50) : Colors.white,
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text('$count',
@@ -588,7 +597,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
   // ── List body ───────────────────────────────────────────
   Widget _body() {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: PX.royal600));
+      return const Center(child: CircularProgressIndicator(color: _kBrand));
     }
     if (_error != null && _items.isEmpty) {
       return StateView(
@@ -612,7 +621,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
 
     final list = _visible;
     return RefreshIndicator(
-      color: PX.royal600,
+      color: _kBrand,
       onRefresh: _load,
       child: list.isEmpty
           ? ListView(
@@ -651,10 +660,10 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
         boxShadow: PX.fabShadow,
       ),
       child: Material(
-        color: DT.onyx900,
+        color: _kBrand, // buttons: only #093C71
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(DT.rLg),
-          side: const BorderSide(color: Color(0x99334155)),
+          side: const BorderSide(color: _kBrand),
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(DT.rLg),
@@ -668,7 +677,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                   width: 24,
                   height: 24,
                   decoration: BoxDecoration(
-                    color: PX.royal600,
+                    color: const Color(0x33FFFFFF),
                     borderRadius: BorderRadius.circular(DT.rSm),
                   ),
                   child: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
@@ -752,7 +761,7 @@ class _ProductCard extends StatelessWidget {
                   child: const SizedBox(
                       width: 24,
                       height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2.5, color: PX.royal600)),
+                      child: CircularProgressIndicator(strokeWidth: 2.5, color: _kBrand)),
                 ),
               ),
           ],
@@ -766,7 +775,7 @@ class _ProductCard extends StatelessWidget {
     Widget fallback() => Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(Icons.inventory_2_outlined, size: 24, color: PX.royal600),
+        const Icon(Icons.inventory_2_outlined, size: 24, color: _kBrand),
         if (p.brandName.isNotEmpty) ...[
           const SizedBox(height: 2),
           Padding(
@@ -848,7 +857,7 @@ class _ProductCard extends StatelessWidget {
                     'toggle',
                     p.isActive ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                     p.isActive ? 'Hide from buyers' : 'Show to buyers',
-                    color: p.isActive ? DT.error : PX.emerald600,
+                    color: p.isActive ? _kRed : PX.emerald600,
                   ),
                 ],
               ),
@@ -922,10 +931,10 @@ class _ProductCard extends StatelessWidget {
             if (p.hasPendingUpdate)
               const PxPill(
                   text: 'update in review',
-                  bg: PX.royal50,
-                  fg: PX.royal700,
+                  bg: _kTint,
+                  fg: _kBrand,
                   icon: Icons.sync_rounded,
-                  border: PX.royal200),
+                  border: _kLine),
             _stockPill(),
           ],
         ),
@@ -959,9 +968,9 @@ class _ProductCard extends StatelessWidget {
     ProductReviewStatus.approved => const PxPill(
         text: 'approved', bg: PX.emerald100, fg: DT.emerald700, icon: Icons.check_rounded),
     ProductReviewStatus.pending => const PxPill(
-        text: 'in review', bg: DT.amber100, fg: DT.amber700, icon: Icons.schedule_rounded),
+        text: 'in review', bg: _kOrangeBg, fg: _kOrangeDark, icon: Icons.schedule_rounded),
     ProductReviewStatus.rejected =>
-    const PxPill(text: 'rejected', bg: PX.rose50, fg: DT.error, icon: Icons.close_rounded),
+    const PxPill(text: 'rejected', bg: PX.rose50, fg: _kRed, icon: Icons.close_rounded),
   };
 
   Widget _stockPill() {
@@ -977,13 +986,13 @@ class _ProductCard extends StatelessWidget {
       child: Text.rich(
         TextSpan(
           text: p.isOutOfStock ? 'Out of stock' : 'Stock: ',
-          style: DT.text(size: 11, weight: FontWeight.w600, color: low ? DT.error : DT.onyx700),
+          style: DT.text(size: 11, weight: FontWeight.w600, color: low ? _kRed : DT.onyx700),
           children: [
             if (!p.isOutOfStock)
               TextSpan(
                   text: '${p.stock}',
                   style: DT.text(
-                      size: 11, weight: FontWeight.w800, color: low ? DT.error : DT.onyx900)),
+                      size: 11, weight: FontWeight.w800, color: low ? _kRed : DT.onyx900)),
           ],
         ),
       ),
@@ -1012,7 +1021,7 @@ class _ProductCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(icon, size: 16, color: primary ? PX.royal600 : DT.onyx600),
+                  Icon(icon, size: 16, color: primary ? _kBrand : DT.onyx600),
                   const SizedBox(width: 6),
                   Text(label,
                       style: DT.text(
@@ -1124,7 +1133,7 @@ class _RestockSheetState extends State<_RestockSheet> {
               PxTextField(
                 controller: _ctrl,
                 icon: Icons.inventory_outlined,
-                iconColor: PX.royal600,
+                iconColor: _kBrand,
                 bold: true,
                 keyboardType: TextInputType.number,
                 inputFormatters: [
@@ -1136,7 +1145,7 @@ class _RestockSheetState extends State<_RestockSheet> {
               ),
               if (_error != null) ...[
                 const SizedBox(height: 6),
-                Text(_error!, style: DT.text(size: 11.5, color: DT.error)),
+                Text(_error!, style: DT.text(size: 11.5, color: _kRed)),
               ],
               const SizedBox(height: 10),
               Wrap(
@@ -1156,20 +1165,20 @@ class _RestockSheetState extends State<_RestockSheet> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: PX.royal50,
+                  color: _kTint,
                   borderRadius: BorderRadius.circular(DT.rMd),
-                  border: Border.all(color: PX.royal200),
+                  border: Border.all(color: _kLine),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.info_outline_rounded, size: 18, color: PX.royal600),
+                    const Icon(Icons.info_outline_rounded, size: 18, color: _kBrand),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Stock changes are sent to the admin as an update request and apply '
                             'once approved.',
-                        style: DT.text(size: 12, color: DT.blue900, height: 1.45),
+                        style: DT.text(size: 12, color: _kBrandDark, height: 1.45),
                       ),
                     ),
                   ],
@@ -1180,9 +1189,9 @@ class _RestockSheetState extends State<_RestockSheet> {
                 height: 48,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    gradient: DT.ctaGradient,
+                    color: _kBrand, // buttons: only #093C71
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
+                    boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 12, offset: Offset(0, 4))],
                   ),
                   child: ElevatedButton(
                     onPressed: _submit,

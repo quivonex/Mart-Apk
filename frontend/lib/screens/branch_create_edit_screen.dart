@@ -4,6 +4,23 @@ import '../constants/design_tokens.dart';
 import '../models/branch_model.dart';
 import '../services/branch_service.dart';
 import '../widgets/product_ui.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kTint = Color(0xFFEAF1F9);
+const _kLine = Color(0xFFC9DBEE);
+const _kRed = Color(0xFFC62828);
+const _kOrange = Color(0xFFF7931E);
+const _kOrangeDark = Color(0xFFC2410C);
+const _kOrangeBg = Color(0xFFFFF7ED);
+const _kOrangeLine = Color(0xFFFED7AA);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 class BranchCreateEditScreen extends StatefulWidget {
   final Branch? existing;
@@ -27,7 +44,7 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
   bool _isLoadingCompanies = true;
   bool _isSubmitting = false;
 
-  static const _brand = Color(0xFF6366F1);
+  static const _brand = _kBrand; // #093C71
 
   bool get _isEdit => widget.existing != null;
 
@@ -108,7 +125,7 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
           content: Text(msg,
               style: DT.text(
                   size: 13, weight: FontWeight.w600, color: Colors.white)),
-          backgroundColor: isError ? DT.error : const Color(0xFF10B981),
+          backgroundColor: isError ? _kRed : const Color(0xFF10B981),
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(16),
           shape: RoundedRectangleBorder(
@@ -227,7 +244,7 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
       preferredSize: const Size.fromHeight(64),
       child: Container(
         decoration: BoxDecoration(
-          gradient: DT.headerGradient,
+          gradient: _kHeader,
           boxShadow: const [
             BoxShadow(
                 color: Color(0x0D0F172A), blurRadius: 2, offset: Offset(0, 1)),
@@ -268,7 +285,7 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
                           style: DT.text(
                               size: 12,
                               weight: FontWeight.w500,
-                              color: const Color(0xFFE0E7FF)),
+                              color: _kLine),
                         ),
                       ],
                     ),
@@ -311,18 +328,18 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: DT.errorBg,
+          color: _kOrangeBg,
           borderRadius: BorderRadius.circular(DT.rMd),
-          border: Border.all(color: DT.errorBorder),
+          border: Border.all(color: _kOrangeLine),
         ),
         child: Row(
           children: [
-            const Icon(Icons.error_outline, color: DT.error, size: 18),
+            const Icon(Icons.warning_amber_rounded, color: _kOrange, size: 18),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 'No companies found. Please create a company first.',
-                style: DT.text(size: 12, color: DT.error),
+                style: DT.text(size: 12, weight: FontWeight.w600, color: _kOrangeDark),
               ),
             ),
           ],
@@ -365,9 +382,9 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: DT.blue50,
+        color: _kTint,
         borderRadius: BorderRadius.circular(DT.rLg),
-        border: Border.all(color: DT.blue200),
+        border: Border.all(color: _kLine),
       ),
       child: Row(
         children: [
@@ -429,7 +446,7 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: DT.blue50,
+                    color: _kTint,
                     borderRadius: BorderRadius.circular(DT.rMd),
                   ),
                   child: Icon(icon, size: 20, color: _brand),
@@ -518,9 +535,9 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
             height: 52,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                gradient: DT.ctaGradient,
+                color: _kBrand, // buttons: only #093C71
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
+                boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 12, offset: Offset(0, 4))],
               ),
               child: ElevatedButton(
                 onPressed: _isSubmitting ? null : _submit,

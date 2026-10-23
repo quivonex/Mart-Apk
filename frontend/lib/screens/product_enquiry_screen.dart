@@ -15,6 +15,19 @@ import '../models/product_model.dart';
 import '../models/product_enquiry_model.dart';
 import '../services/product_enquiry_service.dart';
 import '../widgets/product_ui.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kTint = Color(0xFFEAF1F9);
+const _kLine = Color(0xFFC9DBEE);
+const _kRed = Color(0xFFC62828);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 // M3 spacing scale used on this screen (multiples of 4).
 class _S {
@@ -54,8 +67,8 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
   bool _isLoading = false;
 
   static const int _maxMessage = 500;
-  static const _brand = Color(0xFF6366F1);
-  static const _brandDark = Color(0xFF4338CA);
+  static const _brand = Color(0xFF093C71);
+  static const _brandDark = Color(0xFF062A50);
 
   @override
   void initState() {
@@ -130,7 +143,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
   Future<ImageSource?> _askSource() {
     Widget tile(BuildContext ctx, IconData icon, String label, ImageSource src) => Expanded(
       child: Material(
-        color: DT.blue50,
+        color: _kTint,
         borderRadius: BorderRadius.circular(DT.rLg),
         child: InkWell(
           borderRadius: BorderRadius.circular(DT.rLg),
@@ -254,7 +267,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
               ),
             ],
           ),
-          backgroundColor: isError ? DT.error : const Color(0xFF10B981),
+          backgroundColor: isError ? _kRed : const Color(0xFF10B981),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 4),
           margin: const EdgeInsets.all(_S.lg),
@@ -307,7 +320,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
       preferredSize: const Size.fromHeight(64),
       child: Container(
         decoration: const BoxDecoration(
-          gradient: DT.headerGradient,
+          gradient: _kHeader,
           boxShadow: [
             BoxShadow(
                 color: Color(0x0D0F172A), blurRadius: 2, offset: Offset(0, 1)),
@@ -349,7 +362,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                           style: DT.text(
                               size: 12,
                               weight: FontWeight.w500,
-                              color: const Color(0xFFE0E7FF)),
+                              color: const Color(0xFFC9DBEE)),
                         ),
                       ],
                     ),
@@ -436,7 +449,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
               borderRadius: BorderRadius.circular(DT.rMd),
               boxShadow: const [
                 BoxShadow(
-                    color: Color(0x336366F1),
+                    color: Color(0x33093C71),
                     blurRadius: 8,
                     offset: Offset(0, 3)),
               ],
@@ -651,7 +664,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(DT.rMd),
                     border: Border.all(
-                      color: state.hasError ? DT.error : DT.slate200,
+                      color: state.hasError ? _kRed : DT.slate200,
                     ),
                   ),
                   child: Row(
@@ -692,7 +705,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                 padding: const EdgeInsets.only(top: _S.xs + 2, left: _S.xs),
                 child: Text(
                   state.errorText!,
-                  style: DT.text(size: 11.5, color: DT.error),
+                  style: DT.text(size: 11.5, color: _kRed),
                 ),
               ),
           ],
@@ -830,9 +843,9 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
           padding: const EdgeInsets.symmetric(
               vertical: _S.xl + 2, horizontal: _S.lg),
           decoration: BoxDecoration(
-            color: DT.blue50,
+            color: _kTint,
             borderRadius: BorderRadius.circular(DT.rMd),
-            border: Border.all(color: DT.blue200),
+            border: Border.all(color: _kLine),
           ),
           child: Column(
             children: [
@@ -886,7 +899,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
               errorBuilder: (_, __, ___) => Container(
                 width: 56,
                 height: 56,
-                color: DT.blue50,
+                color: _kTint,
                 child: const Icon(Icons.insert_drive_file_outlined,
                     color: _brand),
               ),
@@ -921,7 +934,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
           IconButton(
             tooltip: 'Remove photo',
             onPressed: _removeAttachment,
-            icon: const Icon(Icons.close_rounded, color: DT.error, size: 20),
+            icon: const Icon(Icons.close_rounded, color: _kRed, size: 20),
           ),
         ],
       ),
@@ -975,9 +988,9 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                   height: 52,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      gradient: DT.ctaGradient,
+                      color: _kBrand, // buttons: only #093C71
                       borderRadius: BorderRadius.circular(12),
-                      boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
+                      boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 12, offset: Offset(0, 4))],
                     ),
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _submit,
@@ -1113,10 +1126,10 @@ class _SectionCard extends StatelessWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: DT.blue50,
+                    color: _kTint,
                     borderRadius: BorderRadius.circular(DT.rMd),
                   ),
-                  child: Icon(icon, size: 20, color: DT.blue800),
+                  child: Icon(icon, size: 20, color: _kBrand),
                 ),
                 const SizedBox(width: _S.md),
                 Expanded(
@@ -1179,10 +1192,10 @@ class _OptionTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(
             horizontal: _S.md, vertical: _S.md + 2),
         decoration: BoxDecoration(
-          color: selected ? DT.blue50 : DT.slate50,
+          color: selected ? _kTint : DT.slate50,
           borderRadius: BorderRadius.circular(DT.rMd),
           border: Border.all(
-            color: selected ? DT.blue800 : DT.slate200,
+            color: selected ? _kBrand : DT.slate200,
             width: selected ? 1.6 : 1,
           ),
         ),
@@ -1193,7 +1206,7 @@ class _OptionTile extends StatelessWidget {
               Icon(
                 icon,
                 size: 18,
-                color: selected ? DT.blue800 : DT.slate500,
+                color: selected ? _kBrand : DT.slate500,
               ),
               const SizedBox(width: _S.xs + 2),
             ],
@@ -1204,7 +1217,7 @@ class _OptionTile extends StatelessWidget {
                 style: DT.text(
                   size: 12.5,
                   weight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: selected ? DT.blue800 : DT.onyx700,
+                  color: selected ? _kBrand : DT.onyx700,
                 ),
               ),
             ),

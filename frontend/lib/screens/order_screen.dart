@@ -5,6 +5,10 @@ import '../services/order_service.dart';
 import 'order_detail_screen.dart';
 import 'reorder_screen.dart';
 import '../utils/order_payment_helper.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kRed = Color(0xFFC62828);
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
@@ -128,7 +132,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppConstants.primary
+                    ? _kBrand
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -157,7 +161,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
       return const Center(
         child: CircularProgressIndicator(
           valueColor:
-          AlwaysStoppedAnimation<Color>(AppConstants.primary),
+          AlwaysStoppedAnimation<Color>(_kBrand),
         ),
       );
     }
@@ -208,7 +212,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
             icon: const Icon(Icons.refresh, size: 18),
             label: const Text('Refresh'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppConstants.primary,
+              backgroundColor: _kBrand,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -229,7 +233,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           children: [
             const Icon(
               Icons.error_outline,
-              color: AppConstants.error,
+              color: _kRed,
               size: 56,
             ),
             const SizedBox(height: 12),
@@ -238,7 +242,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: AppConstants.error,
+                color: _kRed,
               ),
             ),
             const SizedBox(height: 6),
@@ -254,7 +258,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
             ElevatedButton(
               onPressed: _loadOrders,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppConstants.primary,
+                backgroundColor: _kBrand,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -278,7 +282,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
   Widget _buildOrderCard(OrderData order) {
     final Color statusColor =
-    order.awaitingPayment ? const Color(0xFFF59E0B) : Color(order.statusColorValue);
+    order.awaitingPayment ? const Color(0xFFF7931E) : Color(order.statusColorValue);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -412,7 +416,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: AppConstants.primary,
+                  color: _kBrand,
                 ),
               ),
             ],
@@ -422,24 +426,25 @@ class _OrdersScreenState extends State<OrdersScreen> {
             Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFFBEB),
+                color: const Color(0xFFFFF7ED),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFFDE68A)),
+                border: Border.all(color: const Color(0xFFFED7AA)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.schedule_rounded, color: Color(0xFFB45309), size: 20),
+                  const Icon(Icons.schedule_rounded, color: Color(0xFFC2410C), size: 20),
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
                       'Online payment not completed. Pay to confirm this order.',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF92400E), height: 1.35),
+                      style: TextStyle(fontSize: 12, color: Color(0xFFC2410C), height: 1.35),
                     ),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: () => _payNow(order),
                     style: ElevatedButton.styleFrom(
+                      backgroundColor: _kBrand, foregroundColor: Colors.white,
                       minimumSize: const Size(0, 38),
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                     ),
@@ -467,7 +472,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   },
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(
-                      color: AppConstants.primary.withOpacity(0.3),
+                      color: _kBrand.withOpacity(0.3),
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -479,7 +484,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: AppConstants.primary,
+                      color: _kBrand,
                     ),
                   ),
                 ),
@@ -495,7 +500,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     if (placed == true && mounted) _loadOrders();
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppConstants.primary,
+                    backgroundColor: _kBrand,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),

@@ -578,6 +578,9 @@ class PropertyDetail {
   final bool isNegotiable;
   final String? referralCode;            // ✅ ADDED
 
+  /// Agent's user id (who posted the property) – for "Chat with agent".
+  final int? agentUserId;
+
   PropertyDetail({
     required this.id,
     required this.slug,
@@ -620,6 +623,7 @@ class PropertyDetail {
     required this.isFeatured,
     required this.isNegotiable,
     this.referralCode,                   // ✅ ADDED
+    this.agentUserId,
   });
 
   factory PropertyDetail.fromJson(Map<String, dynamic> json) {
@@ -686,6 +690,9 @@ class PropertyDetail {
       isFeatured: json['is_featured'] == true,
       isNegotiable: json['is_negotiable'] == true,
       referralCode: json['referral_code']?.toString(),                   // ✅ ADDED
+      agentUserId: json['agent_user_id'] is int
+          ? json['agent_user_id']
+          : int.tryParse('${json['agent_user_id'] ?? ''}'),
     );
   }
 
@@ -758,4 +765,4 @@ class PropertyDetailResponse {
   }
 
   bool get isSuccess => status && data != null;
-}
+}

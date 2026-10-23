@@ -4,6 +4,17 @@ import '../constants/app_constants.dart';
 import '../models/branch_model.dart';
 import '../services/branch_service.dart';
 import 'branch_create_edit_screen.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kRed = Color(0xFFC62828);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 class BranchListScreen extends StatefulWidget {
   const BranchListScreen({super.key});
@@ -85,9 +96,8 @@ class _BranchListScreenState extends State<BranchListScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: b.isActive
-                  ? AppConstants.error
-                  : AppConstants.primary,
+              backgroundColor: _kBrand, // buttons: only #093C71
+              foregroundColor: Colors.white,
             ),
             child: Text(b.isActive ? 'Deactivate' : 'Reactivate'),
           ),
@@ -107,7 +117,7 @@ class _BranchListScreenState extends State<BranchListScreen> {
       SnackBar(
         content: Text(res.displayMessage),
         backgroundColor:
-        res.isSuccess ? const Color(0xFF10B981) : Color(0xFFEF4444),
+        res.isSuccess ? const Color(0xFF10B981) : _kRed,
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -120,8 +130,8 @@ class _BranchListScreenState extends State<BranchListScreen> {
     return Scaffold(
       backgroundColor: AppConstants.surfaceColor,
       appBar: AppBar(
-        backgroundColor: AppConstants.primary,
-        flexibleSpace: Container(decoration: const BoxDecoration(gradient: AppConstants.appBarGradient)),
+        backgroundColor: _kBrand,
+        flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)),
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(
@@ -136,7 +146,7 @@ class _BranchListScreenState extends State<BranchListScreen> {
       body: _buildBody(),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openCreate,
-        backgroundColor: AppConstants.primary,
+        backgroundColor: _kBrand,
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text(
           'Add Branch',
@@ -154,7 +164,7 @@ class _BranchListScreenState extends State<BranchListScreen> {
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(AppConstants.primary),
+          valueColor: AlwaysStoppedAnimation<Color>(_kBrand),
         ),
       );
     }
@@ -190,12 +200,12 @@ class _BranchListScreenState extends State<BranchListScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppConstants.primary.withOpacity(0.1),
+                  color: _kBrand.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   Icons.store_outlined,
-                  color: AppConstants.primary,
+                  color: _kBrand,
                   size: 22,
                 ),
               ),
@@ -228,7 +238,7 @@ class _BranchListScreenState extends State<BranchListScreen> {
                 padding:
                 const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: (b.isActive ? const Color(0xFF10B981) : Color(0xFFEF4444))
+                  color: (b.isActive ? const Color(0xFF10B981) : _kRed)
                       .withOpacity(0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
@@ -237,7 +247,7 @@ class _BranchListScreenState extends State<BranchListScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: b.isActive ? const Color(0xFF10B981) : Color(0xFFEF4444),
+                    color: b.isActive ? const Color(0xFF10B981) : _kRed,
                   ),
                 ),
               ),
@@ -264,9 +274,9 @@ class _BranchListScreenState extends State<BranchListScreen> {
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppConstants.primary,
+                    foregroundColor: _kBrand,
                     side: BorderSide(
-                        color: AppConstants.primary.withOpacity(0.4)),
+                        color: _kBrand.withOpacity(0.4)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -292,8 +302,8 @@ class _BranchListScreenState extends State<BranchListScreen> {
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                    b.isActive ? AppConstants.error : const Color(0xFF10B981),
+                    backgroundColor: _kBrand, // buttons: only #093C71
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -338,14 +348,14 @@ class _BranchListScreenState extends State<BranchListScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: (isErr ? AppConstants.error : AppConstants.primary)
+                color: (isErr ? _kRed : _kBrand)
                     .withOpacity(0.08),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 isErr ? Icons.error_outline : Icons.store_outlined,
                 size: 56,
-                color: (isErr ? AppConstants.error : AppConstants.primary)
+                color: (isErr ? _kRed : _kBrand)
                     .withOpacity(0.6),
               ),
             ),
@@ -371,8 +381,7 @@ class _BranchListScreenState extends State<BranchListScreen> {
             ElevatedButton.icon(
               onPressed: isErr ? _load : _openCreate,
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                isErr ? AppConstants.error : AppConstants.primary,
+                backgroundColor: _kBrand, // buttons: only #093C71
                 padding: const EdgeInsets.symmetric(
                     horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(

@@ -5,7 +5,8 @@ import '../services/cart_service.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'checkout_screen.dart';
 
-/// Design tokens from the HTML design (Tailwind slate / brand / amber).
+/// Design tokens – QNX MART logo colours: brand #093C71 (all buttons),
+/// red = errors, amber/orange = accents & conditions.
 class _C {
   static const surface = Color(0xFFF8FAFC);
   static const slate50 = Color(0xFFF8FAFC);
@@ -16,11 +17,11 @@ class _C {
   static const slate500 = Color(0xFF64748B);
   static const slate600 = Color(0xFF475569);
   static const slate900 = Color(0xFF0F172A);
-  static const blue50 = Color(0xFFEEF2FF);
-  static const blue200 = Color(0xFFC7D2FE);
-  static const blue600 = Color(0xFF6366F1);
-  static const blue700 = Color(0xFF4F46E5);
-  static const blue900 = Color(0xFF4338CA);
+  static const blue50 = Color(0xFFEAF1F9);
+  static const blue200 = Color(0xFFC9DBEE);
+  static const blue600 = Color(0xFF093C71); // brand
+  static const blue700 = Color(0xFF093C71); // brand
+  static const blue900 = Color(0xFF062A50);
   static const indigo950 = Color(0xFF1E1B4B);
   static const emerald50 = Color(0xFFECFDF5);
   static const emerald600 = Color(0xFF10B981);
@@ -32,7 +33,7 @@ class _C {
   static const amber700 = Color(0xFFB45309); // CTA + accent
   static const amber800 = Color(0xFF92400E);
   static const amber900 = Color(0xFF78350F);
-  static const red = Color(0xFFEF4444);
+  static const red = Color(0xFFC62828); // logo red – errors
   static const redBg = Color(0xFFFEF2F2);
 }
 
@@ -53,6 +54,26 @@ String _inr(num value) {
         (m) => '${m[1]},',
   );
   return '$sign$rest,$last3';
+}
+
+/// Turns a raw backend error from shipping-rates into a message a buyer can
+/// understand. Example: "could not convert string to float: '1000 kg'" comes
+/// from the backend reading a product weight saved as "1000 kg" as a number.
+String? _friendlyShipNote(String? raw) {
+  if (raw == null || raw.trim().isEmpty) return raw;
+  final m = raw.toLowerCase();
+  if (m.contains('could not convert') ||
+      m.contains('float') ||
+      m.contains('invalid literal') ||
+      m.contains('weight')) {
+    return 'Shipping could not be calculated for one of the selected products '
+        '(its weight / size is not set up correctly). The seller has been asked '
+        'to fix it – shipping will be confirmed at checkout.';
+  }
+  if (m.contains('traceback') || m.contains('exception') || m.length > 160) {
+    return 'Shipping will be calculated at checkout.';
+  }
+  return raw;
 }
 
 class CartScreen extends StatefulWidget {
@@ -76,7 +97,7 @@ class _CartScreenState extends State<CartScreen> {
   /// Cart item ids whose quantity is being saved.
   final Set<int> _updating = {};
 
-  // ---- Live shipping estimate (no more fixed ₹500) ----
+  // ---- Live shipping estimate ----
   String _shipKey = ''; // ticked product ids the estimate belongs to
   bool _shipLoading = false;
   double? _shipEstimate; // null = calculated at checkout
@@ -165,12 +186,13 @@ class _CartScreenState extends State<CartScreen> {
   double get _subtotal =>
       _selectedItems.fold(0, (sum, item) => sum + item.lineTotal);
 
-  /// Product prices (final_price) already include each product's GST on the
-  /// backend, so nothing is added here – the row just says "Included".
-  double get _tax => 0;
-  /// Live courier estimate. Until it is known nothing is added to the total
-  /// (the backend fixes the real charge per order at checkout).
+  /// Tax is calculated as 12% of Subtotal
+  double get _tax => _subtotal * 0.12;
+
+  /// 🆕 Shipping relies completely on API (no more static ₹500)
   double get _shipping => _selectedItems.isEmpty ? 0.0 : (_shipEstimate ?? 0.0);
+
+  /// Total now includes Tax + Shipping
   double get _total => _subtotal + _tax + _shipping;
 
   /// Re-prices shipping whenever the set of ticked products changes.
@@ -199,7 +221,7 @@ class _CartScreenState extends State<CartScreen> {
       _shipLoading = false;
       _shipEstimate = r.amount;
       _shipPincode = r.pincode;
-      _shipNote = r.note;
+      _shipNote = _friendlyShipNote(r.note); // no raw backend errors in the UI
     });
   }
 
@@ -207,7 +229,7 @@ class _CartScreenState extends State<CartScreen> {
     if (_selectedItems.isEmpty) return '₹0';
     if (_shipLoading) return 'Calculating…';
     if (_shipEstimate != null) return '₹${_inr(_shipEstimate!)}';
-    return 'At checkout';
+    return 'At checkout'; // 🆕 Dynamic: If API doesn't provide an estimate
   }
 
   void _toggleSelect(CartItemModel item) => setState(() {
@@ -460,7 +482,7 @@ class _CartScreenState extends State<CartScreen> {
                     ElevatedButton.icon(
                       onPressed: _loadCartItems,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _C.slate900,
+                        backgroundColor: _C.blue600, // buttons: only #093C71
                         foregroundColor: Colors.white,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(
@@ -511,7 +533,7 @@ class _CartScreenState extends State<CartScreen> {
             ElevatedButton.icon(
               onPressed: _loadCartItems,
               style: ElevatedButton.styleFrom(
-                backgroundColor: _C.amber700,
+                backgroundColor: _C.blue600, // buttons: only #093C71
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding:
@@ -539,7 +561,7 @@ class _CartScreenState extends State<CartScreen> {
           const LinearProgressIndicator(
             minHeight: 2,
             backgroundColor: _C.slate100,
-            valueColor: AlwaysStoppedAnimation<Color>(_C.amber700),
+            valueColor: AlwaysStoppedAnimation<Color>(_C.blue600),
           ),
         Expanded(
           child: RefreshIndicator(
@@ -658,7 +680,7 @@ class _CartScreenState extends State<CartScreen> {
         gradient: const LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: [Color(0xFF4F46E5), Color(0xFF8B5CF6)],
+          colors: [Color(0xFF062A50), Color(0xFF1E5A9C)],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
@@ -672,9 +694,9 @@ class _CartScreenState extends State<CartScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0x4D6366F1),
+              color: const Color(0x26FFFFFF),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0x4D818CF8)),
+              border: Border.all(color: const Color(0x40FFFFFF)),
             ),
             child: const Icon(Icons.receipt_long_outlined,
                 size: 22, color: _C.amber300),
@@ -993,8 +1015,9 @@ class _CartScreenState extends State<CartScreen> {
     _syncShipping();
     final count = _selectedItems.length;
     final units = _selectedUnits;
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 10), // tighter padding
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(top: BorderSide(color: _C.slate200)),
@@ -1015,79 +1038,79 @@ class _CartScreenState extends State<CartScreen> {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 8),
-          _summaryRow(
+          const SizedBox(height: 10),
+
+          // ── 1. Subtotal Row ──
+          _vRow(
             label: count == 0
                 ? 'Subtotal (no items selected)'
                 : 'Subtotal ($count ${count == 1 ? 'item' : 'items'} · $units qty)',
             value: '₹${_inr(_subtotal)}',
           ),
-          const SizedBox(height: 4),
-          _summaryRow(
-            label: 'GST',
-            value: 'Included',
+          const SizedBox(height: 6),
+
+          // ── 2. Tax Row ──
+          _vRow(
+            label: 'Tax (12% GST)',
             labelTrailing: const Tooltip(
-              message: 'Each product price already includes its GST',
+              message: 'Tax is calculated as 12% of the subtotal.',
               triggerMode: TooltipTriggerMode.tap,
-              child: Icon(Icons.info_outline, size: 12, color: _C.slate400),
+              child: Padding(
+                padding: EdgeInsets.only(left: 4),
+                child: Icon(Icons.info_outline, size: 14, color: _C.slate400),
+              ),
             ),
+            value: '₹${_inr(_tax)}',
           ),
-          const SizedBox(height: 4),
-          _summaryRow(
+          const SizedBox(height: 6),
+
+          // ── 3. Shipping Row ──
+          _vRow(
             label: _shipEstimate != null ? 'Shipping (estimated)' : 'Shipping & Freight',
-            value: _shippingText,
             labelTrailing: _shipPincode == null && _shipNote == null
                 ? null
-                : Tooltip(
-              message: _shipNote ??
-                  'Live courier rate to your saved address. Final charge is confirmed at checkout.',
-              triggerMode: TooltipTriggerMode.tap,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                decoration: BoxDecoration(
-                  color: _C.amber50,
-                  borderRadius: BorderRadius.circular(4),
+                : Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Tooltip(
+                message: _shipNote ??
+                    'Live courier rate to your saved address. Final charge is confirmed at checkout.',
+                triggerMode: TooltipTriggerMode.tap,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: _C.amber50,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                      _shipPincode != null && _shipPincode!.isNotEmpty
+                          ? 'Bulk Hub'
+                          : 'info',
+                      style: _t(9, FontWeight.w700, _C.amber700)),
                 ),
-                child: Text(_shipPincode != null && _shipPincode!.isNotEmpty ? 'to $_shipPincode' : 'info',
-                    style: _t(8.5, FontWeight.w700, _C.amber700)),
               ),
             ),
+            value: _shippingText,
           ),
-          const SizedBox(height: 6),
-          Container(height: 1, color: _C.slate200),
-          const SizedBox(height: 6),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Total', style: _t(12, FontWeight.w800, _C.slate900)),
-                    Text(
-                        _shipEstimate == null && count > 0
-                            ? 'Shipping added at checkout'
-                            : 'Including taxes & estimated shipping',
-                        style: _t(9, FontWeight.w500, _C.slate400)),
-                  ],
-                ),
-              ),
-              Text('₹${_inr(_total)}',
-                  style: _t(18, FontWeight.w800, _C.slate900, ls: -0.5)),
-            ],
-          ),
+
           const SizedBox(height: 8),
+          Container(height: 1, color: _C.slate200),
+          const SizedBox(height: 8),
+
+          // ── 4. Total Row ──
+          _vRow(
+            label: 'Total',
+            labelSuffix: 'Including all statutory taxes',
+            value: '₹${_inr(_total)}',
+            isTotal: true,
+          ),
+
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
-            height: 42, // reduced further from 46
+            height: 42,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                gradient: count == 0
-                    ? null
-                    : const LinearGradient(
-                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6), Color(0xFFF97316)],
-                ),
-                color: count == 0 ? _C.slate200 : null,
+                color: count == 0 ? _C.slate200 : _C.blue600,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: ElevatedButton(
@@ -1101,7 +1124,6 @@ class _CartScreenState extends State<CartScreen> {
                     ),
                   );
                   if (!mounted) return;
-                  // A new address may have been added at checkout.
                   CartService.resetShippingAddress();
                   setState(() => _shipKey = '');
                   if (done == true) _loadCartItems();
@@ -1141,22 +1163,57 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _summaryRow({
+  /// A helper to render prices vertically (stacked) cleanly.
+  Widget _vRow({
     required String label,
     required String value,
     Widget? labelTrailing,
+    String? labelSuffix,
+    bool isTotal = false,
   }) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Flexible(
-          child: Text(label, style: _t(10.5, FontWeight.w500, _C.slate600)),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      label,
+                      style: _t(
+                          isTotal ? 12 : 11.5,
+                          isTotal ? FontWeight.w800 : FontWeight.w500,
+                          isTotal ? _C.slate900 : _C.slate600
+                      ),
+                    ),
+                  ),
+                  if (labelTrailing != null) labelTrailing,
+                ],
+              ),
+              if (labelSuffix != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  labelSuffix,
+                  style: _t(9.5, FontWeight.w500, _C.slate400),
+                ),
+              ],
+            ],
+          ),
         ),
-        if (labelTrailing != null) ...[
-          const SizedBox(width: 4),
-          labelTrailing,
-        ],
-        const Spacer(),
-        Text(value, style: _t(10.5, FontWeight.w700, _C.slate900)),
+        const SizedBox(width: 8),
+        Text(
+          value,
+          style: _t(
+            isTotal ? 18 : 11.5,
+            isTotal ? FontWeight.w800 : FontWeight.w700,
+            _C.slate900,
+            ls: isTotal ? -0.5 : null,
+          ),
+        ),
       ],
     );
   }

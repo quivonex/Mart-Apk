@@ -5,20 +5,33 @@ import 'package:image_picker/image_picker.dart';
 import '../constants/design_tokens.dart';
 import '../models/marketing_partner_enquiry_model.dart';
 import '../services/partner_service.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kTint = Color(0xFFEAF1F9);
+const _kLine = Color(0xFFC9DBEE);
+const _kRed = Color(0xFFC62828);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 // Extra colours used only on this screen (the rest come from DT).
 class _C {
-  static const blue600 = Color(0xFF6366F1);
-  static const blue500 = Color(0xFF6366F1);
-  static const blue300 = Color(0xFFA5B4FC);
-  static const rose500 = Color(0xFFEF4444);
+  static const blue600 = Color(0xFF093C71);
+  static const blue500 = Color(0xFF093C71);
+  static const blue300 = Color(0xFFA3C1E0);
+  static const rose500 = Color(0xFFC62828);
   static const emerald600 = Color(0xFF10B981);
   static const emerald800 = Color(0xFF065F46);
-  static const indigo600 = Color(0xFF4F46E5);
-  static const purple600 = Color(0xFF9333EA);
+  static const indigo600 = Color(0xFF062A50);
+  static const purple600 = Color(0xFF1E5A9C);
   static const sky600 = Color(0xFF0284C7);
   static const pink500 = Color(0xFFEC4899);
-  static const red600 = Color(0xFFEF4444);
+  static const red600 = Color(0xFFC62828);
   static const emerald500 = Color(0xFF10B981);
 }
 
@@ -235,7 +248,7 @@ class _MarketingPartnerEnquiryScreenState
             message,
             style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white),
           ),
-          backgroundColor: isError ? DT.error : DT.onyx900,
+          backgroundColor: isError ? _kRed : DT.onyx900,
           behavior: SnackBarBehavior.floating,
           duration: Duration(seconds: isError ? 4 : 3),
           shape: RoundedRectangleBorder(
@@ -287,9 +300,9 @@ class _MarketingPartnerEnquiryScreenState
                 height: 48,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    gradient: DT.ctaGradient,
+                    color: _kBrand, // buttons: only #093C71
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
+                    boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 12, offset: Offset(0, 4))],
                   ),
                   child: ElevatedButton(
                     onPressed: () {
@@ -360,7 +373,7 @@ class _MarketingPartnerEnquiryScreenState
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: DT.blue50,
+              color: _kTint,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: _C.blue600, size: 18),
@@ -427,7 +440,7 @@ class _MarketingPartnerEnquiryScreenState
       preferredSize: const Size.fromHeight(64),
       child: Container(
         decoration: const BoxDecoration(
-          gradient: DT.headerGradient,
+          gradient: _kHeader,
           boxShadow: DT.shadowXs,
         ),
         child: SafeArea(
@@ -465,7 +478,7 @@ class _MarketingPartnerEnquiryScreenState
                           style: DT.text(
                               size: 11,
                               weight: FontWeight.w500,
-                              color: const Color(0xFFE0E7FF)),
+                              color: const Color(0xFFC9DBEE)),
                         ),
                       ],
                     ),
@@ -474,7 +487,7 @@ class _MarketingPartnerEnquiryScreenState
                     tooltip: 'How it works',
                     onPressed: _showHelp,
                     icon: const Icon(Icons.help_outline_rounded,
-                        color: const Color(0xFFE0E7FF), size: 22),
+                        color: const Color(0xFFC9DBEE), size: 22),
                   ),
                 ],
               ),
@@ -490,9 +503,9 @@ class _MarketingPartnerEnquiryScreenState
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: DT.blue50,
+        color: _kTint,
         borderRadius: BorderRadius.circular(DT.rLg),
-        border: Border.all(color: DT.blue200),
+        border: Border.all(color: _kLine),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -520,7 +533,7 @@ class _MarketingPartnerEnquiryScreenState
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: DT.blue200),
+                        border: Border.all(color: _kLine),
                       ),
                       child: Text(
                         'Partner program',
@@ -586,7 +599,7 @@ class _MarketingPartnerEnquiryScreenState
                 color: active ? _C.blue600 : DT.slate100,
                 shape: BoxShape.circle,
                 border: active
-                    ? Border.all(color: DT.blue100, width: 2)
+                    ? Border.all(color: _kLine, width: 2)
                     : null,
               ),
               child: Text(
@@ -634,7 +647,7 @@ class _MarketingPartnerEnquiryScreenState
       child: Row(
         children: [
           step(1, 'Details', true),
-          line(DT.blue200),
+          line(_kLine),
           step(2, 'Verification', false),
           line(DT.slate200),
           step(3, 'Approval', false),
@@ -647,7 +660,7 @@ class _MarketingPartnerEnquiryScreenState
   Widget _buildPersonalSection() {
     return _SectionCard(
       icon: Icons.person_outline_rounded,
-      iconBg: DT.blue50,
+      iconBg: _kTint,
       iconFg: _C.blue600,
       title: 'Personal Information',
       subtitle: 'Contact details for your partner agreement',
@@ -704,8 +717,8 @@ class _MarketingPartnerEnquiryScreenState
                 margin: const EdgeInsets.only(right: 10),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 decoration: const BoxDecoration(
-                  color: DT.blue50,
-                  border: Border(right: BorderSide(color: DT.blue200)),
+                  color: _kTint,
+                  border: Border(right: BorderSide(color: _kLine)),
                   borderRadius: BorderRadius.horizontal(
                       left: Radius.circular(DT.rMd)),
                 ),
@@ -743,7 +756,7 @@ class _MarketingPartnerEnquiryScreenState
   Widget _buildAddressSection() {
     return _SectionCard(
       icon: Icons.location_on_outlined,
-      iconBg: DT.blue50,
+      iconBg: _kTint,
       iconFg: _C.blue600,
       title: 'Address Details',
       subtitle: 'Where you live and the market you cover',
@@ -825,7 +838,7 @@ class _MarketingPartnerEnquiryScreenState
   Widget _buildWorkSection() {
     return _SectionCard(
       icon: Icons.work_outline_rounded,
-      iconBg: DT.blue50,
+      iconBg: _kTint,
       iconFg: _C.blue600,
       title: 'Work Information',
       subtitle: 'Your commercial reach and expertise',
@@ -871,14 +884,14 @@ class _MarketingPartnerEnquiryScreenState
   Widget _buildPlatformsSection() {
     return _SectionCard(
       icon: Icons.campaign_outlined,
-      iconBg: DT.blue50,
+      iconBg: _kTint,
       iconFg: _C.blue600,
       title: 'Promotion Platforms',
       subtitle: 'Channels you use to reach business clients',
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
-          color: DT.blue50,
+          color: _kTint,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
@@ -921,7 +934,7 @@ class _MarketingPartnerEnquiryScreenState
 
     return _SectionCard(
       icon: Icons.badge_outlined,
-      iconBg: DT.blue50,
+      iconBg: _kTint,
       iconFg: _C.blue600,
       title: 'Profile Photo',
       subtitle: 'Shown on your partner ID badge',
@@ -970,7 +983,7 @@ class _MarketingPartnerEnquiryScreenState
                         _smallButton(
                           icon: Icons.delete_outline_rounded,
                           label: 'Remove',
-                          color: DT.error,
+                          color: _kRed,
                           onTap: _removeImage,
                         ),
                       ],
@@ -1003,7 +1016,7 @@ class _MarketingPartnerEnquiryScreenState
                       width: 48,
                       height: 48,
                       decoration: const BoxDecoration(
-                        color: DT.blue100,
+                        color: _kLine,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.cloud_upload_outlined,
@@ -1039,7 +1052,7 @@ class _MarketingPartnerEnquiryScreenState
   Widget _buildReferralSection() {
     return _SectionCard(
       icon: Icons.redeem_outlined,
-      iconBg: DT.blue50,
+      iconBg: _kTint,
       iconFg: _C.blue600,
       title: 'Referral',
       subtitle: 'Enter a partner code if someone referred you',
@@ -1071,8 +1084,7 @@ class _MarketingPartnerEnquiryScreenState
               child: ElevatedButton(
                 onPressed: _applyReferral,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                  _referralApplied ? _C.emerald600 : _C.blue600,
+                  backgroundColor: _kBrand, // buttons: only #093C71
                   foregroundColor: Colors.white,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -1094,9 +1106,9 @@ class _MarketingPartnerEnquiryScreenState
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: DT.blue50,
+            color: _kTint,
             borderRadius: BorderRadius.circular(DT.rSm),
-            border: Border.all(color: DT.blue200),
+            border: Border.all(color: _kLine),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1112,7 +1124,7 @@ class _MarketingPartnerEnquiryScreenState
                   style: DT.text(
                     size: 11.5,
                     weight: FontWeight.w500,
-                    color: DT.blue900,
+                    color: _kBrandDark,
                     height: 1.45,
                   ),
                 ),
@@ -1144,9 +1156,9 @@ class _MarketingPartnerEnquiryScreenState
                 height: 52,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    gradient: DT.ctaGradient,
+                    color: _kBrand, // buttons: only #093C71
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
+                    boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 12, offset: Offset(0, 4))],
                   ),
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _submitForm,
@@ -1240,12 +1252,12 @@ class _MarketingPartnerEnquiryScreenState
           )),
       prefixIconConstraints:
       const BoxConstraints(minHeight: 0, minWidth: 0),
-      errorStyle: DT.text(size: 11, weight: FontWeight.w500, color: DT.error),
+      errorStyle: DT.text(size: 11, weight: FontWeight.w500, color: _kRed),
       errorMaxLines: 2,
       enabledBorder: border(DT.slate200),
       focusedBorder: border(_C.blue600, 1.5),
-      errorBorder: border(DT.error),
-      focusedErrorBorder: border(DT.error, 1.5),
+      errorBorder: border(_kRed),
+      focusedErrorBorder: border(_kRed, 1.5),
       border: border(DT.slate200),
     );
   }
@@ -1468,7 +1480,7 @@ class _PlatformChip extends StatelessWidget {
       checked: selected,
       button: true,
       child: Material(
-        color: selected ? DT.blue50 : DT.slate50,
+        color: selected ? _kTint : DT.slate50,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(DT.rMd),
           side: BorderSide(
@@ -1500,7 +1512,7 @@ class _PlatformChip extends StatelessWidget {
                     style: DT.text(
                       size: 12,
                       weight: FontWeight.w600,
-                      color: selected ? DT.blue700 : DT.onyx700,
+                      color: selected ? _kBrand : DT.onyx700,
                     ),
                   ),
                 ),

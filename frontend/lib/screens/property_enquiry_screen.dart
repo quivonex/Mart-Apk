@@ -7,6 +7,17 @@ import '../models/property_enquiry_model.dart';
 import '../services/property_enquiry_service.dart';
 import '../utils/login_gate.dart';
 import 'customer_subscription_screen.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kRed = Color(0xFFC62828);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 class PropertyEnquiryScreen extends StatefulWidget {
   final PropertyDetail property;
@@ -132,7 +143,7 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
           ],
         ),
         backgroundColor:
-        response.isSuccess ? const Color(0xFF10B981) : Color(0xFFEF4444),
+        response.isSuccess ? const Color(0xFF10B981) : _kRed,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 4),
         margin: const EdgeInsets.all(16),
@@ -151,7 +162,7 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: isError ? const Color(0xFFEF4444) : Color(0xFF10B981),
+        backgroundColor: isError ? _kRed : Color(0xFF10B981),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -162,8 +173,8 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
     return Scaffold(
       backgroundColor: AppConstants.surfaceColor,
       appBar: AppBar(
-        backgroundColor: AppConstants.primary,
-        flexibleSpace: Container(decoration: const BoxDecoration(gradient: AppConstants.appBarGradient)),
+        backgroundColor: _kBrand,
+        flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)),
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(
@@ -341,7 +352,7 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Icon(Icons.error_outline,
-                          color: Color(0xFFEF4444), size: 20),
+                          color: Color(0xFFC62828), size: 20),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -349,7 +360,7 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFFB91C1C),
+                            color: const Color(0xFFC62828),
                             height: 1.4,
                           ),
                         ),
@@ -366,7 +377,7 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _submit,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppConstants.primary,
+                    backgroundColor: _kBrand,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -409,8 +420,8 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppConstants.primary,
-            AppConstants.primary.withOpacity(0.8),
+            _kBrand,
+            _kBrand.withOpacity(0.8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -479,7 +490,7 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
   }) {
     return InputDecoration(
       labelText: label,
-      prefixIcon: Icon(icon, color: AppConstants.primary),
+      prefixIcon: Icon(icon, color: _kBrand),
       filled: true,
       fillColor: Colors.white,
       border: OutlineInputBorder(
@@ -493,17 +504,17 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(
-          color: AppConstants.primary,
+          color: _kBrand,
           width: 2,
         ),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1),
+        borderSide: const BorderSide(color: Color(0xFFC62828), width: 1),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFEF4444), width: 2),
+        borderSide: const BorderSide(color: Color(0xFFC62828), width: 2),
       ),
       contentPadding:
       const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

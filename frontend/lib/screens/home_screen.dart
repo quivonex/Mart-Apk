@@ -21,6 +21,7 @@
 //   ↑ scroll-to-top
 
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -69,23 +70,28 @@ import 'my_enquiries_screen.dart';
 import 'my_properties_screen.dart';
 import 'my_remart_screen.dart';
 import 'nearby_search_screen.dart';
+import 'ai_chat_screen.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kRed = Color(0xFFC62828);
 
 /// Colours from the QNXMart mobile design (code.html).
 class _HC {
-  static const blue = Color(0xFF6366F1); // brand.blue
-  static const darkBlue = Color(0xFF4338CA); // brand.darkblue
-  static const accent = Color(0xFFF97316); // brand.accent
-  static const blueText = Color(0xFF6366F1);
-  static const pillBg = Color(0xFFEEF2FF); // blue-50
-  static const pillBorder = Color(0xFFE0E7FF); // blue-100
+  static const blue = Color(0xFF093C71); // brand.blue
+  static const darkBlue = Color(0xFF062A50); // brand.darkblue
+  static const accent = Color(0xFFF7931E); // brand.accent
+  static const blueText = Color(0xFF093C71);
+  static const pillBg = Color(0xFFEAF1F9); // blue-50
+  static const pillBorder = Color(0xFFC9DBEE); // blue-100
   static const slatePill = Color(0xFFF8FAFC); // slate-50
   static const line = Color(0xFFE2E8F0); // slate-200
   static const hairline = Color(0xFFF1F5F9); // slate-100
-  static const navy = Color(0xFF3730A3); // back-to-top
-  static const navy2 = Color(0xFF4F46E5);
+  static const navy = Color(0xFF093C71); // chat button
+  static const navy2 = Color(0xFF062A50);
   static const bg = Color(0xFFF8FAFC);
   static const amber = Color(0xFFFBBF24); // amber-400
-  static const red = Color(0xFFEF4444); // red-600
+  static const red = Color(0xFFC62828); // red-600
   static const green = Color(0xFF10B981);
   static const cardShadow = [
     BoxShadow(color: Color(0x0F0F172A), blurRadius: 6, offset: Offset(0, 2)),
@@ -383,7 +389,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Text('QNX', style: DT.text(size: 15, weight: FontWeight.w900, color: _HC.darkBlue, letterSpacing: -0.6)),
                   const SizedBox(width: 3),
-                  Text('MART', style: DT.text(size: 15, weight: FontWeight.w800, color: _HC.accent, letterSpacing: -0.3)),
+                  Text('MART', style: DT.text(size: 15, weight: FontWeight.w800, color: _HC.red, letterSpacing: -0.3)),
                 ],
               ),
             ),
@@ -468,7 +474,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _menu('my_products', Icons.inventory_2_outlined, 'My products'),
         const PopupMenuDivider(),
         _loggedIn
-            ? _menu('logout', Icons.logout_rounded, 'Log out', color: DT.error)
+            ? _menu('logout', Icons.logout_rounded, 'Log out', color: _kRed)
             : _menu('login', Icons.login_rounded, 'Login / Register', color: _HC.blue),
       ],
       child: Container(
@@ -546,7 +552,6 @@ class HomeContentState extends State<HomeContent> {
   final _financeScroll = ScrollController();
   final _productsKey = GlobalKey();
   final _searchCtrl = TextEditingController();
-  bool _showTop = false;
 
   // Marketplace / filters
   Marketplace _marketplace = Marketplace.shopping;
@@ -612,10 +617,6 @@ class HomeContentState extends State<HomeContent> {
   @override
   void initState() {
     super.initState();
-    _scroll.addListener(() {
-      final show = _scroll.hasClients && _scroll.offset > 600;
-      if (show != _showTop) setState(() => _showTop = show);
-    });
     _pillScroll.addListener(() => setState(() {}));
     _chipScroll.addListener(() => setState(() {}));
     _refreshAll(cart: false);
@@ -822,6 +823,13 @@ class HomeContentState extends State<HomeContent> {
     if (_scroll.hasClients) {
       _scroll.animateTo(0, duration: const Duration(milliseconds: 450), curve: Curves.easeOut);
     }
+  }
+
+  /// Chat button (bottom right) -> QNX AI Assistant. Needs login.
+  Future<void> _openAssistant() async {
+    if (!await ensureLoggedIn(context, reason: 'chat with QNX Assistant')) return;
+    if (!mounted) return;
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const AiChatScreen()));
   }
 
   void _scrollToProducts() {
@@ -1066,9 +1074,9 @@ class HomeContentState extends State<HomeContent> {
                     height: 48,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        gradient: DT.ctaGradient,
+                        color: _kBrand, // buttons: only #093C71
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
+                        boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 12, offset: Offset(0, 4))],
                       ),
                       child: ElevatedButton(
                         onPressed: () => Navigator.pop(ctx, true),
@@ -1126,9 +1134,9 @@ class HomeContentState extends State<HomeContent> {
                   children: switch (_marketplace) {
                     Marketplace.shopping => [
                       _heroCarousel(),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 8), // 🆕 Reduced from 10 to 8
                       _financeStrip(),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12), // 🆕 Reduced from 16 to 12
                       _reelsSection(),
                       const SizedBox(height: 16),
                       _partnerCards(),
@@ -1143,29 +1151,11 @@ class HomeContentState extends State<HomeContent> {
             ),
           ],
         ),
-        // Back to top
+        // Chat with QNX Assistant – animated chatbot logo (same 56 x 56 size)
         Positioned(
           right: 20,
           bottom: 16,
-          child: AnimatedScale(
-            scale: _showTop ? 1 : 0,
-            duration: const Duration(milliseconds: 200),
-            child: Material(
-              color: _HC.navy,
-              shape: const CircleBorder(side: BorderSide(color: Color(0x33FFFFFF))),
-              elevation: 8,
-              shadowColor: const Color(0x663730A3),
-              child: InkWell(
-                customBorder: const CircleBorder(),
-                onTap: _scrollTop,
-                child: const SizedBox(
-                  width: 44,
-                  height: 44,
-                  child: Icon(Icons.keyboard_arrow_up_rounded, color: Colors.white, size: 28),
-                ),
-              ),
-            ),
-          ),
+          child: _ChatBotButton(onTap: _openAssistant),
         ),
       ],
     );
@@ -1215,7 +1205,7 @@ class HomeContentState extends State<HomeContent> {
                 children: [
                   Text('QNX', style: DT.text(size: 15, weight: FontWeight.w900, color: _HC.darkBlue, letterSpacing: -0.6)),
                   const SizedBox(width: 3),
-                  Text('MART', style: DT.text(size: 15, weight: FontWeight.w800, color: _HC.accent, letterSpacing: -0.3)),
+                  Text('MART', style: DT.text(size: 15, weight: FontWeight.w800, color: _HC.red, letterSpacing: -0.3)),
                 ],
               ),
             ),
@@ -1300,7 +1290,7 @@ class HomeContentState extends State<HomeContent> {
         _menu('my_products', Icons.inventory_2_outlined, 'My products'),
         const PopupMenuDivider(),
         widget.loggedIn
-            ? _menu('logout', Icons.logout_rounded, 'Log out', color: DT.error)
+            ? _menu('logout', Icons.logout_rounded, 'Log out', color: _kRed)
             : _menu('login', Icons.login_rounded, 'Login / Register', color: _HC.blue),
       ],
       child: Container(
@@ -1377,7 +1367,7 @@ class HomeContentState extends State<HomeContent> {
           color: sel ? _HC.blue : _HC.slatePill,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(color: sel ? _HC.blue : _HC.line),
-          boxShadow: sel ? const [BoxShadow(color: Color(0x336366F1), blurRadius: 6, offset: Offset(0, 2))] : null,
+          boxShadow: sel ? const [BoxShadow(color: Color(0x33093C71), blurRadius: 6, offset: Offset(0, 2))] : null,
         ),
         // Active pill shows the full name, the others a short one (as in the design).
         child: Text(sel ? m.title : m.shortTitle,
@@ -1597,7 +1587,7 @@ class HomeContentState extends State<HomeContent> {
             borderRadius: BorderRadius.circular(999),
             border: Border.all(color: selected ? _HC.blue : _HC.pillBorder),
             boxShadow:
-            selected ? const [BoxShadow(color: Color(0x266366F1), blurRadius: 4, offset: Offset(0, 1))] : null,
+            selected ? const [BoxShadow(color: Color(0x26093C71), blurRadius: 4, offset: Offset(0, 1))] : null,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -1639,66 +1629,71 @@ class HomeContentState extends State<HomeContent> {
     final stillLoading = (_heroLoading || _adminImagesLoading) &&
         _hero.isEmpty &&
         _adminImages.isEmpty;
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [BoxShadow(color: Color(0x1F0F172A), blurRadius: 12, offset: Offset(0, 4))],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: AspectRatio(
-          aspectRatio: 1.2,
-          child: stillLoading
-              ? Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(colors: [Color(0xFFE2E8F0), Color(0xFFF1F5F9)]),
-            ),
-          )
-              : Stack(
-            children: [
-              PageView.builder(
-                controller: _heroPage,
-                itemCount: _heroCount,
-                onPageChanged: (i) => setState(() => _heroIndex = i),
-                itemBuilder: (_, i) {
-                  // Priority: API banners > admin images > fallback slides.
-                  if (_hero.isNotEmpty && i < _hero.length) {
-                    return _heroImage(_hero[i]);
-                  }
-                  if (_adminImages.isNotEmpty && i < _adminImages.length) {
-                    return _adminImageSlide(_adminImages[i]);
-                  }
-                  return _fallbackSlides[i % _fallbackSlides.length]();
-                },
+    // 🆕 Padding reduced to 2 (from 4) to bring banner closer to the search bar
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [BoxShadow(color: Color(0x1F0F172A), blurRadius: 12, offset: Offset(0, 4))],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: AspectRatio(
+            // 🆕 Changed from 1.6 to 1.85 so the banner height is reduced even more
+            aspectRatio: 1.85,
+            child: stillLoading
+                ? Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(colors: [Color(0xFFE2E8F0), Color(0xFFF1F5F9)]),
               ),
-              if (_heroCount > 1) ...[
-                Positioned(
-                    left: 10, top: 0, bottom: 0, child: Center(child: _glassArrow(Icons.chevron_left_rounded, -1))),
-                Positioned(
-                    right: 10, top: 0, bottom: 0, child: Center(child: _glassArrow(Icons.chevron_right_rounded, 1))),
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 12,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      for (var i = 0; i < _heroCount; i++)
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          margin: const EdgeInsets.symmetric(horizontal: 3),
-                          width: i == _heroIndex ? 18 : 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            color: i == _heroIndex ? Colors.white : Colors.white54,
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                        ),
-                    ],
-                  ),
+            )
+                : Stack(
+              children: [
+                PageView.builder(
+                  controller: _heroPage,
+                  itemCount: _heroCount,
+                  onPageChanged: (i) => setState(() => _heroIndex = i),
+                  itemBuilder: (_, i) {
+                    // Priority: API banners > admin images > fallback slides.
+                    if (_hero.isNotEmpty && i < _hero.length) {
+                      return _heroImage(_hero[i]);
+                    }
+                    if (_adminImages.isNotEmpty && i < _adminImages.length) {
+                      return _adminImageSlide(_adminImages[i]);
+                    }
+                    return _fallbackSlides[i % _fallbackSlides.length]();
+                  },
                 ),
+                if (_heroCount > 1) ...[
+                  Positioned(
+                      left: 10, top: 0, bottom: 0, child: Center(child: _glassArrow(Icons.chevron_left_rounded, -1))),
+                  Positioned(
+                      right: 10, top: 0, bottom: 0, child: Center(child: _glassArrow(Icons.chevron_right_rounded, 1))),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 12,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        for (var i = 0; i < _heroCount; i++)
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
+                            width: i == _heroIndex ? 18 : 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: i == _heroIndex ? Colors.white : Colors.white54,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -1743,59 +1738,34 @@ class HomeContentState extends State<HomeContent> {
 
   /// Slide built from an admin-uploaded image (admin_profile/upload_image_list/).
   /// Shown when the banner API has no home_hero banners.
+  /// The "BANNER" label overlay has been removed as requested.
   Widget _adminImageSlide(AdminImage img) {
     return GestureDetector(
       onTap: () => widget.onNavigate('products'),
       child: Container(
         color: const Color(0xFFF1F5F9),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.network(
-              img.imageUrl,
-              fit: BoxFit.contain, // no zoom
-              loadingBuilder: (c, child, p) => p == null
-                  ? child
-                  : Container(
-                color: const Color(0xFFE2E8F0),
-                alignment: Alignment.center,
-                child: const CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: _HC.blue,
-                ),
-              ),
-              errorBuilder: (_, __, ___) => Container(
-                color: const Color(0xFFE2E8F0),
-                alignment: Alignment.center,
-                child: const Icon(
-                  Icons.broken_image_outlined,
-                  color: Color(0xFF94A3B8),
-                  size: 40,
-                ),
-              ),
+        child: Image.network(
+          img.imageUrl,
+          fit: BoxFit.contain, // no zoom
+          loadingBuilder: (c, child, p) => p == null
+              ? child
+              : Container(
+            color: const Color(0xFFE2E8F0),
+            alignment: Alignment.center,
+            child: const CircularProgressIndicator(
+              strokeWidth: 2,
+              color: _HC.blue,
             ),
-            if (img.title.isNotEmpty)
-              Positioned(
-                left: 12,
-                bottom: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.55),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    img.title.toUpperCase(),
-                    style: DT.text(
-                      size: 10,
-                      weight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-              ),
-          ],
+          ),
+          errorBuilder: (_, __, ___) => Container(
+            color: const Color(0xFFE2E8F0),
+            alignment: Alignment.center,
+            child: const Icon(
+              Icons.broken_image_outlined,
+              color: Color(0xFF94A3B8),
+              size: 40,
+            ),
+          ),
         ),
       ),
     );
@@ -1813,16 +1783,16 @@ class HomeContentState extends State<HomeContent> {
       onTap: () => setMarketplace(Marketplace.realEstate),
     ),
         () => _fallbackSlide(
-      colors: const [Color(0xFF4338CA), Color(0xFF6366F1)],
+      colors: const [Color(0xFF062A50), Color(0xFF093C71)],
       kicker: 'QNXMART B2B · Small business. Stronger together.',
-      kickerColor: const Color(0xFFC7D2FE),
+      kickerColor: const Color(0xFFC9DBEE),
       title: 'Fresh Look.\nBigger Possibilities.',
       subtitle: 'Trusted marketplace for products, services and properties.',
       icon: Icons.storefront_rounded,
       onTap: () => widget.onNavigate('products'),
     ),
         () => _fallbackSlide(
-      colors: const [Color(0xFF3730A3), Color(0xFF4F46E5)],
+      colors: const [Color(0xFF093C71), Color(0xFF062A50)],
       kicker: 'Easy bank loans',
       kickerColor: const Color(0xFFFDE68A),
       title: '9.99% p.a.',
@@ -1898,7 +1868,7 @@ class HomeContentState extends State<HomeContent> {
     final useApi = _finance.isNotEmpty;
     final count = useApi ? _finance.length : _fallbackBanks.length;
     return SizedBox(
-      height: 120, // logo + text + arrow fit होण्यासाठी
+      height: 95, // 🆕 Reduced from 112 to 95 to remove extra white space
       child: ListView.separated(
         controller: _financeScroll,
         scrollDirection: Axis.horizontal,
@@ -1921,7 +1891,7 @@ class HomeContentState extends State<HomeContent> {
                 child: Text(
                   b.title,
                   textAlign: TextAlign.center,
-                  style: DT.text(size: 11, weight: FontWeight.w800, color: _HC.darkBlue),
+                  style: DT.text(size: 10, weight: FontWeight.w800, color: _HC.darkBlue),
                 ),
               ),
             );
@@ -1937,7 +1907,7 @@ class HomeContentState extends State<HomeContent> {
                   name,
                   textAlign: TextAlign.center,
                   maxLines: 2,
-                  style: DT.text(size: 10.5, weight: FontWeight.w800, color: _HC.darkBlue, height: 1.15),
+                  style: DT.text(size: 9.5, weight: FontWeight.w800, color: _HC.darkBlue, height: 1.15),
                 ),
               ),
             );
@@ -1948,7 +1918,7 @@ class HomeContentState extends State<HomeContent> {
             onTap: onTap,
             child: Container(
               width: 150,
-              padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+              padding: const EdgeInsets.fromLTRB(6, 6, 6, 6), // 🆕 Reduced from 8 to 6
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
@@ -1962,10 +1932,10 @@ class HomeContentState extends State<HomeContent> {
                 children: [
                   // ── Bank logo (fixed height) ─────────────────
                   SizedBox(
-                    height: 44,
+                    height: 36, // 🆕 Reduced from 42 to 36
                     child: logoWidget,
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 2), // 🆕 Reduced from 4 to 2
                   // ── Loan info + arrow ────────────────────────
                   Row(
                     children: [
@@ -1979,7 +1949,7 @@ class HomeContentState extends State<HomeContent> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: DT.text(
-                                size: 12,
+                                size: 11,
                                 weight: FontWeight.w900,
                                 color: _HC.darkBlue,
                               ),
@@ -1989,7 +1959,7 @@ class HomeContentState extends State<HomeContent> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: DT.text(
-                                size: 9.5,
+                                size: 8.5,
                                 weight: FontWeight.w700,
                                 color: _HC.darkBlue,
                               ),
@@ -1998,14 +1968,14 @@ class HomeContentState extends State<HomeContent> {
                               'Fast approval',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: DT.text(size: 8.5, color: DT.slate500),
+                              style: DT.text(size: 7.5, color: DT.slate500),
                             ),
                           ],
                         ),
                       ),
                       Container(
-                        width: 20,
-                        height: 20,
+                        width: 18,
+                        height: 18,
                         decoration: const BoxDecoration(
                           color: _HC.blue,
                           shape: BoxShape.circle,
@@ -2013,7 +1983,7 @@ class HomeContentState extends State<HomeContent> {
                         child: const Icon(
                           Icons.arrow_forward_rounded,
                           color: Colors.white,
-                          size: 12,
+                          size: 11,
                         ),
                       ),
                     ],
@@ -2026,9 +1996,6 @@ class HomeContentState extends State<HomeContent> {
       ),
     );
   }
-
-  // ── Filters row (only Filters button now) ───────────────
-
 
   // ── Partner cards ───────────────────────────────────────
   Widget _partnerCards() {
@@ -2048,7 +2015,7 @@ class HomeContentState extends State<HomeContent> {
 
   Widget _partnerCard(IconData icon, String title, String subtitle, VoidCallback onTap, {bool big = false}) {
     return Material(
-      color: big ? const Color(0xFF3730A3) : const Color(0xFF312E81),
+      color: big ? const Color(0xFF093C71) : const Color(0xFF062A50),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -2061,7 +2028,7 @@ class HomeContentState extends State<HomeContent> {
                 width: big ? 36 : 38,
                 height: big ? 36 : 38,
                 decoration: BoxDecoration(
-                  color: big ? const Color(0x994F46E5) : const Color(0xCC4338CA),
+                  color: big ? const Color(0x991E5A9C) : const Color(0xCC062A50),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: Colors.white, size: big ? 18 : 19),
@@ -2081,7 +2048,7 @@ class HomeContentState extends State<HomeContent> {
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(
                             size: big ? 10 : 10.5,
-                            color: big ? const Color(0xFFC7D2FE) : DT.slate300)),
+                            color: big ? const Color(0xFFC9DBEE) : DT.slate300)),
                   ],
                 ),
               ),
@@ -2222,8 +2189,8 @@ class HomeContentState extends State<HomeContent> {
                 const SizedBox(height: 12),
                 Center(
                   child: Material(
-                    color: const Color(0x80EEF2FF),
-                    shape: const StadiumBorder(side: BorderSide(color: Color(0xFFC7D2FE))),
+                    color: const Color(0x80EAF1F9),
+                    shape: const StadiumBorder(side: BorderSide(color: Color(0xFFC9DBEE))),
                     child: InkWell(
                       customBorder: const StadiumBorder(),
                       onTap: () => setState(() => _visibleCount += 10),
@@ -2253,7 +2220,6 @@ class HomeContentState extends State<HomeContent> {
           crossAxisCount: 2,
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          // ── UPDATED: Reduced the extra height so the buttons are closer to the price ──
           mainAxisExtent: cardWidth + 105,
         ),
         itemBuilder: (_, i) => builder(i),
@@ -2319,7 +2285,7 @@ class HomeContentState extends State<HomeContent> {
                       p.thumbnail.isEmpty
                           ? placeholder()
                           : Image.network(p.thumbnail,
-                          fit: BoxFit.cover,
+                          fit: BoxFit.contain,
                           loadingBuilder: (_, child, prog) => prog == null ? child : Container(color: DT.slate100),
                           errorBuilder: (_, __, ___) => placeholder()),
                       if (p.isFranchiseAvailable)
@@ -2361,7 +2327,7 @@ class HomeContentState extends State<HomeContent> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: DT.text(
-                      size: 10.5, color: stock != null && stock <= 0 ? DT.error : DT.slate400)),
+                      size: 10.5, color: stock != null && stock <= 0 ? _kRed : DT.slate400)),
               const SizedBox(height: 3),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -2383,7 +2349,6 @@ class HomeContentState extends State<HomeContent> {
                   ],
                 ],
               ),
-              // ── UPDATED: Reduced the space before the buttons ──
               const SizedBox(height: 6),
               Row(
                 children: [
@@ -2415,7 +2380,7 @@ class HomeContentState extends State<HomeContent> {
                     child: ElevatedButton(
                       onPressed: () => _addToCart(p),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: DT.onyx900,
+                        backgroundColor: _kBrand, // buttons: only #093C71
                         foregroundColor: Colors.white,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 4),
@@ -2554,7 +2519,7 @@ class HomeContentState extends State<HomeContent> {
                       ? 'Out of stock'
                       : 'In stock: $stock${p.unitName.isEmpty ? '' : ' ${p.unitName.toUpperCase()}'}',
                   style: DT.text(
-                      size: 12.5, weight: FontWeight.w700, color: stock <= 0 ? DT.error : _HC.green),
+                      size: 12.5, weight: FontWeight.w700, color: stock <= 0 ? _kRed : _HC.green),
                 ),
               ],
               if (p.companyName.isNotEmpty) ...[
@@ -2743,7 +2708,7 @@ class HomeContentState extends State<HomeContent> {
                                     Container(
                                       width: 8,
                                       height: 8,
-                                      decoration: const BoxDecoration(color: Color(0xFFEF4444), shape: BoxShape.circle),
+                                      decoration: const BoxDecoration(color: Color(0xFFC62828), shape: BoxShape.circle),
                                     ),
                                     const SizedBox(width: 6),
                                     Text('PRODUCT VIDEO',
@@ -3469,9 +3434,9 @@ class HomeContentState extends State<HomeContent> {
                       height: 48,
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          gradient: DT.ctaGradient,
+                          color: _kBrand, // buttons: only #093C71
                           borderRadius: BorderRadius.circular(12),
-                          boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
+                          boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 12, offset: Offset(0, 4))],
                         ),
                         child: ElevatedButton(
                           onPressed: () => Navigator.pop(ctx, true),
@@ -3539,6 +3504,116 @@ class _PulseDotState extends State<_PulseDot> with SingleTickerProviderStateMixi
           color: Color(0xFFF59E0B),
           shape: BoxShape.circle,
           boxShadow: [BoxShadow(color: Color(0x66F59E0B), blurRadius: 6)],
+        ),
+      ),
+    );
+  }
+}
+
+
+// =====================================================================
+// CHATBOT BUTTON (bottom right of Home)
+//   • logo: lib/assets/images/Friendly AI Chatbot Badge.png, 56 x 56
+//   • always moving while the screen is open: floats up/down, tilts a little,
+//     soft glow pulses behind it
+//   • hover (web / desktop): grows + stronger glow; press (mobile): shrinks a bit
+// =====================================================================
+class _ChatBotButton extends StatefulWidget {
+  final VoidCallback onTap;
+  const _ChatBotButton({required this.onTap});
+
+  @override
+  State<_ChatBotButton> createState() => _ChatBotButtonState();
+}
+
+class _ChatBotButtonState extends State<_ChatBotButton> with SingleTickerProviderStateMixin {
+  static const double _size = 56; // same size as the old chat icon button
+  static const String _logo = 'lib/assets/images/Friendly AI Chatbot Badge.png';
+
+  // One loop of 2.4 s drives float, tilt and glow (repeats forever).
+  late final AnimationController _loop =
+  AnimationController(vsync: this, duration: const Duration(milliseconds: 2400))..repeat();
+
+  bool _hover = false;
+  bool _pressed = false;
+
+  @override
+  void dispose() {
+    _loop.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = _pressed ? 0.92 : (_hover ? 1.14 : 1.0);
+    return Tooltip(
+      message: 'Chat with QNX Assistant',
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hover = true),
+        onExit: (_) => setState(() {
+          _hover = false;
+          _pressed = false;
+        }),
+        child: GestureDetector(
+          onTapDown: (_) => setState(() => _pressed = true),
+          onTapCancel: () => setState(() => _pressed = false),
+          onTapUp: (_) => setState(() => _pressed = false),
+          onTap: widget.onTap,
+          child: Semantics(
+            button: true,
+            label: 'Chat with QNX Assistant',
+            child: AnimatedScale(
+              scale: scale,
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOutBack,
+              child: AnimatedBuilder(
+                animation: _loop,
+                builder: (context, child) {
+                  final t = _loop.value * 2 * math.pi;
+                  final dy = -4 * math.sin(t); // float up / down 4 px
+                  final tilt = 0.06 * math.sin(t * 2); // ~3.5° wobble
+                  final glow = 0.5 + 0.5 * math.sin(t); // 0..1 pulse
+                  return Transform.translate(
+                    offset: Offset(0, dy),
+                    child: Transform.rotate(
+                      angle: _hover ? 0 : tilt,
+                      child: Container(
+                        width: _size,
+                        height: _size,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF1E5A9C)
+                                  .withValues(alpha: _hover ? 0.55 : 0.25 + 0.25 * glow),
+                              blurRadius: _hover ? 22 : 10 + 10 * glow,
+                              spreadRadius: _hover ? 3 : 1 + 2 * glow,
+                            ),
+                          ],
+                        ),
+                        child: child,
+                      ),
+                    ),
+                  );
+                },
+                child: Image.asset(
+                  _logo,
+                  width: _size,
+                  height: _size,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.medium,
+                  // logo file missing -> old round chat button, app keeps working
+                  errorBuilder: (_, __, ___) => Container(
+                    width: _size,
+                    height: _size,
+                    decoration: const BoxDecoration(color: _HC.navy, shape: BoxShape.circle),
+                    child: const Icon(Icons.chat_rounded, color: Colors.white, size: 26),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

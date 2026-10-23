@@ -3,6 +3,16 @@ import '../constants/design_tokens.dart';
 import '../models/brand_model.dart';
 import '../services/brand_service.dart';
 import '../widgets/product_ui.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kTint = Color(0xFFEAF1F9);
+const _kLine = Color(0xFFC9DBEE);
+const _kRed = Color(0xFFC62828);
+const _kOrange = Color(0xFFF7931E);
+const _kOrangeDark = Color(0xFFC2410C);
+const _kOrangeBg = Color(0xFFFFF7ED);
+const _kOrangeLine = Color(0xFFFED7AA);
 
 class BrandCreateEditScreen extends StatefulWidget {
   final Brand? existing;
@@ -28,7 +38,7 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
   bool _isLoadingSubcategories = false;
   bool _isSubmitting = false;
 
-  static const _brand = Color(0xFF6366F1);
+  static const _brand = _kBrand; // #093C71
 
   bool get _isEdit => widget.existing != null;
 
@@ -136,7 +146,7 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
           content: Text(msg,
               style: DT.text(
                   size: 13, weight: FontWeight.w600, color: Colors.white)),
-          backgroundColor: isError ? DT.error : const Color(0xFF10B981),
+          backgroundColor: isError ? _kRed : const Color(0xFF10B981),
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(16),
           shape: RoundedRectangleBorder(
@@ -377,16 +387,16 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: DT.errorBg,
+        color: _kOrangeBg,
         borderRadius: BorderRadius.circular(DT.rMd),
-        border: Border.all(color: DT.errorBorder),
+        border: Border.all(color: _kOrangeLine),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: DT.error, size: 18),
+          const Icon(Icons.warning_amber_rounded, color: _kOrange, size: 18),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(text, style: DT.text(size: 12, color: DT.error)),
+            child: Text(text, style: DT.text(size: 12, weight: FontWeight.w600, color: _kOrangeDark)),
           ),
         ],
       ),
@@ -401,9 +411,9 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: DT.blue50,
+        color: _kTint,
         borderRadius: BorderRadius.circular(DT.rLg),
-        border: Border.all(color: DT.blue200),
+        border: Border.all(color: _kLine),
       ),
       child: Row(
         children: [
@@ -464,7 +474,7 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: DT.blue50,
+                    color: _kTint,
                     borderRadius: BorderRadius.circular(DT.rMd),
                   ),
                   child: Icon(icon, size: 20, color: _brand),
@@ -516,9 +526,9 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
             height: 52,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                gradient: DT.ctaGradient,
+                color: _kBrand, // buttons: only #093C71
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
+                boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 12, offset: Offset(0, 4))],
               ),
               child: ElevatedButton(
                 onPressed: _isSubmitting ? null : _submit,

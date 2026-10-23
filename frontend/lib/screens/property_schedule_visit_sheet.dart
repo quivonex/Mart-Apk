@@ -19,21 +19,34 @@ import '../services/property_enquiry_service.dart';
 import '../utils/login_gate.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'customer_subscription_screen.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kRed = Color(0xFFC62828);
+const _kRedBg = Color(0xFFFEF2F2);
+const _kRedLine = Color(0xFFFECACA);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 class _SV {
-  static const brand = Color(0xFF6366F1);
-  static const brandDark = Color(0xFF4338CA);
-  static const violet = Color(0xFF8B5CF6);
-  static const orange = Color(0xFFF97316);
+  static const brand = Color(0xFF093C71);
+  static const brandDark = Color(0xFF062A50);
+  static const violet = Color(0xFF1E5A9C);
+  static const orange = Color(0xFFF7931E);
   static const green = Color(0xFF10B981);
   static const bg = Color(0xFFF8FAFC);
   static const line = Color(0xFFE2E8F0);
-  static const tint = Color(0xFFEEF2FF);
+  static const tint = Color(0xFFEAF1F9);
   static const ink = Color(0xFF0F172A);
   static const body = Color(0xFF334155);
   static const muted = Color(0xFF64748B);
   static const hint = Color(0xFF94A3B8);
-  static const rose = Color(0xFFF43F5E);
+  static const rose = Color(0xFFC62828);
 }
 
 const _weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -253,7 +266,7 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
   Widget _header() {
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 10, 8, 16),
-      decoration: const BoxDecoration(gradient: DT.headerGradient),
+      decoration: const BoxDecoration(gradient: _kHeader),
       child: Column(
         children: [
           Container(
@@ -475,7 +488,7 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
                 boxShadow: sel
                     ? const [
                   BoxShadow(
-                      color: Color(0x406366F1),
+                      color: Color(0x40093C71),
                       blurRadius: 10,
                       offset: Offset(0, 4)),
                 ]
@@ -658,11 +671,11 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
           width: double.infinity,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              gradient: DT.ctaGradient,
+              color: _kBrand, // buttons: only #093C71
               borderRadius: BorderRadius.circular(14),
               boxShadow: const [
                 BoxShadow(
-                    color: Color(0x336366F1),
+                    color: Color(0x33093C71),
                     blurRadius: 12,
                     offset: Offset(0, 5)),
               ],
@@ -743,7 +756,7 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _SV.brand,
+                  backgroundColor: _kBrand, // buttons: only #093C71
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -830,18 +843,18 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
   Widget _errorBox(String text) => Container(
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: DT.errorBg,
+      color: _kRedBg,
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: DT.errorBorder),
+      border: Border.all(color: _kRedLine),
     ),
     child: Row(
       children: [
-        const Icon(Icons.error_outline_rounded, size: 18, color: DT.error),
+        const Icon(Icons.error_outline_rounded, size: 18, color: _kRed),
         const SizedBox(width: 8),
         Expanded(
           child: Text(text,
               style: DT.text(
-                  size: 12.5, weight: FontWeight.w600, color: DT.error)),
+                  size: 12.5, weight: FontWeight.w600, color: _kRed)),
         ),
       ],
     ),
@@ -866,9 +879,9 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
       enabledBorder: b(_SV.line),
       focusedBorder: b(_SV.brand, 1.6),
-      errorBorder: b(DT.error),
-      focusedErrorBorder: b(DT.error, 1.6),
-      errorStyle: DT.text(size: 11, color: DT.error),
+      errorBorder: b(_kRed),
+      focusedErrorBorder: b(_kRed, 1.6),
+      errorStyle: DT.text(size: 11, color: _kRed),
     );
   }
 }

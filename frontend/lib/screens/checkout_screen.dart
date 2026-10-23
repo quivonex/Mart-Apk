@@ -18,6 +18,22 @@ import '../utils/order_payment_helper.dart';
 import '../utils/shared_preferences_helper.dart';
 import '../widgets/product_ui.dart';
 import 'order_screen.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kTint = Color(0xFFEAF1F9);
+const _kRed = Color(0xFFC62828);
+const _kRedBg = Color(0xFFFEF2F2);
+const _kRedLine = Color(0xFFFECACA);
+const _kOrangeDark = Color(0xFFC2410C);
+const _kOrangeBg = Color(0xFFFFF7ED);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 class CheckoutScreen extends StatefulWidget {
   final List<CartItemModel> items;
@@ -73,7 +89,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void _snack(String msg, {bool error = false}) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(msg), backgroundColor: error ? DT.error : null));
+      ..showSnackBar(SnackBar(content: Text(msg), backgroundColor: error ? _kRed : null));
   }
 
   // ── Address pickers ─────────────────────────────────────
@@ -115,6 +131,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                     OutlinedButton.icon(
                       onPressed: () => Navigator.pop(ctx, 'add'),
+                      style: OutlinedButton.styleFrom(foregroundColor: _kBrand, side: const BorderSide(color: _kBrand)),
                       icon: const Icon(Icons.add_location_alt_outlined),
                       label: const Text('Add a new address'),
                     ),
@@ -151,7 +168,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         canPop: false,
         child: AlertDialog(
           content: Row(children: [
-            const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5)),
+            const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: _kBrand)),
             const SizedBox(width: 16),
             Expanded(
               child: ValueListenableBuilder<String>(
@@ -236,7 +253,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: DT.background,
-      appBar: AppBar(title: const Text('Checkout')),
+      appBar: AppBar(flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)), foregroundColor: Colors.white, title: const Text('Checkout')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
@@ -254,7 +271,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _addressTile(DeliveryAddress a, {required bool selected, VoidCallback? onTap}) => Material(
-    color: selected ? PX.royal50 : Colors.white,
+    color: selected ? _kTint : Colors.white,
     borderRadius: BorderRadius.circular(DT.rMd),
     child: InkWell(
       borderRadius: BorderRadius.circular(DT.rMd),
@@ -263,11 +280,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(DT.rMd),
-          border: Border.all(color: selected ? PX.royal600 : DT.slate200, width: selected ? 1.5 : 1),
+          border: Border.all(color: selected ? _kBrand : DT.slate200, width: selected ? 1.5 : 1),
         ),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Icon(selected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
-              color: selected ? PX.royal600 : DT.slate400, size: 20),
+              color: selected ? _kBrand : DT.slate400, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -298,10 +315,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         if (_addressError != null)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: Text(_addressError!, style: DT.text(size: 12, color: DT.error)),
+            child: Text(_addressError!, style: DT.text(size: 12, color: _kRed)),
           ),
         ElevatedButton.icon(
           onPressed: _addAddress,
+          style: ElevatedButton.styleFrom(backgroundColor: _kBrand, foregroundColor: Colors.white), // buttons: only #093C71
           icon: const Icon(Icons.add_location_alt_outlined),
           label: const Text('Add delivery address'),
         ),
@@ -356,7 +374,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       Opacity(
         opacity: enabled ? 1 : 0.5,
         child: Material(
-          color: selected ? PX.royal50 : Colors.white,
+          color: selected ? _kTint : Colors.white,
           borderRadius: BorderRadius.circular(DT.rMd),
           child: InkWell(
             borderRadius: BorderRadius.circular(DT.rMd),
@@ -365,10 +383,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(DT.rMd),
-                border: Border.all(color: selected ? PX.royal600 : DT.slate200, width: selected ? 1.5 : 1),
+                border: Border.all(color: selected ? _kBrand : DT.slate200, width: selected ? 1.5 : 1),
               ),
               child: Row(children: [
-                Icon(icon, color: selected ? PX.royal600 : DT.slate500),
+                Icon(icon, color: selected ? _kBrand : DT.slate500),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -377,7 +395,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ]),
                 ),
                 Icon(selected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
-                    color: selected ? PX.royal600 : DT.slate400),
+                    color: selected ? _kBrand : DT.slate400),
               ]),
             ),
           ),
@@ -462,6 +480,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               height: 50,
               child: ElevatedButton(
                 onPressed: _placing || _address == null ? null : _placeOrder,
+                style: ElevatedButton.styleFrom(backgroundColor: _kBrand, foregroundColor: Colors.white), // buttons: only #093C71
                 child: Text(_cod ? 'Place order (COD)' : 'Place order & pay',
                     style: DT.text(size: 14.5, weight: FontWeight.w800, color: Colors.white)),
               ),
@@ -516,7 +535,7 @@ class _AddressSheetState extends State<_AddressSheet> {
     if (r.ok) {
       Navigator.pop(context, r.data);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(r.message), backgroundColor: DT.error));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(r.message), backgroundColor: _kRed));
     }
   }
 
@@ -582,6 +601,7 @@ class _AddressSheetState extends State<_AddressSheet> {
                   height: 48,
                   child: ElevatedButton(
                     onPressed: _saving ? null : _save,
+                    style: ElevatedButton.styleFrom(backgroundColor: _kBrand, foregroundColor: Colors.white), // buttons: only #093C71
                     child: _saving
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white))
                         : const Text('Save address'),
@@ -622,7 +642,7 @@ class _OrderResultScreenState extends State<_OrderResultScreen> {
     final total = widget.orders.fold<double>(0, (s, o) => s + o.total);
     return Scaffold(
       backgroundColor: DT.background,
-      appBar: AppBar(title: const Text('Order placed'), automaticallyImplyLeading: false),
+      appBar: AppBar(flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)), foregroundColor: Colors.white, title: const Text('Order placed'), automaticallyImplyLeading: false),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -631,11 +651,11 @@ class _OrderResultScreenState extends State<_OrderResultScreen> {
               width: 84,
               height: 84,
               decoration: BoxDecoration(
-                color: unpaid == 0 ? DT.emerald50 : DT.amber50,
+                color: unpaid == 0 ? DT.emerald50 : _kOrangeBg,
                 shape: BoxShape.circle,
               ),
               child: Icon(unpaid == 0 ? Icons.check_rounded : Icons.schedule_rounded,
-                  size: 46, color: unpaid == 0 ? DT.emerald700 : DT.amber700),
+                  size: 46, color: unpaid == 0 ? DT.emerald700 : _kOrangeDark),
             ),
           ),
           const SizedBox(height: 14),
@@ -666,7 +686,7 @@ class _OrderResultScreenState extends State<_OrderResultScreen> {
                       ? const PxPill(text: 'Cash on delivery', bg: DT.slate100, fg: DT.onyx700)
                       : o.paid
                       ? const PxPill(text: 'Paid', bg: DT.emerald50, fg: DT.emerald700, icon: Icons.check_rounded)
-                      : const PxPill(text: 'Payment pending', bg: DT.amber50, fg: DT.amber800),
+                      : const PxPill(text: 'Payment pending', bg: _kOrangeBg, fg: _kOrangeDark),
                 ]),
                 const SizedBox(height: 4),
                 Text('Order ${o.orderNumber} · Qty ${o.quantity}', style: DT.text(size: 12, color: DT.slate500)),
@@ -677,7 +697,7 @@ class _OrderResultScreenState extends State<_OrderResultScreen> {
                 ),
                 if (o.paymentMethod == 'PREPAID' && !o.paid) ...[
                   const SizedBox(height: 10),
-                  ElevatedButton(onPressed: () => _pay(o), child: Text('Pay ${formatRupees(o.total)} now')),
+                  ElevatedButton(onPressed: () => _pay(o), style: ElevatedButton.styleFrom(backgroundColor: _kBrand, foregroundColor: Colors.white), child: Text('Pay ${formatRupees(o.total)} now')),
                 ],
               ]),
             ),
@@ -685,13 +705,13 @@ class _OrderResultScreenState extends State<_OrderResultScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: DT.errorBg,
+                color: _kRedBg,
                 borderRadius: BorderRadius.circular(DT.rMd),
-                border: Border.all(color: DT.errorBorder),
+                border: Border.all(color: _kRedLine),
               ),
               child: Text(
                 'Not ordered (still in your cart):\n${widget.failed.map((f) => '• ${f.$1}: ${f.$2}').join('\n')}',
-                style: DT.text(size: 12.5, color: DT.error, height: 1.5),
+                style: DT.text(size: 12.5, color: _kRed, height: 1.5),
               ),
             ),
           const SizedBox(height: 8),
@@ -704,16 +724,21 @@ class _OrderResultScreenState extends State<_OrderResultScreen> {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
           child: Row(children: [
             Expanded(
-              child: OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text('Done')),
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                style: OutlinedButton.styleFrom(foregroundColor: _kBrand, side: const BorderSide(color: _kBrand)),
+                child: const Text('Done'),
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: _kBrand, foregroundColor: Colors.white), // buttons: only #093C71
                 onPressed: () => Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
                     builder: (_) => Scaffold(
-                      appBar: AppBar(title: const Text('My orders')),
+                      appBar: AppBar(flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)), foregroundColor: Colors.white, title: const Text('My orders')),
                       body: const OrdersScreen(),
                     ),
                   ),

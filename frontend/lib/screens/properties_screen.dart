@@ -7,11 +7,21 @@ import '../services/real_estate_service.dart';
 import 'property_detail_screen.dart';
 import 'property_schedule_visit_sheet.dart';
 import 'property_video_screen.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 /// Design tokens from the HTML design (Tailwind slate / brand palette).
 class _C {
-  static const navy = Color(0xFF312E81);
-  static const navyDark = Color(0xFF1E1B4B);
+  static const navy = Color(0xFF062A50);
+  static const navyDark = Color(0xFF062A50);
   static const slate50 = Color(0xFFF8FAFC);
   static const slate100 = Color(0xFFF1F5F9);
   static const slate200 = Color(0xFFE2E8F0);
@@ -21,25 +31,25 @@ class _C {
   static const slate600 = Color(0xFF475569);
   static const slate700 = Color(0xFF334155);
   static const slate900 = Color(0xFF0F172A);
-  static const blue50 = Color(0xFFEEF2FF);
-  static const blue100 = Color(0xFFE0E7FF);
-  static const blue200 = Color(0xFFC7D2FE);
-  static const blue600 = Color(0xFF6366F1);
-  static const blue700 = Color(0xFF4F46E5);
-  static const blue800 = Color(0xFF4338CA);
+  static const blue50 = Color(0xFFEAF1F9);
+  static const blue100 = Color(0xFFC9DBEE);
+  static const blue200 = Color(0xFFC9DBEE);
+  static const blue600 = Color(0xFF093C71);
+  static const blue700 = Color(0xFF062A50);
+  static const blue800 = Color(0xFF062A50);
   static const emerald500 = Color(0xFF10B981);
   static const emerald600 = Color(0xFF10B981);
-  static const amber400 = Color(0xFFFBBF24);
-  static const amber500 = Color(0xFFF59E0B);
-  static const amber600 = Color(0xFFD97706);
-  static const amber700 = Color(0xFFB45309);
-  static const amber800 = Color(0xFF92400E);
-  static const amber950 = Color(0xFF451A03);
-  static const amber50 = Color(0xFFFFFBEB);
+  static const amber400 = Color(0xFFF7931E);
+  static const amber500 = Color(0xFFF7931E);
+  static const amber600 = Color(0xFFF7931E);
+  static const amber700 = Color(0xFFC2410C);
+  static const amber800 = Color(0xFFC2410C);
+  static const amber950 = Color(0xFF7C2D12);
+  static const amber50 = Color(0xFFFFF7ED);
   static const orange50 = Color(0xFFFFF7ED);
-  static const amber200 = Color(0xFFFDE68A);
-  static const orange500 = Color(0xFFF97316); // ✅ image tag orange
-  static const error = Color(0xFFEF4444);
+  static const amber200 = Color(0xFFFED7AA);
+  static const orange500 = Color(0xFFF7931E); // ✅ image tag orange
+  static const error = Color(0xFFC62828);
 }
 
 class PropertiesScreen extends StatefulWidget {
@@ -233,7 +243,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: Colors.transparent,
-      flexibleSpace: Container(decoration: const BoxDecoration(gradient: DT.headerGradient)),
+      flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)),
       foregroundColor: Colors.white,
       elevation: 3,
       shadowColor: const Color(0x33000000),
@@ -263,7 +273,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                 Text('MIDC Plots, Warehouses & Land',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: _t(11, FontWeight.w500, const Color(0xFFC7D2FE))),
+                    style: _t(11, FontWeight.w500, const Color(0xFFC9DBEE))),
               ],
             ),
           ),
@@ -860,7 +870,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                         icon: Icons.play_circle_fill,
                         label: 'Video',
                         fg: _C.blue600,
-                        bg: const Color(0xFFF5F5FF),
+                        bg: const Color(0xFFEAF1F9),
                         border: _C.blue200,
                         onTap: () => _openVideo(property),
                       ),
@@ -868,9 +878,9 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                       _cardAction(
                         icon: Icons.event_available_rounded,
                         label: 'Visit',
-                        fg: _C.orange500,
-                        bg: _C.orange50,
-                        border: const Color(0xFFFED7AA),
+                        fg: _C.blue600,
+                        bg: _C.blue50,
+                        border: _C.blue200,
                         onTap: () => _scheduleVisit(property),
                       ),
                       const SizedBox(width: 6),
@@ -878,9 +888,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                         icon: Icons.chat_bubble_outline,
                         label: 'Enquire',
                         fg: Colors.white,
-                        gradient: const LinearGradient(
-                          colors: [_C.blue600, Color(0xFF8B5CF6)],
-                        ),
+                        bg: _kBrand,
                         onTap: () => _openEnquiry(property),
                       ),
                     ],
@@ -1044,7 +1052,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0x1AF59E0B),
+              color: const Color(0x1AF7931E),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(Icons.business_center_outlined,
@@ -1069,7 +1077,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
           ElevatedButton(
             onPressed: () {},
             style: ElevatedButton.styleFrom(
-              backgroundColor: _C.amber600,
+              backgroundColor: _kBrand, // buttons: only #093C71
               foregroundColor: Colors.white,
               elevation: 1,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -1122,7 +1130,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
             ElevatedButton.icon(
               onPressed: isError ? _loadData : _clearAllFilters,
               style: ElevatedButton.styleFrom(
-                backgroundColor: isError ? _C.error : _C.navy,
+                backgroundColor: _kBrand, // buttons: only #093C71
                 foregroundColor: Colors.white,
                 padding:
                 const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -1277,7 +1285,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _C.navy,
+                      backgroundColor: _kBrand, // buttons: only #093C71
                       foregroundColor: Colors.white,
                       elevation: 1,
                       shape: RoundedRectangleBorder(

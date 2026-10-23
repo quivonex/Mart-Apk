@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../constants/design_tokens.dart';
 import 'logo_widget.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kOrange = Color(0xFFF7931E);
 
 /// Shared top app bar.
 /// Same public API as before (title, showBackButton, actions, onBackPressed),
@@ -126,7 +129,7 @@ class AppBarIconButton extends StatelessWidget {
                     const BoxConstraints(minWidth: 17, minHeight: 17),
                     padding: const EdgeInsets.symmetric(horizontal: 3),
                     decoration: BoxDecoration(
-                      color: DT.amber600,
+                      color: _kOrange,
                       borderRadius: BorderRadius.circular(9),
                       border: Border.all(color: Colors.white, width: 2),
                     ),
@@ -150,7 +153,7 @@ class AppBarIconButton extends StatelessWidget {
                     width: 10,
                     height: 10,
                     decoration: BoxDecoration(
-                      color: DT.amber500,
+                      color: _kOrange,
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
                     ),

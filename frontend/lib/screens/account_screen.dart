@@ -27,16 +27,29 @@ import 'my_remart_screen.dart';
 import 'saved_addresses_screen.dart';
 import 'seller_profile_screen.dart';
 import 'terms_conditions_screen.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kRed = Color(0xFFC62828);
+const _kRedBg = Color(0xFFFEF2F2);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
+/// QNX MART logo colours: #093C71 brand (all buttons) · red = errors · orange = conditions.
 class _AC {
-  static const brand = Color(0xFF6366F1);
-  static const brandDark = Color(0xFF4338CA);
-  static const violet = Color(0xFF8B5CF6);
-  static const orange = Color(0xFFF97316);
+  static const brand = Color(0xFF093C71);
+  static const brandDark = Color(0xFF062A50);
+  static const violet = Color(0xFF1E5A9C); // light brand blue
+  static const orange = Color(0xFFF7931E);
   static const green = Color(0xFF10B981);
   static const bg = Color(0xFFF8FAFC);
   static const line = Color(0xFFE2E8F0);
-  static const tint = Color(0xFFEEF2FF);
+  static const tint = Color(0xFFEAF1F9);
   static const ink = Color(0xFF0F172A);
   static const muted = Color(0xFF64748B);
   static const hint = Color(0xFF94A3B8);
@@ -138,7 +151,7 @@ class _AccountScreenState extends State<AccountScreen> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: DT.error),
+            style: FilledButton.styleFrom(backgroundColor: _AC.brand), // buttons: only #093C71
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Log out'),
           ),
@@ -278,10 +291,10 @@ class _AccountScreenState extends State<AccountScreen> {
                   leading: Container(
                     width: 38,
                     height: 38,
-                    decoration: BoxDecoration(color: DT.errorBg, borderRadius: BorderRadius.circular(10)),
-                    child: const Icon(Icons.logout_rounded, color: DT.error, size: 20),
+                    decoration: BoxDecoration(color: _kRedBg, borderRadius: BorderRadius.circular(10)),
+                    child: const Icon(Icons.logout_rounded, color: _kRed, size: 20),
                   ),
-                  title: Text('Log out', style: DT.text(size: 14, weight: FontWeight.w700, color: DT.error)),
+                  title: Text('Log out', style: DT.text(size: 14, weight: FontWeight.w700, color: _kRed)),
                   onTap: _logout,
                 ),
               ),
@@ -295,7 +308,7 @@ class _AccountScreenState extends State<AccountScreen> {
   Widget _guestCard() => Container(
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
-      gradient: DT.headerGradient,
+      gradient: _kHeader,
       borderRadius: BorderRadius.circular(20),
     ),
     child: Column(
@@ -309,7 +322,12 @@ class _AccountScreenState extends State<AccountScreen> {
             style: DT.text(size: 12.5, color: const Color(0xD9FFFFFF), height: 1.4)),
         const SizedBox(height: 14),
         FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: Colors.white, foregroundColor: _AC.brandDark),
+          // buttons: only #093C71 (white outline so it reads on the blue card)
+          style: FilledButton.styleFrom(
+            backgroundColor: _AC.brand,
+            foregroundColor: Colors.white,
+            side: const BorderSide(color: Colors.white, width: 1.4),
+          ),
           onPressed: _login,
           child: const Text('Log in / Register'),
         ),
@@ -325,10 +343,10 @@ class _AccountScreenState extends State<AccountScreen> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF312E81), _AC.brandDark, _AC.violet],
+          colors: [_AC.brandDark, _AC.brand, _AC.violet],
         ),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 18, offset: Offset(0, 8))],
+        boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 18, offset: Offset(0, 8))],
       ),
       child: Row(
         children: [

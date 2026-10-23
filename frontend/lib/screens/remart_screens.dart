@@ -13,13 +13,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import '../constants/design_tokens.dart';
+import '../models/chat_models.dart';
 import '../services/api_urls.dart';
+import '../services/chat_service.dart';
+import '../utils/chat_launcher.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'login_screen.dart';
 import 'remart_add_product_screen.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kRed = Color(0xFFC62828);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
-const _green = Color(0xFF6366F1);
-const _greenBg = Color(0xFFEEF2FF);
+const _green = Color(0xFF093C71);
+const _greenBg = Color(0xFFEAF1F9);
 
 /// Drawer "QNX ReMart › Add Product": opens the in-app sell form (login required).
 /// Returns true when an item was posted.
@@ -284,7 +298,7 @@ Future<void> startRemartEnquiry(BuildContext context, RemartListing listing, {St
     await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        icon: const Icon(Icons.storefront_rounded, color: Color(0xFF6366F1), size: 36),
+        icon: const Icon(Icons.storefront_rounded, color: Color(0xFF093C71), size: 36),
         title: const Text('This is your listing'),
         content: const Text(
             'Buyers can send you enquiries on this item. You can\'t send an enquiry on your own listing.'),
@@ -473,7 +487,7 @@ class _RemartListingsScreenState extends State<RemartListingsScreen> {
         showCheckmark: false,
         selectedColor: _green,
         backgroundColor: _greenBg,
-        side: BorderSide(color: sel ? _green : const Color(0xFFE0E7FF)),
+        side: BorderSide(color: sel ? _green : const Color(0xFFC9DBEE)),
         labelStyle: DT.text(size: 12.5, weight: FontWeight.w700, color: sel ? Colors.white : _green),
         onSelected: (_) {
           setState(() => _categoryId = id);
@@ -522,6 +536,7 @@ class _RemartListingsScreenState extends State<RemartListingsScreen> {
         const SizedBox(height: 14),
         Center(
           child: OutlinedButton(
+            style: OutlinedButton.styleFrom(foregroundColor: _kBrand, side: const BorderSide(color: _kBrand)),
             onPressed: _load,
             child: Text('Try again', style: DT.text(size: 13, weight: FontWeight.w700, color: _green)),
           ),
@@ -609,23 +624,23 @@ class _RemartListingsScreenState extends State<RemartListingsScreen> {
 // DETAIL + ENQUIRY
 // =====================================================================
 class _Rm {
-  static const brand = Color(0xFF6366F1);
-  static const brandDark = Color(0xFF4338CA);
-  static const violet = Color(0xFF8B5CF6);
-  static const orange = Color(0xFFF97316);
+  static const brand = Color(0xFF093C71);
+  static const brandDark = Color(0xFF062A50);
+  static const violet = Color(0xFF1E5A9C);
+  static const orange = Color(0xFFF7931E);
   static const green = Color(0xFF10B981);
   static const greenBg = Color(0xFFECFDF5);
   static const bg = Color(0xFFF8FAFC);
   static const line = Color(0xFFE2E8F0);
-  static const tint = Color(0xFFEEF2FF);
-  static const tintLine = Color(0xFFC7D2FE);
+  static const tint = Color(0xFFEAF1F9);
+  static const tintLine = Color(0xFFC9DBEE);
   static const ink = Color(0xFF0F172A);
   static const body = Color(0xFF334155);
   static const muted = Color(0xFF64748B);
   static const hint = Color(0xFF94A3B8);
-  static const amberBg = Color(0xFFFFFBEB);
-  static const amberLine = Color(0xFFFDE68A);
-  static const amberInk = Color(0xFF92400E);
+  static const amberBg = Color(0xFFFFF7ED);
+  static const amberLine = Color(0xFFFED7AA);
+  static const amberInk = Color(0xFFC2410C);
 }
 
 /// "2 days ago" style text from an ISO date string.
@@ -706,17 +721,26 @@ class _RemartListingDetailScreenState extends State<RemartListingDetailScreen> {
       if (e.value != null && _rmValue(e.value).isNotEmpty) e,
   ];
 
-  Future<void> _enquire() => startRemartEnquiry(context, l);
-
-  Future<void> _makeOffer() {
-    final offer = (l.price * 0.9 / 100).round() * 100;
-    return startRemartEnquiry(
+  /// "Chat with seller" → olx/chats/create/ {other_user_id: user_id, listing_id}
+  /// [offer] = open the "Make an offer" sheet inside the chat.
+  Future<void> _chat({bool offer = false}) async {
+    // user_id may be missing in the list API → read it from olx/listings/detail/.
+    final owner = l.userId ?? await ChatService.remartOwner(l.id);
+    if (!mounted) return;
+    final suggested = (l.price * 0.9 / 100).round() * 100.0;
+    await ChatLauncher.start(
       context,
-      l,
-      message: 'Hi, I am interested in "${l.title}". '
-          'Would you accept ${_rupees(offer.toDouble())}?',
+      kind: ChatItemKind.listing,
+      itemId: l.id,
+      otherUserId: owner,
+      title: l.title,
+      otherName: 'Seller',
+      openOffer: offer,
+      price: offer && suggested > 0 ? suggested : null,
     );
   }
+
+  Future<void> _makeOffer() => _chat(offer: true);
 
   void _share() {
     Clipboard.setData(ClipboardData(
@@ -839,7 +863,7 @@ class _RemartListingDetailScreenState extends State<RemartListingDetailScreen> {
             child: AnimatedOpacity(
               opacity: _collapsed ? 1 : 0,
               duration: const Duration(milliseconds: 180),
-              child: const DecoratedBox(decoration: BoxDecoration(gradient: DT.headerGradient)),
+              child: const DecoratedBox(decoration: BoxDecoration(gradient: _kHeader)),
             ),
           ),
         ],
@@ -860,7 +884,7 @@ class _RemartListingDetailScreenState extends State<RemartListingDetailScreen> {
         _glassBtn(_saved ? Icons.favorite_rounded : Icons.favorite_border_rounded, () {
           setState(() => _saved = !_saved);
           _toast(_saved ? 'Saved to your list' : 'Removed from saved');
-        }, color: _saved ? const Color(0xFFF43F5E) : null),
+        }, color: _saved ? const Color(0xFFC62828) : null),
         const SizedBox(width: 8),
         _glassBtn(Icons.ios_share_rounded, _share),
         const SizedBox(width: 10),
@@ -883,7 +907,7 @@ class _RemartListingDetailScreenState extends State<RemartListingDetailScreen> {
   Widget _gallery() {
     if (l.images.isEmpty) {
       return Container(
-        decoration: const BoxDecoration(gradient: DT.headerGradient),
+        decoration: const BoxDecoration(gradient: _kHeader),
         child: const Center(child: Icon(Icons.image_outlined, size: 72, color: Color(0x66FFFFFF))),
       );
     }
@@ -900,9 +924,9 @@ class _RemartListingDetailScreenState extends State<RemartListingDetailScreen> {
               l.images[i],
               fit: BoxFit.cover,
               loadingBuilder: (c, child, p) =>
-              p == null ? child : Container(color: const Color(0xFF1E1B4B)),
+              p == null ? child : Container(color: const Color(0xFF062A50)),
               errorBuilder: (_, __, ___) => Container(
-                color: const Color(0xFF1E1B4B),
+                color: const Color(0xFF062A50),
                 child: const Center(child: Icon(Icons.broken_image_outlined, size: 48, color: Color(0x66FFFFFF))),
               ),
             ),
@@ -1034,10 +1058,10 @@ class _RemartListingDetailScreenState extends State<RemartListingDetailScreen> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF312E81), _Rm.brandDark, _Rm.violet],
+          colors: [Color(0xFF062A50), _Rm.brandDark, _Rm.violet],
         ),
         borderRadius: BorderRadius.circular(18),
-        boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 18, offset: Offset(0, 8))],
+        boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 18, offset: Offset(0, 8))],
       ),
       child: Row(
         children: [
@@ -1323,7 +1347,7 @@ class _RemartListingDetailScreenState extends State<RemartListingDetailScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.shield_outlined, size: 18, color: Color(0xFFD97706)),
+              const Icon(Icons.shield_outlined, size: 18, color: Color(0xFFF7931E)),
               const SizedBox(width: 6),
               Text('Stay safe while buying',
                   style: DT.text(size: 13.5, weight: FontWeight.w800, color: _Rm.amberInk)),
@@ -1338,7 +1362,7 @@ class _RemartListingDetailScreenState extends State<RemartListingDetailScreen> {
                 children: [
                   const Padding(
                     padding: EdgeInsets.only(top: 2),
-                    child: Icon(Icons.check_circle_rounded, size: 14, color: Color(0xFFD97706)),
+                    child: Icon(Icons.check_circle_rounded, size: 14, color: Color(0xFFF7931E)),
                   ),
                   const SizedBox(width: 6),
                   Expanded(child: Text(t, style: DT.text(size: 12.5, color: _Rm.amberInk, height: 1.4))),
@@ -1428,14 +1452,14 @@ class _RemartListingDetailScreenState extends State<RemartListingDetailScreen> {
                 height: 52,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    gradient: DT.ctaGradient,
+                    color: _kBrand, // buttons: only #093C71
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: const [
-                      BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 5)),
+                      BoxShadow(color: Color(0x40093C71), blurRadius: 12, offset: Offset(0, 5)),
                     ],
                   ),
                   child: ElevatedButton.icon(
-                    onPressed: _enquire,
+                    onPressed: () => _chat(),
                     icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18, color: Colors.white),
                     label: Text('Chat with seller',
                         maxLines: 1,
@@ -1598,7 +1622,7 @@ class _EnquirySheetState extends State<_EnquirySheet> {
     if (ok) Navigator.pop(context);
     messenger.showSnackBar(SnackBar(
       content: Text(msg),
-      backgroundColor: ok ? _Rm.green : DT.error,
+      backgroundColor: ok ? _Rm.green : _kRed,
       behavior: SnackBarBehavior.floating,
     ));
   }
@@ -1616,8 +1640,8 @@ class _EnquirySheetState extends State<_EnquirySheet> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
       enabledBorder: b(_Rm.line),
       focusedBorder: b(_Rm.brand, 1.6),
-      errorBorder: b(DT.error),
-      focusedErrorBorder: b(DT.error, 1.6),
+      errorBorder: b(_kRed),
+      focusedErrorBorder: b(_kRed, 1.6),
     );
   }
 
@@ -1644,7 +1668,7 @@ class _EnquirySheetState extends State<_EnquirySheet> {
                   // header with item preview
                   Container(
                     padding: const EdgeInsets.fromLTRB(16, 10, 8, 14),
-                    decoration: const BoxDecoration(gradient: DT.headerGradient),
+                    decoration: const BoxDecoration(gradient: _kHeader),
                     child: Column(
                       children: [
                         Container(
@@ -1753,7 +1777,7 @@ class _EnquirySheetState extends State<_EnquirySheet> {
                           height: 52,
                           child: DecoratedBox(
                             decoration: BoxDecoration(
-                              gradient: DT.ctaGradient,
+                              color: _kBrand, // buttons: only #093C71
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: ElevatedButton.icon(

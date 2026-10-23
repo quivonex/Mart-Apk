@@ -1,6 +1,6 @@
 // lib/screens/loan_enquiry_screen.dart
 
-// Loan enquiry – redesigned to match the app (brand blue #1A68FA, page
+// Loan enquiry – QNX MART colours (brand #093C71 for all buttons, page
 // #F6F8FC, white cards with slate borders, Plus Jakarta Sans via DT.text).
 // Logic unchanged: LoanEnquiryService.createLoanEnquiry.
 
@@ -12,6 +12,19 @@ import '../constants/design_tokens.dart';
 import '../models/loan_enquiry_model.dart';
 import '../services/loan_enquiry_service.dart';
 import '../widgets/product_ui.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kTint = Color(0xFFEAF1F9);
+const _kLine = Color(0xFFC9DBEE);
+const _kRed = Color(0xFFC62828);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 // M3 spacing scale (multiples of 4).
 class _S {
@@ -23,8 +36,8 @@ class _S {
   static const double xxl = 24;
 }
 
-const _brand = Color(0xFF6366F1);
-const _brandDark = Color(0xFF4338CA);
+const _brand = Color(0xFF093C71);
+const _brandDark = Color(0xFF062A50);
 
 const _amountPresets = <int, String>{
   500000: '₹5 Lakhs',
@@ -192,7 +205,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
             ),
           ],
         ),
-        backgroundColor: response.isSuccess ? const Color(0xFF10B981) : DT.error,
+        backgroundColor: response.isSuccess ? const Color(0xFF10B981) : _kRed,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(_S.lg),
         shape: RoundedRectangleBorder(
@@ -278,7 +291,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
       preferredSize: const Size.fromHeight(64),
       child: Container(
         decoration: const BoxDecoration(
-          gradient: DT.headerGradient,
+          gradient: _kHeader,
           boxShadow: [
             BoxShadow(
                 color: Color(0x0D0F172A), blurRadius: 2, offset: Offset(0, 1)),
@@ -322,9 +335,9 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: DT.blue50,
+                                color: _kTint,
                                 borderRadius: BorderRadius.circular(999),
-                                border: Border.all(color: DT.blue200),
+                                border: Border.all(color: _kLine),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -349,7 +362,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
                           'QNX Mart Capital & Credit Network',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: DT.text(size: 12, color: const Color(0xFFE0E7FF)),
+                          style: DT.text(size: 12, color: const Color(0xFFC9DBEE)),
                         ),
                       ],
                     ),
@@ -374,12 +387,12 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF4F46E5), _brand, Color(0xFF8B5CF6)],
+          colors: [Color(0xFF062A50), _brand, Color(0xFF1E5A9C)],
         ),
         borderRadius: BorderRadius.circular(DT.rLg),
         boxShadow: const [
           BoxShadow(
-              color: Color(0x336366F1), blurRadius: 16, offset: Offset(0, 8)),
+              color: Color(0x33093C71), blurRadius: 16, offset: Offset(0, 8)),
         ],
       ),
       child: Stack(
@@ -434,7 +447,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
                 'Instant credit limits up to ₹50 Lakhs with verified Tier-1 banking partners. Quick digital sanction for purchase orders and expansion.',
                 style: DT.text(
                     size: 12.5,
-                    color: const Color(0xFFC7D2FE),
+                    color: const Color(0xFFC9DBEE),
                     height: 1.5),
               ),
               const SizedBox(height: _S.lg),
@@ -697,10 +710,10 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: _S.md, vertical: 6),
                     decoration: BoxDecoration(
-                      color: selected ? _brand : DT.blue50,
+                      color: selected ? _brand : _kTint,
                       borderRadius: BorderRadius.circular(999),
                       border: Border.all(
-                          color: selected ? _brand : DT.blue200),
+                          color: selected ? _brand : _kLine),
                     ),
                     child: Text(
                       e.value,
@@ -789,9 +802,9 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
         Container(
           padding: const EdgeInsets.all(_S.md),
           decoration: BoxDecoration(
-            color: DT.blue50,
+            color: _kTint,
             borderRadius: BorderRadius.circular(DT.rMd),
-            border: Border.all(color: DT.blue200),
+            border: Border.all(color: _kLine),
           ),
           child: Row(
             children: [
@@ -1014,9 +1027,9 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
             children: [
               chip('SBI Commercial', Icons.account_balance_rounded, _brand),
               chip('HDFC Capital', Icons.account_balance_rounded,
-                  const Color(0xFF6366F1)),
+                  const Color(0xFF093C71)),
               chip('ICICI Trade', Icons.account_balance_rounded,
-                  const Color(0xFFF97316)),
+                  const Color(0xFFF7931E)),
             ],
           ),
         ],
@@ -1034,9 +1047,9 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
           height: 52,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              gradient: DT.ctaGradient,
+              color: _kBrand, // buttons: only #093C71
               borderRadius: BorderRadius.circular(12),
-              boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
+              boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 12, offset: Offset(0, 4))],
             ),
             child: ElevatedButton(
               onPressed: _isLoading ? null : _submitEnquiry,
@@ -1140,7 +1153,7 @@ class _SectionCard extends StatelessWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: DT.blue50,
+                    color: _kTint,
                     borderRadius: BorderRadius.circular(DT.rMd),
                   ),
                   child: Icon(icon, size: 20, color: _brand),
@@ -1199,7 +1212,7 @@ class _TrustPip extends StatelessWidget {
                 TextSpan(
                   text: suffix,
                   style: const TextStyle(
-                      fontWeight: FontWeight.w400, color: Color(0xFFC7D2FE)),
+                      fontWeight: FontWeight.w400, color: Color(0xFFC9DBEE)),
                 ),
             ],
           ),
@@ -1237,9 +1250,9 @@ class _SchemeTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(_S.md),
       decoration: BoxDecoration(
-        color: DT.blue50,
+        color: _kTint,
         borderRadius: BorderRadius.circular(DT.rMd),
-        border: Border.all(color: DT.blue200),
+        border: Border.all(color: _kLine),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

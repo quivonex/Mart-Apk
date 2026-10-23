@@ -19,15 +19,26 @@ import 'package:video_player/video_player.dart';
 import '../constants/design_tokens.dart';
 import '../models/property_model.dart';
 import '../services/real_estate_service.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kRed = Color(0xFFC62828);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 class _V {
-  static const ink = Color(0xFF0B0B1A);
-  static const panel = Color(0xFF15152B);
-  static const panelLine = Color(0xFF26264A);
-  static const brand = Color(0xFF6366F1);
-  static const violet = Color(0xFF8B5CF6);
-  static const orange = Color(0xFFF97316);
-  static const muted = Color(0xFF9CA3C7);
+  static const ink = Color(0xFF04111F);
+  static const panel = Color(0xFF0B1E33);
+  static const panelLine = Color(0xFF1C3552);
+  static const brand = Color(0xFF093C71);
+  static const violet = Color(0xFF1E5A9C);
+  static const orange = Color(0xFFF7931E);
+  static const muted = Color(0xFF9DB0C6);
 }
 
 class PropertyVideoScreen extends StatefulWidget {
@@ -72,7 +83,7 @@ class PropertyVideoScreen extends StatefulWidget {
     if (!r.isSuccess || r.data == null) {
       messenger.showSnackBar(SnackBar(
         content: Text(r.message ?? 'Could not load the video'),
-        backgroundColor: DT.error,
+        backgroundColor: _kRed,
         behavior: SnackBarBehavior.floating,
       ));
       return;
@@ -247,7 +258,7 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         flexibleSpace: Container(
-            decoration: const BoxDecoration(gradient: DT.headerGradient)),
+            decoration: const BoxDecoration(gradient: _kHeader)),
         foregroundColor: Colors.white,
         elevation: 0,
         titleSpacing: 0,
@@ -453,10 +464,7 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
           height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: filled
-                ? const LinearGradient(colors: [_V.brand, _V.violet])
-                : null,
-            color: filled ? null : const Color(0x33FFFFFF),
+            color: filled ? _kBrand : const Color(0x33FFFFFF),
           ),
           child: Icon(icon, color: Colors.white, size: size * 0.52),
         ),
@@ -475,7 +483,7 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
               width: 56,
               height: 56,
               decoration: const BoxDecoration(
-                color: Color(0x22EF4444),
+                color: Color(0x22C62828),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.videocam_off_rounded,
@@ -509,7 +517,7 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
                     icon: const Icon(Icons.open_in_new_rounded, size: 16),
                     label: const Text('Open in browser'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _V.brand,
+                      backgroundColor: _kBrand, // buttons: only #093C71
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
@@ -585,7 +593,7 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
   Widget _playlistTile(int i) {
     final active = i == _index;
     return Material(
-      color: active ? const Color(0xFF1E1B4B) : _V.panel,
+      color: active ? const Color(0xFF062A50) : _V.panel,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
@@ -605,7 +613,7 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0xFF312E81), Color(0xFF6D28D9)],
+                    colors: [Color(0xFF062A50), Color(0xFF093C71)],
                   ),
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -624,7 +632,7 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
                     style: DT.text(
                         size: 13,
                         weight: FontWeight.w700,
-                        color: active ? Colors.white : const Color(0xFFE0E7FF))),
+                        color: active ? Colors.white : const Color(0xFFC9DBEE))),
               ),
               if (active)
                 Text('Playing',

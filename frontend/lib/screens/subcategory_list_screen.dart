@@ -4,6 +4,10 @@ import '../constants/app_constants.dart';
 import '../models/subcategory_model.dart';
 import '../services/subcategory_service.dart';
 import 'subcategory_create_edit_screen.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kRed = Color(0xFFC62828);
 
 class SubCategoryListScreen extends StatefulWidget {
   const SubCategoryListScreen({super.key});
@@ -86,8 +90,7 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor:
-              sc.isActive ? AppConstants.error : AppConstants.primary,
+              backgroundColor: _kBrand, // buttons: only #093C71
             ),
             child: Text(sc.isActive ? 'Deactivate' : 'Reactivate'),
           ),
@@ -107,7 +110,7 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
       SnackBar(
         content: Text(res.displayMessage),
         backgroundColor:
-        res.isSuccess ? Colors.green : const Color(0xFFD32F2F),
+        res.isSuccess ? Colors.green : const Color(0xFFC62828),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -120,7 +123,7 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
     return Scaffold(
       backgroundColor: AppConstants.surfaceColor,
       appBar: AppBar(
-        backgroundColor: AppConstants.primary,
+        backgroundColor: _kBrand,
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(
@@ -135,7 +138,7 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
       body: _buildBody(),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openCreate,
-        backgroundColor: AppConstants.primary,
+        backgroundColor: _kBrand,
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text(
           'Add Sub Category',
@@ -153,7 +156,7 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(AppConstants.primary),
+          valueColor: AlwaysStoppedAnimation<Color>(_kBrand),
         ),
       );
     }
@@ -189,12 +192,12 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppConstants.primary.withOpacity(0.1),
+                  color: _kBrand.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   Icons.category_outlined,
-                  color: AppConstants.primary,
+                  color: _kBrand,
                   size: 22,
                 ),
               ),
@@ -269,9 +272,9 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppConstants.primary,
+                    foregroundColor: _kBrand,
                     side: BorderSide(
-                        color: AppConstants.primary.withOpacity(0.4)),
+                        color: _kBrand.withOpacity(0.4)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -297,8 +300,7 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                    sc.isActive ? AppConstants.error : Colors.green,
+                    backgroundColor: _kBrand, // buttons: only #093C71
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -323,14 +325,14 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: (isErr ? AppConstants.error : AppConstants.primary)
+                color: (isErr ? _kRed : _kBrand)
                     .withOpacity(0.08),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 isErr ? Icons.error_outline : Icons.category_outlined,
                 size: 56,
-                color: (isErr ? AppConstants.error : AppConstants.primary)
+                color: (isErr ? _kRed : _kBrand)
                     .withOpacity(0.6),
               ),
             ),
@@ -356,8 +358,7 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
             ElevatedButton.icon(
               onPressed: isErr ? _load : _openCreate,
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                isErr ? AppConstants.error : AppConstants.primary,
+                backgroundColor: _kBrand, // buttons: only #093C71
                 padding: const EdgeInsets.symmetric(
                     horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(

@@ -12,6 +12,12 @@ import '../constants/design_tokens.dart';
 import '../models/company_model.dart';
 import '../services/company_service.dart';
 import '../widgets/company_ui.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kTint = Color(0xFFEAF1F9);
+const _kLine = Color(0xFFC9DBEE);
+const _kRed = Color(0xFFC62828);
 
 class CompanyPhotosScreen extends StatefulWidget {
   final Company company;
@@ -172,7 +178,7 @@ class _CompanyPhotosScreenState extends State<CompanyPhotosScreen> {
             if (_toDelete.isNotEmpty) ...[
               const SizedBox(height: 12),
               Text('${_toDelete.length} photo(s) will be removed when you save.',
-                  style: DT.text(size: 12, color: DT.error, weight: FontWeight.w600)),
+                  style: DT.text(size: 12, color: _kRed, weight: FontWeight.w600)),
             ],
           ],
         ),
@@ -187,9 +193,9 @@ class _CompanyPhotosScreenState extends State<CompanyPhotosScreen> {
               height: 48,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  gradient: DT.ctaGradient,
+                  color: _kBrand, // buttons: only #093C71
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: const [BoxShadow(color: Color(0x406366F1), blurRadius: 12, offset: Offset(0, 4))],
+                  boxShadow: const [BoxShadow(color: Color(0x40093C71), blurRadius: 12, offset: Offset(0, 4))],
                 ),
                 child: ElevatedButton(
                   onPressed: _dirty && !_saving ? _save : null,
@@ -248,7 +254,7 @@ class _Tile extends StatelessWidget {
             Opacity(opacity: markedForDelete ? 0.35 : 1, child: image),
             if (markedForDelete)
               const Center(
-                child: Icon(Icons.delete_outline_rounded, color: DT.error, size: 30),
+                child: Icon(Icons.delete_outline_rounded, color: _kRed, size: 30),
               ),
             Positioned(
               top: 6,
@@ -256,7 +262,7 @@ class _Tile extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
-                  color: markedForDelete ? DT.blue800 : Colors.black54,
+                  color: markedForDelete ? _kBrand : Colors.black54,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -296,10 +302,10 @@ class _AddTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: DT.blue50,
+      color: _kTint,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(DT.rMd),
-        side: const BorderSide(color: DT.blue200),
+        side: const BorderSide(color: _kLine),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(DT.rMd),
@@ -315,7 +321,7 @@ class _AddTile extends StatelessWidget {
               children: [
                 const SizedBox(height: 8),
                 ListTile(
-                  leading: const Icon(Icons.photo_library_outlined, color: DT.blue800),
+                  leading: const Icon(Icons.photo_library_outlined, color: _kBrand),
                   title: Text('Choose from gallery',
                       style: DT.text(size: 14, weight: FontWeight.w600)),
                   onTap: () {
@@ -324,7 +330,7 @@ class _AddTile extends StatelessWidget {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.photo_camera_outlined, color: DT.blue800),
+                  leading: const Icon(Icons.photo_camera_outlined, color: _kBrand),
                   title: Text('Take a photo', style: DT.text(size: 14, weight: FontWeight.w600)),
                   onTap: () {
                     Navigator.pop(ctx);
@@ -339,10 +345,10 @@ class _AddTile extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.add_photo_alternate_outlined, color: DT.blue800, size: 28),
+            const Icon(Icons.add_photo_alternate_outlined, color: _kBrand, size: 28),
             const SizedBox(height: 4),
             Text('Add photo',
-                style: DT.text(size: 11.5, weight: FontWeight.w700, color: DT.blue800)),
+                style: DT.text(size: 11.5, weight: FontWeight.w700, color: _kBrand)),
           ],
         ),
       ),

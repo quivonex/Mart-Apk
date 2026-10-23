@@ -1,5 +1,17 @@
 import 'package:flutter/material.dart';
 import '../constants/design_tokens.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kRed = Color(0xFFC62828);
+const _kOrange = Color(0xFFF7931E);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 /// Brand logo.
 /// - [useImage] = true  -> tries the PNG asset first, falls back to the text logo.
@@ -39,7 +51,7 @@ class LogoWidget extends StatelessWidget {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            gradient: DT.logoGradient,
+            gradient: _kHeader,
             borderRadius: BorderRadius.circular(size * 0.33),
             boxShadow: DT.shadowXs,
           ),
@@ -61,7 +73,7 @@ class LogoWidget extends StatelessWidget {
                   style: DT.text(
                     size: size * 0.46,
                     weight: FontWeight.w800,
-                    color: DT.amber300,
+                    color: _kOrange,
                     letterSpacing: -1,
                   ),
                 ),
@@ -83,7 +95,7 @@ class LogoWidget extends StatelessWidget {
                     style: DT.text(
                       size: size * 0.44,
                       weight: FontWeight.w800,
-                      color: DT.onyx900,
+                      color: _kBrand,
                       height: 1,
                       letterSpacing: -0.4,
                     ),
@@ -93,7 +105,7 @@ class LogoWidget extends StatelessWidget {
                     style: DT.text(
                       size: size * 0.44,
                       weight: FontWeight.w800,
-                      color: DT.blue700,
+                      color: _kRed,
                       height: 1,
                       letterSpacing: -0.4,
                     ),

@@ -14,8 +14,12 @@ import 'package:url_launcher/url_launcher.dart';
 import '../constants/design_tokens.dart';
 import '../services/api_urls.dart';
 import '../utils/shared_preferences_helper.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kRed = Color(0xFFC62828);
 
-const _blue = Color(0xFF6366F1);
+const _blue = Color(0xFF093C71);
 const _supportEmail = 'qnxmartb2b@gmail.com';
 const _website = 'https://qnxmartb2b.com';
 
@@ -230,7 +234,7 @@ class HelpInfoScreen extends StatelessWidget {
                 onPressed: () => Navigator.push(
                     context, MaterialPageRoute(builder: (_) => const ContactUsScreen())),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _blue,
+                  backgroundColor: _kBrand, // buttons: only #093C71
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -584,7 +588,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(msg),
-        backgroundColor: DT.error,
+        backgroundColor: _kRed,
         behavior: SnackBarBehavior.floating,
       ));
     }
@@ -716,7 +720,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                   label: Text(_sending ? 'Sending…' : 'Send message',
                       style: DT.text(size: 15, weight: FontWeight.w700, color: Colors.white)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _blue,
+                    backgroundColor: _kBrand, // buttons: only #093C71
                     disabledBackgroundColor: _blue.withValues(alpha: 0.6),
                     foregroundColor: Colors.white,
                     elevation: 0,

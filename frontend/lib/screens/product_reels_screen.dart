@@ -10,6 +10,9 @@ import '../constants/design_tokens.dart';
 import '../models/product_model.dart';
 import '../utils/cart_helper.dart';
 import 'product_enquiry_screen.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
 
 class ReelItem {
   final Product product;
@@ -268,7 +271,7 @@ class _ReelPageState extends State<_ReelPage> {
                           label: Text('Cart',
                               style: DT.text(size: 13.5, weight: FontWeight.w700, color: Colors.white)),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF6366F1),
+                            backgroundColor: _kBrand,
                             foregroundColor: Colors.white,
                             elevation: 0,
                             minimumSize: const Size.fromHeight(44),

@@ -79,7 +79,7 @@ class CartService {
       }
 
       // 2. Live courier rate for the selected products.
-      final r = await _postJson('/shiprocket/shipping-rates/', {
+      final r = await _postJson('/shipping/shipping-rates/', {
         'product_ids': productIds,
         'address_id': _addressId,
         'payment_method': cod ? 'COD' : 'Prepaid',

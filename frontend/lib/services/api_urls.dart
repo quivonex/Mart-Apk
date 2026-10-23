@@ -1,8 +1,8 @@
 class ApiUrls {
   // Base URL - Change this to your actual server IP
 
-  static const String baseUrl = 'http://192.168.31.249:16000';
-  // static const String baseUrl = "https://api.qnxmartb2b.com";
+  static const String baseUrl = 'http://192.168.31.4:16000';
+  //  static const String baseUrl = "https://api.qnxmartb2b.com";
 
   // Auth Endpoints
   static const String login = '/accounts/login/';
@@ -35,11 +35,11 @@ class ApiUrls {
   static const String franchiseCreate = '/franchicies/franchise/create/';
 
   // Order Endpoints
-  static const String myOrders = '/shiprocket/my-orders/';
-  static const String myOrderDetail = '/shiprocket/my-order-detail/';
-  static const String cancelOrder = '/shiprocket/cancel-order/';
-  static const String trackShipment = '/shiprocket/track-shipment/';
-  static const String returnOrder = '/shiprocket/return-order/';
+  static const String myOrders = '/shipping/my-orders/';
+  static const String myOrderDetail = '/shipping/my-order-detail/';
+  static const String cancelOrder = '/shipping/cancel-order/';
+  static const String trackShipment = '/shipping/track-shipment/';
+  static const String returnOrder = '/shipping/return-order/';
 
   // ✅ Real Estate Endpoints (NEW)
   static const String approvedProperties = '/real_estate/properties/approved/';
@@ -124,6 +124,35 @@ class ApiUrls {
 // ✅ Admin uploaded images (home carousel)
   static const String adminImageList = '/admin_profile/upload_image_list/';
 
+  static const String aiChat = '/AI/chat/';
+  static const String aiConversations = '/AI/conversations/';
+  static const String aiMessages = '/AI/messages/';
+
+
+  // ✅ Nearby Search + its subscription (login token required)
+  static const String nearbyPlaces = '/admin_profile/places/nearby/';
+  static const String nearbySubscriptionPlans = '/admin_profile/subscription-plans/list/';
+  static const String nearbySubscriptionCreateOrder = '/admin_profile/subscription/create-order/';
+  static const String nearbySubscriptionVerify = '/admin_profile/place_subscription/sub_payment_verify/';
+
+  // ✅ Chat (buyer ↔ seller / agent) – shared by Product, Property and ReMart detail
+  static const String chatCreate = '/olx/chats/create/';
+  static const String chats = '/olx/chats/';
+  static const String remartListingDetail = '/olx/listings/detail/';
+
+  // ✅ QNX ReMart Communication Plan (chat / enquiry limits)
+  static const String commPlans = '/olx/bazaar-communication-plans/list/';
+  static const String commCreateOrder = '/payment/bazaar-communication/create-order/';
+  static const String commVerifyPayment = '/payment/bazaar-communication/verify-payment/';
+  static const String commMySubscriptions = '/olx/bazaar-communication-subscriptions/my/';
+  static const String commChatUsage = '/olx/bazaar-communication-usage/chat/';
+  static const String commEnquiryUsage = '/olx/bazaar-communication-usage/enquiry/';
+
+  // ✅ Customer Subscription (property enquiries – My Subscription)
+  static const String customerSubscriptionPlans = '/payment/customer-subscription-plans/';
+  static const String customerMySubscriptions = '/payment/customer-subscriptions/my/';
+  static const String customerSubscriptionCreateOrder = '/payment/customer-subscription/create-order/';
+  static const String customerSubscriptionVerify = '/payment/customer-subscription/verify-payment/';
 
 
 
@@ -209,24 +238,47 @@ class ApiUrls {
   static String get createMarketingPartnerEnquiryUrl => '$baseUrl$createMarketingPartnerEnquiry';
 
   static String get adminImageListUrl => '$baseUrl$adminImageList';
+
+
+  // AI Assistant
+  static String get aiChatUrl => '$baseUrl$aiChat';
+  static String get aiConversationsUrl => '$baseUrl$aiConversations';
+  static String aiConversationUrl(String id) => '$baseUrl$aiConversations$id/';
+  static String aiMessageFeedbackUrl(String messageId) => '$baseUrl$aiMessages$messageId/feedback/';
+
+
+  // Nearby Search + subscription
+  static String get nearbyPlacesUrl => '$baseUrl$nearbyPlaces';
+  static String get nearbySubscriptionPlansUrl => '$baseUrl$nearbySubscriptionPlans';
+  static String get nearbySubscriptionCreateOrderUrl => '$baseUrl$nearbySubscriptionCreateOrder';
+  static String get nearbySubscriptionVerifyUrl => '$baseUrl$nearbySubscriptionVerify';
+
+
+  // Chat
+  static String get chatCreateUrl => '$baseUrl$chatCreate';
+  static String get chatsUrl => '$baseUrl$chats';
+  static String get remartListingDetailUrl => '$baseUrl$remartListingDetail';
+  static String chatMessagesUrl(int chatId, {int page = 1, int pageSize = 100}) =>
+      '$baseUrl$chats$chatId/messages/?page=$page&page_size=$pageSize';
+  static String chatSendUrl(int chatId) => '$baseUrl$chats$chatId/messages/send/';
+  static String chatOffersUrl(int chatId) => '$baseUrl$chats$chatId/offers/';
+  static String chatOfferRespondUrl(int chatId, int messageId) =>
+      '$baseUrl$chats$chatId/offers/$messageId/respond/';
+  static String chatReadUrl(int chatId) => '$baseUrl$chats$chatId/read/';
+
+
+
+  // Communication Plan
+  static String get commPlansUrl => '$baseUrl$commPlans';
+  static String get commCreateOrderUrl => '$baseUrl$commCreateOrder';
+  static String get commVerifyPaymentUrl => '$baseUrl$commVerifyPayment';
+  static String get commMySubscriptionsUrl => '$baseUrl$commMySubscriptions';
+  static String get commChatUsageUrl => '$baseUrl$commChatUsage';
+  static String get commEnquiryUsageUrl => '$baseUrl$commEnquiryUsage';
+
+  // Customer Subscription (My Subscription)
+  static String get customerSubscriptionPlansUrl => '$baseUrl$customerSubscriptionPlans';
+  static String get customerMySubscriptionsUrl => '$baseUrl$customerMySubscriptions';
+  static String get customerSubscriptionCreateOrderUrl => '$baseUrl$customerSubscriptionCreateOrder';
+  static String get customerSubscriptionVerifyUrl => '$baseUrl$customerSubscriptionVerify';
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

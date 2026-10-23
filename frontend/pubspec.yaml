@@ -94,6 +94,9 @@ flutter:
     - lib/assets/icon/mahindra finance.jpeg
     - lib/assets/icon/tata capital.jpeg
 
+
+
+
     #   - images/a_dot_ham.jpeg
 
 flutter_launcher_icons:

@@ -10,14 +10,24 @@ import 'package:http/http.dart' as http;
 import '../constants/design_tokens.dart';
 import '../services/api_urls.dart';
 import '../utils/shared_preferences_helper.dart';
+// ── QNX MART logo colours (private to this screen) ──────────────
+//   #093C71 brand (all buttons) · red = errors · orange = conditions
+const _kBrand = Color(0xFF093C71);
+const _kBrandDark = Color(0xFF062A50);
+const _kBrandLight = Color(0xFF1E5A9C);
+const _kHeader = LinearGradient(
+  colors: [_kBrandDark, _kBrand, _kBrandLight],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 class _ME {
-  static const brand = Color(0xFF6366F1);
-  static const brandDark = Color(0xFF4338CA);
+  static const brand = Color(0xFF093C71);
+  static const brandDark = Color(0xFF062A50);
   static const green = Color(0xFF10B981);
   static const bg = Color(0xFFF8FAFC);
   static const line = Color(0xFFE2E8F0);
-  static const tint = Color(0xFFEEF2FF);
+  static const tint = Color(0xFFEAF1F9);
   static const ink = Color(0xFF0F172A);
   static const muted = Color(0xFF64748B);
   static const hint = Color(0xFF94A3B8);
@@ -104,7 +114,7 @@ class _MyEnquiriesScreenState extends State<MyEnquiriesScreen> {
       backgroundColor: _ME.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        flexibleSpace: Container(decoration: const BoxDecoration(gradient: DT.headerGradient)),
+        flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)),
         foregroundColor: Colors.white,
         elevation: 0,
         title: Column(
@@ -155,7 +165,7 @@ class _MyEnquiriesScreenState extends State<MyEnquiriesScreen> {
         const SizedBox(height: 18),
         Center(
           child: FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: _ME.brand),
+            style: FilledButton.styleFrom(backgroundColor: _kBrand), // buttons: only #093C71
             onPressed: _load,
             child: const Text('Try again'),
           ),

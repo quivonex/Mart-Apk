@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'constants/app_constants.dart';
-import 'constants/app_theme.dart';
+import 'package:qnx_mart/constants/app_theme.dart';
 import 'utils/shared_preferences_helper.dart';
 
 void main() {

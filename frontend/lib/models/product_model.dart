@@ -105,6 +105,9 @@ class Product {
   final String subcategoryName;
   final String brandName;
   final String companyName;
+
+  /// Seller's user id (company owner) – for "Chat with seller".
+  final int? companyUserId;
   final bool isFranchiseAvailable;
   final String finalPrice;
   final String price;
@@ -146,6 +149,7 @@ class Product {
     required this.subcategoryName,
     required this.brandName,
     required this.companyName,
+    this.companyUserId,
     required this.isFranchiseAvailable,
     required this.finalPrice,
     required this.price,
@@ -238,6 +242,9 @@ class Product {
       subcategoryName: json['subcategory_name'] ?? '',
       brandName: json['brand_name'] ?? '',
       companyName: json['company_name'] ?? '',
+      companyUserId: json['company_user_id'] is int
+          ? json['company_user_id']
+          : int.tryParse('${json['company_user_id'] ?? ''}'),
       isFranchiseAvailable: json['is_franchise_available'] ?? false,
       finalPrice: json['final_price']?.toString() ?? '0',
       price: json['price']?.toString() ?? '0',
@@ -294,6 +301,7 @@ class Product {
       'subcategory_name': subcategoryName,
       'brand_name': brandName,
       'company_name': companyName,
+      'company_user_id': companyUserId,
       'is_franchise_available': isFranchiseAvailable,
       'final_price': finalPrice,
       'price': price,
