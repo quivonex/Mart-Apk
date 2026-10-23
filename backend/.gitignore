@@ -1,59 +1,22 @@
-# =========================
-# Python build and cache
-# =========================
+# Python build and cache artifacts
 __pycache__/
-*.py[cod]
-*$py.class
+*.pyc
+*.pyo
+*.pyd
 .Python
-
-# =========================
-# Environment / Secrets
-# =========================
-.env
-.env.*
-!.env.example
-
 env/
 venv/
 .venv/
-
 pip-log.txt
 pip-delete-this-directory.txt
 
-# =========================
-# Local database / generated files
-# =========================
+# Local development files and databases
+.git/
+.gitignore
 db.sqlite3
 staticfiles/
+.env
 
-# =========================
-# IDE
-# =========================
+# IDE configurations
 .vscode/
 .idea/
-*.iml
-
-# =========================
-# Firebase Credentials
-# =========================
-battery_manegement/firebase/firebase-service-account.json
-
-# =========================
-# Temporary / Backup Files
-# =========================
-*.bak
-*.backup
-*.swp
-*.swo
-*~
-
-# =========================
-# Angular
-# =========================
-.angular/
-
-# =========================
-# OS
-# =========================
-.DS_Store
-Thumbs.db

@@ -8,6 +8,14 @@ from .models import (
     BazaarListingImage,
     BazaarPlan,
     BazaarPricing,
+
+    BazaarCommunicationPlan,
+    BazaarCommunicationSettings,
+    BazaarCommunicationSubscription,
+    BazaarCommunicationUsage,
+
+    BazaarChat,
+    BazaarChatMessage,
 )
 
 class BazaarCategoryCreateSerializer(serializers.ModelSerializer):
@@ -105,7 +113,7 @@ class BazaarListingSerializer(serializers.ModelSerializer):
         model = BazaarListing
         fields = [
             "id",
-            "user_id"
+            "user_id",
             "title",
             "description",
             "price",
@@ -607,4 +615,355 @@ class BazaarListingListSerializer(serializers.ModelSerializer):
             "updated_at",
 
             "images",
-        ]    
+        ]      
+
+
+
+
+
+
+
+
+
+
+
+
+##############################################################################
+##############################################################################
+#            OLX ENQUIRY AND QNX CHAT SUBCRIPTION PLAN SERIALIZERS
+##############################################################################
+##############################################################################
+
+
+class BazaarCommunicationPlanSerializer(serializers.ModelSerializer):
+    """
+    Used by admin APIs to create, update and list communication plans.
+    """
+
+    class Meta:
+        model = BazaarCommunicationPlan
+        fields = [
+            "id",
+            "name",
+            "description",
+            "price",
+            "currency",
+            "duration_days",
+            "chat_limit",
+            "chat_unlimited",
+            "chat_limit_period",
+            "enquiry_limit",
+            "enquiry_unlimited",
+            "enquiry_limit_period",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "created_at",
+            "updated_at",
+        ]
+
+    def validate_name(self, value):
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError(
+                "Plan name cannot be empty."
+            )
+        return value
+
+    def validate_currency(self, value):
+        return value.upper()
+
+    def validate(self, attrs):
+        """
+        A zero limit is permitted when the corresponding feature is
+        unlimited. Otherwise, zero means no usage is included.
+        """
+        chat_unlimited = attrs.get(
+            "chat_unlimited",
+            getattr(self.instance, "chat_unlimited", False),
+        )
+        enquiry_unlimited = attrs.get(
+            "enquiry_unlimited",
+            getattr(self.instance, "enquiry_unlimited", False),
+        )
+
+        chat_limit = attrs.get(
+            "chat_limit",
+            getattr(self.instance, "chat_limit", 0),
+        )
+        enquiry_limit = attrs.get(
+            "enquiry_limit",
+            getattr(self.instance, "enquiry_limit", 0),
+        )
+
+        if chat_unlimited and chat_limit:
+            raise serializers.ValidationError({
+                "chat_limit": (
+                    "Set chat_limit to 0 when chat_unlimited is true."
+                )
+            })
+
+        if enquiry_unlimited and enquiry_limit:
+            raise serializers.ValidationError({
+                "enquiry_limit": (
+                    "Set enquiry_limit to 0 when "
+                    "enquiry_unlimited is true."
+                )
+            })
+
+        return attrs
+
+
+class BazaarCommunicationSettingsSerializer(
+    serializers.ModelSerializer
+):
+    """
+    Used to retrieve and update global communication settings.
+    """
+
+    class Meta:
+        model = BazaarCommunicationSettings
+        fields = [
+            "id",
+            "chat_mode",
+            "enquiry_mode",
+            "free_chat_limit",
+            "free_chat_period",
+            "free_enquiry_limit",
+            "free_enquiry_period",
+            "block_contact_info",
+            "block_phone_numbers",
+            "block_emails",
+            "block_social_handles",
+            "block_external_links",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "created_at",
+            "updated_at",
+        ]
+
+    def validate(self, attrs):
+        chat_mode = attrs.get(
+            "chat_mode",
+            getattr(self.instance, "chat_mode", None),
+        )
+        enquiry_mode = attrs.get(
+            "enquiry_mode",
+            getattr(self.instance, "enquiry_mode", None),
+        )
+
+        free_chat_limit = attrs.get(
+            "free_chat_limit",
+            getattr(self.instance, "free_chat_limit", 0),
+        )
+        free_enquiry_limit = attrs.get(
+            "free_enquiry_limit",
+            getattr(self.instance, "free_enquiry_limit", 0),
+        )
+
+        modes_with_free_allowance = {
+            BazaarCommunicationSettings.AccessMode.FREE_WITH_LIMIT,
+            BazaarCommunicationSettings.AccessMode.MIXED,
+        }
+
+        if (
+            chat_mode in modes_with_free_allowance
+            and free_chat_limit < 1
+        ):
+            raise serializers.ValidationError({
+                "free_chat_limit": (
+                    "The free chat limit must be at least 1 "
+                    "for this mode."
+                )
+            })
+
+        if (
+            enquiry_mode in modes_with_free_allowance
+            and free_enquiry_limit < 1
+        ):
+            raise serializers.ValidationError({
+                "free_enquiry_limit": (
+                    "The free enquiry limit must be at least 1 "
+                    "for this mode."
+                )
+            })
+
+        return attrs
+
+
+class BazaarCommunicationSubscriptionSerializer(
+    serializers.ModelSerializer
+):
+    """
+    Read-only subscription details for the authenticated user.
+    """
+
+    plan_name = serializers.CharField(
+        source="plan.name",
+        read_only=True,
+    )
+
+    is_currently_valid = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = BazaarCommunicationSubscription
+        fields = [
+            "id",
+            "plan",
+            "plan_name",
+            "starts_at",
+            "expires_at",
+            "status",
+            "price_paid",
+            "currency",
+            "chat_limit_snapshot",
+            "chat_unlimited_snapshot",
+            "chat_limit_period_snapshot",
+            "enquiry_limit_snapshot",
+            "enquiry_unlimited_snapshot",
+            "enquiry_limit_period_snapshot",
+            "is_currently_valid",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+
+class BazaarCommunicationUsageSerializer(
+    serializers.ModelSerializer
+):
+    """
+    Read-only usage records. Clients cannot change their own usage counts.
+    """
+
+    subscription_id = serializers.IntegerField(
+        read_only=True,
+        allow_null=True,
+    )
+
+    class Meta:
+        model = BazaarCommunicationUsage
+        fields = [
+            "id",
+            "subscription_id",
+            "feature",
+            "period_start",
+            "period_end",
+            "used_count",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+
+
+
+
+
+##############################################################################
+##############################################################################
+#                      QNX CHAT SERIALIZERS
+##############################################################################
+##############################################################################
+
+class BazaarChatCreateSerializer(serializers.Serializer):
+    other_user_id = serializers.IntegerField(min_value=1)
+    listing_id = serializers.IntegerField(
+        min_value=1,
+        required=False,
+        allow_null=True,
+    )
+
+class BazaarChatMessageCreateSerializer(serializers.Serializer):
+    message = serializers.CharField(
+        max_length=5000,
+        trim_whitespace=True,
+        allow_blank=False,
+    )
+
+class BazaarChatMessageSerializer(serializers.ModelSerializer):
+    sender_id = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = BazaarChatMessage
+        fields = [
+            "id",
+            "chat",
+            "sender_id",
+            "message",
+            "moderation_status",
+            "is_read",
+            "read_at",
+            "created_at",
+        ]
+        read_only_fields = fields
+
+class BazaarChatSerializer(serializers.ModelSerializer):
+    other_user_id = serializers.SerializerMethodField()
+    other_username = serializers.SerializerMethodField()
+    last_message = serializers.SerializerMethodField()
+    unread_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BazaarChat
+        fields = [
+            "id",
+            "user_one",
+            "user_two",
+            "other_user_id",
+            "other_username",
+            "listing",
+            "is_active",
+            "last_message",
+            "unread_count",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+    def get_other_user_id(self, obj):
+        request = self.context.get("request")
+        if not request:
+            return None
+        other_user = obj.get_other_participant(request.user)
+        return other_user.pk if other_user else None
+
+    def get_other_username(self, obj):
+        request = self.context.get("request")
+        if not request:
+            return None
+        other_user = obj.get_other_participant(request.user)
+        if not other_user:
+            return None
+        return other_user.get_username()
+
+    def get_last_message(self, obj):
+        message = (
+            obj.messages
+            .filter(is_active=True)
+            .order_by("-created_at")
+            .first()
+        )
+        if not message:
+            return None
+        return BazaarChatMessageSerializer(message).data
+
+    def get_unread_count(self, obj):
+        request = self.context.get("request")
+        if not request:
+            return 0
+        return obj.messages.filter(
+            is_active=True,
+            is_read=False,
+        ).exclude(
+            sender=request.user,
+        ).count()

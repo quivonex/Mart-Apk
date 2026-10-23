@@ -1,4 +1,5 @@
 import razorpay
+import json
 from rest_framework.views import APIView, settings
 from rest_framework.response import Response
 from rest_framework import status
@@ -14,9 +15,16 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .serializers import BuilderSerializer
 from django.utils import timezone
-from .serializers import RealEstateChannelPartnerSerializer
+from .serializers import RealEstateChannelPartnerSerializer, PropertyUpdateSerializer
 from enquiry.serializers import MarketingPartnerSerializer
 import razorpay
+from rest_framework.parsers import (
+    MultiPartParser,
+    FormParser,
+    JSONParser
+)
+
+
 razorpay_client = razorpay.Client(
     auth=(
         settings.RAZORPAY_KEY_ID,
@@ -825,15 +833,68 @@ class PropertyCreateAPIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+
+import json
+
+from django.db import transaction
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import AllowAny
+from rest_framework.parsers import (
+    MultiPartParser,
+    FormParser,
+    JSONParser
+)
+
+
+import json
+
+from django.db import transaction
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import AllowAny
+from rest_framework.parsers import (
+    MultiPartParser,
+    FormParser,
+    JSONParser
+)
+
+
 class PropertyUpdateAPIView(APIView):
 
-    @transaction.atomic
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    parser_classes = [
+        MultiPartParser,
+        FormParser,
+        JSONParser
+    ]
+
     def post(self, request):
+        return self.update_property(
+            request,
+            partial=True
+        )
+
+    def patch(self, request):
+        return self.update_property(
+            request,
+            partial=True
+        )
+
+    @transaction.atomic
+    def update_property(self, request, partial=True):
 
         try:
-            # ---------------------------------------
-            # PROPERTY ID
-            # ---------------------------------------
+
+            # =======================================
+            # GET PROPERTY ID
+            # =======================================
 
             property_id = request.data.get("property_id")
 
@@ -846,14 +907,30 @@ class PropertyUpdateAPIView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # ---------------------------------------
+            try:
+                property_id = int(property_id)
+
+                if property_id <= 0:
+                    raise ValueError
+
+            except (ValueError, TypeError):
+                return Response(
+                    {
+                        "success": False,
+                        "message": "property_id must be a valid positive integer"
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # =======================================
             # GET PROPERTY
-            # ---------------------------------------
+            # =======================================
 
             try:
                 property_obj = Property.objects.get(
                     id=property_id
                 )
+
             except Property.DoesNotExist:
                 return Response(
                     {
@@ -863,18 +940,47 @@ class PropertyUpdateAPIView(APIView):
                     status=status.HTTP_404_NOT_FOUND
                 )
 
-            # ---------------------------------------
-            # UPDATE PROPERTY
-            # ---------------------------------------
+            # =======================================
+            # COPY REQUEST DATA
+            # =======================================
 
-            serializer = PropertyCreateSerializer(
+            data = request.data.copy()
+            data.pop("property_id", None)
+
+            # =======================================
+            # PROTECTED FIELDS
+            # =======================================
+
+            protected_fields = [
+                "id",
+                "agent",
+                "source",
+                "free_days",
+                "free_expiry_date",
+                "subscription_expiry_date",
+                "subscription_required",
+                "subscription_active",
+                "created_at",
+                "updated_at",
+                "status_approved",
+                "expiry_date",
+                "published_at",
+            ]
+
+            for field in protected_fields:
+                data.pop(field, None)
+
+            # =======================================
+            # SERIALIZER
+            # =======================================
+
+            serializer = PropertyUpdateSerializer(
                 property_obj,
-                data=request.data,
+                data=data,
                 partial=True
             )
 
             if not serializer.is_valid():
-
                 return Response(
                     {
                         "success": False,
@@ -884,13 +990,83 @@ class PropertyUpdateAPIView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
+            # =======================================
+            # UPDATE PROPERTY AND NESTED DATA
+            # =======================================
+
             property_obj = serializer.save()
 
-            # ---------------------------------------
-            # NEW IMAGES UPLOAD TO S3
-            # ---------------------------------------
+            # =======================================
+            # DELETE IMAGES
+            # =======================================
+
+            delete_images = request.data.get(
+                "delete_image_ids"
+            )
+
+            if delete_images:
+
+                if isinstance(delete_images, str):
+                    try:
+                        delete_images = json.loads(delete_images)
+                    except json.JSONDecodeError:
+                        delete_images = [
+                            x.strip()
+                            for x in delete_images.split(",")
+                            if x.strip()
+                        ]
+
+                if not isinstance(delete_images, list):
+                    delete_images = [delete_images]
+
+                PropertyImage.objects.filter(
+                    property=property_obj,
+                    id__in=delete_images
+                ).delete()
+
+            # =======================================
+            # DELETE VIDEOS
+            # =======================================
+
+            delete_videos = request.data.get(
+                "delete_video_ids"
+            )
+
+            if delete_videos:
+
+                if isinstance(delete_videos, str):
+                    try:
+                        delete_videos = json.loads(delete_videos)
+                    except json.JSONDecodeError:
+                        delete_videos = [
+                            x.strip()
+                            for x in delete_videos.split(",")
+                            if x.strip()
+                        ]
+
+                if not isinstance(delete_videos, list):
+                    delete_videos = [delete_videos]
+
+                PropertyVideo.objects.filter(
+                    property=property_obj,
+                    id__in=delete_videos
+                ).delete()
+
+            # =======================================
+            # ADD NEW IMAGES
+            # =======================================
 
             images = request.FILES.getlist("images")
+
+            image_type = request.data.get(
+                "image_type",
+                "other"
+            )
+
+            image_caption = request.data.get(
+                "image_caption",
+                ""
+            )
 
             for image in images:
 
@@ -902,20 +1078,14 @@ class PropertyUpdateAPIView(APIView):
                 PropertyImage.objects.create(
                     property=property_obj,
                     image_s3_key=image_url,
-                    image_type=request.data.get(
-                        "image_type",
-                        "other"
-                    ),
-                    caption=request.data.get(
-                        "image_caption",
-                        ""
-                    ),
+                    image_type=image_type,
+                    caption=image_caption,
                     is_primary=False
                 )
 
-            # ---------------------------------------
-            # NEW VIDEOS UPLOAD TO S3
-            # ---------------------------------------
+            # =======================================
+            # ADD NEW VIDEOS
+            # =======================================
 
             videos = request.FILES.getlist("videos")
 
@@ -928,17 +1098,12 @@ class PropertyUpdateAPIView(APIView):
 
                 PropertyVideo.objects.create(
                     property=property_obj,
-                    video_s3_key=video_url,
-                    title=request.data.get(
-                        "video_title",
-                        ""
-                    ),
-                    is_featured=False
+                    video_s3_key=video_url
                 )
 
-            # ---------------------------------------
+            # =======================================
             # RESPONSE
-            # ---------------------------------------
+            # =======================================
 
             response_serializer = PropertyDetailSerializer(
                 property_obj,
@@ -966,8 +1131,8 @@ class PropertyUpdateAPIView(APIView):
                     "error": str(e)
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )            
-            
+            )
+
             
 class PropertyDetailAPIView(APIView):
 

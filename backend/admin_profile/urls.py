@@ -1,5 +1,5 @@
 from django.urls import path # type: ignore
-from .views import CreateRoleView, NearbyPlacesView, UploadImageDeleteView, UploadImageListView, UploadImageRestoreView, UploadImageUpdateView, UploadImageView, UserAdminLoginAPIView, OTPResetPasswordView, UserAdminCreateAPIView, RoleDetailView, RoleListView, SendOTPView, SoftDeleteRoleView, UpdateRoleView, UserListView, VerifyOTPView
+from .views import CreateRoleView, CustomerSubscriptionCreateOrderAPIView, CustomerSubscriptionPlanCreateAPIView, CustomerSubscriptionPlanListAPIView, CustomerSubscriptionVerifyPaymentAPIView, NearbyPlacesView, UploadImageDeleteView, UploadImageListView, UploadImageRestoreView, UploadImageUpdateView, UploadImageView, UserAdminLoginAPIView, OTPResetPasswordView, UserAdminCreateAPIView, RoleDetailView, RoleListView, SendOTPView, SoftDeleteRoleView, UpdateRoleView, UserListView, VerifyOTPView
 
 urlpatterns = [
     
@@ -23,4 +23,8 @@ urlpatterns = [
     path('upload_image_restore/', UploadImageRestoreView.as_view()),
     
     path("places/nearby/",NearbyPlacesView.as_view(),name="nearby-places"),
+    path("subscription-plans/create/",CustomerSubscriptionPlanCreateAPIView.as_view(),name="subscription-plan-create"),
+    path("subscription-plans/list/",CustomerSubscriptionPlanListAPIView.as_view(),name="subscription-plan-list"),
+    path("subscription/create-order/",CustomerSubscriptionCreateOrderAPIView.as_view(),name="subscription-create-order"),
+    path("subscription/verify-payment/",CustomerSubscriptionVerifyPaymentAPIView.as_view(),name="subscription-verify-payment"),
 ]

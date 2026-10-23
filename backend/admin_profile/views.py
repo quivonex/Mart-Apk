@@ -500,27 +500,53 @@ class UploadImageRestoreView(APIView):
             
             
             
-            
 import time
 import requests
 
 from django.conf import settings
+from django.utils import timezone
+from django.db import transaction
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+
+from .models import CustomerSubscription
 
 
 class NearbyPlacesView(APIView):
 
     def post(self, request):
 
+        user = request.user
+
+        # =====================================================
+        # 1. LOGIN CHECK
+        # =====================================================
+
+        if not user or not user.is_authenticated:
+            return Response(
+                {
+                    "status": False,
+                    "message": "Authentication required."
+                },
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        # =====================================================
+        # 2. GET REQUEST DATA
+        # =====================================================
+
         lat = request.data.get("lat")
         lng = request.data.get("lng")
         radius = request.data.get("radius", 10000)
         keyword = request.data.get("keyword", "")
 
-        # Validation
-        if not lat or not lng:
+        # =====================================================
+        # 3. VALIDATION
+        # =====================================================
+
+        if lat in [None, ""] or lng in [None, ""]:
             return Response(
                 {
                     "status": False,
@@ -529,7 +555,90 @@ class NearbyPlacesView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
+        try:
+            lat = float(lat)
+            lng = float(lng)
+            radius = int(radius)
+
+        except (ValueError, TypeError):
+            return Response(
+                {
+                    "status": False,
+                    "message": "Invalid latitude, longitude or radius."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # =====================================================
+        # 4. GET ACTIVE SUBSCRIPTION
+        # =====================================================
+
+        now = timezone.now()
+
+        subscription = (
+            CustomerSubscription.objects
+            .select_related("plan")
+            .filter(
+                user=user,
+                is_active=True,
+                start_date__lte=now,
+                end_date__gte=now
+            )
+            .order_by("-created_at")
+            .first()
+        )
+
+        # =====================================================
+        # 5. SUBSCRIPTION CHECK
+        # =====================================================
+
+        if not subscription:
+
+            return Response(
+                {
+                    "status": False,
+                    "message": "No active subscription found.",
+                    "subscription_required": True
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # =====================================================
+        # 6. CHECK REMAINING ENQUIRIES
+        # =====================================================
+
+        remaining = max(
+            subscription.enquiry_limit - subscription.enquiry_used,
+            0
+        )
+
+        if remaining <= 0:
+
+            return Response(
+                {
+                    "status": False,
+                    "message": "Your subscription enquiry limit has been exhausted.",
+                    "subscription_required": True,
+                    "subscription": {
+                        "plan_name": subscription.plan.name,
+                        "enquiry_limit": subscription.enquiry_limit,
+                        "enquiry_used": subscription.enquiry_used,
+                        "remaining_enquiries": 0,
+                        "start_date": subscription.start_date,
+                        "end_date": subscription.end_date
+                    }
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # =====================================================
+        # 7. GOOGLE PLACES API
+        # =====================================================
+
+        url = (
+            "https://maps.googleapis.com/maps/api/place/"
+            "nearbysearch/json"
+        )
 
         params = {
             "location": f"{lat},{lng}",
@@ -541,69 +650,669 @@ class NearbyPlacesView(APIView):
         all_results = []
 
         try:
-            # First Page
-            response = requests.get(url, params=params).json()
 
-            if response.get("status") not in ["OK", "ZERO_RESULTS"]:
+            # =================================================
+            # FIRST PAGE
+            # =================================================
+
+            google_response = requests.get(
+                url,
+                params=params,
+                timeout=15
+            )
+
+            google_response.raise_for_status()
+
+            response_data = google_response.json()
+
+            google_status = response_data.get("status")
+
+            if google_status not in ["OK", "ZERO_RESULTS"]:
+
                 return Response(
                     {
                         "status": False,
-                        "message": response.get("error_message", response.get("status"))
+                        "message": response_data.get(
+                            "error_message",
+                            google_status
+                        )
                     },
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            all_results.extend(response.get("results", []))
+            all_results.extend(
+                response_data.get("results", [])
+            )
 
-            next_page_token = response.get("next_page_token")
+            next_page_token = response_data.get(
+                "next_page_token"
+            )
 
-            # Maximum 2 more pages
-            while next_page_token:
+            # =================================================
+            # NEXT PAGES
+            # =================================================
 
-                # Google requires a short delay before next_page_token becomes valid
+            page_count = 1
+
+            while next_page_token and page_count < 3:
+
+                # Google requires a short delay
                 time.sleep(2)
 
-                response = requests.get(
+                next_response = requests.get(
                     url,
                     params={
                         "pagetoken": next_page_token,
                         "key": settings.GOOGLE_MAPS_API_KEY,
                     },
-                ).json()
+                    timeout=15
+                )
 
-                if response.get("status") == "OK":
-                    all_results.extend(response.get("results", []))
-                    next_page_token = response.get("next_page_token")
+                next_response.raise_for_status()
+
+                next_data = next_response.json()
+
+                if next_data.get("status") == "OK":
+
+                    all_results.extend(
+                        next_data.get("results", [])
+                    )
+
+                    next_page_token = next_data.get(
+                        "next_page_token"
+                    )
+
+                    page_count += 1
+
                 else:
                     break
 
-            # Filter only Rating >= 3.5
+            # =================================================
+            # 8. FILTER RATING >= 3.5
+            # =================================================
+
             filtered_results = [
-                place for place in all_results
-                if place.get("rating", 0) >= 3.5
+                place
+                for place in all_results
+                if float(place.get("rating", 0) or 0) >= 3.5
             ]
 
-            # Sort by Rating (Highest First)
+            # =================================================
+            # 9. SORT BY RATING
+            # =================================================
+
             filtered_results.sort(
-                key=lambda x: x.get("rating", 0),
+                key=lambda x: float(
+                    x.get("rating", 0) or 0
+                ),
                 reverse=True
             )
+
+            # =================================================
+            # 10. INCREASE SUBSCRIPTION USAGE
+            # =================================================
+
+            with transaction.atomic():
+
+                subscription = (
+                    CustomerSubscription.objects
+                    .select_for_update()
+                    .get(
+                        id=subscription.id,
+                        user=user
+                    )
+                )
+
+                current_remaining = max(
+                    subscription.enquiry_limit
+                    - subscription.enquiry_used,
+                    0
+                )
+
+                if current_remaining <= 0:
+
+                    return Response(
+                        {
+                            "status": False,
+                            "message": (
+                                "Your subscription enquiry "
+                                "limit has been exhausted."
+                            ),
+                            "subscription_required": True
+                        },
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+
+                subscription.enquiry_used += 1
+                subscription.save(
+                    update_fields=["enquiry_used"]
+                )
+
+            # =================================================
+            # 11. NEW REMAINING COUNT
+            # =================================================
+
+            remaining_enquiries = max(
+                subscription.enquiry_limit
+                - subscription.enquiry_used,
+                0
+            )
+
+            # =================================================
+            # 12. SUCCESS RESPONSE
+            # =================================================
 
             return Response(
                 {
                     "status": True,
                     "message": "Nearby places fetched successfully.",
+
+                    "subscription": {
+                        "plan_name": subscription.plan.name,
+                        "enquiry_limit": subscription.enquiry_limit,
+                        "enquiry_used": subscription.enquiry_used,
+                        "remaining_enquiries": remaining_enquiries,
+                        "start_date": subscription.start_date,
+                        "end_date": subscription.end_date,
+                    },
+
+                    "search": {
+                        "latitude": lat,
+                        "longitude": lng,
+                        "radius": radius,
+                        "keyword": keyword
+                    },
+
                     "count": len(filtered_results),
-                    "results": filtered_results,
+
+                    "results": filtered_results
                 },
                 status=status.HTTP_200_OK
             )
 
-        except Exception as e:
+        # =====================================================
+        # 13. REQUEST / GOOGLE ERROR
+        # =====================================================
+
+        except requests.exceptions.RequestException as e:
+
             return Response(
                 {
                     "status": False,
-                    "message": str(e),
+                    "message": "Unable to fetch nearby places.",
+                    "error": str(e)
+                },
+                status=status.HTTP_502_BAD_GATEWAY
+            )
+
+        except Exception as e:
+
+            return Response(
+                {
+                    "status": False,
+                    "message": str(e)
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+            
+            
+            
+            
+
+from .models import CustomerSubscriptionPlan
+from .serializers import CustomerSubscriptionPlanSerializer
+
+
+class CustomerSubscriptionPlanCreateAPIView(APIView):
+
+    def post(self, request):
+
+        serializer = CustomerSubscriptionPlanSerializer(
+            data=request.data
+        )
+
+        if serializer.is_valid():
+
+            plan = serializer.save()
+
+            return Response(
+                {
+                    "status": True,
+                    "message": "Subscription plan created successfully.",
+                    "data": CustomerSubscriptionPlanSerializer(
+                        plan
+                    ).data
+                },
+                status=status.HTTP_201_CREATED
+            )
+
+        return Response(
+            {
+                "status": False,
+                "message": "Validation failed.",
+                "errors": serializer.errors
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )            
+        
+        
+class CustomerSubscriptionPlanListAPIView(APIView):
+
+
+
+    def get(self, request):
+
+        plans = CustomerSubscriptionPlan.objects.filter(
+            is_active=True
+        ).order_by("-created_at")
+
+        serializer = CustomerSubscriptionPlanSerializer(
+            plans,
+            many=True
+        )
+
+        return Response(
+            {
+                "status": True,
+                "message": "Subscription plans fetched successfully.",
+                "count": plans.count(),
+                "data": serializer.data
+            },
+            status=status.HTTP_200_OK
+        )        
+        
+        
+        
+
+import razorpay
+
+from decimal import Decimal
+
+from django.conf import settings
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
+from .models import CustomerSubscriptionPlan
+
+
+class CustomerSubscriptionCreateOrderAPIView(APIView):
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        # 1. Get plan ID
+        plan_id = request.data.get("plan_id")
+
+        if not plan_id:
+            return Response(
+                {
+                    "status": False,
+                    "message": "plan_id is required."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 2. Validate plan ID
+        try:
+            plan_id = int(plan_id)
+
+            if plan_id <= 0:
+                raise ValueError
+
+        except (ValueError, TypeError):
+            return Response(
+                {
+                    "status": False,
+                    "message": "Invalid plan_id."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 3. Get active plan
+        try:
+            plan = CustomerSubscriptionPlan.objects.get(
+                id=plan_id,
+                is_active=True
+            )
+
+        except CustomerSubscriptionPlan.DoesNotExist:
+            return Response(
+                {
+                    "status": False,
+                    "message": "Subscription plan not found or inactive."
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # 4. Validate price
+        if plan.price <= Decimal("0.00"):
+            return Response(
+                {
+                    "status": False,
+                    "message": "Plan price must be greater than zero."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 5. Initialize Razorpay
+        try:
+            client = razorpay.Client(
+                auth=(
+                    settings.RAZORPAY_KEY_ID,
+                    settings.RAZORPAY_KEY_SECRET
+                )
+            )
+
+            # Amount must be in paise
+            amount = int(plan.price * 100)
+
+            # 6. Create Razorpay order
+            order_data = {
+                "amount": amount,
+                "currency": "INR",
+                "receipt": f"sub_{request.user.id}_{plan.id}",
+                "notes": {
+                    "user_id": str(request.user.id),
+                    "plan_id": str(plan.id),
+                    "plan_name": plan.name
+                }
+            }
+
+            razorpay_order = client.order.create(
+                data=order_data
+            )
+
+            # 7. Return order details
+            return Response(
+                {
+                    "status": True,
+                    "message": "Razorpay order created successfully.",
+                    "data": {
+                        "order_id": razorpay_order["id"],
+                        "razorpay_key": settings.RAZORPAY_KEY_ID,
+                        "amount": razorpay_order["amount"],
+                        "currency": razorpay_order["currency"],
+                        "plan": {
+                            "id": plan.id,
+                            "name": plan.name,
+                            "price": str(plan.price),
+                            "enquiry_limit": plan.enquiry_limit,
+                            "duration_days": plan.duration_days
+                        }
+                    }
+                },
+                status=status.HTTP_201_CREATED
+            )
+
+        except Exception:
+            return Response(
+                {
+                    "status": False,
+                    "message": "Unable to create Razorpay order."
+                },
+                status=status.HTTP_502_BAD_GATEWAY
+            )
+        
+        
+        
+        
+
+from .models import (
+    CustomerSubscriptionPlan,
+    CustomerSubscription,
+    CustomerSubscriptionPayment,
+)
+
+
+class CustomerSubscriptionVerifyPaymentAPIView(APIView):
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        razorpay_order_id = request.data.get(
+            "razorpay_order_id"
+        )
+        razorpay_payment_id = request.data.get(
+            "razorpay_payment_id"
+        )
+        razorpay_signature = request.data.get(
+            "razorpay_signature"
+        )
+
+        # 1. Validate request
+        if not all([
+            razorpay_order_id,
+            razorpay_payment_id,
+            razorpay_signature
+        ]):
+            return Response(
+                {
+                    "status": False,
+                    "message": (
+                        "razorpay_order_id, "
+                        "razorpay_payment_id and "
+                        "razorpay_signature are required."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 2. Find order belonging to logged-in user
+        try:
+            payment_record = CustomerSubscriptionPayment.objects.select_related(
+                "plan"
+            ).get(
+                razorpay_order_id=razorpay_order_id,
+                user=request.user
+            )
+
+        except CustomerSubscriptionPayment.DoesNotExist:
+            return Response(
+                {
+                    "status": False,
+                    "message": "Payment order not found."
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # 3. Prevent duplicate verification
+        if payment_record.status == "paid":
+            return Response(
+                {
+                    "status": True,
+                    "message": "Payment already verified.",
+                    "subscription_active": True
+                },
+                status=status.HTTP_200_OK
+            )
+
+        # 4. Initialize Razorpay
+        try:
+            client = razorpay.Client(
+                auth=(
+                    settings.RAZORPAY_KEY_ID,
+                    settings.RAZORPAY_KEY_SECRET
+                )
+            )
+
+            # 5. Verify signature
+            client.utility.verify_payment_signature({
+                "razorpay_order_id": razorpay_order_id,
+                "razorpay_payment_id": razorpay_payment_id,
+                "razorpay_signature": razorpay_signature
+            })
+
+            # 6. Fetch payment directly from Razorpay
+            razorpay_payment = client.payment.fetch(
+                razorpay_payment_id
+            )
+
+            # 7. Validate order, amount and currency
+            if razorpay_payment.get("order_id") != razorpay_order_id:
+                return Response(
+                    {
+                        "status": False,
+                        "message": "Payment order mismatch."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if int(razorpay_payment.get("amount", 0)) != payment_record.amount:
+                return Response(
+                    {
+                        "status": False,
+                        "message": "Payment amount mismatch."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if razorpay_payment.get("currency") != payment_record.currency:
+                return Response(
+                    {
+                        "status": False,
+                        "message": "Payment currency mismatch."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # 8. Activate only captured payments
+            if razorpay_payment.get("status") != "captured":
+                return Response(
+                    {
+                        "status": False,
+                        "message": (
+                            "Payment is not captured yet. "
+                            "Subscription is not activated."
+                        ),
+                        "payment_status": razorpay_payment.get(
+                            "status"
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # 9. Create subscription atomically
+            with transaction.atomic():
+
+                payment_record = (
+                    CustomerSubscriptionPayment.objects
+                    .select_for_update()
+                    .get(id=payment_record.id)
+                )
+
+                # Another request may have completed verification
+                if payment_record.status == "paid":
+                    return Response(
+                        {
+                            "status": True,
+                            "message": "Payment already verified.",
+                            "subscription_active": True
+                        },
+                        status=status.HTTP_200_OK
+                    )
+
+                plan = payment_record.plan
+
+                if not plan.is_active:
+                    return Response(
+                        {
+                            "status": False,
+                            "message": "Subscription plan is inactive."
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                now = timezone.now()
+
+                # Deactivate previous subscriptions
+                CustomerSubscription.objects.filter(
+                    user=request.user,
+                    is_active=True
+                ).update(is_active=False)
+
+                # Create new subscription
+                subscription = CustomerSubscription.objects.create(
+                    user=request.user,
+                    plan=plan,
+                    start_date=now,
+                    end_date=now + timedelta(
+                        days=plan.duration_days
+                    ),
+                    enquiry_limit=plan.enquiry_limit,
+                    enquiry_used=0,
+                    is_active=True
+                )
+
+                # Mark payment as paid
+                payment_record.razorpay_payment_id = (
+                    razorpay_payment_id
+                )
+                payment_record.status = "paid"
+                payment_record.save(
+                    update_fields=[
+                        "razorpay_payment_id",
+                        "status",
+                        "updated_at"
+                    ]
+                )
+
+            return Response(
+                {
+                    "status": True,
+                    "message": (
+                        "Payment verified and subscription "
+                        "activated successfully."
+                    ),
+                    "payment": {
+                        "order_id": razorpay_order_id,
+                        "payment_id": razorpay_payment_id,
+                        "status": "paid",
+                        "amount": payment_record.amount,
+                        "currency": payment_record.currency
+                    },
+                    "subscription": {
+                        "id": subscription.id,
+                        "plan_id": plan.id,
+                        "plan_name": plan.name,
+                        "enquiry_limit": subscription.enquiry_limit,
+                        "enquiry_used": subscription.enquiry_used,
+                        "remaining_enquiries": (
+                            subscription.enquiry_limit
+                        ),
+                        "start_date": subscription.start_date,
+                        "end_date": subscription.end_date,
+                        "is_active": subscription.is_active
+                    }
+                },
+                status=status.HTTP_200_OK
+            )
+
+        except razorpay.errors.SignatureVerificationError:
+            return Response(
+                {
+                    "status": False,
+                    "message": "Invalid Razorpay payment signature."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        except Exception:
+            return Response(
+                {
+                    "status": False,
+                    "message": (
+                        "Unable to verify payment. "
+                        "Please try again."
+                    )
+                },
+                status=status.HTTP_502_BAD_GATEWAY
+            )
+        

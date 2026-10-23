@@ -1,3 +1,4 @@
+import re
 from django.db import transaction
 from django.utils import timezone
 from django.db.models import Prefetch
@@ -10,7 +11,6 @@ from .models import BazaarSettings
 from .models import BazaarEnquiry
 from .whatsapp import send_bazaar_enquiry_message
 from django.db.models import Max
-from django.db import transaction
 from rest_framework.permissions import IsAuthenticated
 from .s3_upload import upload_bazaar_listing_image,get_bazaar_image_url, delete_bazaar_listing_image
 
@@ -20,6 +20,15 @@ from .models import (
     BazaarAttribute,
     BazaarListing,
     BazaarListingImage,
+
+    BazaarCommunicationPlan,
+    BazaarCommunicationSettings,
+    BazaarCommunicationSubscription,
+
+    BazaarChat,
+    BazaarChatMessage,
+    BazaarListing,
+    BazaarCommunicationSettings,
 )
 
 from .serializers import (
@@ -34,7 +43,16 @@ from .serializers import (
     BazaarListingCreateSerializer,
     BazaarListingListSerializer,
     BazaarAttributeSerializer,
-    BazaarListingUpdateSerializer
+    BazaarListingUpdateSerializer,
+
+    BazaarCommunicationPlanSerializer,
+    BazaarCommunicationSettingsSerializer,
+    BazaarCommunicationSubscriptionSerializer,
+
+    BazaarChatCreateSerializer,
+    BazaarChatSerializer,
+    BazaarChatMessageCreateSerializer,
+    BazaarChatMessageSerializer,
 )
 
 from .services import (
@@ -44,12 +62,42 @@ from .services import (
 )
 
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 
 from .models import BazaarCategory
 from .serializers import BazaarCategoryCreateSerializer
+
+
+from django.shortcuts import get_object_or_404
+
+from .bazaar_comm_services.communication_access import (
+    BazaarCommunicationAccessService,
+)
+
+from django.contrib.auth import get_user_model
+from django.db.models import Q
+
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from payment.models import BazaarCommunicationPayment
+
+from .bazaar_comm_services.communication_access import (
+    BazaarCommunicationAccessService,
+)
+
+User = get_user_model()
+
+
+
+
+
+
+
 
 
 class BazaarCategoryCreateAPIView(APIView):
@@ -2331,16 +2379,17 @@ class BazaarAttributeListAPIView(APIView):
             },
             status=status.HTTP_200_OK
         )             
-        
-        
+
+      
 class BazaarEnquiryCreateAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def post(self, request):
 
         # ==================================================
-        # 1. Request Data
+        # 1. REQUEST DATA
         # ==================================================
 
         listing_id = request.data.get("listing_id")
@@ -2348,79 +2397,127 @@ class BazaarEnquiryCreateAPIView(APIView):
         phone_number = request.data.get("phone_number")
 
         # ==================================================
-        # 2. Validation
+        # 2. VALIDATION
         # ==================================================
 
         if not listing_id:
             return Response(
                 {
                     "success": False,
-                    "message": "listing_id is required"
+                    "message": "listing_id is required",
                 },
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         if not message or not str(message).strip():
             return Response(
                 {
                     "success": False,
-                    "message": "message is required"
+                    "message": "message is required",
                 },
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
+        message = str(message).strip()
+
         # ==================================================
-        # 3. Get Active Listing
+        # Mobile Number Validation
+        # ==================================================
+
+        if phone_number:
+
+            phone_number = str(phone_number).strip()
+
+            # Indian mobile number:
+            # Exactly 10 digits
+            # Must start with 6, 7, 8 or 9
+            if not re.fullmatch(r"[6-9]\d{9}", phone_number):
+
+                return Response(
+                    {
+                        "success": False,
+                        "message": "Please enter a valid 10-digit mobile number."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )  
+
+        # ==================================================
+        # 3. GET ACTIVE LISTING
         # ==================================================
 
         try:
-
             listing = (
                 BazaarListing.objects
                 .select_related("user")
                 .get(
                     id=listing_id,
-                    status="active"
+                    status="active",
                 )
             )
 
         except BazaarListing.DoesNotExist:
-
             return Response(
                 {
                     "success": False,
-                    "message": "Listing not found"
+                    "message": "Listing not found",
                 },
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         # ==================================================
-        # 4. Prevent Own Listing Enquiry
+        # 4. PREVENT ENQUIRY ON OWN LISTING
         # ==================================================
 
         if listing.user_id == request.user.id:
-
             return Response(
                 {
                     "success": False,
-                    "message": "You cannot send enquiry on your own listing"
+                    "message": (
+                        "You cannot send enquiry on your own listing"
+                    ),
                 },
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         # ==================================================
-        # 5. Create Enquiry
+        # 5. CHECK AND CONSUME ENQUIRY ALLOWANCE
+        # ==================================================
+
+        access_result = (
+            BazaarCommunicationAccessService.consume(
+                user=request.user,
+                feature="enquiry",
+            )
+        )
+
+        if not access_result.get("allowed", False):
+            return Response(
+                {
+                    "success": False,
+                    "message": access_result.get(
+                        "message",
+                        "Your enquiry limit has been reached. "
+                        "Please purchase a communication plan "
+                        "to continue.",
+                    ),
+                    "usage": access_result,
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # ==================================================
+        # 6. CREATE ENQUIRY
         # ==================================================
 
         enquiry = BazaarEnquiry.objects.create(
             listing=listing,
             user=request.user,
-            message=str(message).strip(),
-            phone_number=phone_number
+            message=message,
+            phone_number=phone_number,
         )
 
         # ==================================================
-        # 6. Listing Owner
+        # 7. LISTING OWNER DETAILS
         # ==================================================
 
         owner = listing.user
@@ -2434,7 +2531,7 @@ class BazaarEnquiryCreateAPIView(APIView):
         owner_phone = owner.phone_number
 
         # ==================================================
-        # 7. Enquiry User Details
+        # 8. ENQUIRY USER DETAILS
         # ==================================================
 
         enquiry_user_name = (
@@ -2450,51 +2547,36 @@ class BazaarEnquiryCreateAPIView(APIView):
         )
 
         # ==================================================
-        # 8. Send WhatsApp to Listing Owner
+        # 9. SEND WHATSAPP NOTIFICATION
         # ==================================================
 
         whatsapp_result = {
             "success": False,
             "status_code": None,
             "response": None,
-            "error": "Owner phone number not available"
+            "error": "Owner phone number not available",
         }
 
         if owner_phone:
-
             whatsapp_result = send_bazaar_enquiry_message(
-
                 owner_phone=owner_phone,
-
                 owner_name=owner_name,
-
                 listing_title=listing.title,
-
                 listing_price=listing.price,
-
                 enquiry_user_name=enquiry_user_name,
-
                 enquiry_user_phone=enquiry_user_phone,
-
-                enquiry_message=enquiry.message
+                enquiry_message=enquiry.message,
             )
 
         # ==================================================
-        # 9. Response
+        # 10. SUCCESS RESPONSE
         # ==================================================
 
         return Response(
             {
                 "success": True,
-
                 "message": "Enquiry submitted successfully",
-
                 "data": {
-
-                    # --------------------------------------
-                    # Enquiry
-                    # --------------------------------------
-
                     "enquiry": {
                         "id": enquiry.id,
                         "status": enquiry.status,
@@ -2502,30 +2584,16 @@ class BazaarEnquiryCreateAPIView(APIView):
                         "phone_number": enquiry.phone_number,
                         "created_at": enquiry.created_at,
                     },
-
-                    # --------------------------------------
-                    # Listing
-                    # --------------------------------------
-
                     "listing": {
                         "id": listing.id,
                         "title": listing.title,
                         "price": str(listing.price),
                     },
-
-                    # --------------------------------------
-                    # Owner
-                    # --------------------------------------
-
                     "owner": {
                         "id": owner.id,
                         "name": owner_name,
                     },
-
-                    # --------------------------------------
-                    # WhatsApp
-                    # --------------------------------------
-
+                    "usage": access_result,
                     "whatsapp": {
                         "sent": whatsapp_result.get("success"),
                         "status_code": whatsapp_result.get(
@@ -2537,12 +2605,11 @@ class BazaarEnquiryCreateAPIView(APIView):
                         "error": whatsapp_result.get(
                             "error"
                         ),
-                    }
-                }
+                    },
+                },
             },
-            status=status.HTTP_201_CREATED
+            status=status.HTTP_201_CREATED,
         )
-
 
                     
         
@@ -2745,4 +2812,787 @@ class BazaarSettingsUpdateAPIView(APIView):
                     "error": str(e)
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )            
+            )                       
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##############################################################################
+##############################################################################
+#            OLX ENQUIRY AND QNX CHAT SUBCRIPTION PLAN VIEWS
+##############################################################################
+##############################################################################
+
+# ============================================================
+# BAZAAR COMMUNICATION SUBSCRIPTION APIs
+# Append this section to the existing olx/views.py.
+# Do not delete your existing views.
+# ============================================================
+
+# ============================================================
+# SHARED SETTINGS HELPER
+# ============================================================
+
+def get_communication_settings():
+    """
+    Return the first active global settings record.
+    Create defaults if none exist.
+    """
+    settings_obj = (
+        BazaarCommunicationSettings.objects
+        .filter(is_active=True)
+        .order_by("-updated_at", "-id")
+        .first()
+    )
+    if settings_obj is None:
+        settings_obj = BazaarCommunicationSettings.objects.create(
+            is_active=True
+        )
+    return settings_obj
+
+# ============================================================
+# 1. CREATE COMMUNICATION PLAN
+# POST /api/olx/bazaar-communication-plans/create/
+# ============================================================
+
+class BazaarCommunicationPlanCreateAPIView(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = BazaarCommunicationPlanSerializer(
+            data=request.data
+        )
+        if not serializer.is_valid():
+            return Response(
+                {
+                    "success": False,
+                    "message": "Communication plan validation failed.",
+                    "errors": serializer.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        plan = serializer.save()
+        return Response(
+            {
+                "success": True,
+                "message": "Communication plan created successfully.",
+                "data": BazaarCommunicationPlanSerializer(plan).data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+# ============================================================
+# 2. LIST COMMUNICATION PLANS
+# POST /api/olx/bazaar-communication-plans/list/
+# ============================================================
+
+class BazaarCommunicationPlanListAPIView(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # Pass {"include_inactive": true} to retrieve inactive plans.
+        include_inactive = (
+            str(request.data.get("include_inactive", "false")).lower()
+            in {"true", "1", "yes"}
+        )
+        plans = BazaarCommunicationPlan.objects.all()
+        if not include_inactive:
+            plans = plans.filter(is_active=True)
+        plans = plans.order_by("price", "name")
+        serializer = BazaarCommunicationPlanSerializer(
+            plans,
+            many=True,
+        )
+        return Response(
+            {
+                "success": True,
+                "count": plans.count(),
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+# ============================================================
+# 3. UPDATE COMMUNICATION PLAN
+# POST /api/olx/bazaar-communication-plans/update/
+#
+# Request example:
+# {
+#     "plan_id": 1,
+#     "price": "199.00",
+#     "duration_days": 30
+# }
+# ============================================================
+
+class BazaarCommunicationPlanUpdateAPIView(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        plan_id = request.data.get("plan_id")
+        if not plan_id:
+            return Response(
+                {
+                    "success": False,
+                    "message": "plan_id is required.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        plan = get_object_or_404(
+            BazaarCommunicationPlan,
+            pk=plan_id,
+        )
+        # Do not pass plan_id into the model serializer.
+        update_data = request.data.copy()
+        update_data.pop("plan_id", None)
+        serializer = BazaarCommunicationPlanSerializer(
+            plan,
+            data=update_data,
+            partial=True,
+        )
+        if not serializer.is_valid():
+            return Response(
+                {
+                    "success": False,
+                    "message": "Communication plan update failed.",
+                    "errors": serializer.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        plan = serializer.save()
+        return Response(
+            {
+                "success": True,
+                "message": "Communication plan updated successfully.",
+                "data": BazaarCommunicationPlanSerializer(plan).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+# ============================================================
+# 4. SOFT-DEACTIVATE COMMUNICATION PLAN
+# POST /api/olx/bazaar-communication-plans/delete/
+#
+# Request:
+# {"plan_id": 1}
+# ============================================================
+
+class BazaarCommunicationPlanDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        plan_id = request.data.get("plan_id")
+        if not plan_id:
+            return Response(
+                {
+                    "success": False,
+                    "message": "plan_id is required.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        plan = get_object_or_404(
+            BazaarCommunicationPlan,
+            pk=plan_id,
+        )
+        if not plan.is_active:
+            return Response(
+                {
+                    "success": True,
+                    "message": "Communication plan is already inactive.",
+                },
+                status=status.HTTP_200_OK,
+            )
+        plan.is_active = False
+        plan.save(update_fields=["is_active", "updated_at"])
+        return Response(
+            {
+                "success": True,
+                "message": "Communication plan deactivated successfully.",
+                "plan_id": plan.id,
+                "is_active": plan.is_active,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+# ============================================================
+# 5. GET GLOBAL COMMUNICATION SETTINGS
+# POST /api/olx/bazaar-communication-settings/detail/
+# ============================================================
+
+class BazaarCommunicationSettingsDetailAPIView(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        settings_obj = get_communication_settings()
+        serializer = BazaarCommunicationSettingsSerializer(
+            settings_obj
+        )
+        return Response(
+            {
+                "success": True,
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+# ============================================================
+# 6. UPDATE GLOBAL COMMUNICATION SETTINGS
+# POST /api/olx/bazaar-communication-settings/update/
+# ============================================================
+
+class BazaarCommunicationSettingsUpdateAPIView(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        settings_obj = get_communication_settings()
+        serializer = BazaarCommunicationSettingsSerializer(
+            settings_obj,
+            data=request.data,
+            partial=True,
+        )
+        if not serializer.is_valid():
+            return Response(
+                {
+                    "success": False,
+                    "message": "Settings validation failed.",
+                    "errors": serializer.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        settings_obj = serializer.save()
+        return Response(
+            {
+                "success": True,
+                "message": "Communication settings updated successfully.",
+                "data": BazaarCommunicationSettingsSerializer(
+                    settings_obj
+                ).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+# ============================================================
+# 7. LIST MY COMMUNICATION SUBSCRIPTIONS
+# POST /api/olx/bazaar-communication-subscriptions/my/
+# ============================================================
+
+class BazaarCommunicationMySubscriptionsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        paid_subscription_ids = (
+            BazaarCommunicationPayment.objects
+            .filter(
+                user=request.user,
+                status="paid",
+                subscription__isnull=False,
+            )
+            .values_list("subscription_id", flat=True)
+        )
+
+        subscriptions = (
+            BazaarCommunicationSubscription.objects
+            .filter(
+                user=request.user,
+                is_active=True,
+                id__in=paid_subscription_ids,
+            )
+            .select_related("plan")
+            .order_by("-created_at")
+        )
+        serializer = BazaarCommunicationSubscriptionSerializer(
+            subscriptions,
+            many=True,
+        )
+        return Response(
+            {
+                "success": True,
+                "count": subscriptions.count(),
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+# ============================================================
+# 8. MY SUBSCRIPTION DETAIL
+# POST /api/olx/bazaar-communication-subscriptions/detail/
+#
+# Request:
+# {"subscription_id": 1}
+# ============================================================
+
+class BazaarCommunicationSubscriptionDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        subscription_id = request.data.get("subscription_id")
+        if not subscription_id:
+            return Response(
+                {
+                    "success": False,
+                    "message": "subscription_id is required.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        subscription = get_object_or_404(
+            BazaarCommunicationSubscription.objects.select_related(
+                "plan"
+            ),
+            pk=subscription_id,
+            user=request.user,
+            is_active=True,
+        )
+        serializer = BazaarCommunicationSubscriptionSerializer(
+            subscription
+        )
+        return Response(
+            {
+                "success": True,
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+# ============================================================
+# 9. CHAT USAGE STATUS
+# POST /api/olx/bazaar-communication-usage/chat/
+# ============================================================
+
+class BazaarCommunicationChatUsageAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        result = BazaarCommunicationAccessService.get_status(
+            user=request.user,
+            feature="chat",
+        )
+        return Response(
+            {
+                "success": True,
+                "data": result,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+# ============================================================
+# 10. ENQUIRY USAGE STATUS
+# POST /api/olx/bazaar-communication-usage/enquiry/
+# ============================================================
+
+class BazaarCommunicationEnquiryUsageAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        result = BazaarCommunicationAccessService.get_status(
+            user=request.user,
+            feature="enquiry",
+        )
+        return Response(
+            {
+                "success": True,
+                "data": result,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+
+
+
+
+##############################################################################
+##############################################################################
+#                               QNX CHAT VIEWS
+##############################################################################
+##############################################################################
+
+# ---------------------------------------------------------
+# Contact information validation
+# ---------------------------------------------------------
+
+EMAIL_PATTERN = re.compile(
+    r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b",
+    re.IGNORECASE,
+)
+PHONE_PATTERN = re.compile(
+    r"(?<!\w)(?:\+?\d[\d\s().-]{7,}\d)(?!\w)"
+)
+URL_PATTERN = re.compile(
+    r"(?:https?://|www\.)\S+|"
+    r"\b[a-zA-Z0-9-]+\.(?:com|in|net|org|io|co|me|app|dev|info|xyz)"
+    r"(?:/\S*)?",
+    re.IGNORECASE,
+)
+SOCIAL_PATTERN = re.compile(
+    r"@\w{2,}|"
+    r"\b(?:instagram|insta|telegram|whatsapp|facebook|snapchat|"
+    r"twitter|tiktok|discord)\b"
+    r".{0,30}\b(?:id|handle|username|me|dm|message|contact|follow)\b|"
+    r"\b(?:dm|message|contact|follow)\b"
+    r".{0,30}\b(?:instagram|insta|telegram|whatsapp|facebook|snapchat|"
+    r"twitter|tiktok|discord)\b",
+    re.IGNORECASE,
+)
+
+def get_bazaar_communication_settings():
+    return BazaarCommunicationSettings.objects.filter(
+        is_active=True
+    ).first()
+
+def detect_contact_information(message, settings_obj):
+    """
+    Returns an error message when a configured contact restriction
+    is triggered. Returns None when no configured rule is triggered.
+    """
+    if not settings_obj:
+        return None
+
+    email_found = bool(EMAIL_PATTERN.search(message))
+    phone_found = bool(PHONE_PATTERN.search(message))
+    url_found = bool(URL_PATTERN.search(message))
+    social_found = bool(SOCIAL_PATTERN.search(message))
+
+    # The umbrella setting blocks any detected contact information.
+    if settings_obj.block_contact_info:
+        if email_found or phone_found or url_found or social_found:
+            return "Messages containing contact information are not allowed."
+
+    if settings_obj.block_phone_numbers and phone_found:
+        return "Phone numbers are not allowed in messages."
+
+    if settings_obj.block_emails and email_found:
+        return "Email addresses are not allowed in messages."
+
+    if settings_obj.block_external_links and url_found:
+        return "External links are not allowed in messages."
+
+    if settings_obj.block_social_handles and social_found:
+        return "Social media contact details are not allowed in messages."
+
+    return None
+
+# ---------------------------------------------------------
+# Pagination
+# ---------------------------------------------------------
+
+class BazaarChatMessagePagination(PageNumberPagination):
+    page_size = 30
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+# ---------------------------------------------------------
+# Create or retrieve a conversation
+# POST /chats/create/
+# ---------------------------------------------------------
+
+
+class BazaarChatCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request):
+        serializer = BazaarChatCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        other_user_id = serializer.validated_data["other_user_id"]
+        current_user = request.user
+
+        # Prevent chatting with yourself.
+        if current_user.pk == other_user_id:
+            return Response(
+                {"detail": "You cannot create a chat with yourself."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validate the other participant.
+        other_user = User.objects.filter(pk=other_user_id).first()
+
+        if not other_user:
+            return Response(
+                {"detail": "The requested user does not exist."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Lock both users in a consistent order to reduce
+        # duplicate creation during concurrent requests.
+        locked_users = list(
+            User.objects.select_for_update()
+            .filter(pk__in=[current_user.pk, other_user.pk])
+            .order_by("pk")
+        )
+
+        users_by_id = {user.pk: user for user in locked_users}
+
+        current_user = users_by_id[current_user.pk]
+        other_user = users_by_id[other_user.pk]
+
+        # Always store the pair in canonical numeric order.
+        user_one, user_two = sorted(
+            [current_user, other_user],
+            key=lambda user: user.pk,
+        )
+
+        # One conversation per user pair.
+        # Listing does not participate in chat identity.
+        chat = (
+            BazaarChat.objects.filter(
+                user_one=user_one,
+                user_two=user_two,
+                is_active=True,
+            )
+            .first()
+        )
+
+        created = False
+
+        if chat is None:
+            chat = BazaarChat.objects.create(
+                user_one=user_one,
+                user_two=user_two,
+                listing=None,
+            )
+            created = True
+
+        response_serializer = BazaarChatSerializer(
+            chat,
+            context={"request": request},
+        )
+
+        return Response(
+            {
+                "created": created,
+                "chat": response_serializer.data,
+            },
+            status=(
+                status.HTTP_201_CREATED
+                if created
+                else status.HTTP_200_OK
+            ),
+        )
+
+
+# ---------------------------------------------------------
+# List current user's conversations
+# GET /chats/
+# ---------------------------------------------------------
+
+class BazaarChatListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        chats = (
+            BazaarChat.objects
+            .filter(
+                Q(user_one=request.user) |
+                Q(user_two=request.user),
+                is_active=True,
+            )
+            .select_related("user_one", "user_two", "listing")
+            .order_by("-updated_at")
+        )
+        serializer = BazaarChatSerializer(
+            chats,
+            many=True,
+            context={"request": request},
+        )
+        return Response(
+            {"results": serializer.data},
+            status=status.HTTP_200_OK,
+        )
+
+# ---------------------------------------------------------
+# Shared participant authorization
+# ---------------------------------------------------------
+
+class BazaarChatParticipantAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_chat(self, request, chat_id):
+        return BazaarChat.objects.filter(
+            pk=chat_id,
+            is_active=True,
+        ).filter(
+            Q(user_one=request.user) |
+            Q(user_two=request.user)
+        ).first()
+
+# ---------------------------------------------------------
+# Retrieve messages in a conversation
+# GET /chats/<chat_id>/messages/
+# ---------------------------------------------------------
+
+class BazaarChatMessageListAPIView(BazaarChatParticipantAPIView):
+    pagination_class = BazaarChatMessagePagination
+
+    def get(self, request, chat_id):
+        chat = self.get_chat(request, chat_id)
+
+        if not chat:
+            return Response(
+                {"detail": "Chat not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        messages = (
+            BazaarChatMessage.objects
+            .filter(
+                chat=chat,
+                is_active=True,
+                moderation_status=BazaarChatMessage.ModerationStatus.ALLOWED,
+            )
+            .select_related("sender")
+            .order_by("created_at", "id")
+        )
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(
+            messages,
+            request,
+            view=self,
+        )
+        serializer = BazaarChatMessageSerializer(
+            page,
+            many=True,
+        )
+        return paginator.get_paginated_response(serializer.data)
+
+# ---------------------------------------------------------
+# Send a message
+# POST /chats/<chat_id>/messages/send/
+# ---------------------------------------------------------
+
+class BazaarChatMessageSendAPIView(BazaarChatParticipantAPIView):
+
+    @transaction.atomic
+    def post(self, request, chat_id):
+        chat = (
+            BazaarChat.objects
+            .select_for_update()
+            .filter(
+                pk=chat_id,
+                is_active=True,
+            )
+            .filter(
+                Q(user_one=request.user) |
+                Q(user_two=request.user)
+            )
+            .first()
+        )
+
+        if not chat:
+            return Response(
+                {"detail": "Chat not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = BazaarChatMessageCreateSerializer(
+            data=request.data,
+        )
+        serializer.is_valid(raise_exception=True)
+        message_text = serializer.validated_data["message"]
+
+        # Check contact restrictions before consuming allowance.
+        settings_obj = get_bazaar_communication_settings()
+        contact_error = detect_contact_information(
+            message_text,
+            settings_obj,
+        )
+        if contact_error:
+            return Response(
+                {
+                    "detail": contact_error,
+                    "code": "contact_information_not_allowed",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Consume one outgoing-message allowance.
+        access_result = BazaarCommunicationAccessService.consume(
+            user=request.user,
+            feature="chat",
+        )
+        if not access_result.get("allowed", False):
+            return Response(
+                {
+                    "detail": access_result.get(
+                        "message",
+                        "Your messaging allowance has been exhausted.",
+                    ),
+                    "code": "chat_limit_reached",
+                    "access": access_result,
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        message = BazaarChatMessage.objects.create(
+            chat=chat,
+            sender=request.user,
+            message=message_text,
+            moderation_status=(
+                BazaarChatMessage.ModerationStatus.ALLOWED
+            ),
+        )
+        chat.updated_at = timezone.now()
+        chat.save(update_fields=["updated_at"])
+
+        return Response(
+            {
+                "detail": "Message sent successfully.",
+                "message": BazaarChatMessageSerializer(message).data,
+                "access": access_result,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+# ---------------------------------------------------------
+# Mark incoming messages as read
+# POST /chats/<chat_id>/read/
+# ---------------------------------------------------------
+
+class BazaarChatMarkReadAPIView(BazaarChatParticipantAPIView):
+
+    @transaction.atomic
+    def post(self, request, chat_id):
+        chat = self.get_chat(request, chat_id)
+
+        if not chat:
+            return Response(
+                {"detail": "Chat not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        updated_count = (
+            BazaarChatMessage.objects
+            .filter(
+                chat=chat,
+                is_active=True,
+                is_read=False,
+            )
+            .exclude(sender=request.user)
+            .update(
+                is_read=True,
+                read_at=timezone.now(),
+            )
+        )
+
+        return Response(
+            {
+                "detail": "Messages marked as read.",
+                "updated_count": updated_count,
+            },
+            status=status.HTTP_200_OK,
+        )

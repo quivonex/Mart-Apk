@@ -37,3 +37,50 @@ class RoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = admin_Role
         fields = "__all__"
+        
+        
+        
+from rest_framework import serializers
+from .models import CustomerSubscriptionPlan
+
+
+class CustomerSubscriptionPlanSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = CustomerSubscriptionPlan
+        fields = [
+            "id",
+            "name",
+            "price",
+            "enquiry_limit",
+            "duration_days",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "created_at",
+            "updated_at",
+        ]
+
+    def validate_name(self, value):
+        if not value.strip():
+            raise serializers.ValidationError(
+                "Plan name is required."
+            )
+        return value
+
+    def validate_price(self, value):
+        if value < 0:
+            raise serializers.ValidationError(
+                "Price cannot be negative."
+            )
+        return value
+
+    def validate_duration_days(self, value):
+        if value < 1:
+            raise serializers.ValidationError(
+                "Duration must be at least 1 day."
+            )
+        return value        

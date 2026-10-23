@@ -2261,3 +2261,268 @@ class CustomerMySubscriptionsAPIView(APIView):
             },
             status=status.HTTP_200_OK
         )        
+        
+        
+from django.shortcuts import get_object_or_404
+
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from olx.models import BazaarCommunicationPlan
+
+from .models import BazaarCommunicationPayment
+from .serializers import (
+    BazaarCommunicationCreateOrderSerializer,
+    BazaarCommunicationVerifyPaymentSerializer,
+    BazaarCommunicationPaymentSerializer,
+)
+from .services.bazaar_communication_payment import (
+    BazaarCommunicationPaymentService,
+)
+
+# ============================================================
+# 1. CREATE RAZORPAY ORDER
+# POST /api/payments/bazaar-communication/create-order/
+# ============================================================
+
+class BazaarCommunicationCreateOrderAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = BazaarCommunicationCreateOrderSerializer(
+            data=request.data
+        )
+        if not serializer.is_valid():
+            return Response(
+                {
+                    "success": False,
+                    "message": "Invalid payment order request.",
+                    "errors": serializer.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        plan = serializer.context["plan"]
+
+        try:
+            result = BazaarCommunicationPaymentService.create_order(
+                user=request.user,
+                plan=plan,
+            )
+            payment = result["payment"]
+            subscription = result["subscription"]
+            razorpay_order = result["razorpay_order"]
+
+            return Response(
+                {
+                    "success": True,
+                    "message": "Razorpay order created successfully.",
+                    "data": {
+                        "payment_id": payment.id,
+                        "subscription_id": subscription.id,
+                        "plan_id": plan.id,
+                        "plan_name": plan.name,
+                        "razorpay_key_id": result["key_id"],
+                        "razorpay_order_id": razorpay_order["id"],
+                        "amount": str(payment.amount),
+                        "amount_in_paise": razorpay_order["amount"],
+                        "currency": payment.currency,
+                        "payment_status": payment.status,
+                    },
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Exception as exc:
+            # DRF validation exceptions should retain their proper
+            # HTTP status and error structure.
+            from rest_framework.exceptions import APIException
+
+            if isinstance(exc, APIException):
+                raise
+
+            # Log the detailed exception server-side in production.
+            return Response(
+                {
+                    "success": False,
+                    "message": "Unable to create the payment order.",
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+# ============================================================
+# 2. VERIFY RAZORPAY PAYMENT
+# POST /api/payments/bazaar-communication/verify-payment/
+#
+# Request:
+# {
+#     "razorpay_order_id": "order_xxxxx",
+#     "razorpay_payment_id": "pay_xxxxx",
+#     "razorpay_signature": "xxxxx"
+# }
+# ============================================================
+
+class BazaarCommunicationVerifyPaymentAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = BazaarCommunicationVerifyPaymentSerializer(
+            data=request.data
+        )
+        if not serializer.is_valid():
+            return Response(
+                {
+                    "success": False,
+                    "message": "Invalid payment verification request.",
+                    "errors": serializer.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        validated_data = serializer.validated_data
+
+        try:
+            result = (
+                BazaarCommunicationPaymentService.verify_payment(
+                    user=request.user,
+                    razorpay_order_id=validated_data[
+                        "razorpay_order_id"
+                    ],
+                    razorpay_payment_id=validated_data[
+                        "razorpay_payment_id"
+                    ],
+                    razorpay_signature=validated_data[
+                        "razorpay_signature"
+                    ],
+                )
+            )
+            payment = result["payment"]
+            subscription = result["subscription"]
+
+            return Response(
+                {
+                    "success": True,
+                    "message": (
+                        "Payment was already verified successfully."
+                        if result.get("already_verified")
+                        else "Payment verified and subscription activated."
+                    ),
+                    "data": {
+                        "payment_id": payment.id,
+                        "razorpay_order_id": payment.razorpay_order_id,
+                        "razorpay_payment_id": payment.razorpay_payment_id,
+                        "payment_status": payment.status,
+                        "amount": str(payment.amount),
+                        "currency": payment.currency,
+                        "paid_at": payment.paid_at,
+                        "subscription": {
+                            "id": subscription.id,
+                            "plan_id": subscription.plan_id,
+                            "plan_name": subscription.plan.name,
+                            "status": subscription.status,
+                            "starts_at": subscription.starts_at,
+                            "expires_at": subscription.expires_at,
+                            "duration_days": (
+                                subscription.duration_days_snapshot
+                            ),
+                        },
+                    },
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as exc:
+            from rest_framework.exceptions import APIException
+
+            if isinstance(exc, APIException):
+                raise
+
+            # Do not expose internal Razorpay errors or credentials.
+            return Response(
+                {
+                    "success": False,
+                    "message": "Unable to verify the payment.",
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+# ============================================================
+# 3. PAYMENT HISTORY
+# POST /api/payments/bazaar-communication/history/
+#
+# Optional request:
+# {
+#     "status": "paid",
+#     "page": 1,
+#     "page_size": 20
+# }
+# ============================================================
+
+class BazaarCommunicationPaymentHistoryAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        payments = (
+            BazaarCommunicationPayment.objects
+            .filter(user=request.user)
+            .select_related("plan", "subscription")
+            .order_by("-created_at")
+        )
+        payment_status = request.data.get("status")
+
+        if payment_status:
+            valid_statuses = {
+                choice[0]
+                for choice in BazaarCommunicationPayment.Status.choices
+            }
+            if payment_status not in valid_statuses:
+                return Response(
+                    {
+                        "success": False,
+                        "message": "Invalid payment status.",
+                        "valid_statuses": sorted(valid_statuses),
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            payments = payments.filter(status=payment_status)
+
+        try:
+            page = int(request.data.get("page", 1))
+            page_size = int(request.data.get("page_size", 20))
+            if page < 1 or page_size < 1 or page_size > 100:
+                raise ValueError
+        except (ValueError, TypeError):
+            return Response(
+                {
+                    "success": False,
+                    "message": (
+                        "page must be positive and page_size "
+                        "must be between 1 and 100."
+                    ),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        total_count = payments.count()
+        start = (page - 1) * page_size
+        end = start + page_size
+        serializer = BazaarCommunicationPaymentSerializer(
+            payments[start:end],
+            many=True,
+        )
+
+        return Response(
+            {
+                "success": True,
+                "count": total_count,
+                "page": page,
+                "page_size": page_size,
+                "total_pages": (
+                    (total_count + page_size - 1) // page_size
+                ),
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )        

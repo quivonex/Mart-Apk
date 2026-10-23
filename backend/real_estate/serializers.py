@@ -1,3 +1,4 @@
+from django.core.serializers import python
 from rest_framework import serializers
 
 from real_estate.utils import check_property_subscription
@@ -1471,3 +1472,233 @@ class ApprovedPropertyListSerializer(serializers.ModelSerializer):
     def get_subscription_required(self, obj):
 
         return check_property_subscription(obj)
+    
+    
+    
+    
+    
+
+class PropertyUpdateSerializer(serializers.ModelSerializer):
+
+    amenities = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Amenity.objects.all(),
+        required=False
+    )
+
+    flat_types = FlatTypeCreateSerializer(
+        many=True,
+        required=False
+    )
+
+    floors = FloorInfoCreateSerializer(
+        many=True,
+        required=False
+    )
+
+    pricing_slabs = PricingSlabCreateSerializer(
+        many=True,
+        required=False
+    )
+
+    google_location_url = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True
+    )
+
+    rera_website = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True
+    )
+
+    property_website_url = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True
+    )
+
+    class Meta:
+        model = Property
+
+        fields = [
+            "title",
+            "description",
+            "property_type",
+            "transaction_type",
+            "property_condition",
+            "status",
+            "city",
+            "area",
+            "address",
+            "landmark",
+            "pincode",
+            "latitude",
+            "longitude",
+            "google_location_url",
+            "total_area",
+            "plot_area",
+            "total_floors",
+            "total_towers",
+            "builder",
+            "amenities",
+            "rera_number",
+            "rera_qr_code",
+            "rera_website",
+            "rera_additional_urls",
+            "property_website_url",
+            "is_under_construction",
+            "ready_to_move",
+            "possession_date",
+            "completion_percentage",
+            "features",
+            "is_featured",
+            "is_verified",
+            "is_negotiable",
+            "referral_code",
+            "flat_types",
+            "floors",
+            "pricing_slabs",
+        ]
+
+    def update(self, instance, validated_data):
+
+        amenities = validated_data.pop("amenities", None)
+        flat_types = validated_data.pop("flat_types", None)
+        floors = validated_data.pop("floors", None)
+        pricing_slabs = validated_data.pop("pricing_slabs", None)
+
+        # =======================================
+        # UPDATE PROPERTY FIELDS
+        # =======================================
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+
+        # =======================================
+        # UPDATE AMENITIES
+        # =======================================
+
+        if amenities is not None:
+            instance.amenities.set(amenities)
+
+        # =======================================
+        # UPDATE EXISTING / CREATE FLAT TYPES
+        # =======================================
+
+        if flat_types is not None:
+
+            for flat_type_data in flat_types:
+
+                flat_type_id = flat_type_data.pop("id", None)
+
+                if flat_type_id:
+
+                    try:
+                        flat_obj = FlatType.objects.get(
+                            id=flat_type_id,
+                            property=instance
+                        )
+
+                    except FlatType.DoesNotExist:
+                        raise serializers.ValidationError({
+                            "flat_types": (
+                                f"FlatType ID {flat_type_id} "
+                                "does not belong to this property."
+                            )
+                        })
+
+                    # Update existing record
+                    for attr, value in flat_type_data.items():
+                        setattr(flat_obj, attr, value)
+
+                    flat_obj.save()
+
+                else:
+
+                    # Create new record if ID is not supplied
+                    FlatType.objects.create(
+                        property=instance,
+                        **flat_type_data
+                    )
+
+        # =======================================
+        # UPDATE EXISTING / CREATE FLOORS
+        # =======================================
+
+        if floors is not None:
+
+            for floor_data in floors:
+
+                floor_id = floor_data.pop("id", None)
+
+                if floor_id:
+
+                    try:
+                        floor_obj = FloorInfo.objects.get(
+                            id=floor_id,
+                            property=instance
+                        )
+
+                    except FloorInfo.DoesNotExist:
+                        raise serializers.ValidationError({
+                            "floors": (
+                                f"Floor ID {floor_id} "
+                                "does not belong to this property."
+                            )
+                        })
+
+                    for attr, value in floor_data.items():
+                        setattr(floor_obj, attr, value)
+
+                    floor_obj.save()
+
+                else:
+
+                    FloorInfo.objects.create(
+                        property=instance,
+                        **floor_data
+                    )
+
+        # =======================================
+        # UPDATE EXISTING / CREATE PRICING SLABS
+        # =======================================
+
+        if pricing_slabs is not None:
+
+            for pricing_data in pricing_slabs:
+
+                pricing_id = pricing_data.pop("id", None)
+
+                if pricing_id:
+
+                    try:
+                        pricing_obj = PricingSlab.objects.get(
+                            id=pricing_id,
+                            property=instance
+                        )
+
+                    except PricingSlab.DoesNotExist:
+                        raise serializers.ValidationError({
+                            "pricing_slabs": (
+                                f"PricingSlab ID {pricing_id} "
+                                "does not belong to this property."
+                            )
+                        })
+
+                    for attr, value in pricing_data.items():
+                        setattr(pricing_obj, attr, value)
+
+                    pricing_obj.save()
+
+                else:
+
+                    PricingSlab.objects.create(
+                        property=instance,
+                        **pricing_data
+                    )
+
+        return instance

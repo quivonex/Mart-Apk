@@ -13,16 +13,36 @@ User = get_user_model()
 
 
 # 🔹 1. SEND OTP
+# 🔹 1. SEND OTP
 class SendOTPView(APIView):
+
     def post(self, request):
+
         email = request.data.get("email")
 
         if not email:
-            return Response({"error": "Email required"}, status=400)
+            return Response(
+                {"error": "Email required"},
+                status=400
+            )
 
+        # Check user
+        user = User.objects.filter(email=email).first()
+
+        # Email already verified
+        if user and user.is_email_verified:
+            return Response(
+                {
+                    "success": False,
+                    "error": "Email is already verified"
+                },
+                status=400
+            )
+
+        # Generate OTP
         otp = generate_otp()
 
-        # update or create OTP
+        # Create / Update OTP
         EmailOTP.objects.update_or_create(
             email=email,
             defaults={
@@ -32,33 +52,62 @@ class SendOTPView(APIView):
             }
         )
 
+        # Send OTP
         send_otp_email(email, otp)
 
-        return Response({"message": "OTP sent successfully"})
+        return Response(
+            {
+                "success": True,
+                "message": "OTP sent successfully"
+            },
+            status=200
+        )
 
-
-# 🔹 2. VERIFY OTP
 class VerifyOTPView(APIView):
     def post(self, request):
         email = request.data.get("email")
         otp = request.data.get("otp")
 
+        if not email or not otp:
+            return Response(
+                {"error": "Email and OTP are required"},
+                status=400
+            )
+
         otp_obj = EmailOTP.objects.filter(email=email).first()
 
         if not otp_obj:
-            return Response({"error": "OTP not found"}, status=400)
+            return Response(
+                {"error": "OTP not found"},
+                status=400
+            )
+
+        # Already verified check
+        if otp_obj.is_verified:
+            return Response(
+                {"error": "Email is already verified"},
+                status=400
+            )
 
         if otp_obj.is_expired():
-            return Response({"error": "OTP expired"}, status=400)
+            return Response(
+                {"error": "OTP expired"},
+                status=400
+            )
 
         if otp_obj.otp != otp:
-            return Response({"error": "Invalid OTP"}, status=400)
+            return Response(
+                {"error": "Invalid OTP"},
+                status=400
+            )
 
         otp_obj.is_verified = True
         otp_obj.save()
 
-        return Response({"message": "OTP verified successfully"})
-
+        return Response(
+            {"message": "OTP verified successfully"},
+            status=200
+        )
 
 # 🔹 3. REGISTER
 class RegisterUserView(APIView):

@@ -19,11 +19,14 @@ from .views import( CancelOrderAPIView,
                    AssignAWBAPIView,
                    TrackShipmentAPIView,
                    ReturnShiprocketOrderAPIView,
+                   ReturnShiprocketOrderListAPIView,
+                   ReturnOrderListAPIView,
                    AssignReturnAWBAPIView,
                    ReturnPickupRequestAPIView,
                    TrackReturnShipmentAPIView,
                    DownloadMultipleLabelsMultipleAPIView,
-                   DownloadMultipleLabelsPDFAPIView
+                   DownloadMultipleLabelsPDFAPIView,
+                   ShiprocketWebhookAPIView
 )
 urlpatterns = [
     path("shipping-rates/", ShippingRateAPIView.as_view()),
@@ -49,11 +52,15 @@ urlpatterns = [
     path("packing-video/retrieve/",PackingVideoRetrieveAPIView.as_view(),name="packing-video-retrieve"),
     path("download-invoice/",DownloadInvoiceAPIView.as_view(),name="download-invoice"),
     path("download-manifest/",DownloadManifestAPIView.as_view(),name="download-manifest"),
+    
     path("return-order/",ReturnOrderAPIView.as_view(),name="return-order"),
+    path("return-orders/",ReturnOrderListAPIView.as_view(),name="return-orders"),
     path("return-order/create-shipment/",ReturnShiprocketOrderAPIView.as_view(),name="return-create-shipment"),
+    path("return-order/shiprocket-list/",ReturnShiprocketOrderListAPIView.as_view(),name="return-shiprocket-order-list"),
     path("return-order/assign-awb/",AssignReturnAWBAPIView.as_view(),name="return-assign-awb"),
     path("return-order/pickup/",ReturnPickupRequestAPIView.as_view(),name="return-pickup"),
     path("return-order/track/",TrackReturnShipmentAPIView.as_view(),name="return-track"),
     
     path('api/shiprocket/shipping-rates/', ShippingRateLocationAPIView.as_view(), name='shipping-rates'),
+    path("shipping-status-callback/",ShiprocketWebhookAPIView.as_view(),name="shiprocket-webhook"),
     ]

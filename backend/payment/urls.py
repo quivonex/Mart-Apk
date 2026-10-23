@@ -1,6 +1,9 @@
 from django.urls import path
 
 from .views import (
+    BazaarCommunicationCreateOrderAPIView,
+    BazaarCommunicationPaymentHistoryAPIView,
+    BazaarCommunicationVerifyPaymentAPIView,
     CreatePaymentSettingAPIView,
     CustomerMySubscriptionsAPIView,
     CustomerSubscriptionPlanCreateAPIView,
@@ -43,5 +46,11 @@ urlpatterns = [
     path("customer-subscription/create-order/",CustomerSubscriptionCreateOrderAPIView.as_view(),name="customer-subscription-create-order"),
     path("customer-subscription/verify-payment/",CustomerSubscriptionVerifyPaymentAPIView.as_view(),name="customer-subscription-verify-payment"),
     path("customer-subscriptions/my/",CustomerMySubscriptionsAPIView.as_view(),name="customer-my-subscriptions"),
+    
+    
+    # Bazaar Communication Payments
+    path("bazaar-communication/create-order/", BazaarCommunicationCreateOrderAPIView.as_view(), name="bazaar-communication-create-order"),
+    path("bazaar-communication/verify-payment/", BazaarCommunicationVerifyPaymentAPIView.as_view(), name="bazaar-communication-verify-payment"),
+    path("bazaar-communication/history/", BazaarCommunicationPaymentHistoryAPIView.as_view(), name="bazaar-communication-payment-history"),
 
 ]

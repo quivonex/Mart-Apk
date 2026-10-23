@@ -79,3 +79,77 @@ class UploadImage(models.Model):
 
     def __str__(self):
         return self.title if self.title else f"Image {self.id}"
+    
+
+
+from django.db import models
+from django.conf import settings
+
+
+class CustomerSubscription(models.Model):
+
+    user = models.ForeignKey(
+    settings.AUTH_USER_MODEL,
+    on_delete=models.CASCADE,
+    related_name="admin_profile_subscriptions"
+)
+    plan = models.ForeignKey("CustomerSubscriptionPlan",on_delete=models.PROTECT,related_name="subscriptions")
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    enquiry_limit = models.PositiveIntegerField(default=0)
+    enquiry_used = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    @property
+    def remaining_enquiries(self):
+        return max(self.enquiry_limit - self.enquiry_used, 0)
+
+    def __str__(self):
+        return f"{self.user} - {self.plan.name}"
+    
+    
+from django.db import models
+
+
+class CustomerSubscriptionPlan(models.Model):
+
+    name = models.CharField(max_length=100)
+    price = models.DecimalField(max_digits=10,decimal_places=2)
+    enquiry_limit = models.PositiveIntegerField(default=0)
+    duration_days = models.PositiveIntegerField(default=30)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.name    
+    
+    
+
+class CustomerSubscriptionPayment(models.Model):
+
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("paid", "Paid"),
+        ("failed", "Failed"),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name="nearby_subscription_payments")
+    plan = models.ForeignKey(CustomerSubscriptionPlan,on_delete=models.PROTECT,related_name="payments")
+    razorpay_order_id = models.CharField(max_length=100,unique=True)
+    razorpay_payment_id = models.CharField(max_length=100,unique=True,null=True,blank=True)
+    amount = models.PositiveIntegerField()
+    currency = models.CharField(max_length=3, default="INR")
+    status = models.CharField(max_length=20,choices=STATUS_CHOICES,default="pending")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.razorpay_order_id
+    

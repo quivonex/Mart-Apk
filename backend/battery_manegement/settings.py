@@ -90,29 +90,30 @@ INSTALLED_APPS = [
 
     "rest_framework",
 
-    "admin_profile",
-    "company",
-    "corsheaders",
-    "product",
-    "state",
-    "offer",
-    "enquiry",
-    "accounts",
-    "cart",
-    "branch",
-    "agreement",
-    "core",
-    "seller",
-    "order",
-    "Franchicies",
-    "payment",
-    "contact",
-    "shiprocket",
-    "olx",
-    "real_estate",
-    "loan",
+    'admin_profile',
+    'company',
+    'corsheaders',
+    'product',
+    'state',
+    'offer',
+    'enquiry',
+    'accounts',
+    'cart',
+    'branch',
+    'agreement',
+    'core',
+    'seller',
+    'order',
+    'Franchicies',
+    'payment',
+    'contact',
+    'shiprocket',
+    'olx',
+    'real_estate',
+    'loan',
     'AI',
     'commission',
+    'businessman',
     
 ]
 
@@ -341,6 +342,8 @@ COMPANY_REGISTRATION_AMOUNT = os.getenv(
 # SHIPROCKET
 # =========================================================
 
+#SHIPROCKET_WEBHOOK_TOKEN = os.getenv("SHIPROCKET_WEBHOOK_TOKEN")
+SHIPROCKET_WEBHOOK_TOKEN = "QNXMart_Webhook_7f9A2kL8pX4mN6vB3rT"
 SHIPROCKET_EMAIL = os.getenv("SHIPROCKET_EMAIL")
 
 SHIPROCKET_PASSWORD = os.getenv("SHIPROCKET_PASSWORD")
@@ -404,6 +407,16 @@ FIREBASE_CREDENTIALS = (
 #WhatsApp Integration
 #==========================================================
 
-WHATSAPP_ACCESS_TOKEN = os.getenv("WHATSAPP_ACCESS_TOKEN")
-WHATSAPP_PHONE_NUMBER_ID = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
+WATI_API_URL = os.getenv("WATI_API_URL")
+WATI_ACCESS_TOKEN = os.getenv("WATI_ACCESS_TOKEN")
+
+
+
+
+QNX_MART_GST_NUMBER = "27AAECQ1550H1Z9"
+
+QNX_MART_BUSINESS_CARD_PATH = (
+    BASE_DIR / "battery_manegement" / "static" / "images"
+    / "qnx_mart_business_card.png"
+)
 

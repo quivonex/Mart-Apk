@@ -5,7 +5,7 @@ from django.db import models
 from django.db import transaction
 from django.db import models
 from django.conf import settings
-
+from django.core.validators import MinValueValidator
 from real_estate.models import Property, User
 
 
@@ -228,3 +228,96 @@ class CustomerSubscriptionPayment(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.razorpay_order_id}"        
+    
+    
+from olx.models import (
+    BazaarCommunicationPlan,
+    BazaarCommunicationSubscription,
+)
+
+
+class BazaarCommunicationPayment(models.Model):
+    """
+    Razorpay payment records for Bazaar communication subscriptions only.
+
+    This model is separate from the existing seller/listing payment flow.
+    """
+
+    class Status(models.TextChoices):
+        CREATED = "created", "Created"
+        PAID = "paid", "Paid"
+        FAILED = "failed", "Failed"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="bazaar_communication_payments",
+    )
+
+    plan = models.ForeignKey(
+        BazaarCommunicationPlan,
+        on_delete=models.PROTECT,
+        related_name="payments",
+    )
+
+    subscription = models.ForeignKey(
+        BazaarCommunicationSubscription,
+        on_delete=models.PROTECT,
+        related_name="payments",
+        null=True,
+        blank=True,
+    )
+
+    # Razorpay identifiers
+    razorpay_order_id = models.CharField(
+        max_length=100,
+        unique=True,
+    )
+    razorpay_payment_id = models.CharField(
+        max_length=100,
+        unique=True,
+        null=True,
+        blank=True,
+    )
+    razorpay_signature = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+    )
+    currency = models.CharField(max_length=3, default="INR")
+
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.CREATED,
+        db_index=True,
+    )
+
+    failure_reason = models.TextField(blank=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+
+    # Deactivate records only when necessary; retain financial history.
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["user", "status"]),
+            models.Index(fields=["plan", "status"]),
+            models.Index(fields=["created_at"]),
+        ]
+
+    def _str_(self):
+        return (
+            f"Communication Payment #{self.pk} - "
+            f"{self.currency} {self.amount} - {self.status}"
+        )    

@@ -514,276 +514,478 @@ class ShiprocketService:
             }
 
 
-# ==========================================
-# Assign AWB For Return
-# ==========================================
-@staticmethod
-def assign_return_awb(
-    shipment_id,
-    courier_id=None
-):
+    # ==========================================
+    # Assign AWB For Return
+    # ==========================================
+    @staticmethod
+    def assign_return_awb(
+        shipment_id,
+        courier_id=None
+    ):
 
-    url = (
-        f"{ShiprocketService.BASE_URL}"
-        "/courier/assign/awb"
-    )
-
-    payload = {
-        "shipment_id": int(shipment_id),
-        "is_return": 1
-    }
-
-    if courier_id:
-
-        payload["courier_id"] = int(
-            courier_id
+        url = (
+            f"{ShiprocketService.BASE_URL}"
+            "/courier/assign/awb"
         )
 
-    print("========================================")
-    print("ASSIGN RETURN AWB")
-    print("========================================")
-    print("URL     :", url)
-    print("Payload :", payload)
-    print("========================================")
-
-    try:
-
-        response = requests.post(
-            url,
-            json=payload,
-            headers=ShiprocketService.get_headers(),
-            timeout=30
-        )
-
-        print("Status   :", response.status_code)
-        print("Response :", response.text)
-
-        try:
-            data = response.json()
-
-        except ValueError:
-
-            return {
-                "success": False,
-                "status_code": response.status_code,
-                "message": response.text
-            }
-
-        if response.status_code not in [200, 201]:
-
-            return {
-                "success": False,
-                "status_code": response.status_code,
-                "error": data
-            }
-
-        return {
-            "success": True,
-            "status_code": response.status_code,
-            "data": data
+        payload = {
+            "shipment_id": int(shipment_id),
+            "is_return": 1
         }
 
-    except Exception as e:
+        if courier_id:
 
-        return {
-            "success": False,
-            "error": str(e)
-        }
-
-
-# ==========================================
-# Return Pickup Request
-# ==========================================
-@staticmethod
-def request_return_pickup(shipment_id):
-
-    url = (
-        f"{ShiprocketService.BASE_URL}"
-        "/courier/generate/pickup"
-    )
-
-    payload = {
-        "shipment_id": [int(shipment_id)]
-    }
-
-    print("========================================")
-    print("RETURN PICKUP REQUEST")
-    print("========================================")
-    print("URL     :", url)
-    print("Payload :", payload)
-    print("========================================")
-
-    try:
-
-        response = requests.post(
-            url,
-            json=payload,
-            headers=ShiprocketService.get_headers(),
-            timeout=30
-        )
-
-        print("Status   :", response.status_code)
-        print("Response :", response.text)
-
-        try:
-            data = response.json()
-
-        except ValueError:
-
-            return {
-                "success": False,
-                "status_code": response.status_code,
-                "message": response.text
-            }
-
-        if response.status_code not in [200, 201]:
-
-            return {
-                "success": False,
-                "status_code": response.status_code,
-                "error": data
-            }
-
-        return {
-            "success": True,
-            "status_code": response.status_code,
-            "data": data
-        }
-
-    except Exception as e:
-
-        return {
-            "success": False,
-            "error": str(e)
-        }
-
-
-# ==========================================
-# Track Return Shipment
-# ==========================================
-@staticmethod
-def track_return_shipment(shipment_id):
-
-    url = (
-        f"{ShiprocketService.BASE_URL}"
-        f"/courier/track/shipment/{shipment_id}"
-    )
-
-    try:
-
-        response = requests.get(
-            url,
-            headers=ShiprocketService.get_headers(),
-            timeout=30
-        )
+            payload["courier_id"] = int(
+                courier_id
+            )
 
         print("========================================")
-        print("TRACK RETURN SHIPMENT")
+        print("ASSIGN RETURN AWB")
         print("========================================")
-        print("URL      :", url)
-        print("Status   :", response.status_code)
-        print("Response :", response.text)
+        print("URL     :", url)
+        print("Payload :", payload)
         print("========================================")
 
         try:
-            data = response.json()
 
-        except ValueError:
+            response = requests.post(
+                url,
+                json=payload,
+                headers=ShiprocketService.get_headers(),
+                timeout=30
+            )
+
+            print("Status   :", response.status_code)
+            print("Response :", response.text)
+
+            try:
+                data = response.json()
+
+            except ValueError:
+
+                return {
+                    "success": False,
+                    "status_code": response.status_code,
+                    "message": response.text
+                }
+
+            if response.status_code not in [200, 201]:
+
+                return {
+                    "success": False,
+                    "status_code": response.status_code,
+                    "error": data
+                }
+
+            return {
+                "success": True,
+                "status_code": response.status_code,
+                "data": data
+            }
+
+        except Exception as e:
 
             return {
                 "success": False,
-                "status_code": response.status_code,
-                "message": response.text
+                "error": str(e)
             }
 
-        if response.status_code != 200:
 
-            return {
-                "success": False,
-                "status_code": response.status_code,
-                "error": data
-            }
+    # ==========================================
+    # Return Pickup Request
+    # ==========================================
+    @staticmethod
+    def request_return_pickup(shipment_id):
 
-        return {
-            "success": True,
-            "status_code": response.status_code,
-            "data": data
+        url = (
+            f"{ShiprocketService.BASE_URL}"
+            "/courier/generate/pickup"
+        )
+
+        payload = {
+            "shipment_id": [int(shipment_id)]
         }
 
-    except Exception as e:
+        print("========================================")
+        print("RETURN PICKUP REQUEST")
+        print("========================================")
+        print("URL     :", url)
+        print("Payload :", payload)
+        print("========================================")
 
-        return {
-            "success": False,
-            "error": str(e)
-        }        
-        
-        
-        
-        
+        try:
+
+            response = requests.post(
+                url,
+                json=payload,
+                headers=ShiprocketService.get_headers(),
+                timeout=30
+            )
+
+            print("Status   :", response.status_code)
+            print("Response :", response.text)
+
+            try:
+                data = response.json()
+
+            except ValueError:
+
+                return {
+                    "success": False,
+                    "status_code": response.status_code,
+                    "message": response.text
+                }
+
+            if response.status_code not in [200, 201]:
+
+                return {
+                    "success": False,
+                    "status_code": response.status_code,
+                    "error": data
+                }
+
+            return {
+                "success": True,
+                "status_code": response.status_code,
+                "data": data
+            }
+
+        except Exception as e:
+
+            return {
+                "success": False,
+                "error": str(e)
+            }
 
 
+    # ==========================================
+    # Track Return Shipment
+    # ==========================================
+    @staticmethod
+    def track_return_shipment(shipment_id):
+
+        url = (
+            f"{ShiprocketService.BASE_URL}"
+            f"/courier/track/shipment/{shipment_id}"
+        )
+
+        try:
+
+            response = requests.get(
+                url,
+                headers=ShiprocketService.get_headers(),
+                timeout=30
+            )
+
+            print("========================================")
+            print("TRACK RETURN SHIPMENT")
+            print("========================================")
+            print("URL      :", url)
+            print("Status   :", response.status_code)
+            print("Response :", response.text)
+            print("========================================")
+
+            try:
+                data = response.json()
+
+            except ValueError:
+
+                return {
+                    "success": False,
+                    "status_code": response.status_code,
+                    "message": response.text
+                }
+
+            if response.status_code != 200:
+
+                return {
+                    "success": False,
+                    "status_code": response.status_code,
+                    "error": data
+                }
+
+            return {
+                "success": True,
+                "status_code": response.status_code,
+                "data": data
+            }
+
+        except Exception as e:
+
+            return {
+                "success": False,
+                "error": str(e)
+            }        
+            
+            
+
+
+    
+
+
+
+
+
+        # ==========================================
+        # Assign AWB For Return
+        # ==========================================
+    @staticmethod
+    def assign_return_awb(shipment_id, courier_id=None):
+            url = f"{ShiprocketService.BASE_URL}/courier/assign/awb"
+
+            payload = {
+                "shipment_id": int(shipment_id),
+                "is_return": 1,
+            }
+
+            if courier_id is not None:
+                payload["courier_id"] = int(courier_id)
+
+            try:
+                response = requests.post(
+                    url,
+                    json=payload,
+                    headers=ShiprocketService.get_headers(),
+                    timeout=30,
+                )
+
+                print("ASSIGN RETURN AWB STATUS:", response.status_code)
+                print("ASSIGN RETURN AWB RESPONSE:", response.text)
+
+                try:
+                    data = response.json()
+                except ValueError:
+                    return {
+                        "success": False,
+                        "message": "Invalid response from Shiprocket.",
+                        "status_code": response.status_code,
+                        "raw_response": response.text,
+                    }
+
+                if response.status_code not in [200, 201]:
+                    return {
+                        "success": False,
+                        "message": "Shiprocket AWB assignment failed.",
+                        "status_code": response.status_code,
+                        "data": data,
+                    }
+
+                # Shiprocket can return HTTP 200 with an API-level error.
+                if str(data.get("awb_assign_status", "")) == "0":
+                    return {
+                        "success": False,
+                        "message": data.get(
+                            "message",
+                            "Shiprocket AWB assignment failed.",
+                        ),
+                        "data": data,
+                    }
+
+                return {
+                    "success": True,
+                    "message": "AWB assignment response received.",
+                    "data": data,
+                }
+
+            except requests.RequestException as exc:
+                return {
+                    "success": False,
+                    "message": "Shiprocket API request failed.",
+                    "error": str(exc),
+                }
+
+    @classmethod
+    def request_return_pickup(cls, shipment_id):
+
+        if not shipment_id:
+            return {
+                "success": False,
+                "status_code": 400,
+                "data": {
+                    "message": "shipment_id is required."
+                }
+            }
+
+        url = (
+            "https://apiv2.shiprocket.in/v1/external/"
+            "courier/generate/pickup"
+        )
+
+        payload = {
+            "shipment_id": [int(shipment_id)]
+        }
+
+        try:
+            response = requests.post(
+                url,
+                json=payload,
+                headers=cls.get_headers(),
+                timeout=30
+            )
+
+            try:
+                response_data = response.json()
+            except ValueError:
+                response_data = {
+                    "message": response.text
+                }
+
+            message = str(
+                response_data.get("message", "")
+            ).strip()
+
+            # Pickup is already queued in Shiprocket.
+            if "already in pickup queue" in message.lower():
+                return {
+                    "success": True,
+                    "already_queued": True,
+                    "status_code": 200,
+                    "data": response_data
+                }
+
+            if response.ok:
+                return {
+                    "success": True,
+                    "already_queued": False,
+                    "status_code": response.status_code,
+                    "data": response_data
+                }
+
+            return {
+                "success": False,
+                "already_queued": False,
+                "status_code": response.status_code,
+                "data": response_data
+            }
+
+        except requests.RequestException as exc:
+            return {
+                "success": False,
+                "already_queued": False,
+                "status_code": 502,
+                "data": {
+                    "message": "Unable to connect to Shiprocket.",
+                    "error": str(exc)
+                }
+            }
+
+            # ==========================================
+            # Track Return Shipment
+            # ==========================================
+    @staticmethod
+    def track_return_shipment(shipment_id):
+                url = (
+                    f"{ShiprocketService.BASE_URL}"
+                    f"/courier/track/shipment/{shipment_id}"
+                )
+
+                try:
+                    response = requests.get(
+                        url,
+                        headers=ShiprocketService.get_headers(),
+                        timeout=30,
+                    )
+
+                    print("TRACK RETURN STATUS:", response.status_code)
+                    print("TRACK RETURN RESPONSE:", response.text)
+
+                    try:
+                        data = response.json()
+                    except ValueError:
+                        return {
+                            "success": False,
+                            "message": "Invalid response from Shiprocket.",
+                            "status_code": response.status_code,
+                            "raw_response": response.text,
+                        }
+
+                    if response.status_code != 200:
+                        return {
+                            "success": False,
+                            "message": "Return shipment tracking failed.",
+                            "status_code": response.status_code,
+                            "data": data,
+                        }
+
+                    return {
+                        "success": True,
+                        "message": "Return tracking response received.",
+                        "data": data,
+                    }
+
+                except requests.RequestException as exc:
+                    return {
+                        "success": False,
+                        "message": "Shiprocket API request failed.",
+                        "error": str(exc),
+                    }
+        
+        
+        
+    
+    
 def get_shiprocket_token():
-    url = f"{settings.SHIPROCKET_BASE_URL.rstrip('/')}/auth/login"
+        url = f"{settings.SHIPROCKET_BASE_URL.rstrip('/')}/auth/login"
 
-    payload = {
-        "email": settings.SHIPROCKET_EMAIL,
-        "password": settings.SHIPROCKET_PASSWORD,
-    }
+        payload = {
+            "email": settings.SHIPROCKET_EMAIL,
+            "password": settings.SHIPROCKET_PASSWORD,
+        }
 
-    response = requests.post(
-        url,
-        json=payload,
-        timeout=30,
-    )
-    response.raise_for_status()
+        response = requests.post(
+            url,
+            json=payload,
+            timeout=30,
+        )
+        response.raise_for_status()
 
-    token = response.json().get("token")
+        token = response.json().get("token")
 
-    if not token:
-        raise Exception("Shiprocket token not found in response.")
+        if not token:
+            raise Exception("Shiprocket token not found in response.")
 
-    return token
+        return token
 
 
 def get_shipping_rates(
-    pickup_postcode,
-    delivery_postcode,
-    weight,
-    length,
-    breadth,
-    height,
-    cod,
-    declared_value,
-):
-    token = get_shiprocket_token()
+        pickup_postcode,
+        delivery_postcode,
+        weight,
+        length,
+        breadth,
+        height,
+        cod,
+        declared_value,
+    ):
+        token = get_shiprocket_token()
 
-    url = (
-        f"{settings.SHIPROCKET_BASE_URL.rstrip('/')}"
-        "/courier/serviceability/"
-    )
+        url = (
+            f"{settings.SHIPROCKET_BASE_URL.rstrip('/')}"
+            "/courier/serviceability/"
+        )
 
-    params = {
-        "pickup_postcode": pickup_postcode,
-        "delivery_postcode": delivery_postcode,
-        "weight": weight,
-        "length": length,
-        "breadth": breadth,
-        "height": height,
-        "cod": int(cod),
-        "declared_value": declared_value,
-    }
+        params = {
+            "pickup_postcode": pickup_postcode,
+            "delivery_postcode": delivery_postcode,
+            "weight": weight,
+            "length": length,
+            "breadth": breadth,
+            "height": height,
+            "cod": int(cod),
+            "declared_value": declared_value,
+        }
 
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-    }
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
 
-    response = requests.get(
-        url,
-        params=params,
-        headers=headers,
-        timeout=30,
-    )
-    response.raise_for_status()
+        response = requests.get(
+            url,
+            params=params,
+            headers=headers,
+            timeout=30,
+        )
+        response.raise_for_status()
 
-    return response.json()
+        return response.json()

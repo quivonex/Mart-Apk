@@ -45,21 +45,248 @@ from battery_manegement.firebase import send_fcm_notification
 # from company.utils import upload_file_to_s3
 
 
+# class CompanyCreateAPIView(APIView):
+
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated]
+#     parser_classes = [MultiPartParser, FormParser]
+
+#     def post(self, request):
+
+#         # --------------------------------------------------
+#         # 1. Validate Company Data
+#         # --------------------------------------------------
+
+#         serializer = CompanySerializer(data=request.data)
+
+#         if not serializer.is_valid():
+#             return Response(
+#                 {
+#                     "status": False,
+#                     "message": "Validation failed",
+#                     "errors": serializer.errors,
+#                 },
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
+
+#         # --------------------------------------------------
+#         # 2. Referral Code
+#         # --------------------------------------------------
+
+#         referral_code = request.data.get("referral_code")
+#         marketing_partner_name = None
+
+#         if referral_code:
+
+#             try:
+#                 partner = MarketingPartner.objects.get(
+#                     referral_code=referral_code
+#                 )
+
+#                 marketing_partner_name = partner.full_name
+
+#             except MarketingPartner.DoesNotExist:
+
+#                 return Response(
+#                     {
+#                         "status": False,
+#                         "message": "Invalid referral code",
+#                     },
+#                     status=status.HTTP_400_BAD_REQUEST,
+#                 )
+
+#         # --------------------------------------------------
+#         # 3. Create Company
+#         # --------------------------------------------------
+
+#         company = serializer.save(
+#             user=request.user,
+#             referral_code=referral_code,
+#             marketing_partner_name=marketing_partner_name,
+#             payment_status="pending",
+#         )
+
+#         # --------------------------------------------------
+#         # 4. Upload Logo
+#         # --------------------------------------------------
+
+#         logo = request.FILES.get("logo")
+
+#         if logo:
+
+#             logo_key = upload_file_to_s3(
+#                 logo,
+#                 "company/logo"
+#             )
+
+#             company.logo_s3_key = logo_key
+#             company.save(update_fields=["logo_s3_key"])
+
+#         # --------------------------------------------------
+#         # 5. Upload Company Images
+#         # --------------------------------------------------
+
+#         images = request.FILES.getlist("images")
+
+#         for image in images:
+
+#             image_key = upload_file_to_s3(
+#                 image,
+#                 "company/images"
+#             )
+
+#             CompanyImage.objects.create(
+#                 company=company,
+#                 image_s3_key=image_key,
+#             )
+
+#         # --------------------------------------------------
+#         # 6. Send FCM Notification
+#         # --------------------------------------------------
+
+#         try:
+
+#             notification_sent = send_fcm_notification(
+#                 user=request.user,
+#                 title="Company Created Successfully",
+#                 body=f"Your company '{company.name}' has been created successfully.",
+#                 data={
+#                     "type": "company_created",
+#                     "company_id": str(company.id),
+#                     "payment_status": "pending",
+#                 }
+#             )
+
+#         except Exception as e:
+
+#             notification_sent = False
+
+#             print(
+#                 "FCM Notification Error:",
+#                 str(e)
+#             )
+
+#         # --------------------------------------------------
+#         # 7. Send Email
+#         # --------------------------------------------------
+
+#         if company.email:
+
+#             subject = "Welcome to QNX Mart B2B - Company Admin Panel"
+
+#             message = f"""
+# Dear {company.owner_name or company.name},
+
+# Congratulations!
+
+# Your company has been registered successfully on QNX Mart B2B.
+
+# You can now access your Company Admin Panel using the link below:
+
+# https://qnxmartb2b.com/companyadmin/
+
+# ------------------------------------------------
+
+# Company Name : {company.name}
+# Login Email  : {company.email}
+
+# ------------------------------------------------
+
+# Thank you for choosing QNX Mart B2B.
+
+# Regards,
+# QNX Mart B2B Team
+# """
+
+#             try:
+
+#                 send_mail(
+#                     subject=subject,
+#                     message=message,
+#                     from_email=settings.DEFAULT_FROM_EMAIL,
+#                     recipient_list=[company.email],
+#                     fail_silently=False,
+#                 )
+
+#             except Exception as e:
+
+#                 # Email fail झाला तरी company create झालेली आहे
+#                 print(
+#                     "Email Error:",
+#                     str(e)
+#                 )
+
+#         # --------------------------------------------------
+#         # 8. Response Serializer
+#         # --------------------------------------------------
+
+#         response_serializer = CompanySerializer(
+#             company,
+#             context={
+#                 "request": request
+#             },
+#         )
+
+#         # --------------------------------------------------
+#         # 9. Final Response
+#         # --------------------------------------------------
+
+#         return Response(
+#             {
+#                 "status": True,
+#                 "message": "Company created successfully. Payment pending.",
+#                 "notification_sent": notification_sent,
+#                 "data": response_serializer.data,
+#             },
+#             status=status.HTTP_201_CREATED,
+#         )
 class CompanyCreateAPIView(APIView):
 
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser]
+
+    parser_classes = [
+        MultiPartParser,
+        FormParser
+    ]
 
     def post(self, request):
 
         # --------------------------------------------------
-        # 1. Validate Company Data
+        # 1. REGISTRATION TYPE
         # --------------------------------------------------
 
-        serializer = CompanySerializer(data=request.data)
+        registration_type = request.data.get(
+            "registration_type",
+            "paid"
+        )
+
+        if registration_type not in [
+            "free",
+            "paid"
+        ]:
+
+            return Response(
+                {
+                    "status": False,
+                    "message": (
+                        "registration_type must be "
+                        "'free' or 'paid'"
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # --------------------------------------------------
+        # 2. VALIDATE COMPANY DATA
+        # --------------------------------------------------
+
+        serializer = CompanySerializer(
+            data=request.data
+        )
 
         if not serializer.is_valid():
+
             return Response(
                 {
                     "status": False,
@@ -70,15 +297,19 @@ class CompanyCreateAPIView(APIView):
             )
 
         # --------------------------------------------------
-        # 2. Referral Code
+        # 3. REFERRAL CODE
         # --------------------------------------------------
 
-        referral_code = request.data.get("referral_code")
+        referral_code = request.data.get(
+            "referral_code"
+        )
+
         marketing_partner_name = None
 
         if referral_code:
 
             try:
+
                 partner = MarketingPartner.objects.get(
                     referral_code=referral_code
                 )
@@ -96,18 +327,31 @@ class CompanyCreateAPIView(APIView):
                 )
 
         # --------------------------------------------------
-        # 3. Create Company
+        # 4. PAYMENT STATUS
+        # --------------------------------------------------
+
+        if registration_type == "free":
+
+            payment_status = "paid"
+
+        else:
+
+            payment_status = "pending"
+
+        # --------------------------------------------------
+        # 5. CREATE COMPANY
         # --------------------------------------------------
 
         company = serializer.save(
             user=request.user,
             referral_code=referral_code,
             marketing_partner_name=marketing_partner_name,
-            payment_status="pending",
+            registration_type=registration_type,
+            payment_status=payment_status,
         )
 
         # --------------------------------------------------
-        # 4. Upload Logo
+        # 6. UPLOAD LOGO
         # --------------------------------------------------
 
         logo = request.FILES.get("logo")
@@ -120,13 +364,20 @@ class CompanyCreateAPIView(APIView):
             )
 
             company.logo_s3_key = logo_key
-            company.save(update_fields=["logo_s3_key"])
+
+            company.save(
+                update_fields=[
+                    "logo_s3_key"
+                ]
+            )
 
         # --------------------------------------------------
-        # 5. Upload Company Images
+        # 7. UPLOAD COMPANY IMAGES
         # --------------------------------------------------
 
-        images = request.FILES.getlist("images")
+        images = request.FILES.getlist(
+            "images"
+        )
 
         for image in images:
 
@@ -141,7 +392,7 @@ class CompanyCreateAPIView(APIView):
             )
 
         # --------------------------------------------------
-        # 6. Send FCM Notification
+        # 8. FCM
         # --------------------------------------------------
 
         try:
@@ -149,11 +400,15 @@ class CompanyCreateAPIView(APIView):
             notification_sent = send_fcm_notification(
                 user=request.user,
                 title="Company Created Successfully",
-                body=f"Your company '{company.name}' has been created successfully.",
+                body=(
+                    f"Your company '{company.name}' "
+                    "has been created successfully."
+                ),
                 data={
                     "type": "company_created",
                     "company_id": str(company.id),
-                    "payment_status": "pending",
+                    "registration_type": registration_type,
+                    "payment_status": payment_status,
                 }
             )
 
@@ -167,30 +422,46 @@ class CompanyCreateAPIView(APIView):
             )
 
         # --------------------------------------------------
-        # 7. Send Email
+        # 9. EMAIL
         # --------------------------------------------------
 
         if company.email:
 
-            subject = "Welcome to QNX Mart B2B - Company Admin Panel"
+            subject = (
+                "Welcome to QNX Mart B2B - "
+                "Company Admin Panel"
+            )
+
+            if registration_type == "free":
+
+                payment_message = (
+                    "Registration Type : FREE\n"
+                    "Payment Required  : NO"
+                )
+
+            else:
+
+                payment_message = (
+                    "Registration Type : PAID\n"
+                    "Payment Required  : YES"
+                )
 
             message = f"""
 Dear {company.owner_name or company.name},
 
 Congratulations!
 
-Your company has been registered successfully on QNX Mart B2B.
-
-You can now access your Company Admin Panel using the link below:
-
-https://qnxmartb2b.com/companyadmin/
-
-------------------------------------------------
+Your company has been registered successfully
+on QNX Mart B2B.
 
 Company Name : {company.name}
 Login Email  : {company.email}
 
-------------------------------------------------
+{payment_message}
+
+You can access your Company Admin Panel:
+
+https://qnxmartb2b.com/companyadmin/
 
 Thank you for choosing QNX Mart B2B.
 
@@ -204,45 +475,174 @@ QNX Mart B2B Team
                     subject=subject,
                     message=message,
                     from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[company.email],
+                    recipient_list=[
+                        company.email
+                    ],
                     fail_silently=False,
                 )
 
             except Exception as e:
 
-                # Email fail झाला तरी company create झालेली आहे
                 print(
                     "Email Error:",
                     str(e)
                 )
 
         # --------------------------------------------------
-        # 8. Response Serializer
+        # 10. RESPONSE
         # --------------------------------------------------
 
         response_serializer = CompanySerializer(
             company,
             context={
                 "request": request
-            },
+            }
         )
-
-        # --------------------------------------------------
-        # 9. Final Response
-        # --------------------------------------------------
 
         return Response(
             {
                 "status": True,
-                "message": "Company created successfully. Payment pending.",
-                "notification_sent": notification_sent,
+
+                "message": (
+                    "Company registered successfully."
+                    if registration_type == "free"
+                    else
+                    "Company created successfully. "
+                    "Payment required."
+                ),
+
+                "registration_type": registration_type,
+
+                "payment_required": (
+                    registration_type == "paid"
+                ),
+
                 "data": response_serializer.data,
             },
-            status=status.HTTP_201_CREATED,
+            status=status.HTTP_201_CREATED
         )
 
-
 from payment.models import PaymentSetting
+# class CreateCompanyPaymentOrderAPIView(APIView):
+
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request):
+
+#         company_id = request.data.get(
+#             "company_id"
+#         )
+
+#         try:
+
+#             company = Company.objects.get(
+#                 id=company_id
+#             )
+
+#         except Company.DoesNotExist:
+
+#             return Response({
+
+#                 "status": False,
+
+#                 "message": "Company not found"
+
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         # =========================================
+#         # GET PAYMENT SETTING
+#         # =========================================
+
+#         payment_setting = (
+#             PaymentSetting.objects.filter(
+#                 payment_type=(
+#                     PaymentSetting.COMPANY_REGISTRATION
+#                 ),
+#                 is_active=True
+#             )
+#             .first()
+#         )
+
+#         if not payment_setting:
+
+#             return Response({
+
+#                 "status": False,
+
+#                 "message": (
+#                     "Company registration amount "
+#                     "not configured"
+#                 )
+
+#             }, status=status.HTTP_404_NOT_FOUND)
+
+#         # =========================================
+#         # RUPEES TO PAISE
+#         # =========================================
+
+#         amount_in_paise = int(
+#             payment_setting.amount * 100
+#         )
+
+#         client = razorpay.Client(
+
+#             auth=(
+
+#                 settings.RAZORPAY_KEY_ID,
+
+#                 settings.RAZORPAY_KEY_SECRET
+
+#             )
+
+#         )
+
+#         # =========================================
+#         # CREATE RAZORPAY ORDER
+#         # =========================================
+
+#         order = client.order.create({
+
+#             "amount": amount_in_paise,
+
+#             "currency": "INR",
+
+#             "payment_capture": 1
+
+#         })
+
+#         # =========================================
+#         # SAVE ORDER
+#         # =========================================
+
+#         company.order_id = order["id"]
+
+#         company.save(
+#             update_fields=[
+#                 "order_id"
+#             ]
+#         )
+
+#         return Response({
+
+#             "status": True,
+
+#             "order_id": order["id"],
+
+#             "amount": str(
+#                 payment_setting.amount
+#             ),
+
+#             "amount_in_paise": (
+#                 amount_in_paise
+#             ),
+
+#             "key": settings.RAZORPAY_KEY_ID,
+
+#             "company_id": company.id
+
+#         }, status=status.HTTP_200_OK)
+        
 class CreateCompanyPaymentOrderAPIView(APIView):
 
     authentication_classes = [JWTAuthentication]
@@ -254,24 +654,65 @@ class CreateCompanyPaymentOrderAPIView(APIView):
             "company_id"
         )
 
+        # =========================================
+        # COMPANY
+        # =========================================
+
         try:
 
             company = Company.objects.get(
-                id=company_id
+                id=company_id,
+                user=request.user
             )
 
         except Company.DoesNotExist:
 
-            return Response({
-
-                "status": False,
-
-                "message": "Company not found"
-
-            }, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {
+                    "status": False,
+                    "message": "Company not found"
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
 
         # =========================================
-        # GET PAYMENT SETTING
+        # CHECK FREE / PAID
+        # =========================================
+
+        if company.registration_type == "free":
+
+            return Response(
+                {
+                    "status": False,
+                    "message": (
+                        "This company has free "
+                        "registration. Payment is not required."
+                    ),
+                    "registration_type": "free",
+                    "payment_required": False
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # =========================================
+        # ALREADY PAID
+        # =========================================
+
+        if company.payment_status == "paid":
+
+            return Response(
+                {
+                    "status": False,
+                    "message": (
+                        "Company registration payment "
+                        "is already completed."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # =========================================
+        # PAYMENT SETTING
         # =========================================
 
         payment_setting = (
@@ -286,53 +727,46 @@ class CreateCompanyPaymentOrderAPIView(APIView):
 
         if not payment_setting:
 
-            return Response({
-
-                "status": False,
-
-                "message": (
-                    "Company registration amount "
-                    "not configured"
-                )
-
-            }, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {
+                    "status": False,
+                    "message": (
+                        "Company registration amount "
+                        "not configured"
+                    )
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
 
         # =========================================
-        # RUPEES TO PAISE
+        # AMOUNT
         # =========================================
 
         amount_in_paise = int(
             payment_setting.amount * 100
         )
 
+        # =========================================
+        # RAZORPAY
+        # =========================================
+
         client = razorpay.Client(
-
             auth=(
-
                 settings.RAZORPAY_KEY_ID,
-
                 settings.RAZORPAY_KEY_SECRET
-
             )
+        )
 
+        order = client.order.create(
+            {
+                "amount": amount_in_paise,
+                "currency": "INR",
+                "payment_capture": 1
+            }
         )
 
         # =========================================
-        # CREATE RAZORPAY ORDER
-        # =========================================
-
-        order = client.order.create({
-
-            "amount": amount_in_paise,
-
-            "currency": "INR",
-
-            "payment_capture": 1
-
-        })
-
-        # =========================================
-        # SAVE ORDER
+        # SAVE ORDER ID
         # =========================================
 
         company.order_id = order["id"]
@@ -343,27 +777,28 @@ class CreateCompanyPaymentOrderAPIView(APIView):
             ]
         )
 
-        return Response({
+        # =========================================
+        # RESPONSE
+        # =========================================
 
-            "status": True,
-
-            "order_id": order["id"],
-
-            "amount": str(
-                payment_setting.amount
-            ),
-
-            "amount_in_paise": (
-                amount_in_paise
-            ),
-
-            "key": settings.RAZORPAY_KEY_ID,
-
-            "company_id": company.id
-
-        }, status=status.HTTP_200_OK)
-        
-
+        return Response(
+            {
+                "status": True,
+                "message": (
+                    "Payment order created successfully."
+                ),
+                "registration_type": "paid",
+                "payment_required": True,
+                "order_id": order["id"],
+                "amount": str(
+                    payment_setting.amount
+                ),
+                "amount_in_paise": amount_in_paise,
+                "key": settings.RAZORPAY_KEY_ID,
+                "company_id": company.id
+            },
+            status=status.HTTP_200_OK
+        )
 from .shiprocket import create_company_pickup_location
 
 class VerifyCompanyPaymentAPIView(APIView):
@@ -1502,7 +1937,8 @@ class CompanyProductListView(APIView):
                 )
 
             products = Product.objects.filter(
-                company_id=company_id
+                company_id=company_id,
+                status="approved"
             )
 
             data = products.values(
@@ -1531,7 +1967,7 @@ class CompanyProductListView(APIView):
                     "error": str(e)
                 },
                 status=500
-            )  
+            )
         
 from django.db.models import Sum, F
 from rest_framework.views import APIView

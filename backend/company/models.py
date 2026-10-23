@@ -4,6 +4,10 @@ from accounts.models import User # type: ignore
 
 class Company(models.Model):
     # Basic info
+    REGISTRATION_TYPES = (
+            ("free", "Free"),
+            ("paid", "Paid"),
+        )
     user = models.ForeignKey(User,on_delete=models.CASCADE,null=True,blank=True,related_name="companies")
     name = models.CharField(max_length=200,unique=True)
     owner_name = models.CharField(max_length=200, blank=True, null=True)
@@ -47,6 +51,7 @@ class Company(models.Model):
     referral_code = models.CharField(max_length=50, blank=True, null=True)
     # referral_link = models.URLField(blank=True, null=True)
     marketing_partner_name = models.CharField(max_length=200, blank=True, null=True)
+    registration_type = models.CharField(max_length=10,choices=REGISTRATION_TYPES,default="paid")
     payment_id = models.CharField(max_length=200, blank=True, null=True)
     order_id = models.CharField(max_length=200, blank=True, null=True)
     payment_status = models.CharField(max_length=20, default="pending")

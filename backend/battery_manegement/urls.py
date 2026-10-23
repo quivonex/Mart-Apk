@@ -39,12 +39,13 @@ urlpatterns = [
     path('franchicies/', include('Franchicies.urls')),  # Include franchicies app URLs
     path('payment/', include('payment.urls')),  # Include payment app URLs
     path('contact/', include('contact.urls')),  # Include contact app URLs
-    path('shiprocket/', include('shiprocket.urls')),  # Include shipping app URLs
+    # path('shiprocket/', include('shiprocket.urls')),  # Include shipping app URLs
     path('olx/', include('olx.urls')),  # Include olx app URLs
     path('real_estate/', include('real_estate.urls')),  # Include real estate app URLs
     path('loan/', include('loan.urls')),  # Include loan app URLs
     path('AI/', include('AI.urls')),
     path('commission/', include('commission.urls')),
+    path('shipping/', include('shiprocket.urls')),  # Include shipping app URLs
     
 ]
 

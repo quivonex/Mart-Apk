@@ -7,14 +7,14 @@ from company.models import Company
 from product.models import Product
 from order.models import Address
 from state.services.shiprocket import ShiprocketService, get_shipping_rates
-ShipmentListSerializer
+
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 from decimal import Decimal
 import random
 from .models import ShipOrder, ShipOrderItem
 from .models import ReturnOrder
-
+from django.db.models import Q
 
 class ShippingRateAPIView(APIView):
 
@@ -943,6 +943,10 @@ class MyOrdersAPIView(APIView):
             orders = (
                 ShipOrder.objects
                 .filter(user=user)
+                .filter(
+                    Q(payment_method="COD") |
+                    Q(payment_method="PREPAID", payment_status=True)
+                )
                 .select_related(
                     "company",
                     "product",
@@ -2355,6 +2359,9 @@ class ShipOrderListAPIView(APIView):
                 "company",
                 "product",
                 "address"
+            ).filter(
+                Q(payment_method="COD") |
+                Q(payment_method="PREPAID", payment_status=True)
             ).order_by("-created_at")
 
             data = []
@@ -4832,22 +4839,84 @@ class ReturnOrderAPIView(APIView):
 
             status=status.HTTP_201_CREATED
         )        
+   
+class ReturnOrderListAPIView(APIView):
+
+    def post(self, request):
+
+        return_orders = (
+            ReturnOrder.objects
+            .select_related(
+                "order",
+                "order__product",
+                "order__company",
+                "order__address"
+            )
+            .order_by("-id")
+        )
+
+        data = []
+
+        for return_order in return_orders:
+
+            order = return_order.order
+
+            data.append({
+                "return_id": return_order.id,
+                "return_number": return_order.return_number,
+
+                "order_id": order.id,
+                "order_number": order.order_number,
+
+                "product": (
+                    order.product.name
+                    if order.product
+                    else None
+                ),
+
+                "quantity": return_order.quantity,
+
+                "reason": return_order.reason,
+
+                "reason_note": return_order.reason_note,
+
+                "refund_amount": return_order.refund_amount,
+
+                "status": return_order.status,
+
+                "order_status": order.status,
+
+                "created_at": return_order.created_at,
+
+                "updated_at": return_order.updated_at,
+            })
+
+        return Response(
+            {
+                "success": True,
+                "message": "Return orders fetched successfully.",
+                "count": len(data),
+                "data": data
+            },
+            status=status.HTTP_200_OK
+        )       
         
         
-        
+
+
 class ReturnShiprocketOrderAPIView(APIView):
 
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    # सध्या तुमच्या जुन्या code प्रमाणे authentication commented आहे.
+    # Production मध्ये authentication enable करणे सुरक्षित आहे.
+    # authentication_classes = [JWTAuthentication]
+    # permission_classes = [IsAuthenticated]
 
     def post(self, request):
 
         user = request.user
-
         return_id = request.data.get("return_id")
 
         if not return_id:
-
             return Response(
                 {
                     "success": False,
@@ -4857,11 +4926,10 @@ class ReturnShiprocketOrderAPIView(APIView):
             )
 
         # =====================================================
-        # GET RETURN
+        # GET RETURN ORDER
         # =====================================================
 
         try:
-
             return_order = ReturnOrder.objects.select_related(
                 "order",
                 "order__product",
@@ -4873,8 +4941,7 @@ class ReturnShiprocketOrderAPIView(APIView):
                 order__user=user
             )
 
-        except ReturnOrder.DoesNotExist:
-
+        except (ReturnOrder.DoesNotExist, ValueError, TypeError):
             return Response(
                 {
                     "success": False,
@@ -4884,17 +4951,39 @@ class ReturnShiprocketOrderAPIView(APIView):
             )
 
         # =====================================================
-        # GET ORIGINAL ORDER
+        # PREVENT DUPLICATE SHIPMENT CREATION
+        # =====================================================
+
+        if (
+            return_order.shipment_id
+            and str(return_order.shipment_id).strip()
+        ):
+            return Response(
+                {
+                    "success": True,
+                    "message": "Return shipment already exists.",
+                    "data": {
+                        "return_id": return_order.id,
+                        "return_number": return_order.return_number,
+                        "shiprocket_order_id":
+                            return_order.shiprocket_order_id,
+                        "shipment_id": return_order.shipment_id,
+                        "awb_code": return_order.awb_code,
+                        "courier_company":
+                            return_order.courier_company,
+                        "status": return_order.status
+                    }
+                },
+                status=status.HTTP_200_OK
+            )
+
+        # =====================================================
+        # ORIGINAL ORDER
         # =====================================================
 
         order = return_order.order
 
-        # =====================================================
-        # ONLY DELIVERED ORDER
-        # =====================================================
-
         if order.status != "DELIVERED":
-
             return Response(
                 {
                     "success": False,
@@ -4904,22 +4993,11 @@ class ReturnShiprocketOrderAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # =====================================================
-        # PRODUCT
-        # =====================================================
-
         product = order.product
-
         company = order.company
-
         customer = order.address
 
-        # =====================================================
-        # VALIDATION
-        # =====================================================
-
         if not company.pincode:
-
             return Response(
                 {
                     "success": False,
@@ -4929,7 +5007,6 @@ class ReturnShiprocketOrderAPIView(APIView):
             )
 
         if not customer.pincode:
-
             return Response(
                 {
                     "success": False,
@@ -4939,7 +5016,6 @@ class ReturnShiprocketOrderAPIView(APIView):
             )
 
         if not company.pickup_location:
-
             return Response(
                 {
                     "success": False,
@@ -4953,31 +5029,21 @@ class ReturnShiprocketOrderAPIView(APIView):
         # =====================================================
 
         try:
+            length = float(str(product.length).split()[0])
+            breadth = float(str(product.width).split()[0])
+            height = float(str(product.height).split()[0])
+            weight = float(str(product.weight).split()[0])
 
-            length = float(
-                str(product.length).split()[0]
-            )
+            if min(length, breadth, height, weight) <= 0:
+                raise ValueError(
+                    "Dimensions and weight must be greater than zero."
+                )
 
-            breadth = float(
-                str(product.width).split()[0]
-            )
-
-            height = float(
-                str(product.height).split()[0]
-            )
-
-            weight = float(
-                str(product.weight).split()[0]
-            )
-
-        except Exception as e:
-
+        except (ValueError, TypeError, IndexError) as exc:
             return Response(
                 {
                     "success": False,
-                    "message": (
-                        f"Invalid product dimensions/weight: {str(e)}"
-                    )
+                    "message": f"Invalid product dimensions/weight: {exc}"
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
@@ -4986,174 +5052,190 @@ class ReturnShiprocketOrderAPIView(APIView):
         # PRICE
         # =====================================================
 
-        price = (
-            product.final_price
-            if product.final_price
-            else product.price
-        )
+        try:
+            price = Decimal(
+                str(
+                    product.final_price
+                    if product.final_price
+                    else product.price
+                )
+            )
+            refund_amount = Decimal(str(return_order.refund_amount))
+
+        except (InvalidOperation, TypeError, ValueError):
+            return Response(
+                {
+                    "success": False,
+                    "message": "Invalid product price or refund amount."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         # =====================================================
-        # RETURN NUMBER
+        # SHIPROCKET VALID RETURN REASON
+        # =====================================================
+
+        reason_text = str(return_order.reason or "").strip().lower()
+
+        reason_mapping = {
+            "size issue": "size not as expected",
+            "wrong size": "size not as expected",
+            "size/quantity issue": "size or quantity issues",
+            "not fit": "does not fit",
+            "does not fit": "does not fit",
+            "damaged": "item is damaged",
+            "product damaged": "product damaged",
+            "wrong item": "received wrong item",
+            "wrong product": "received wrong item",
+            "defective": "item defective",
+            "quality issue": "quality not as expected",
+            "quality problem": "quality not as expected",
+            "changed mind": "changed my mind",
+            "no longer needed": "no longer needed",
+            "late delivery": "arrived too late",
+            "not as described": "not as described",
+            "other": "other",
+        }
+
+        shiprocket_reason = reason_mapping.get(
+            reason_text,
+            reason_text
+        )
+
+        valid_reasons = {
+            "bought by mistake",
+            "better price available",
+            "performance or quality not adequate",
+            "incompatible or not useful",
+            "product damaged, but shipping box ok",
+            "item arrived too late",
+            "missing parts or accessories",
+            "both product and shipping box damaged",
+            "wrong item was sent",
+            "item defective or doesn't work",
+            "no longer needed",
+            "didn't approve purchase",
+            "inaccurate website description",
+            "return against replacement",
+            "delay refund",
+            "delivered late",
+            "product does not match description on website",
+            "both product & outer box damaged",
+            "defective or does not work",
+            "product damaged",
+            "but outer box damaged",
+            "incorrect item delivered",
+            "product defective or doesn't work",
+            "product performance/quality is not up to my expectations",
+            "other",
+            "changed my mind",
+            "does not fit",
+            "size not as expected",
+            "item is damaged",
+            "received wrong item",
+            "parcel damaged on arrival",
+            "quality not as expected",
+            "missing item or accessories",
+            "performance not adequate",
+            "not as described",
+            "arrived too late",
+            "order not received",
+            "empty package",
+            "wrong item or wrong colour was sent",
+            "items or parts missing",
+            "size or quantity issues",
+            "status as delivered but order not received",
+            "n/a",
+        }
+
+        # Shiprocket reason list मध्ये नसेल तर valid fallback वापरा.
+        if shiprocket_reason not in valid_reasons:
+            shiprocket_reason = "other"
+
+        # =====================================================
+        # SHIPROCKET PAYLOAD
         # =====================================================
 
         return_number = return_order.return_number
 
-        # =====================================================
-        # PAYLOAD
-        # =====================================================
-
         payload = {
-
             "order_id": return_number,
+            "order_date": return_order.created_at.strftime(
+                "%Y-%m-%d %H:%M"
+            ),
 
-            "order_date":
-                return_order.created_at.strftime(
-                    "%Y-%m-%d %H:%M"
-                ),
+            # Pickup = Customer
+            "pickup_customer_name": customer.full_name,
+            "pickup_last_name": "",
+            "pickup_address": customer.address_line1,
+            "pickup_address_2": customer.address_line2 or "",
+            "pickup_city": customer.city,
+            "pickup_state": customer.state,
+            "pickup_country": customer.country or "India",
+            "pickup_pincode": customer.pincode,
+            "pickup_email": user.email or "",
+            "pickup_phone": customer.mobile_no,
 
-            # =================================================
-            # PICKUP = CUSTOMER
-            # =================================================
+            # Return destination = Company
+            "shipping_customer_name": company.name,
+            "shipping_last_name": "",
+            "shipping_address": company.address or "",
+            "shipping_address_2": "",
+            "shipping_city": company.taluka or company.district or "",
+            "shipping_state": company.state or "",
+            "shipping_country": "India",
+            "shipping_pincode": company.pincode,
+            "shipping_email": company.email or "",
+            "shipping_phone": company.phone_number or "",
 
-            "pickup_customer_name":
-                customer.full_name,
-
-            "pickup_last_name":
-                "",
-
-            "pickup_address":
-                customer.address_line1,
-
-            "pickup_address_2":
-                customer.address_line2 or "",
-
-            "pickup_city":
-                customer.city,
-
-            "pickup_state":
-                customer.state,
-
-            "pickup_country":
-                customer.country or "India",
-
-            "pickup_pincode":
-                customer.pincode,
-
-            "pickup_email":
-                user.email or "",
-
-            "pickup_phone":
-                customer.mobile_no,
-
-            # =================================================
-            # RETURN DESTINATION = COMPANY
-            # =================================================
-
-            "shipping_customer_name":
-                company.name,
-
-            "shipping_last_name":
-                "",
-
-            "shipping_address":
-                company.address or "",
-
-            "shipping_address_2":
-                "",
-
-            "shipping_city":
-                company.taluka
-                or company.district
-                or "",
-
-            "shipping_state":
-                company.state or "",
-
-            "shipping_country":
-                "India",
-
-            "shipping_pincode":
-                company.pincode,
-
-            "shipping_email":
-                company.email or "",
-
-            "shipping_phone":
-                company.phone_number or "",
-
-            # =================================================
-            # ITEM
-            # =================================================
-
+            # Product
             "order_items": [
-
                 {
                     "name": product.name,
-
-                    "sku":
-                        product.product_code
-                        or str(product.id),
-
-                    "units":
-                        return_order.quantity,
-
-                    "selling_price":
-                        str(price)
+                    "sku": product.product_code or str(product.id),
+                    "units": return_order.quantity,
+                    "selling_price": str(price),
                 }
-
             ],
 
-            # =================================================
-            # PAYMENT
-            # =================================================
+            # Payment
+            "payment_method": order.payment_method,
+            "sub_total": str(refund_amount),
 
-            "payment_method":
-                order.payment_method,
-
-            "sub_total":
-                str(return_order.refund_amount),
-
-            # =================================================
-            # DIMENSIONS
-            # =================================================
-
+            # Dimensions
             "length": length,
-
             "breadth": breadth,
-
             "height": height,
-
             "weight": weight,
 
-            "return_reason":
-                return_order.reason,
-
-            "return_reason_note":
-                return_order.reason_note or ""
+            # Return reason must match Shiprocket's accepted values
+            "return_reason": shiprocket_reason,
+            "return_reason_note": return_order.reason_note or "",
         }
 
-        print("========================================")
-        print("RETURN SHIPROCKET PAYLOAD")
-        print(payload)
-        print("========================================")
+        print("RETURN SHIPROCKET PAYLOAD:", payload)
 
         # =====================================================
         # CREATE RETURN SHIPMENT
         # =====================================================
 
-        response = (
-            ShiprocketService.create_return_shipment(
-                payload
+        try:
+            response = ShiprocketService.create_return_shipment(payload)
+        except Exception as exc:
+            print("SHIPROCKET RETURN ERROR:", str(exc))
+
+            return Response(
+                {
+                    "success": False,
+                    "message": "Shiprocket return shipment request failed.",
+                    "error": str(exc)
+                },
+                status=status.HTTP_502_BAD_GATEWAY
             )
-        )
 
-        print("========================================")
-        print("RETURN RESPONSE")
-        print(response)
-        print("========================================")
+        print("SHIPROCKET RETURN RESPONSE:", response)
 
-        if not response.get("success"):
-
+        if not isinstance(response, dict) or not response.get("success"):
             return Response(
                 {
                     "success": False,
@@ -5163,78 +5245,270 @@ class ReturnShiprocketOrderAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        data = response.get(
-            "data",
-            {}
-        )
+        # =====================================================
+        # EXTRACT THE REAL SHIPROCKET PAYLOAD
+        # =====================================================
+        #
+        # Expected service response example:
+        # {
+        #   "success": True,
+        #   "data": {
+        #       "status": 1,
+        #       "payload": {
+        #           "order_id": 1671284055,
+        #           "shipment_id": 1666934900,
+        #           "awb_code": "1504877691654",
+        #           "courier_name": "Delhivery Reverse Surface 5kg"
+        #       }
+        #   }
+        # }
+        #
+        # =====================================================
+
+        service_data = response.get("data") or {}
+
+        # Support both wrapped and direct response structures.
+        if isinstance(service_data, dict):
+            shipment_data = (
+                service_data.get("payload")
+                or service_data.get("data")
+                or service_data
+            )
+        else:
+            shipment_data = {}
+
+        # Some services return Shiprocket response at the top level.
+        if not shipment_data.get("shipment_id"):
+            outer_payload = response.get("payload") or {}
+            if outer_payload.get("shipment_id"):
+                shipment_data = outer_payload
 
         # =====================================================
-        # SAVE SHIPROCKET DETAILS
+        # CHECK SHIPROCKET STATUS AND IDS
         # =====================================================
 
-        return_order.shiprocket_order_id = str(
-            data.get("order_id", "")
-        )
+        shiprocket_status = service_data.get("status")
 
-        return_order.shipment_id = str(
-            data.get("shipment_id", "")
-        )
+        if shiprocket_status is None:
+            shiprocket_status = response.get("status")
 
-        return_order.awb_code = (
-            data.get("awb_code")
-            or ""
-        )
+        # Shiprocket status=0 indicates failure.
+        if str(shiprocket_status) == "0":
+            return Response(
+                {
+                    "success": False,
+                    "message": "Shiprocket did not create the return shipment.",
+                    "shiprocket_response": response
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        return_order.courier_company = (
-            data.get("courier_name")
-            or ""
-        )
+        shiprocket_order_id = shipment_data.get("order_id")
+        shipment_id = shipment_data.get("shipment_id")
+        awb_code = shipment_data.get("awb_code")
+        courier_name = shipment_data.get("courier_name")
 
-        return_order.status = "SHIPMENT_CREATED"
-
-        return_order.save()
+        if not shiprocket_order_id or not shipment_id:
+            return Response(
+                {
+                    "success": False,
+                    "message": (
+                        "Shiprocket response is missing order_id or shipment_id. "
+                        "Database was not updated."
+                    ),
+                    "shiprocket_response": response
+                },
+                status=status.HTTP_502_BAD_GATEWAY
+            )
 
         # =====================================================
-        # RESPONSE
+        # SAVE VALUES TO DATABASE
+        # =====================================================
+
+        try:
+            with transaction.atomic():
+                return_order.shiprocket_order_id = str(shiprocket_order_id)
+                return_order.shipment_id = str(shipment_id)
+                return_order.awb_code = str(awb_code or "")
+                return_order.courier_company = str(courier_name or "")
+                return_order.status = "SHIPMENT_CREATED"
+
+                return_order.save(
+                    update_fields=[
+                        "shiprocket_order_id",
+                        "shipment_id",
+                        "awb_code",
+                        "courier_company",
+                        "status",
+                        "updated_at",
+                    ]
+                )
+
+        except Exception as exc:
+            print("RETURN ORDER DATABASE SAVE ERROR:", str(exc))
+
+            return Response(
+                {
+                    "success": False,
+                    "message": (
+                        "Shiprocket created the shipment, but saving "
+                        "the details to the database failed."
+                    ),
+                    "shiprocket_order_id": str(shiprocket_order_id),
+                    "shipment_id": str(shipment_id),
+                    "awb_code": str(awb_code or ""),
+                    "error": str(exc)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        # Verify saved database values.
+        return_order.refresh_from_db()
+
+        # =====================================================
+        # SUCCESS RESPONSE
         # =====================================================
 
         return Response(
             {
                 "success": True,
-
-                "message":
-                    "Return shipment created successfully.",
-
+                "message": "Return shipment created and saved successfully.",
                 "data": {
-
-                    "return_id":
-                        return_order.id,
-
-                    "return_number":
-                        return_order.return_number,
-
-                    "shiprocket_order_id":
-                        return_order.shiprocket_order_id,
-
-                    "shipment_id":
-                        return_order.shipment_id,
-
-                    "awb_code":
-                        return_order.awb_code,
-
-                    "courier_company":
-                        return_order.courier_company,
-
-                    "status":
-                        return_order.status
+                    "return_id": return_order.id,
+                    "return_number": return_order.return_number,
+                    "shiprocket_order_id": return_order.shiprocket_order_id,
+                    "shipment_id": return_order.shipment_id,
+                    "awb_code": return_order.awb_code,
+                    "courier_company": return_order.courier_company,
+                    "status": return_order.status,
                 },
-
-                "shiprocket_response":
-                    data
+                "shiprocket_response": response,
             },
             status=status.HTTP_201_CREATED
         )
+
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
+from .models import ReturnOrder
+
+
+class ReturnShiprocketOrderListAPIView(APIView):
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        try:
+            # Login केलेल्या user चे return orders
+            return_orders = (
+                ReturnOrder.objects
+                .filter(order__user=request.user)
+                .select_related(
+                    "order",
+                    "order__product",
+                    "order__company",
+                    "order__address"
+                )
+                .order_by("-created_at")
+            )
+
+            data = []
+
+            for return_order in return_orders:
+
+                order = return_order.order
+                product = order.product
+
+                data.append({
+                    "return_id": return_order.id,
+                    "return_number": return_order.return_number,
+
+                    # Original order details
+                    "order_id": order.id,
+                    "order_status": order.status,
+                    "payment_method": order.payment_method,
+
+                    # Product details
+                    "product_id": product.id if product else None,
+                    "product_name": product.name if product else None,
+
+                    # Return details
+                    "quantity": return_order.quantity,
+                    "reason": return_order.reason,
+                    "reason_note": getattr(
+                        return_order,
+                        "reason_note",
+                        ""
+                    ),
+                    "refund_amount": str(
+                        return_order.refund_amount
+                    ) if return_order.refund_amount is not None else None,
+
+                    # Shiprocket details
+                    "shiprocket_order_id": (
+                        return_order.shiprocket_order_id
+                    ),
+                    "shipment_id": return_order.shipment_id,
+                    "awb_code": return_order.awb_code,
+                    "courier_company": return_order.courier_company,
+                    "status": return_order.status,
+
+                    # Date/time
+                    "created_at": (
+                        return_order.created_at.isoformat()
+                        if return_order.created_at else None
+                    ),
+                    "updated_at": (
+                        return_order.updated_at.isoformat()
+                        if getattr(
+                            return_order,
+                            "updated_at",
+                            None
+                        ) else None
+                    ),
+                })
+
+            return Response(
+                {
+                    "success": True,
+                    "message": "Return shipment list fetched successfully.",
+                    "count": len(data),
+                    "data": data
+                },
+                status=status.HTTP_200_OK
+            )
+
+        except Exception as exc:
+            return Response(
+                {
+                    "success": False,
+                    "message": "Failed to fetch return shipment list.",
+                    "error": str(exc)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
         
+import re
+
+from django.db import transaction
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
+from state.services.shiprocket import ShiprocketService
+
+# तुझ्या actual app मधून import कर:
+# from your_app.models import ReturnOrder
+
+
 class AssignReturnAWBAPIView(APIView):
 
     authentication_classes = [JWTAuthentication]
@@ -5242,185 +5516,223 @@ class AssignReturnAWBAPIView(APIView):
 
     def post(self, request):
 
-        return_id = request.data.get(
-            "return_id"
-        )
-
-        courier_id = request.data.get(
-            "courier_id"
-        )
-
-        # =====================================================
-        # VALIDATION
-        # =====================================================
+        return_id = request.data.get("return_id")
 
         if not return_id:
-
             return Response(
                 {
                     "success": False,
-                    "message": "return_id is required."
+                    "message": "return_id is required.",
                 },
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # =====================================================
-        # GET RETURN
-        # =====================================================
-
         try:
-
             return_order = ReturnOrder.objects.select_related(
                 "order"
             ).get(
                 id=return_id,
-                order__user=request.user
+                order__user=request.user,
             )
 
         except ReturnOrder.DoesNotExist:
-
             return Response(
                 {
                     "success": False,
-                    "message": "Return order not found."
+                    "message": "Return order not found.",
                 },
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUND,
             )
 
-        # =====================================================
-        # SHIPMENT ID
-        # =====================================================
+        # ------------------------------------------
+        # 1. AWB आधीच database मध्ये असेल तर तोच द्या
+        # ------------------------------------------
+        if return_order.awb_code:
+            return Response(
+                {
+                    "success": True,
+                    "message": "Return AWB already assigned.",
+                    "data": {
+                        "return_id": return_order.id,
+                        "return_number": return_order.return_number,
+                        "shipment_id": return_order.shipment_id,
+                        "awb_code": return_order.awb_code,
+                        "courier_company": return_order.courier_company,
+                        "status": return_order.status,
+                    },
+                },
+                status=status.HTTP_200_OK,
+            )
 
         if not return_order.shipment_id:
-
             return Response(
                 {
                     "success": False,
                     "message": (
-                        "Shiprocket shipment_id not found."
-                    )
+                        "shipment_id is missing. "
+                        "Create the return shipment first."
+                    ),
                 },
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # =====================================================
-        # ASSIGN AWB
-        # =====================================================
-
-        response = (
-            ShiprocketService.assign_return_awb(
-                shipment_id=return_order.shipment_id,
-                courier_id=courier_id
+        # ------------------------------------------
+        # 2. Shiprocket AWB assignment
+        # ------------------------------------------
+        try:
+            response_data = ShiprocketService.assign_return_awb(
+                shipment_id=return_order.shipment_id
             )
-        )
 
-        print("RETURN AWB RESPONSE:", response)
-
-        if not response.get("success"):
-
+        except Exception as exc:
             return Response(
                 {
                     "success": False,
-                    "message": "Return AWB assignment failed.",
-                    "shiprocket": response
+                    "message": "Shiprocket AWB assignment request failed.",
+                    "error": str(exc),
                 },
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_502_BAD_GATEWAY,
             )
 
-        data = response.get(
-            "data",
-            {}
-        )
+        shiprocket_data = response_data.get("data", {})
 
-        # =====================================================
-        # GET AWB DETAILS
-        # =====================================================
+        # Response structure can vary by Shiprocket response.
+        nested_data = (
+            shiprocket_data.get("response", {}).get("data", {})
+        )
 
         awb_code = (
-            data.get("awb_code")
-            or data.get("response", {}).get("data", {}).get("awb_code")
+            shiprocket_data.get("awb_code")
+            or shiprocket_data.get("response", {}).get("awb_code")
+            or nested_data.get("awb_code")
+        )
+
+        courier_company = (
+            shiprocket_data.get("courier_name")
+            or shiprocket_data.get("response", {}).get("courier_name")
+            or nested_data.get("courier_name")
+        )
+
+        # ------------------------------------------
+        # 3. Already assigned AWB error handle करा
+        # Example:
+        # AWB is already assigned with awb - 1504877691654
+        # and status - PICKUP GENERATED
+        # ------------------------------------------
+        error_message = (
+            nested_data.get("awb_assign_error")
+            or shiprocket_data.get("message")
+            or response_data.get("message")
             or ""
         )
 
-        courier_name = (
-            data.get("courier_name")
-            or data.get("response", {}).get("data", {}).get("courier_name")
-            or ""
-        )
+        if not awb_code and "already assigned" in error_message.lower():
 
-        # =====================================================
-        # SAVE
-        # =====================================================
+            match = re.search(
+                r"awb\s*-\s*([A-Za-z0-9]+)",
+                error_message,
+                re.IGNORECASE,
+            )
 
+            if match:
+                awb_code = match.group(1)
+
+        # ------------------------------------------
+        # 4. AWB उपलब्ध असल्यास database मध्ये save करा
+        # ------------------------------------------
         if awb_code:
 
-            return_order.awb_code = str(
-                awb_code
+            with transaction.atomic():
+
+                return_order.awb_code = str(awb_code)
+
+                if courier_company:
+                    return_order.courier_company = courier_company
+                elif not return_order.courier_company:
+                    # Known courier ID from the supplied response.
+                    if str(nested_data.get("courier_id", "")) == "138":
+                        return_order.courier_company = (
+                            "Delhivery Reverse Surface 5kg"
+                        )
+
+                # तुझ्या model मध्ये valid status choices असतील,
+                # तर त्यातील योग्य status वापर.
+                # Existing status आधीच PICKUP GENERATED असल्यास
+                # तो overwrite करण्याची गरज नाही.
+                current_status = str(
+                    return_order.status or ""
+                ).upper()
+
+                if not current_status or current_status in {
+                    "PENDING",
+                    "CREATED",
+                    "SHIPMENT_CREATED",
+                }:
+                    return_order.status = "PICKUP_PENDING"
+
+                return_order.save(
+                    update_fields=[
+                        "awb_code",
+                        "courier_company",
+                        "status",
+                    ]
+                )
+
+            return Response(
+                {
+                    "success": True,
+                    "message": (
+                        "Return AWB is available and saved successfully."
+                    ),
+                    "data": {
+                        "return_id": return_order.id,
+                        "return_number": return_order.return_number,
+                        "shipment_id": return_order.shipment_id,
+                        "awb_code": return_order.awb_code,
+                        "courier_company": return_order.courier_company,
+                        "status": return_order.status,
+                    },
+                    "shiprocket": response_data,
+                },
+                status=status.HTTP_200_OK,
             )
 
-        if courier_name:
-
-            return_order.courier_company = (
-                courier_name
-            )
-
-        return_order.status = (
-            "PICKUP_PENDING"
-        )
-
-        return_order.save()
-
-        # =====================================================
-        # RESPONSE
-        # =====================================================
-
+        # ------------------------------------------
+        # 5. AWB मिळाला नाही तर error द्या
+        # ------------------------------------------
         return Response(
             {
-                "success": True,
-
-                "message":
-                    "Return AWB assigned successfully.",
-
-                "data": {
-
-                    "return_id":
-                        return_order.id,
-
-                    "return_number":
-                        return_order.return_number,
-
-                    "shipment_id":
-                        return_order.shipment_id,
-
-                    "awb_code":
-                        return_order.awb_code,
-
-                    "courier_company":
-                        return_order.courier_company,
-
-                    "status":
-                        return_order.status
-                },
-
-                "shiprocket_response":
-                    data
-            }
-        )            
+                "success": False,
+                "message": "Return AWB assignment failed.",
+                "shiprocket": response_data,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
         
-        
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
+from django.db import transaction
+
+from .models import ReturnOrder
+from state.services.shiprocket import ShiprocketService
+
+
 class ReturnPickupRequestAPIView(APIView):
 
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def post(self, request):
 
-        return_id = request.data.get(
-            "return_id"
-        )
+        return_id = request.data.get("return_id")
 
+        # 1. Validate return_id
         if not return_id:
-
             return Response(
                 {
                     "success": False,
@@ -5429,160 +5741,140 @@ class ReturnPickupRequestAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # =====================================================
-        # GET RETURN
-        # =====================================================
-
+        # 2. Get return order for logged-in user
         try:
-
-            return_order = ReturnOrder.objects.select_related(
-                "order"
-            ).get(
-                id=return_id,
-                order__user=request.user
+            return_order = (
+                ReturnOrder.objects
+                .select_for_update()
+                .select_related("order")
+                .get(
+                    id=return_id,
+                    order__user=request.user
+                )
             )
 
         except ReturnOrder.DoesNotExist:
-
-            return Response(
-                {
-                    "success": False,
-                    "message": "Return order not found."
-                },
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        # =====================================================
-        # SHIPMENT
-        # =====================================================
-
-        if not return_order.shipment_id:
-
-            return Response(
-                {
-                    "success": False,
-                    "message": "Shipment ID not found."
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # =====================================================
-        # AWB
-        # =====================================================
-
-        if not return_order.awb_code:
-
             return Response(
                 {
                     "success": False,
                     "message": (
-                        "AWB is not assigned. "
-                        "Assign return AWB first."
+                        "Return order not found "
+                        "or you do not have permission."
+                    )
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # 3. Validate shipment ID
+        shipment_id = getattr(
+            return_order,
+            "shipment_id",
+            None
+        )
+
+        if not shipment_id:
+            return Response(
+                {
+                    "success": False,
+                    "message": (
+                        "shipment_id is missing. "
+                        "Please assign return AWB first."
+                    ),
+                    "data": {
+                        "return_id": return_order.id,
+                        "return_number": getattr(
+                            return_order,
+                            "return_number",
+                            None
+                        )
+                    }
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 4. Validate return AWB
+        awb_code = getattr(
+            return_order,
+            "awb_code",
+            None
+        )
+
+        if not awb_code:
+            return Response(
+                {
+                    "success": False,
+                    "message": (
+                        "Return AWB is not assigned. "
+                        "Please assign AWB first."
                     )
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # =====================================================
-        # PICKUP
-        # =====================================================
-
-        response = (
-            ShiprocketService.request_return_pickup(
-                return_order.shipment_id
-            )
+        # 5. Send pickup request to Shiprocket
+        result = ShiprocketService.request_return_pickup(
+            shipment_id=shipment_id
         )
 
-        print(
-            "RETURN PICKUP RESPONSE:",
-            response
-        )
-
-        if not response.get("success"):
-
+        if not result.get("success"):
             return Response(
                 {
                     "success": False,
-                    "message": (
-                        "Return pickup request failed."
-                    ),
-                    "shiprocket": response
+                    "message": "Shiprocket pickup request failed.",
+                    "source": "shiprocket_api",
+                    "data": result.get("data"),
+                    "error": result.get("error")
                 },
-                status=status.HTTP_400_BAD_REQUEST
+                status=(
+                    status.HTTP_502_BAD_GATEWAY
+                    if result.get("status_code") == 502
+                    else status.HTTP_400_BAD_REQUEST
+                )
             )
 
-        data = response.get(
-            "data",
-            {}
-        )
+        # 6. Save pickup status only if the model has this field.
+        # Do not mark the return as PICKED_UP here.
+        already_queued = result.get("already_queued", False)
 
-        # =====================================================
-        # PICKUP REQUEST ID
-        # =====================================================
-
-        pickup_request_id = (
-            data.get("pickup_token_number")
-            or data.get("pickup_request_id")
-            or data.get("response", {}).get(
-                "pickup_token_number"
+        if hasattr(return_order, "pickup_status"):
+            return_order.pickup_status = (
+                "Already in Pickup Queue"
+                if already_queued
+                else "Requested"
             )
-            or ""
-        )
+            return_order.save(
+                update_fields=["pickup_status"]
+            )
 
-        return_order.pickup_request_id = str(
-            pickup_request_id
-        )
-
-        return_order.pickup_status = (
-            "Requested"
-        )
-
-        return_order.status = (
-            "PICKED_UP"
-        )
-
-        return_order.save()
-
-        # =====================================================
-        # RESPONSE
-        # =====================================================
-
+        # 7. Return success response
         return Response(
             {
                 "success": True,
-
-                "message":
-                    "Return pickup requested successfully.",
-
+                "message": (
+                    "Pickup request is already in the "
+                    "Shiprocket queue."
+                    if already_queued
+                    else "Return pickup request submitted successfully."
+                ),
                 "data": {
-
-                    "return_id":
-                        return_order.id,
-
-                    "return_number":
-                        return_order.return_number,
-
-                    "shipment_id":
-                        return_order.shipment_id,
-
-                    "awb_code":
-                        return_order.awb_code,
-
-                    "pickup_request_id":
-                        return_order.pickup_request_id,
-
-                    "pickup_status":
-                        return_order.pickup_status,
-
-                    "status":
-                        return_order.status
-                },
-
-                "shiprocket_response":
-                    data
-            }
-        )        
-        
+                    "return_id": return_order.id,
+                    "return_number": getattr(
+                        return_order,
+                        "return_number",
+                        None
+                    ),
+                    "shipment_id": str(shipment_id),
+                    "awb_code": str(awb_code),
+                    "pickup_status": (
+                        "Already in Pickup Queue"
+                        if already_queued
+                        else "Requested"
+                    ),
+                    "shiprocket_response": result.get("data")
+                }
+            },
+            status=status.HTTP_200_OK
+        )
 class TrackReturnShipmentAPIView(APIView):
 
     authentication_classes = [JWTAuthentication]
@@ -6194,3 +6486,580 @@ class ShippingRateLocationAPIView(APIView):
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+            
+            
+            
+
+
+import secrets
+import logging
+
+from django.conf import settings
+from django.db import transaction
+from django.db.models import Q
+
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework import status
+
+from .models import ShipOrder
+
+
+logger = logging.getLogger(__name__)
+
+
+class ShiprocketWebhookAPIView(APIView):
+
+    # --------------------------------------------------
+    # WEBHOOK IS PUBLIC
+    # AUTHENTICATION IS DONE USING x-api-key
+    # --------------------------------------------------
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @transaction.atomic
+    def post(self, request):
+
+        # ==================================================
+        # 1. VERIFY WEBHOOK TOKEN
+        # ==================================================
+
+        expected_token = getattr(
+            settings,
+            "SHIPROCKET_WEBHOOK_TOKEN",
+            ""
+        )
+
+        expected_token = str(
+            expected_token
+        ).strip()
+
+        received_token = request.headers.get(
+            "x-api-key",
+            ""
+        )
+
+        received_token = str(
+            received_token
+        ).strip()
+
+        # ----------------------------------------------
+        # Invalid token
+        # ----------------------------------------------
+
+        if (
+            not expected_token
+            or not received_token
+            or not secrets.compare_digest(
+                received_token,
+                expected_token
+            )
+        ):
+
+            logger.warning(
+                "Invalid Shiprocket webhook authentication"
+            )
+
+            return Response(
+                {
+                    "success": False,
+                    "message": "Invalid webhook token"
+                },
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        # ==================================================
+        # 2. READ REQUEST PAYLOAD
+        # ==================================================
+
+        payload = request.data
+
+        logger.info(
+            "Shiprocket webhook received"
+        )
+
+        logger.info(
+            "Webhook payload: %s",
+            payload
+        )
+
+        # ----------------------------------------------
+        # Payload must be dictionary
+        # ----------------------------------------------
+
+        if not isinstance(payload, dict):
+
+            logger.warning(
+                "Invalid webhook payload format"
+            )
+
+            return Response(
+                {
+                    "success": True,
+                    "message": "Webhook received."
+                },
+                status=status.HTTP_200_OK
+            )
+
+        # ==================================================
+        # 3. HANDLE NESTED DATA
+        # ==================================================
+
+        data = payload
+
+        nested_data = payload.get(
+            "data"
+        )
+
+        if isinstance(
+            nested_data,
+            dict
+        ):
+
+            data = {
+                **payload,
+                **nested_data
+            }
+
+        logger.info(
+            "Processed webhook data: %s",
+            data
+        )
+
+        # ==================================================
+        # 4. EXTRACT ORDER REFERENCE
+        # ==================================================
+
+        order_reference = (
+            data.get("channel_order_id")
+            or data.get("channel_order_number")
+            or data.get("order_number")
+            or data.get("order_id")
+        )
+
+        # Convert to string
+        if order_reference is not None:
+
+            order_reference = str(
+                order_reference
+            ).strip()
+
+        # ==================================================
+        # 5. EXTRACT SHIPROCKET ORDER ID
+        # ==================================================
+
+        shiprocket_order_id = (
+            data.get("sr_order_id")
+            or data.get("shiprocket_order_id")
+            or data.get("shipment_order_id")
+        )
+
+        if shiprocket_order_id is not None:
+
+            shiprocket_order_id = str(
+                shiprocket_order_id
+            ).strip()
+
+        # ==================================================
+        # 6. EXTRACT AWB
+        # ==================================================
+
+        awb_code = (
+            data.get("awb")
+            or data.get("awb_code")
+            or data.get("awb_number")
+        )
+
+        if awb_code is not None:
+
+            awb_code = str(
+                awb_code
+            ).strip()
+
+        # ==================================================
+        # 7. EXTRACT COURIER
+        # ==================================================
+
+        courier_name = (
+            data.get("courier_name")
+            or data.get("courier_company")
+            or data.get("courier")
+        )
+
+        if courier_name is not None:
+
+            courier_name = str(
+                courier_name
+            ).strip()
+
+        # ==================================================
+        # 8. EXTRACT CURRENT STATUS
+        # ==================================================
+
+        current_status = (
+            data.get("current_status")
+            or data.get("shipment_status")
+            or data.get("status")
+        )
+
+        # --------------------------------------------------
+        # Sometimes status can be nested
+        # --------------------------------------------------
+
+        if not current_status:
+
+            shipment_data = data.get(
+                "shipment"
+            )
+
+            if isinstance(
+                shipment_data,
+                dict
+            ):
+
+                current_status = (
+                    shipment_data.get(
+                        "current_status"
+                    )
+                    or shipment_data.get(
+                        "shipment_status"
+                    )
+                    or shipment_data.get(
+                        "status"
+                    )
+                )
+
+        # ==================================================
+        # 9. IF STATUS MISSING
+        # ==================================================
+
+        if not current_status:
+
+            logger.warning(
+                "Webhook received but shipment status is missing."
+            )
+
+            return Response(
+                {
+                    "success": True,
+                    "message": "Webhook received, but shipment status is missing."
+                },
+                status=status.HTTP_200_OK
+            )
+
+        # ==================================================
+        # 10. NORMALIZE STATUS
+        # ==================================================
+
+        shiprocket_status = str(
+            current_status
+        ).strip().upper()
+
+        shiprocket_status = (
+            shiprocket_status
+            .replace("_", " ")
+            .replace("-", " ")
+        )
+
+        # ==================================================
+        # 11. STATUS MAPPING
+        # ==================================================
+
+        status_map = {
+
+            # ------------------------------------------
+            # Pending
+            # ------------------------------------------
+
+            "NEW": "PENDING",
+            "PENDING": "PENDING",
+
+            # ------------------------------------------
+            # Confirmed
+            # ------------------------------------------
+
+            "CONFIRMED": "CONFIRMED",
+            "ORDER CONFIRMED": "CONFIRMED",
+            "INVOICED": "CONFIRMED",
+
+            # ------------------------------------------
+            # Packed
+            # ------------------------------------------
+
+            "READY TO SHIP": "PACKED",
+            "READY TO SHIP ": "PACKED",
+            "PACKED": "PACKED",
+            "PICKUP SCHEDULED": "PACKED",
+            "PICKUP GENERATED": "PACKED",
+            "PICKUP QUEUED": "PACKED",
+
+            # ------------------------------------------
+            # Shipped
+            # ------------------------------------------
+
+            "SHIPPED": "SHIPPED",
+            "PICKED UP": "SHIPPED",
+            "IN TRANSIT": "SHIPPED",
+            "DISPATCHED": "SHIPPED",
+
+            # ------------------------------------------
+            # Out For Delivery
+            # ------------------------------------------
+
+            "OUT FOR DELIVERY": "OUT_FOR_DELIVERY",
+
+            # ------------------------------------------
+            # Delivered
+            # ------------------------------------------
+
+            "DELIVERED": "DELIVERED",
+
+            # ------------------------------------------
+            # Cancelled
+            # ------------------------------------------
+
+            "CANCELLED": "CANCELLED",
+            "CANCELED": "CANCELLED",
+            "ORDER CANCELLED": "CANCELLED",
+            "ORDER CANCELED": "CANCELLED",
+
+            # ------------------------------------------
+            # Return Requested
+            # ------------------------------------------
+
+            "RETURN PENDING": "RETURN_REQUESTED",
+            "RETURN REQUESTED": "RETURN_REQUESTED",
+            "RETURN INITIATED": "RETURN_REQUESTED",
+            "RTO INITIATED": "RETURN_REQUESTED",
+
+            # ------------------------------------------
+            # Return Pickup
+            # ------------------------------------------
+
+            "RETURN PICKUP QUEUED": "RETURN_PICKUP",
+            "RETURN PICKUP": "RETURN_PICKUP",
+            "OUT FOR PICKUP": "RETURN_PICKUP",
+
+            # ------------------------------------------
+            # Return In Transit
+            # ------------------------------------------
+
+            "RETURN IN TRANSIT": "RETURN_IN_TRANSIT",
+            "RTO IN TRANSIT": "RETURN_IN_TRANSIT",
+
+            # ------------------------------------------
+            # Returned
+            # ------------------------------------------
+
+            "RETURNED": "RETURNED",
+            "RETURN DELIVERED": "RETURNED",
+            "RTO DELIVERED": "RETURNED",
+        }
+
+        new_status = status_map.get(
+            shiprocket_status
+        )
+
+        # ==================================================
+        # 12. STATUS NOT MAPPED
+        # ==================================================
+
+        if not new_status:
+
+            logger.warning(
+                "Unmapped Shiprocket status: %s",
+                shiprocket_status
+            )
+
+            return Response(
+                {
+                    "success": True,
+                    "message": "Webhook received; status is not mapped.",
+                    "shiprocket_status": shiprocket_status
+                },
+                status=status.HTTP_200_OK
+            )
+
+        # ==================================================
+        # 13. FIND ORDER
+        # ==================================================
+
+        query = Q()
+
+        # ------------------------------------------
+        # QNX Mart order number
+        # ------------------------------------------
+
+        if order_reference:
+
+            query |= Q(
+                order_number=str(
+                    order_reference
+                )
+            )
+
+        # ------------------------------------------
+        # Shiprocket order ID
+        # ------------------------------------------
+
+        if shiprocket_order_id:
+
+            query |= Q(
+                shipment__shiprocket_order_id=str(
+                    shiprocket_order_id
+                )
+            )
+
+        # ------------------------------------------
+        # AWB
+        # ------------------------------------------
+
+        if awb_code:
+
+            query |= Q(
+                shipment__awb_code=str(
+                    awb_code
+                )
+            )
+
+        # ==================================================
+        # 14. NO REFERENCE
+        # ==================================================
+
+        if not query:
+
+            logger.warning(
+                "Webhook has no order reference, "
+                "Shiprocket order ID or AWB."
+            )
+
+            return Response(
+                {
+                    "success": True,
+                    "message": "Webhook received; order reference is missing."
+                },
+                status=status.HTTP_200_OK
+            )
+
+        # ==================================================
+        # 15. GET ORDER
+        # ==================================================
+
+        order = (
+            ShipOrder.objects
+            .select_for_update()
+            .filter(query)
+            .distinct()
+            .first()
+        )
+
+        # ==================================================
+        # 16. ORDER NOT FOUND
+        # ==================================================
+
+        if not order:
+
+            logger.warning(
+                "Matching ShipOrder not found. "
+                "Order Reference=%s, "
+                "Shiprocket Order ID=%s, "
+                "AWB=%s",
+                order_reference,
+                shiprocket_order_id,
+                awb_code
+            )
+
+            # ------------------------------------------
+            # IMPORTANT
+            # Return 200 to Shiprocket
+            # ------------------------------------------
+
+            return Response(
+                {
+                    "success": True,
+                    "message": "Webhook received, but matching order was not found.",
+                    "order_reference": order_reference,
+                    "shiprocket_order_id": shiprocket_order_id,
+                    "awb_code": awb_code
+                },
+                status=status.HTTP_200_OK
+            )
+
+        # ==================================================
+        # 17. OLD STATUS
+        # ==================================================
+
+        old_status = order.status
+
+        update_fields = []
+
+        # ==================================================
+        # 18. UPDATE STATUS
+        # ==================================================
+
+        if order.status != new_status:
+
+            order.status = new_status
+
+            update_fields.append(
+                "status"
+            )
+
+        # ==================================================
+        # 19. UPDATE COURIER
+        # ==================================================
+
+        if courier_name:
+
+            if order.courier_name != courier_name:
+
+                order.courier_name = courier_name
+
+                update_fields.append(
+                    "courier_name"
+                )
+
+        # ==================================================
+        # 20. SAVE
+        # ==================================================
+
+        if update_fields:
+
+            update_fields.append(
+                "updated_at"
+            )
+
+            order.save(
+                update_fields=update_fields
+            )
+
+        # ==================================================
+        # 21. LOG
+        # ==================================================
+
+        logger.info(
+            "QNX Mart order status synchronized | "
+            "Order=%s | Old=%s | New=%s",
+            order.order_number,
+            old_status,
+            order.status
+        )
+
+        # ==================================================
+        # 22. SUCCESS RESPONSE
+        # ==================================================
+
+        return Response(
+            {
+                "success": True,
+                "message": "Order status synchronized successfully.",
+                "order_id": order.id,
+                "order_number": order.order_number,
+                "old_status": old_status,
+                "new_status": order.status,
+                "courier_name": order.courier_name
+            },
+            status=status.HTTP_200_OK
+        )
