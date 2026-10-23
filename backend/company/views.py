@@ -23,7 +23,7 @@ from django.db import transaction
 from enquiry.models import BankDetails, MarketingPartner
 from order.models import OrderItem
 from company.shiprocket import create_company_pickup_location
-
+from commission.models import MarketingPartnerWallet,MarketingPartnerWalletTransaction
 import razorpay
 
 from rest_framework.views import APIView
@@ -240,6 +240,8 @@ QNX Mart B2B Team
             },
             status=status.HTTP_201_CREATED,
         )
+
+
 from payment.models import PaymentSetting
 class CreateCompanyPaymentOrderAPIView(APIView):
 
@@ -364,295 +366,15 @@ class CreateCompanyPaymentOrderAPIView(APIView):
 
 from .shiprocket import create_company_pickup_location
 
-# class VerifyCompanyPaymentAPIView(APIView):
-
-#     authentication_classes = [JWTAuthentication]
-#     permission_classes = [IsAuthenticated]
-
-#     def post(self, request):
-
-#         payment_id = request.data.get("payment_id")
-#         order_id = request.data.get("order_id")
-#         signature = request.data.get("signature")
-#         company_id = request.data.get("company_id")
-
-#         # =====================================================
-#         # 1. VALIDATE PAYMENT DATA
-#         # =====================================================
-
-#         if not all([
-#             payment_id,
-#             order_id,
-#             signature,
-#             company_id
-#         ]):
-
-#             return Response(
-#                 {
-#                     "status": False,
-#                     "message": "Missing payment data"
-#                 },
-#                 status=status.HTTP_400_BAD_REQUEST
-#             )
-
-#         # =====================================================
-#         # 2. RAZORPAY CLIENT
-#         # =====================================================
-
-#         client = Client(
-#             auth=(
-#                 settings.RAZORPAY_KEY_ID,
-#                 settings.RAZORPAY_KEY_SECRET
-#             )
-#         )
-
-#         # =====================================================
-#         # 3. VERIFY RAZORPAY SIGNATURE
-#         # =====================================================
-
-#         try:
-
-#             client.utility.verify_payment_signature(
-#                 {
-#                     "razorpay_order_id": order_id,
-#                     "razorpay_payment_id": payment_id,
-#                     "razorpay_signature": signature
-#                 }
-#             )
-
-#         except Exception as e:
-
-#             return Response(
-#                 {
-#                     "status": False,
-#                     "message": "Payment verification failed",
-#                     "error": str(e)
-#                 },
-#                 status=status.HTTP_400_BAD_REQUEST
-#             )
-
-#         # =====================================================
-#         # 4. GET COMPANY
-#         # =====================================================
-
-#         try:
-
-#             company = Company.objects.get(
-#                 id=company_id,
-#                 order_id=order_id
-#             )
-
-#         except Company.DoesNotExist:
-
-#             return Response(
-#                 {
-#                     "status": False,
-#                     "message": (
-#                         "Company not found for this "
-#                         "payment order"
-#                     )
-#                 },
-#                 status=status.HTTP_404_NOT_FOUND
-#             )
-
-#         # =====================================================
-#         # 5. SECURITY CHECK
-#         # =====================================================
-
-#         if company.user != request.user:
-
-#             return Response(
-#                 {
-#                     "status": False,
-#                     "message": (
-#                         "You do not have permission "
-#                         "for this company"
-#                     )
-#                 },
-#                 status=status.HTTP_403_FORBIDDEN
-#             )
-
-#         # =====================================================
-#         # 6. ALREADY PAID CHECK
-#         # =====================================================
-
-#         if company.payment_status == "paid":
-
-#             return Response(
-#                 {
-#                     "status": True,
-#                     "message": "Payment already verified",
-#                     "company_id": company.id,
-#                     "payment_id": company.payment_id
-#                 },
-#                 status=status.HTTP_200_OK
-#             )
-
-#         # =====================================================
-#         # 7. PROCESS PAYMENT
-#         # =====================================================
-
-#         try:
-
-#             with transaction.atomic():
-
-#                 # =================================================
-#                 # FETCH RAZORPAY ORDER
-#                 # =================================================
-
-#                 razorpay_order = client.order.fetch(
-#                     order_id
-#                 )
-
-#                 # =================================================
-#                 # AMOUNT PAISA -> RUPEES
-#                 # =================================================
-
-#                 company_amount = (
-#                     Decimal(
-#                         str(
-#                             razorpay_order["amount"]
-#                         )
-#                     )
-#                     / Decimal("100")
-#                 )
-
-#                 company_amount = company_amount.quantize(
-#                     Decimal("0.01")
-#                 )
-
-#                 print(
-#                     "========================================"
-#                 )
-
-#                 print(
-#                     "COMPANY PAYMENT VERIFIED"
-#                 )
-
-#                 print(
-#                     "COMPANY:",
-#                     company.id
-#                 )
-
-#                 print(
-#                     "AMOUNT:",
-#                     company_amount
-#                 )
-
-#                 print(
-#                     "========================================"
-#                 )
-
-#                 # =================================================
-#                 # 8. UPDATE COMPANY PAYMENT STATUS
-#                 # =================================================
-
-#                 company.payment_id = payment_id
-#                 company.payment_status = "paid"
-
-#                 company.save(
-#                     update_fields=[
-#                         "payment_id",
-#                         "payment_status"
-#                     ]
-#                 )
-
-#                 # =================================================
-#                 # 9. SHIPROCKET PICKUP LOCATION
-#                 # =================================================
-
-#                 shiprocket_result = None
-#                 shiprocket_error = None
-
-#                 try:
-
-#                     shiprocket_result = (
-#                         create_company_pickup_location(
-#                             company
-#                         )
-#                     )
-
-#                     print(
-#                         "SHIPROCKET PICKUP LOCATION CREATED:"
-#                     )
-
-#                     print(
-#                         shiprocket_result
-#                     )
-
-#                 except Exception as e:
-
-#                     shiprocket_error = str(e)
-
-#                     print(
-#                         "SHIPROCKET PICKUP LOCATION "
-#                         "CREATION FAILED:"
-#                     )
-
-#                     print(
-#                         shiprocket_error
-#                     )
-
-#                 # =================================================
-#                 # 10. FINAL RESPONSE
-#                 # =================================================
-
-#                 response_data = {
-
-#                     "status": True,
-
-#                     "message": (
-#                         "Payment successful. "
-#                         "Company registration completed."
-#                     ),
-
-#                     "payment_id": payment_id,
-
-#                     "company_id": company.id,
-
-#                     "company_amount": str(
-#                         company_amount
-#                     ),
-
-#                     "shiprocket_pickup": (
-#                         shiprocket_result
-#                         if shiprocket_result
-#                         else None
-#                     )
-#                 }
-
-#                 if shiprocket_error:
-
-#                     response_data[
-#                         "shiprocket_error"
-#                     ] = shiprocket_error
-
-#                 return Response(
-#                     response_data,
-#                     status=status.HTTP_200_OK
-#                 )
-
-#         # =====================================================
-#         # 11. EXCEPTION
-#         # =====================================================
-
-#         except Exception as e:
-
-#             import traceback
-
-#             traceback.print_exc()
-
-#             return Response(
-#                 {
-#                     "status": False,
-#                     "message": str(e)
-#                 },
-#                 status=status.HTTP_400_BAD_REQUEST
-#             )
 class VerifyCompanyPaymentAPIView(APIView):
 
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [
+        JWTAuthentication
+    ]
+
+    permission_classes = [
+        IsAuthenticated
+    ]
 
     def post(self, request):
 
@@ -662,12 +384,28 @@ class VerifyCompanyPaymentAPIView(APIView):
             # 1. REQUEST DATA
             # =====================================================
 
-            payment_id = request.data.get("payment_id")
-            order_id = request.data.get("order_id")
-            signature = request.data.get("signature")
-            company_id = request.data.get("company_id")
+            payment_id = request.data.get(
+                "payment_id"
+            )
+
+            order_id = request.data.get(
+                "order_id"
+            )
+
+            signature = request.data.get(
+                "signature"
+            )
+
+            company_id = request.data.get(
+                "company_id"
+            )
+
+            # =====================================================
+            # 2. VALIDATION
+            # =====================================================
 
             if not payment_id:
+
                 return Response(
                     {
                         "status": False,
@@ -677,6 +415,7 @@ class VerifyCompanyPaymentAPIView(APIView):
                 )
 
             if not order_id:
+
                 return Response(
                     {
                         "status": False,
@@ -686,6 +425,7 @@ class VerifyCompanyPaymentAPIView(APIView):
                 )
 
             if not signature:
+
                 return Response(
                     {
                         "status": False,
@@ -695,6 +435,7 @@ class VerifyCompanyPaymentAPIView(APIView):
                 )
 
             if not company_id:
+
                 return Response(
                     {
                         "status": False,
@@ -704,7 +445,7 @@ class VerifyCompanyPaymentAPIView(APIView):
                 )
 
             # =====================================================
-            # 2. GET COMPANY
+            # 3. GET COMPANY
             # =====================================================
 
             try:
@@ -719,7 +460,10 @@ class VerifyCompanyPaymentAPIView(APIView):
                 return Response(
                     {
                         "status": False,
-                        "message": "Company not found for this payment order",
+                        "message": (
+                            "Company not found for "
+                            "this payment order"
+                        ),
                         "company_id": company_id,
                         "order_id": order_id
                     },
@@ -727,7 +471,7 @@ class VerifyCompanyPaymentAPIView(APIView):
                 )
 
             # =====================================================
-            # 3. SECURITY CHECK
+            # 4. SECURITY CHECK
             # =====================================================
 
             if company.user_id != request.user.id:
@@ -735,13 +479,16 @@ class VerifyCompanyPaymentAPIView(APIView):
                 return Response(
                     {
                         "status": False,
-                        "message": "You do not have permission for this company"
+                        "message": (
+                            "You do not have permission "
+                            "for this company"
+                        )
                     },
                     status=status.HTTP_403_FORBIDDEN
                 )
 
             # =====================================================
-            # 4. ALREADY PAID
+            # 5. ALREADY PAID
             # =====================================================
 
             if company.payment_status == "paid":
@@ -749,27 +496,31 @@ class VerifyCompanyPaymentAPIView(APIView):
                 return Response(
                     {
                         "status": True,
-                        "message": "Payment already verified",
+                        "message": (
+                            "Payment already verified"
+                        ),
                         "company_id": company.id,
                         "payment_id": company.payment_id,
-                        "payment_status": company.payment_status
+                        "payment_status": (
+                            company.payment_status
+                        )
                     },
                     status=status.HTTP_200_OK
                 )
 
             # =====================================================
-            # 5. RAZORPAY CLIENT
+            # 6. RAZORPAY CLIENT
             # =====================================================
 
-            client = Client(
-                auth=(
-                    settings.RAZORPAY_KEY_ID,
-                    settings.RAZORPAY_KEY_SECRET
-                )
+            client = razorpay.Client(
+            auth=(
+                settings.RAZORPAY_KEY_ID,
+                settings.RAZORPAY_KEY_SECRET
+            )
             )
 
             # =====================================================
-            # 6. VERIFY RAZORPAY SIGNATURE
+            # 7. VERIFY RAZORPAY SIGNATURE
             # =====================================================
 
             try:
@@ -787,43 +538,56 @@ class VerifyCompanyPaymentAPIView(APIView):
                 return Response(
                     {
                         "status": False,
-                        "message": "Payment signature verification failed",
+                        "message": (
+                            "Payment signature "
+                            "verification failed"
+                        ),
                         "error": str(e)
                     },
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
             # =====================================================
-            # 7. FETCH RAZORPAY ORDER
+            # 8. FETCH RAZORPAY ORDER
             # =====================================================
 
             try:
 
-                razorpay_order = client.order.fetch(order_id)
+                razorpay_order = (
+                    client.order.fetch(order_id)
+                )
 
             except Exception as e:
 
                 return Response(
                     {
                         "status": False,
-                        "message": "Unable to fetch Razorpay order",
+                        "message": (
+                            "Unable to fetch "
+                            "Razorpay order"
+                        ),
                         "error": str(e)
                     },
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
             # =====================================================
-            # 8. GET RAZORPAY AMOUNT
+            # 9. GET PAYMENT AMOUNT
             # =====================================================
 
-            razorpay_amount = razorpay_order.get("amount")
+            razorpay_amount = (
+                razorpay_order.get("amount")
+            )
 
             if razorpay_amount is None:
 
                 return Response(
                     {
                         "status": False,
-                        "message": "Amount not found in Razorpay order"
+                        "message": (
+                            "Amount not found "
+                            "in Razorpay order"
+                        )
                     },
                     status=status.HTTP_400_BAD_REQUEST
                 )
@@ -836,12 +600,97 @@ class VerifyCompanyPaymentAPIView(APIView):
             )
 
             # =====================================================
-            # 9. UPDATE COMPANY PAYMENT
+            # 10. FIND MARKETING PARTNER
+            # =====================================================
+
+            marketing_partner = None
+
+            if company.referral_code:
+
+                marketing_partner = (
+                    MarketingPartner.objects
+                    .filter(
+                        referral_code=company.referral_code
+                    )
+                    .first()
+                )
+
+            # =====================================================
+            # 11. FIND APPROVED AGREEMENT
+            # =====================================================
+
+            marketing_partner_agreement = None
+
+            if marketing_partner:
+
+                marketing_partner_agreement = (
+                    marketing_partner
+                    .marketing_partner_agreements
+                    .filter(
+                        status="approved"
+                    )
+                    .order_by(
+                        "-created_at"
+                    )
+                    .first()
+                )
+
+            # =====================================================
+            # 12. COMMISSION DEFAULT
+            # =====================================================
+
+            company_commission_percentage = (
+                Decimal("0.00")
+            )
+
+            company_commission_amount = (
+                Decimal("0.00")
+            )
+
+            # =====================================================
+            # 13. CALCULATE COMPANY REGISTRATION COMMISSION
+            # =====================================================
+
+            if marketing_partner_agreement:
+
+                company_commission_percentage = (
+                    marketing_partner_agreement
+                    .company_commission_percentage
+                    or Decimal("0.00")
+                )
+
+                company_commission_percentage = (
+                    Decimal(
+                        str(
+                            company_commission_percentage
+                        )
+                    )
+                )
+
+                # ---------------------------------------------
+                # Commission calculation
+                # ---------------------------------------------
+
+                company_commission_amount = (
+                    company_amount
+                    * company_commission_percentage
+                    / Decimal("100")
+                ).quantize(
+                    Decimal("0.01")
+                )
+
+            # =====================================================
+            # 14. TRANSACTION
             # =====================================================
 
             with transaction.atomic():
 
+                # =============================================
+                # 14.1 UPDATE COMPANY PAYMENT
+                # =============================================
+
                 company.payment_id = payment_id
+
                 company.payment_status = "paid"
 
                 company.save(
@@ -851,17 +700,98 @@ class VerifyCompanyPaymentAPIView(APIView):
                     ]
                 )
 
+                # =============================================
+                # 14.2 MARKETING PARTNER COMMISSION
+                # =============================================
+
+                if (
+                    marketing_partner
+                    and marketing_partner_agreement
+                    and company_commission_amount > 0
+                ):
+
+                    # -----------------------------------------
+                    # Get / Create Partner Wallet
+                    # -----------------------------------------
+
+                    partner_wallet, wallet_created = (
+                        MarketingPartnerWallet.objects
+                        .get_or_create(
+                            marketing_partner=(
+                                marketing_partner
+                            )
+                        )
+                    )
+
+                    # -----------------------------------------
+                    # Credit Partner
+                    # -----------------------------------------
+
+                    partner_wallet.balance += (
+                        company_commission_amount
+                    )
+
+                    partner_wallet.save(
+                        update_fields=[
+                            "balance",
+                            "updated_at"
+                        ]
+                    )
+
+                    # -----------------------------------------
+                    # Transaction
+                    # -----------------------------------------
+
+                    MarketingPartnerWalletTransaction.objects.create(
+                        wallet=partner_wallet,
+
+                        company=company,
+
+                        transaction_type="CREDIT",
+
+                        amount=(
+                            company_commission_amount
+                        ),
+
+                        commission_percentage=(
+                            company_commission_percentage
+                        ),
+
+                        base_amount=(
+                            company_amount
+                        ),
+
+                        commission_type=(
+                            "COMPANY_REGISTRATION"
+                        ),
+
+                        description=(
+                            f"Company registration "
+                            f"commission for "
+                            f"{company.name}. "
+                            f"Company payment "
+                            f"₹{company_amount}, "
+                            f"commission "
+                            f"{company_commission_percentage}%, "
+                            f"commission amount "
+                            f"₹{company_commission_amount}."
+                        )
+                    )
+
             # =====================================================
-            # 10. CREATE SHIPROCKET PICKUP LOCATION
+            # 15. CREATE SHIPROCKET PICKUP LOCATION
             # =====================================================
 
             shiprocket_result = None
+
             shiprocket_error = None
 
             try:
 
                 shiprocket_result = (
-                    create_company_pickup_location(company)
+                    create_company_pickup_location(
+                        company
+                    )
                 )
 
             except Exception as e:
@@ -869,26 +799,67 @@ class VerifyCompanyPaymentAPIView(APIView):
                 shiprocket_error = str(e)
 
             # =====================================================
-            # 11. FINAL RESPONSE
+            # 16. FINAL RESPONSE
             # =====================================================
 
             response_data = {
+
                 "status": True,
+
                 "message": (
                     "Payment successful. "
                     "Company registration completed."
                 ),
+
                 "payment_id": payment_id,
+
                 "company_id": company.id,
+
                 "order_id": order_id,
-                "payment_status": company.payment_status,
-                "company_amount": str(company_amount),
-                "shiprocket_pickup": shiprocket_result
+
+                "payment_status": (
+                    company.payment_status
+                ),
+
+                "company_amount": str(
+                    company_amount
+                ),
+
+                # =============================================
+                # MARKETING PARTNER
+                # =============================================
+
+                "marketing_partner": {
+
+                    "found": bool(
+                        marketing_partner
+                    ),
+
+                    "name": (
+                        marketing_partner.full_name
+                        if marketing_partner
+                        else None
+                    ),
+
+                    "commission_percentage": str(
+                        company_commission_percentage
+                    ),
+
+                    "commission_amount": str(
+                        company_commission_amount
+                    )
+                },
+
+                "shiprocket_pickup": (
+                    shiprocket_result
+                )
             }
 
             if shiprocket_error:
 
-                response_data["shiprocket_error"] = shiprocket_error
+                response_data[
+                    "shiprocket_error"
+                ] = shiprocket_error
 
             return Response(
                 response_data,
@@ -912,7 +883,271 @@ class VerifyCompanyPaymentAPIView(APIView):
                     "error": str(e)
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )            
+            )
+# class VerifyCompanyPaymentAPIView(APIView):
+
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request):
+
+#         try:
+
+#             # =====================================================
+#             # 1. REQUEST DATA
+#             # =====================================================
+
+#             payment_id = request.data.get("payment_id")
+#             order_id = request.data.get("order_id")
+#             signature = request.data.get("signature")
+#             company_id = request.data.get("company_id")
+
+#             if not payment_id:
+#                 return Response(
+#                     {
+#                         "status": False,
+#                         "message": "payment_id is required"
+#                     },
+#                     status=status.HTTP_400_BAD_REQUEST
+#                 )
+
+#             if not order_id:
+#                 return Response(
+#                     {
+#                         "status": False,
+#                         "message": "order_id is required"
+#                     },
+#                     status=status.HTTP_400_BAD_REQUEST
+#                 )
+
+#             if not signature:
+#                 return Response(
+#                     {
+#                         "status": False,
+#                         "message": "signature is required"
+#                     },
+#                     status=status.HTTP_400_BAD_REQUEST
+#                 )
+
+#             if not company_id:
+#                 return Response(
+#                     {
+#                         "status": False,
+#                         "message": "company_id is required"
+#                     },
+#                     status=status.HTTP_400_BAD_REQUEST
+#                 )
+
+#             # =====================================================
+#             # 2. GET COMPANY
+#             # =====================================================
+
+#             try:
+
+#                 company = Company.objects.get(
+#                     id=company_id,
+#                     order_id=order_id
+#                 )
+
+#             except Company.DoesNotExist:
+
+#                 return Response(
+#                     {
+#                         "status": False,
+#                         "message": "Company not found for this payment order",
+#                         "company_id": company_id,
+#                         "order_id": order_id
+#                     },
+#                     status=status.HTTP_404_NOT_FOUND
+#                 )
+
+#             # =====================================================
+#             # 3. SECURITY CHECK
+#             # =====================================================
+
+#             if company.user_id != request.user.id:
+
+#                 return Response(
+#                     {
+#                         "status": False,
+#                         "message": "You do not have permission for this company"
+#                     },
+#                     status=status.HTTP_403_FORBIDDEN
+#                 )
+
+#             # =====================================================
+#             # 4. ALREADY PAID
+#             # =====================================================
+
+#             if company.payment_status == "paid":
+
+#                 return Response(
+#                     {
+#                         "status": True,
+#                         "message": "Payment already verified",
+#                         "company_id": company.id,
+#                         "payment_id": company.payment_id,
+#                         "payment_status": company.payment_status
+#                     },
+#                     status=status.HTTP_200_OK
+#                 )
+
+#             # =====================================================
+#             # 5. RAZORPAY CLIENT
+#             # =====================================================
+
+#             client = Client(
+#                 auth=(
+#                     settings.RAZORPAY_KEY_ID,
+#                     settings.RAZORPAY_KEY_SECRET
+#                 )
+#             )
+
+#             # =====================================================
+#             # 6. VERIFY RAZORPAY SIGNATURE
+#             # =====================================================
+
+#             try:
+
+#                 client.utility.verify_payment_signature(
+#                     {
+#                         "razorpay_order_id": order_id,
+#                         "razorpay_payment_id": payment_id,
+#                         "razorpay_signature": signature
+#                     }
+#                 )
+
+#             except Exception as e:
+
+#                 return Response(
+#                     {
+#                         "status": False,
+#                         "message": "Payment signature verification failed",
+#                         "error": str(e)
+#                     },
+#                     status=status.HTTP_400_BAD_REQUEST
+#                 )
+
+#             # =====================================================
+#             # 7. FETCH RAZORPAY ORDER
+#             # =====================================================
+
+#             try:
+
+#                 razorpay_order = client.order.fetch(order_id)
+
+#             except Exception as e:
+
+#                 return Response(
+#                     {
+#                         "status": False,
+#                         "message": "Unable to fetch Razorpay order",
+#                         "error": str(e)
+#                     },
+#                     status=status.HTTP_400_BAD_REQUEST
+#                 )
+
+#             # =====================================================
+#             # 8. GET RAZORPAY AMOUNT
+#             # =====================================================
+
+#             razorpay_amount = razorpay_order.get("amount")
+
+#             if razorpay_amount is None:
+
+#                 return Response(
+#                     {
+#                         "status": False,
+#                         "message": "Amount not found in Razorpay order"
+#                     },
+#                     status=status.HTTP_400_BAD_REQUEST
+#                 )
+
+#             company_amount = (
+#                 Decimal(str(razorpay_amount))
+#                 / Decimal("100")
+#             ).quantize(
+#                 Decimal("0.01")
+#             )
+
+#             # =====================================================
+#             # 9. UPDATE COMPANY PAYMENT
+#             # =====================================================
+
+#             with transaction.atomic():
+
+#                 company.payment_id = payment_id
+#                 company.payment_status = "paid"
+
+#                 company.save(
+#                     update_fields=[
+#                         "payment_id",
+#                         "payment_status"
+#                     ]
+#                 )
+
+#             # =====================================================
+#             # 10. CREATE SHIPROCKET PICKUP LOCATION
+#             # =====================================================
+
+#             shiprocket_result = None
+#             shiprocket_error = None
+
+#             try:
+
+#                 shiprocket_result = (
+#                     create_company_pickup_location(company)
+#                 )
+
+#             except Exception as e:
+
+#                 shiprocket_error = str(e)
+
+#             # =====================================================
+#             # 11. FINAL RESPONSE
+#             # =====================================================
+
+#             response_data = {
+#                 "status": True,
+#                 "message": (
+#                     "Payment successful. "
+#                     "Company registration completed."
+#                 ),
+#                 "payment_id": payment_id,
+#                 "company_id": company.id,
+#                 "order_id": order_id,
+#                 "payment_status": company.payment_status,
+#                 "company_amount": str(company_amount),
+#                 "shiprocket_pickup": shiprocket_result
+#             }
+
+#             if shiprocket_error:
+
+#                 response_data["shiprocket_error"] = shiprocket_error
+
+#             return Response(
+#                 response_data,
+#                 status=status.HTTP_200_OK
+#             )
+
+#         # =========================================================
+#         # GLOBAL EXCEPTION
+#         # =========================================================
+
+#         except Exception as e:
+
+#             import traceback
+
+#             traceback.print_exc()
+
+#             return Response(
+#                 {
+#                     "status": False,
+#                     "message": "Something went wrong",
+#                     "error": str(e)
+#                 },
+#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
+#             )            
             
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -1254,32 +1489,49 @@ class CompanyProductListView(APIView):
 
     def post(self, request):
 
-        company_id = request.data.get('company_id')
+        try:
+            company_id = request.data.get("company_id")
 
-        if not company_id:
-            return Response({
-                "status": "error",
-                "message": "company_id is required"
-            }, status=400)
+            if not company_id:
+                return Response(
+                    {
+                        "status": "error",
+                        "message": "company_id is required"
+                    },
+                    status=400
+                )
 
-        products = Product.objects.filter(company_id=company_id)
+            products = Product.objects.filter(
+                company_id=company_id
+            )
 
-        data = products.values(
-            'id',
-            'thumbnail_s3_key',
-            'name',
-            'price',
-            'final_price',
-            'stock_quantity',
-            'status'
-        )
+            data = products.values(
+                "id",
+                "thumbnail_s3_key",
+                "name",
+                "price",
+                "final_price",
+                "stock_quantity",
+                "status"
+            )
 
-        return Response({
-            "status": "success",
-            "data": list(data)
-        })    
-        
-        
+            return Response(
+                {
+                    "status": "success",
+                    "data": list(data)
+                },
+                status=200
+            )
+
+        except Exception as e:
+            return Response(
+                {
+                    "status": "error",
+                    "message": "Something went wrong",
+                    "error": str(e)
+                },
+                status=500
+            )  
         
 from django.db.models import Sum, F
 from rest_framework.views import APIView

@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Q
 from datetime import datetime, timedelta
+from payment.models import CustomerSubscription
 from real_estate.whatsapp import send_whatsapp_meeting_message
 from enquiry.models import MarketingPartner
 from .models import Amenity, Property, PropertyEnquiry, Builder
@@ -813,6 +814,8 @@ class PropertyCreateAPIView(APIView):
 
         except Exception as e:
 
+            transaction.set_rollback(True)
+
             return Response(
                 {
                     "success": False,
@@ -1286,34 +1289,195 @@ class MyPropertyListAPIView(APIView):
             
 class PropertyEnquiryCreateAPIView(APIView):
 
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
     def post(self, request):
 
-        serializer = PropertyEnquiryCreateSerializer(
-            data=request.data
-        )
+        user = request.user
 
-        if serializer.is_valid():
+        property_id = request.data.get("property")
 
-            enquiry = serializer.save()
+        if not property_id:
+            return Response(
+                {
+                    "success": False,
+                    "message": "property_id is required."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            property_obj = Property.objects.get(id=property_id)
+
+        except Property.DoesNotExist:
+            return Response(
+                {
+                    "success": False,
+                    "message": "Property not found."
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # =====================================================
+        # ADMIN PROPERTY
+        # FREE ENQUIRY
+        # =====================================================
+
+        if property_obj.source == "admin":
+
+            enquiry = PropertyEnquiry.objects.create(
+                customer=user,
+                property=property_obj,
+                customer_name=request.data.get(
+                    "customer_name",
+                    user.name
+                ),
+                customer_email=request.data.get(
+                    "customer_email",
+                    user.email
+                ),
+                customer_mobile=request.data.get(
+                    "customer_mobile",
+                    user.phone_number
+                ),
+                flat_type=request.data.get("flat_type"),
+                budget_min=request.data.get("budget_min"),
+                budget_max=request.data.get("budget_max"),
+                message=request.data.get("message")
+            )
 
             return Response(
                 {
                     "success": True,
                     "message": "Property enquiry created successfully.",
                     "enquiry_id": enquiry.id,
-                    "data": serializer.data
+                    "property": {
+                        "property_id": property_obj.id,
+                        "source": property_obj.source
+                    },
+                    "subscription": {
+                        "required": False,
+                        "free": True
+                    }
                 },
                 status=status.HTTP_201_CREATED
             )
 
+        # =====================================================
+        # WEBSITE PROPERTY
+        # SUBSCRIPTION REQUIRED
+        # =====================================================
+
+        now = timezone.now()
+
+        subscription = (
+            CustomerSubscription.objects
+            .select_for_update()
+            .filter(
+                user=user,
+                is_active=True,
+                start_date__lte=now,
+                end_date__gte=now
+            )
+            .order_by("-end_date")
+            .first()
+        )
+
+        if not subscription:
+            return Response(
+                {
+                    "success": False,
+                    "message": "Active subscription is required to create an enquiry for website property.",
+                    "property_source": property_obj.source,
+                    "subscription_required": True
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # =====================================================
+        # CHECK ENQUIRY LIMIT
+        # =====================================================
+
+        if subscription.enquiry_used >= subscription.enquiry_limit:
+
+            return Response(
+                {
+                    "success": False,
+                    "message": "Your enquiry limit has been exhausted.",
+                    "enquiry_limit": subscription.enquiry_limit,
+                    "enquiry_used": subscription.enquiry_used,
+                    "remaining_enquiries": 0
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # =====================================================
+        # CREATE ENQUIRY
+        # =====================================================
+
+        enquiry = PropertyEnquiry.objects.create(
+            customer=user,
+            property=property_obj,
+            customer_name=request.data.get(
+                "customer_name",
+                user.name
+            ),
+            customer_email=request.data.get(
+                "customer_email",
+                user.email
+            ),
+            customer_mobile=request.data.get(
+                "customer_mobile",
+                user.phone_number
+            ),
+            flat_type=request.data.get("flat_type"),
+            budget_min=request.data.get("budget_min"),
+            budget_max=request.data.get("budget_max"),
+            message=request.data.get("message")
+        )
+
+        # =====================================================
+        # INCREASE USED ENQUIRY
+        # =====================================================
+
+        subscription.enquiry_used += 1
+
+        subscription.save(
+            update_fields=[
+                "enquiry_used",
+                "updated_at"
+            ]
+        )
+
+        remaining_enquiries = max(
+            subscription.enquiry_limit - subscription.enquiry_used,
+            0
+        )
+
         return Response(
             {
-                "success": False,
-                "message": "Property enquiry creation failed.",
-                "errors": serializer.errors
+                "success": True,
+                "message": "Property enquiry created successfully.",
+                "enquiry_id": enquiry.id,
+                "property": {
+                    "property_id": property_obj.id,
+                    "source": property_obj.source
+                },
+                "subscription": {
+                    "required": True,
+                    "free": False,
+                    "plan": subscription.plan.name,
+                    "enquiry_limit": subscription.enquiry_limit,
+                    "enquiry_used": subscription.enquiry_used,
+                    "remaining_enquiries": remaining_enquiries,
+                    "start_date": subscription.start_date,
+                    "end_date": subscription.end_date
+                }
             },
-            status=status.HTTP_400_BAD_REQUEST
-        )   
+            status=status.HTTP_201_CREATED
+        )
         
         
               

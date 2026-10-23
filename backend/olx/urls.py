@@ -13,6 +13,9 @@ from .views import (
     BazaarPlanCreateAPIView,
     BazaarPlanPricingListAPIView,
     BazaarPricingCreateAPIView,
+    BazaarSettingsCreateAPIView,
+    BazaarSettingsListAPIView,
+    BazaarSettingsUpdateAPIView,
     BazaarSubCategoryCreateAPIView,
     BazaarSubCategoryDeleteAPIView,
     BazaarSubCategoryListAPIView,
@@ -44,4 +47,7 @@ urlpatterns = [
     path("payment/verify/", BazaarVerifyPaymentAPIView.as_view(), name="bazaar-payment-verify"),
     path("enquiries/create/",BazaarEnquiryCreateAPIView.as_view(),name="bazaar-enquiry-create"),
     path("enquiries/",BazaarEnquiryListAPIView.as_view(),name="bazaar-enquiry-list"),
+    path("settings/create/",BazaarSettingsCreateAPIView.as_view(), name="bazaar-settings-create"),
+    path("settings/",BazaarSettingsListAPIView.as_view(),name="bazaar-settings-list"),
+    path("settings/update/",BazaarSettingsUpdateAPIView.as_view(),name="bazaar-settings-update"),
 ]

@@ -162,3 +162,69 @@ class PropertySubscriptionPayment(models.Model):
     paid_at = models.DateTimeField(blank=True,null=True)
     class Meta:
         db_table = "property_subscription_payments"    
+        
+        
+        
+        
+        
+        
+        
+class CustomerSubscriptionPlan(models.Model):
+    name = models.CharField(max_length=100)
+    price = models.DecimalField(max_digits=10,decimal_places=2)
+    enquiry_limit = models.PositiveIntegerField(default=0)
+    duration_days = models.PositiveIntegerField(default=30)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name        
+    
+    
+class CustomerSubscription(models.Model):
+
+    user = models.ForeignKey(User,on_delete=models.CASCADE,related_name="customer_subscriptions")
+    plan = models.ForeignKey(CustomerSubscriptionPlan,on_delete=models.PROTECT,related_name="subscriptions")
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    enquiry_limit = models.PositiveIntegerField(default=0)
+    enquiry_used = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user} - {self.plan.name}"
+
+    @property
+    def remaining_enquiries(self):
+        return max(
+            self.enquiry_limit - self.enquiry_used,
+            0
+        )    
+        
+        
+class CustomerSubscriptionPayment(models.Model):
+
+    STATUS_CHOICES = (
+        ("created", "Created"),
+        ("success", "Success"),
+        ("failed", "Failed"),
+    )
+
+    user = models.ForeignKey(User,on_delete=models.CASCADE,related_name="subscription_payments")
+    plan = models.ForeignKey(CustomerSubscriptionPlan,on_delete=models.PROTECT,related_name="payments")
+    razorpay_order_id = models.CharField(max_length=255,unique=True)
+    razorpay_payment_id = models.CharField(max_length=255,blank=True,null=True)
+    razorpay_signature = models.CharField(max_length=500,blank=True,null=True)
+    amount = models.DecimalField(max_digits=10,decimal_places=2)
+    status = models.CharField(max_length=20,choices=STATUS_CHOICES,default="created")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user} - {self.razorpay_order_id}"        

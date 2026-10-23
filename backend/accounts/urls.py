@@ -12,7 +12,6 @@ urlpatterns = [
     path('forgot-password/send-otp/', ForgotPasswordSendOTPView.as_view()),
     path('forgot-password/verify-otp/', ForgotPasswordVerifyOTPView.as_view()),
     path('forgot-password/reset/', ResetPasswordView.as_view()),
-    
     path("instagram-reel/create/",CreateInstagramReelAPI.as_view(),name="create-instagram-reel"),
     path("instagram-reel/list/",InstagramReelListAPI.as_view(),name="instagram-reels"),
     path("instagram-reel/list-all/",InstagramReelListAllAPI.as_view(),name="instagram-reels-all"),

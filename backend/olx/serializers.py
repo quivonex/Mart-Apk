@@ -105,6 +105,7 @@ class BazaarListingSerializer(serializers.ModelSerializer):
         model = BazaarListing
         fields = [
             "id",
+            "user_id"
             "title",
             "description",
             "price",

@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from decimal import Decimal, InvalidOperation
 from rest_framework import status
 import json
-
+from .models import BazaarSettings
 from .models import BazaarEnquiry
 from .whatsapp import send_bazaar_enquiry_message
 from django.db.models import Max
@@ -135,6 +135,16 @@ class BazaarCategoryListAPIView(APIView):
         
         
         
+from django.db import transaction
+from django.utils import timezone
+from datetime import timedelta
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+
+
 class BazaarListingCreateAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
@@ -151,9 +161,77 @@ class BazaarListingCreateAPIView(APIView):
             print("FILES:", request.FILES)
             print("====================================")
 
-            # ==========================================
+            # ==================================================
+            # GET BAZAAR SETTINGS
+            # ==================================================
+
+            settings_obj = BazaarSettings.objects.filter(
+                is_active=True
+            ).order_by("-id").first()
+
+            if not settings_obj:
+
+                return Response(
+                    {
+                        "success": False,
+                        "message": "Bazaar settings are not configured."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # ==================================================
+            # CHECK USER'S EXISTING LISTINGS
+            # ==================================================
+
+            existing_listing_count = BazaarListing.objects.filter(
+                user=request.user
+            ).count()
+
+            is_first_listing = existing_listing_count == 0
+
+            # ==================================================
+            # FIRST LISTING FREE
+            # ==================================================
+
+            if (
+                is_first_listing
+                and settings_obj.first_listing_free
+            ):
+
+                free_period_days = settings_obj.free_listing_days
+
+                active_from = timezone.now()
+
+                expires_at = (
+                    active_from
+                    + timedelta(days=free_period_days)
+                )
+
+                listing_status = "active"
+
+                subscription_required = False
+
+            # ==================================================
+            # SECOND / NEXT LISTING
+            # ==================================================
+
+            else:
+
+                free_period_days = 0
+
+                active_from = None
+
+                expires_at = None
+
+                # Subscription required
+                subscription_required = True
+
+                # Listing pending until subscription/payment
+                listing_status = "pending"
+
+            # ==================================================
             # SERIALIZER
-            # ==========================================
+            # ==================================================
 
             serializer = BazaarListingCreateSerializer(
                 data=request.data
@@ -170,25 +248,30 @@ class BazaarListingCreateAPIView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # ==========================================
+            # ==================================================
             # CREATE LISTING
-            # ==========================================
+            # ==================================================
 
             listing = serializer.save(
-                user=request.user
+                user=request.user,
+                status=listing_status,
+                is_first_listing=is_first_listing,
+                free_period_days=free_period_days,
+                active_from=active_from,
+                expires_at=expires_at
             )
 
-            # ==========================================
+            # ==================================================
             # GET MULTIPLE IMAGES
-            # ==========================================
+            # ==================================================
 
             images = request.FILES.getlist("images")
 
             image_data = []
 
-            # ==========================================
+            # ==================================================
             # S3 IMAGE UPLOAD
-            # ==========================================
+            # ==================================================
 
             for index, image in enumerate(images):
 
@@ -197,13 +280,11 @@ class BazaarListingCreateAPIView(APIView):
                     image.name
                 )
 
-                # Upload image to S3
                 s3_key = upload_bazaar_listing_image(
                     image,
                     listing.id
                 )
 
-                # Save image record
                 listing_image = BazaarListingImage.objects.create(
                     listing=listing,
                     image_s3_key=s3_key,
@@ -211,35 +292,45 @@ class BazaarListingCreateAPIView(APIView):
                     sort_order=index
                 )
 
-                # ======================================
-                # IMAGE RESPONSE
-                # ======================================
-
                 image_data.append(
                     {
                         "id": listing_image.id,
 
-                        "image_s3_key": listing_image.image_s3_key,
+                        "image_s3_key": (
+                            listing_image.image_s3_key
+                        ),
 
                         "image_url": get_bazaar_image_url(
                             listing_image.image_s3_key
                         ),
 
-                        "is_primary": listing_image.is_primary,
+                        "is_primary": (
+                            listing_image.is_primary
+                        ),
 
-                        "sort_order": listing_image.sort_order
+                        "sort_order": (
+                            listing_image.sort_order
+                        )
                     }
                 )
 
-            # ==========================================
+            # ==================================================
             # SUCCESS RESPONSE
-            # ==========================================
+            # ==================================================
 
             return Response(
                 {
                     "success": True,
 
-                    "message": "Listing created successfully.",
+                    "message": (
+                        "First listing created successfully "
+                        "and is free for "
+                        f"{free_period_days} days."
+                        if is_first_listing
+                        else
+                        "Listing created successfully. "
+                        "Subscription is required to activate this listing."
+                    ),
 
                     "data": {
 
@@ -247,17 +338,17 @@ class BazaarListingCreateAPIView(APIView):
 
                         "user_id": listing.user.id,
 
-                        # ------------------------------
+                        # ----------------------------------
                         # CATEGORY
-                        # ------------------------------
+                        # ----------------------------------
 
                         "category_id": listing.category.id,
 
                         "category_name": listing.category.name,
 
-                        # ------------------------------
+                        # ----------------------------------
                         # SUBCATEGORY
-                        # ------------------------------
+                        # ----------------------------------
 
                         "subcategory_id": (
                             listing.subcategory.id
@@ -271,9 +362,9 @@ class BazaarListingCreateAPIView(APIView):
                             else None
                         ),
 
-                        # ------------------------------
+                        # ----------------------------------
                         # BASIC DETAILS
-                        # ------------------------------
+                        # ----------------------------------
 
                         "title": listing.title,
 
@@ -287,9 +378,9 @@ class BazaarListingCreateAPIView(APIView):
 
                         "seller_type": listing.seller_type,
 
-                        # ------------------------------
+                        # ----------------------------------
                         # LOCATION
-                        # ------------------------------
+                        # ----------------------------------
 
                         "city": listing.city,
 
@@ -311,35 +402,43 @@ class BazaarListingCreateAPIView(APIView):
                             else None
                         ),
 
-                        # ------------------------------
+                        # ----------------------------------
                         # ATTRIBUTES
-                        # ------------------------------
+                        # ----------------------------------
 
                         "attributes": listing.attributes,
 
-                        # ------------------------------
+                        # ----------------------------------
                         # STATUS
-                        # ------------------------------
+                        # ----------------------------------
 
                         "status": listing.status,
 
-                        # ------------------------------
+                        "subscription_required": (
+                            subscription_required
+                        ),
+
+                        # ----------------------------------
                         # FEATURED
-                        # ------------------------------
+                        # ----------------------------------
 
                         "is_featured": listing.is_featured,
 
-                        # ------------------------------
+                        # ----------------------------------
                         # FIRST LISTING
-                        # ------------------------------
+                        # ----------------------------------
 
-                        "is_first_listing": listing.is_first_listing,
+                        "is_first_listing": (
+                            listing.is_first_listing
+                        ),
 
-                        "free_period_days": listing.free_period_days,
+                        "free_period_days": (
+                            listing.free_period_days
+                        ),
 
-                        # ------------------------------
+                        # ----------------------------------
                         # DATES
-                        # ------------------------------
+                        # ----------------------------------
 
                         "active_from": listing.active_from,
 
@@ -349,9 +448,9 @@ class BazaarListingCreateAPIView(APIView):
 
                         "updated_at": listing.updated_at,
 
-                        # ------------------------------
+                        # ----------------------------------
                         # IMAGES
-                        # ------------------------------
+                        # ----------------------------------
 
                         "images": image_data
                     }
@@ -370,7 +469,10 @@ class BazaarListingCreateAPIView(APIView):
             return Response(
                 {
                     "success": False,
-                    "message": "Something went wrong while creating listing.",
+                    "message": (
+                        "Something went wrong while "
+                        "creating listing."
+                    ),
                     "error": str(e)
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -2474,3 +2576,173 @@ class BazaarEnquiryListAPIView(APIView):
             "count": len(data),
             "data": data
         }, status=status.HTTP_200_OK)        
+        
+        
+        
+class BazaarSettingsCreateAPIView(APIView):
+
+    def post(self, request):
+
+        try:
+            settings = BazaarSettings.objects.create(
+                first_listing_free=request.data.get(
+                    "first_listing_free", True
+                ),
+                free_listing_days=request.data.get(
+                    "free_listing_days", 15
+                ),
+                payment_required_after_expiry=request.data.get(
+                    "payment_required_after_expiry", True
+                ),
+                is_active=request.data.get(
+                    "is_active", True
+                )
+            )
+
+            return Response(
+                {
+                    "success": True,
+                    "message": "Bazaar settings created successfully.",
+                    "data": {
+                        "id": settings.id,
+                        "first_listing_free": settings.first_listing_free,
+                        "free_listing_days": settings.free_listing_days,
+                        "payment_required_after_expiry": settings.payment_required_after_expiry,
+                        "is_active": settings.is_active,
+                        "updated_at": settings.updated_at
+                    }
+                },
+                status=status.HTTP_201_CREATED
+            )
+
+        except Exception as e:
+
+            return Response(
+                {
+                    "success": False,
+                    "message": "Failed to create Bazaar settings.",
+                    "error": str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+            
+class BazaarSettingsListAPIView(APIView):
+
+    def get(self, request):
+
+        try:
+            settings = BazaarSettings.objects.all().order_by("-id")
+
+            data = []
+
+            for item in settings:
+                data.append({
+                    "id": item.id,
+                    "first_listing_free": item.first_listing_free,
+                    "free_listing_days": item.free_listing_days,
+                    "payment_required_after_expiry": item.payment_required_after_expiry,
+                    "is_active": item.is_active,
+                    "updated_at": item.updated_at
+                })
+
+            return Response(
+                {
+                    "success": True,
+                    "message": "Bazaar settings fetched successfully.",
+                    "data": data
+                },
+                status=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+
+            return Response(
+                {
+                    "success": False,
+                    "message": "Failed to fetch Bazaar settings.",
+                    "error": str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )            
+            
+            
+class BazaarSettingsUpdateAPIView(APIView):
+
+    def put(self, request):
+
+        try:
+
+            settings_id = request.data.get("id")
+
+            if not settings_id:
+                return Response(
+                    {
+                        "success": False,
+                        "message": "id is required."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            try:
+                settings = BazaarSettings.objects.get(
+                    id=settings_id
+                )
+            except BazaarSettings.DoesNotExist:
+
+                return Response(
+                    {
+                        "success": False,
+                        "message": "Bazaar settings not found."
+                    },
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            if "first_listing_free" in request.data:
+                settings.first_listing_free = request.data.get(
+                    "first_listing_free"
+                )
+
+            if "free_listing_days" in request.data:
+                settings.free_listing_days = request.data.get(
+                    "free_listing_days"
+                )
+
+            if "payment_required_after_expiry" in request.data:
+                settings.payment_required_after_expiry = request.data.get(
+                    "payment_required_after_expiry"
+                )
+
+            if "is_active" in request.data:
+                settings.is_active = request.data.get(
+                    "is_active"
+                )
+
+            settings.save()
+
+            return Response(
+                {
+                    "success": True,
+                    "message": "Bazaar settings updated successfully.",
+                    "data": {
+                        "id": settings.id,
+                        "first_listing_free": settings.first_listing_free,
+                        "free_listing_days": settings.free_listing_days,
+                        "payment_required_after_expiry": settings.payment_required_after_expiry,
+                        "is_active": settings.is_active,
+                        "updated_at": settings.updated_at
+                    }
+                },
+                status=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+
+            return Response(
+                {
+                    "success": False,
+                    "message": "Failed to update Bazaar settings.",
+                    "error": str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )            

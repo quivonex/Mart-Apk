@@ -2050,6 +2050,12 @@ class MyMarketingPartnerAgreementListAPIView(APIView):
                     "marketing_partner_address": (
                         agreement.marketing_partner_address
                     ),
+                    "adhar_number": (
+                        agreement.adhar_number
+                    ),
+                    "pan_number": (
+                        agreement.pan_number
+                    ),
 
                     # ---------------------------------
                     # Commission
