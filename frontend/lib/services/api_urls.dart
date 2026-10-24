@@ -1,7 +1,7 @@
 class ApiUrls {
   // Base URL - Change this to your actual server IP
 
-  static const String baseUrl = 'http://192.168.31.4:16000';
+      static const String baseUrl = 'http://192.168.31.5:16000';
   //  static const String baseUrl = "https://api.qnxmartb2b.com";
 
   // Auth Endpoints
@@ -133,7 +133,7 @@ class ApiUrls {
   static const String nearbyPlaces = '/admin_profile/places/nearby/';
   static const String nearbySubscriptionPlans = '/admin_profile/subscription-plans/list/';
   static const String nearbySubscriptionCreateOrder = '/admin_profile/subscription/create-order/';
-  static const String nearbySubscriptionVerify = '/admin_profile/place_subscription/sub_payment_verify/';
+  static const String nearbySubscriptionVerify = '/admin_profile/subscription/verify-payment/';
 
   // ✅ Chat (buyer ↔ seller / agent) – shared by Product, Property and ReMart detail
   static const String chatCreate = '/olx/chats/create/';
@@ -159,6 +159,31 @@ class ApiUrls {
 
 
 
+
+  // ✅ Product search (server side, saves search history when logged in)
+  static const String productSearch = '/product/product/search/';
+
+  // ✅ Edit my ReMart listing / my property (multipart, images add + delete)
+  static const String remartListingUpdate = '/olx/listings/update/';
+  static const String remartMyListings = '/olx/my-listings/';
+  static const String propertyUpdate = '/real_estate/property-update/';
+
+  // ✅ Orders extras
+  static const String orderInvoice = '/shipping/download-invoice/';
+  static const String returnOrders = '/shipping/return-orders/';
+  static const String returnOrderTrack = '/shipping/return-order/track/';
+  static const String addressUpdate = '/order/address/update/';
+
+  // ✅ ReMart chat plan extras
+  static const String commPaymentHistory = '/payment/bazaar-communication/history/';
+  static const String commSubscriptionDetail = '/olx/bazaar-communication-subscriptions/detail/';
+
+  // ✅ Offer discount filters (home filter sheet)
+  static const String offerFilterOptions = '/offer/offers/filter-options/';
+
+  // ✅ Instagram reels: list = my reels (login), list-all = all active reels (home)
+  static const String instagramReels = '/accounts/instagram-reel/list/';
+  static const String instagramReelsAll = '/accounts/instagram-reel/list-all/';
 
   // Full URL getters
   static String get loginUrl => '$baseUrl$login';
@@ -281,4 +306,29 @@ class ApiUrls {
   static String get customerMySubscriptionsUrl => '$baseUrl$customerMySubscriptions';
   static String get customerSubscriptionCreateOrderUrl => '$baseUrl$customerSubscriptionCreateOrder';
   static String get customerSubscriptionVerifyUrl => '$baseUrl$customerSubscriptionVerify';
+
+  // Product search
+  static String get productSearchUrl => '$baseUrl$productSearch';
+
+  // Edit listing / property
+  static String get remartListingUpdateUrl => '$baseUrl$remartListingUpdate';
+  static String get remartMyListingsUrl => '$baseUrl$remartMyListings';
+  static String get propertyUpdateUrl => '$baseUrl$propertyUpdate';
+
+  // Orders extras
+  static String get orderInvoiceUrl => '$baseUrl$orderInvoice';
+  static String get returnOrdersUrl => '$baseUrl$returnOrders';
+  static String get returnOrderTrackUrl => '$baseUrl$returnOrderTrack';
+  static String get addressUpdateUrl => '$baseUrl$addressUpdate';
+
+  // Chat plan extras
+  static String get commPaymentHistoryUrl => '$baseUrl$commPaymentHistory';
+  static String get commSubscriptionDetailUrl => '$baseUrl$commSubscriptionDetail';
+
+  // Offers
+  static String get offerFilterOptionsUrl => '$baseUrl$offerFilterOptions';
+
+  // Instagram reels
+  static String get instagramReelsUrl => '$baseUrl$instagramReels';
+  static String get instagramReelsAllUrl => '$baseUrl$instagramReelsAll';
 }

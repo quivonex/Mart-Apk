@@ -146,7 +146,18 @@ class _ChatScreenState extends State<ChatScreen> {
     await _load();
     if (!mounted) return;
     _poll = Timer.periodic(const Duration(seconds: 5), (_) => _pollNow());
-    if (widget.openOfferOnStart && !_needsLogin && _error == null) {
+    if (widget.openOfferOnStart && !ChatService.offersSupported) {
+      // No offer API yet → put the offer in the message box instead.
+      final p = widget.suggestedOffer;
+      if (_input.text.isEmpty) {
+        _input.text = p != null && p > 0
+            ? 'Hi, I am interested. Would you accept ${chatRupees(p)}?'
+            : 'Hi, I am interested. What is your best price?';
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _focus.requestFocus();
+      });
+    } else if (widget.openOfferOnStart && !_needsLogin && _error == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _offerSheet();
       });
@@ -705,7 +716,7 @@ class _ChatScreenState extends State<ChatScreen> {
       'expired' || 'cancelled' => (ChatColors.muted, ChatColors.line, st[0].toUpperCase() + st.substring(1)),
       _ => (ChatColors.orangeText, ChatColors.orangeBg, 'Pending'),
     };
-    final canRespond = !mine && m.id > 0 && m.isPendingOffer && !_sending;
+    final canRespond = ChatService.offersSupported && !mine && m.id > 0 && m.isPendingOffer && !_sending;
     return Container(
       width: 250,
       decoration: BoxDecoration(
@@ -801,7 +812,7 @@ class _ChatScreenState extends State<ChatScreen> {
       );
 
   Widget _composer() {
-    final canOffer = widget.isBuyer != false;
+    final canOffer = ChatService.offersSupported && widget.isBuyer != false;
     final hasText = _input.text.trim().isNotEmpty;
     return Container(
       decoration: const BoxDecoration(

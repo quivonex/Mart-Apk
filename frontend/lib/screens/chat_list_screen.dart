@@ -69,6 +69,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       return;
     }
     _me = await SharedPreferencesHelper.getUserId();
+    _boughtIds = await ChatService.buyingChatIds();
     final usageF = CommunicationPlanService.chatUsage(); // silent, may be null
     final r = await ChatService.chats();
     final usage = await usageF;
@@ -98,7 +99,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   /// true = I am the buyer, false = I am the seller / agent, null = unknown.
-  bool? _buying(ChatThread c) => (_me == null || c.buyerId == null) ? null : c.buyerId == _me;
+  /// Buyer = the backend says I started it, or I started it from a detail
+  /// screen on this device. Everything else = Seller (someone messaged me).
+  bool? _buying(ChatThread c) {
+    if (_me != null && c.buyerId != null) return c.buyerId == _me;
+    return _boughtIds.contains(c.id);
+  }
+
+  /// Chats started from a detail screen on this device (ChatService.rememberBuying).
+  Set<int> _boughtIds = {};
 
   bool _inFilter(ChatThread c, String f) => switch (f) {
         'buying' => _buying(c) == true,

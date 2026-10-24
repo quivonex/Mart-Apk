@@ -75,6 +75,8 @@ class ChatLauncher {
       return;
     }
 
+    await ChatService.rememberBuying(r.data!); // I started it → I am the buyer
+    if (!context.mounted) return;
     await Navigator.push(
       context,
       MaterialPageRoute(

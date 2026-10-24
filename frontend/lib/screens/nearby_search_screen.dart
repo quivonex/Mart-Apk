@@ -3,7 +3,7 @@
 // QNX Mart › Nearby Search (Google Places through the QNX backend)
 //
 //   ┌ Search bar ─────────────────┐ [10 km ▾] [→]
-//   ┌ Google Map ──────────────────────────────┐
+//   ┌ Map (OpenStreetMap – web AND mobile, same as Add Company) ┐
 //   │  tap anywhere = set search location        │
 //   │  circle = radius, numbered pins = results  │
 //   └──────────────────────────── [◎ my location]┘
@@ -16,10 +16,11 @@
 
 import 'dart:async';
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-// OpenStreetMap fallback (no API key) when the Google Maps script is not on the page.
+// OpenStreetMap (no API key) – used on web and mobile, like the Add Company map.
 import 'package:flutter_map/flutter_map.dart' as fm;
 import 'package:latlong2/latlong.dart' as ll;
 import 'package:url_launcher/url_launcher.dart';
@@ -27,7 +28,6 @@ import '../constants/design_tokens.dart';
 import '../services/nearby_places_service.dart';
 import '../services/nearby_subscription_service.dart';
 import '../utils/login_gate.dart';
-import '../utils/google_maps_check.dart'; // web / mobile version picked automatically
 import '../utils/shared_preferences_helper.dart';
 import 'login_screen.dart';
 import 'nearby_subscription_screen.dart';
@@ -87,7 +87,10 @@ class NearbySearchScreen extends StatefulWidget {
   State<NearbySearchScreen> createState() => _NearbySearchScreenState();
 }
 
-class _NearbySearchScreenState extends State<NearbySearchScreen> {
+/// Why the live location is not available (shown as a banner on the map).
+enum _LocIssue { none, serviceOff, denied, blocked, failed }
+
+class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBindingObserver {
   final _query = TextEditingController();
   GoogleMapController? _gmap;
 
@@ -107,85 +110,192 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> {
   /// Saved Nearby plan of this user (active or expired) – for the header button.
   NearbyActiveSub? _sub;
 
-  /// Web: the Maps <script> may finish loading after the first frame → re-check.
-  /// While Google Maps is not available an OpenStreetMap map is shown instead.
-  bool _mapsOk = googleMapsLoaded();
-  Timer? _mapsTimer;
+  /// The map is OpenStreetMap (flutter_map) on web AND mobile – same as the
+  /// Add Company map, no Google Maps API key needed. (`_mapsOk` = Google Map,
+  /// kept off.)
+  final bool _mapsOk = false;
   final _osm = fm.MapController();
   bool _osmReady = false;
+  bool _satellite = false; // street / satellite toggle (like Add Company)
+
+  // ---- live location ----
+  StreamSubscription<Position>? _posSub;
+  LatLng? _live; // latest GPS / browser position
+  double _liveAccuracy = 0; // metres
+  bool _followLive = true; // search centre follows the live location until the user taps the map
+  bool _gotFix = false;
+  _LocIssue _locIssue = _LocIssue.none;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     if (widget.initialKeyword != null) _query.text = widget.initialKeyword!;
     _loadSub();
-    if (!_mapsOk) {
-      var tries = 0;
-      _mapsTimer = Timer.periodic(const Duration(milliseconds: 500), (t) {
-        tries++;
-        if (googleMapsLoaded()) {
-          t.cancel();
-          if (mounted) {
-            setState(() {
-              _mapsOk = true;
-              _osmReady = false;
-            });
-          }
-        } else if (tries >= 30) {
-          t.cancel();
-        }
-      });
-    }
-    // setState() is not allowed inside initState → start after the first frame.
+    // Ask for location permission as soon as the screen opens and follow the
+    // live position (setState() is not allowed inside initState → after 1st frame).
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      await _useMyLocation(quiet: true);
+      await _startLiveLocation();
       if (mounted && widget.initialKeyword != null) _search();
     });
   }
 
+  /// Back from phone Settings (permission / GPS turned on) → try again.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _locIssue != _LocIssue.none && !_locating) {
+      _startLiveLocation();
+    }
+  }
+
   @override
   void dispose() {
-    _mapsTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    _posSub?.cancel();
     _query.dispose();
     _gmap?.dispose();
     super.dispose();
   }
 
-  // ------------------------------------------------------------ location
-  Future<void> _useMyLocation({bool quiet = false}) async {
-    setState(() => _locating = true);
-    String? problem;
+  // ------------------------------------------------------------ live location
+  /// Asks for permission (Android / iOS dialog, browser prompt on web), shows
+  /// the current position right away and then keeps following it.
+  Future<void> _startLiveLocation() async {
+    if (_locating) return;
+    setState(() {
+      _locating = true;
+      _locIssue = _LocIssue.none;
+    });
+    var issue = _LocIssue.none;
     try {
       if (!await Geolocator.isLocationServiceEnabled()) {
-        problem = 'Location is turned off.';
+        issue = _LocIssue.serviceOff;
       } else {
         var perm = await Geolocator.checkPermission();
         if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
-        if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
-          problem = 'Location permission denied.';
+        if (perm == LocationPermission.deniedForever) {
+          issue = _LocIssue.blocked;
+        } else if (perm != LocationPermission.whileInUse && perm != LocationPermission.always) {
+          issue = _LocIssue.denied;
         } else {
-          final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.medium)
-              .timeout(const Duration(seconds: 15));
+          // Last known fix first (instant, mobile only), then a fresh one.
+          if (!kIsWeb) {
+            final last = await Geolocator.getLastKnownPosition();
+            if (last != null && mounted) _onPosition(last);
+          }
+          final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high)
+              .timeout(const Duration(seconds: 20));
           if (!mounted) return;
-          _setPoint(LatLng(pos.latitude, pos.longitude), 'My location');
-          setState(() => _locating = false);
-          return;
+          _onPosition(pos);
+          _listenLive();
         }
       }
+    } on TimeoutException {
+      issue = _gotFix ? _LocIssue.none : _LocIssue.failed;
+      if (_gotFix) _listenLive();
     } catch (_) {
-      problem = 'Could not get your location.';
+      issue = _gotFix ? _LocIssue.none : _LocIssue.failed;
     }
     if (!mounted) return;
-    setState(() => _locating = false);
-    if (!quiet) _snack('$problem Tap on the map to choose a location.');
+    setState(() {
+      _locating = false;
+      _locIssue = issue;
+    });
   }
+
+  /// Keeps receiving positions while the screen is open (every ~25 m of movement).
+  void _listenLive() {
+    _posSub?.cancel();
+    _posSub = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 25),
+    ).listen(_onPosition, onError: (_) {});
+  }
+
+  void _onPosition(Position p) {
+    if (!mounted) return;
+    final here = LatLng(p.latitude, p.longitude);
+    final before = _point;
+    final first = !_gotFix;
+    setState(() {
+      _live = here;
+      _liveAccuracy = p.accuracy;
+      _gotFix = true;
+      _locIssue = _LocIssue.none;
+      if (_followLive) {
+        _point = here;
+        _pointLabel = 'My location';
+      }
+    });
+    if (!_followLive) return;
+    if (first) {
+      _fitRadius();
+    } else {
+      _moveCamera(here);
+    }
+    // Moved more than 1 km → refresh the results around the new position.
+    if (!first && _searched && !_loading && _distanceKm(before, here) > 1.0) _search();
+  }
+
+  /// "My location" button: follow the live position again.
+  void _goLive() {
+    final here = _live;
+    if (here == null || _locIssue != _LocIssue.none) {
+      _followLive = true;
+      _startLiveLocation();
+      return;
+    }
+    setState(() {
+      _followLive = true;
+      _point = here;
+      _pointLabel = 'My location';
+    });
+    _fitRadius();
+    if (_posSub == null) _listenLive();
+    if (_searched && !_loading) _search();
+  }
+
+  /// Opens phone settings (blocked permission / GPS off). On web the browser
+  /// asks again or the user allows it from the address bar.
+  Future<void> _fixLocation() async {
+    if (kIsWeb) {
+      if (_locIssue == _LocIssue.blocked) {
+        _snack('Location is blocked for this site. Click the lock icon in the address bar → Location → Allow, then try again.');
+      }
+      _startLiveLocation();
+      return;
+    }
+    switch (_locIssue) {
+      case _LocIssue.serviceOff:
+        await Geolocator.openLocationSettings();
+      case _LocIssue.blocked:
+        await Geolocator.openAppSettings();
+      default:
+        _startLiveLocation();
+    }
+  }
+
+  void _moveCamera(LatLng p) {
+    if (_mapsOk) {
+      try {
+        _gmap?.animateCamera(CameraUpdate.newLatLng(p));
+      } catch (_) {}
+    } else if (_osmReady) {
+      try {
+        _osm.move(ll.LatLng(p.latitude, p.longitude), _osm.camera.zoom);
+      } catch (_) {}
+    }
+  }
+
+  static double _distanceKm(LatLng a, LatLng b) =>
+      Geolocator.distanceBetween(a.latitude, a.longitude, b.latitude, b.longitude) / 1000.0;
 
   /// Sets the search centre (map tap / GPS) and re-runs the search if one was done.
   void _setPoint(LatLng p, String label) {
     setState(() {
       _point = p;
       _pointLabel = label;
+      _followLive = false; // the user picked a place → stop following the GPS
     });
     _fitRadius();
     if (_searched && !_loading) _search();
@@ -624,15 +734,28 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> {
   }
 
   // ------------------------------------------------------------ map
-  /// Red pin = search location, orange pins = results (tap = WhatsApp / View on Map).
+  /// Blue pin = you (live), red pin = a place picked on the map,
+  /// orange pins = results (tap = WhatsApp / View on Map).
   Set<Marker> _markers() => {
-    Marker(
-      markerId: const MarkerId('selected_location'),
-      position: _point,
-      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-      infoWindow: InfoWindow(title: 'Search here', snippet: '$_km km radius'),
-      zIndex: 2,
-    ),
+    if (_live != null)
+      Marker(
+        markerId: const MarkerId('live_location'),
+        position: _live!,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+        infoWindow: InfoWindow(
+          title: 'You are here',
+          snippet: _followLive ? 'Searching within $_km km' : 'Live location',
+        ),
+        zIndex: 3,
+      ),
+    if (!_followLive || _live == null)
+      Marker(
+        markerId: const MarkerId('selected_location'),
+        position: _point,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+        infoWindow: InfoWindow(title: 'Search here', snippet: '$_km km radius'),
+        zIndex: 2,
+      ),
     for (var i = 0; i < _places.length; i++)
       if (_places[i].hasLocation)
         Marker(
@@ -655,14 +778,14 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> {
           _osmMap()
         else
           GoogleMap(
-            initialCameraPosition: CameraPosition(target: _point, zoom: 11),
+            initialCameraPosition: CameraPosition(target: _point, zoom: _gotFix ? 13 : 11),
             onMapCreated: (c) {
               _gmap = c;
               _fitRadius();
             },
             onTap: (latLng) => _setPoint(latLng, 'Selected on map'),
             mapType: MapType.normal,
-            myLocationEnabled: true,
+            myLocationEnabled: !kIsWeb && _live != null, // blue dot (mobile); web uses the blue pin
             myLocationButtonEnabled: false, // own button (works on web too)
             zoomControlsEnabled: true,
             mapToolbarEnabled: false,
@@ -720,12 +843,28 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> {
             shape: const CircleBorder(),
             elevation: 3,
             child: IconButton(
-              tooltip: 'My location',
-              onPressed: _locating ? null : () => _useMyLocation(),
+              tooltip: _followLive ? 'Following your live location' : 'Go to my location',
+              onPressed: _locating ? null : _goLive,
               icon: _locating
                   ? const SizedBox(
                   width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: _NS.brand))
-                  : const Icon(Icons.my_location_rounded, color: _NS.brand),
+                  : Icon(_followLive && _live != null ? Icons.my_location_rounded : Icons.location_searching_rounded,
+                  color: _NS.brand),
+            ),
+          ),
+        ),
+        // Street / satellite toggle
+        Positioned(
+          top: 60,
+          right: 10,
+          child: Material(
+            color: Colors.white,
+            shape: const CircleBorder(),
+            elevation: 3,
+            child: IconButton(
+              tooltip: _satellite ? 'Street map' : 'Satellite',
+              onPressed: () => setState(() => _satellite = !_satellite),
+              icon: Icon(_satellite ? Icons.map_rounded : Icons.satellite_alt_rounded, color: _NS.brand),
             ),
           ),
         ),
@@ -742,16 +881,107 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> {
                 color: _NS.ink.withValues(alpha: 0.85),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Text(
-                '$_pointLabel · ${_point.latitude.toStringAsFixed(4)}, ${_point.longitude.toStringAsFixed(4)} · $_km km',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: DT.text(size: 11, weight: FontWeight.w700, color: Colors.white),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_followLive && _live != null) ...[
+                    const _LiveDot(size: 8),
+                    const SizedBox(width: 6),
+                  ],
+                  Flexible(
+                    child: Text(
+                      _followLive && _live != null
+                          ? 'Live location · ${_point.latitude.toStringAsFixed(4)}, ${_point.longitude.toStringAsFixed(4)} · $_km km'
+                          : '$_pointLabel · ${_point.latitude.toStringAsFixed(4)}, ${_point.longitude.toStringAsFixed(4)} · $_km km',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: DT.text(size: 11, weight: FontWeight.w700, color: Colors.white),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
         ),
+        // Finding your location (first fix)
+        if (_locating && !_gotFix)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Container(
+                color: Colors.white.withValues(alpha: 0.55),
+                alignment: Alignment.center,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: const [BoxShadow(color: Color(0x220F172A), blurRadius: 10)],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(
+                          width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: _NS.brand)),
+                      const SizedBox(width: 10),
+                      Text('Finding your location…',
+                          style: DT.text(size: 12.5, weight: FontWeight.w700, color: _NS.ink)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        // Permission / GPS problem
+        if (_locIssue != _LocIssue.none && !_locating)
+          Positioned(left: 10, right: 10, bottom: 10, child: _locationBanner()),
       ],
+    );
+  }
+
+  Widget _locationBanner() {
+    final (String text, String button) = switch (_locIssue) {
+      _LocIssue.serviceOff => ('Location (GPS) is turned off. Turn it on to see places near you.', 'Turn on'),
+      _LocIssue.blocked => (
+      kIsWeb
+          ? 'Location is blocked for this site. Allow it from the lock icon in the address bar.'
+          : 'Location permission is blocked. Allow it in Settings to see places near you.',
+      kIsWeb ? 'Try again' : 'Settings'
+      ),
+      _LocIssue.denied => ('Allow location access to see places near you.', 'Allow'),
+      _ => ('Could not get your location. You can also tap on the map.', 'Retry'),
+    };
+    return Material(
+      color: const Color(0xFFFFF7ED), // conditions: orange
+      borderRadius: BorderRadius.circular(14),
+      elevation: 2,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 8, 6, 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFFED7AA)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.location_off_rounded, size: 18, color: Color(0xFFC2410C)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(text,
+                  style: DT.text(size: 11.5, weight: FontWeight.w600, color: const Color(0xFFC2410C), height: 1.3)),
+            ),
+            const SizedBox(width: 6),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: _kBrand, // buttons: only #093C71
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                minimumSize: const Size(0, 34),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: _fixLocation,
+              child: Text(button, style: DT.text(size: 12, weight: FontWeight.w700, color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -838,7 +1068,9 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> {
       mapController: _osm,
       options: fm.MapOptions(
         initialCenter: c,
-        initialZoom: 11,
+        initialZoom: _gotFix ? 13 : 11,
+        minZoom: 3,
+        maxZoom: 19,
         interactionOptions: const fm.InteractionOptions(
           flags: fm.InteractiveFlag.all & ~fm.InteractiveFlag.rotate,
         ),
@@ -849,11 +1081,29 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> {
         onTap: (_, p) => _setPoint(LatLng(p.latitude, p.longitude), 'Selected on map'),
       ),
       children: [
-        fm.TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.qnxmart.app',
-        ),
+        if (_satellite)
+          fm.TileLayer(
+            urlTemplate:
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            userAgentPackageName: 'com.qnxmart.app',
+            maxZoom: 19,
+          )
+        else
+          fm.TileLayer(
+            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            userAgentPackageName: 'com.qnxmart.app',
+            maxZoom: 19,
+          ),
         fm.CircleLayer(circles: [
+          if (_live != null && _liveAccuracy > 0)
+            fm.CircleMarker(
+              point: ll.LatLng(_live!.latitude, _live!.longitude),
+              radius: _liveAccuracy.clamp(10.0, 500.0),
+              useRadiusInMeter: true,
+              color: const Color(0xFF1E88E5).withValues(alpha: 0.12),
+              borderColor: const Color(0xFF1E88E5).withValues(alpha: 0.35),
+              borderStrokeWidth: 1,
+            ),
           fm.CircleMarker(
             point: c,
             radius: _km * 1000.0,
@@ -885,14 +1135,23 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> {
                   ),
                 ),
               ),
-          // Search point (on top)
-          fm.Marker(
-            point: c,
-            width: 40,
-            height: 40,
-            alignment: Alignment.topCenter,
-            child: const Icon(Icons.location_on_rounded, size: 40, color: _NS.brand),
-          ),
+          // Picked search point (only when not following the live location)
+          if (!_followLive || _live == null)
+            fm.Marker(
+              point: c,
+              width: 40,
+              height: 40,
+              alignment: Alignment.topCenter,
+              child: const Icon(Icons.location_on_rounded, size: 40, color: _NS.brand),
+            ),
+          // You (live) – on top
+          if (_live != null)
+            fm.Marker(
+              point: ll.LatLng(_live!.latitude, _live!.longitude),
+              width: 30,
+              height: 30,
+              child: const _LiveDot(size: 18),
+            ),
         ]),
         const fm.RichAttributionWidget(
           alignment: fm.AttributionAlignment.bottomLeft,
@@ -1107,6 +1366,62 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Pulsing blue "you are here" dot (live location).
+class _LiveDot extends StatefulWidget {
+  final double size;
+  const _LiveDot({required this.size});
+
+  @override
+  State<_LiveDot> createState() => _LiveDotState();
+}
+
+class _LiveDotState extends State<_LiveDot> with SingleTickerProviderStateMixin {
+  late final AnimationController _c =
+  AnimationController(vsync: this, duration: const Duration(milliseconds: 1400))..repeat();
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const blue = Color(0xFF1E88E5);
+    final s = widget.size;
+    return SizedBox(
+      width: s * 1.45,
+      height: s * 1.45,
+      child: AnimatedBuilder(
+        animation: _c,
+        builder: (_, __) => Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              width: s * (0.9 + 0.55 * _c.value),
+              height: s * (0.9 + 0.55 * _c.value),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: blue.withValues(alpha: 0.35 * (1 - _c.value)),
+              ),
+            ),
+            Container(
+              width: s * 0.8,
+              height: s * 0.8,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: blue,
+                border: Border.all(color: Colors.white, width: s * 0.14),
+                boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 3)],
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -3,6 +3,7 @@ import '../constants/app_constants.dart';
 import '../models/order_model.dart';
 import '../services/order_service.dart';
 import 'order_detail_screen.dart';
+import 'return_orders_screen.dart';
 import 'reorder_screen.dart';
 import '../utils/order_payment_helper.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
@@ -96,8 +97,58 @@ class _OrdersScreenState extends State<OrdersScreen> {
       child: Column(
         children: [
           _buildTabBar(),
+          if (_hasReturns) _buildReturnsLink(),
           Expanded(child: _buildContent()),
         ],
+      ),
+    );
+  }
+
+    bool get _hasReturns => _orders.any((o) {
+        final s = o.status.toUpperCase();
+        return s.contains('RETURN') || s == 'REFUNDED';
+      });
+
+  // "My returns" → shipping/return-orders/ list with tracking
+  Widget _buildReturnsLink() {
+    final n = _orders.where((o) {
+      final s = o.status.toUpperCase();
+      return s.contains('RETURN') || s == 'REFUNDED';
+    }).length;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: Material(
+        color: const Color(0xFFEAF1F9),
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ReturnOrdersScreen()),
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFC9DBEE)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.assignment_return_outlined, size: 20, color: _kBrand),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'My returns · $n order${n == 1 ? '' : 's'}',
+                    style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: _kBrand),
+                  ),
+                ),
+                const Text('Track',
+                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: _kBrand)),
+                const Icon(Icons.chevron_right_rounded, color: _kBrand),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

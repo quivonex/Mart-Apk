@@ -7,6 +7,8 @@
 
 import 'package:flutter/material.dart';
 import '../constants/design_tokens.dart';
+import '../services/remart_edit_service.dart';
+import 'remart_edit_screen.dart';
 import 'remart_screens.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
@@ -72,6 +74,7 @@ class _MyRemartScreenState extends State<MyRemartScreen> {
   String? _enqError;
   List<RemartListing> _items = [];
   List<Map<String, dynamic>> _enquiries = [];
+  final Set<int> _soldBusy = {};
 
   @override
   void initState() {
@@ -196,65 +199,155 @@ class _MyRemartScreenState extends State<MyRemartScreen> {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: _MR.line),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: SizedBox(
-                  width: 84,
-                  height: 84,
-                  child: l.images.isEmpty
-                      ? Container(color: _MR.tint, child: const Icon(Icons.image_outlined, color: _MR.hint))
-                      : Image.network(l.images.first,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(color: _MR.tint)),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+              Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      width: 84,
+                      height: 84,
+                      child: l.images.isEmpty
+                          ? Container(color: _MR.tint, child: const Icon(Icons.image_outlined, color: _MR.hint))
+                          : Image.network(l.images.first,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(color: _MR.tint)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-                          child: Text(label, style: DT.text(size: 10.5, weight: FontWeight.w800, color: fg)),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
+                              child: Text(label, style: DT.text(size: 10.5, weight: FontWeight.w800, color: fg)),
+                            ),
+                            const Spacer(),
+                            if (l.viewsCount > 0) ...[
+                              const Icon(Icons.visibility_outlined, size: 13, color: _MR.hint),
+                              const SizedBox(width: 3),
+                              Text('${l.viewsCount}', style: DT.text(size: 11, color: _MR.muted)),
+                            ],
+                          ],
                         ),
-                        const Spacer(),
-                        if (l.viewsCount > 0) ...[
-                          const Icon(Icons.visibility_outlined, size: 13, color: _MR.hint),
-                          const SizedBox(width: 3),
-                          Text('${l.viewsCount}', style: DT.text(size: 11, color: _MR.muted)),
-                        ],
+                        const SizedBox(height: 6),
+                        Text(l.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: DT.text(size: 14, weight: FontWeight.w700, color: _MR.ink, height: 1.3)),
+                        const SizedBox(height: 4),
+                        Text(_price(l.price), style: DT.text(size: 15, weight: FontWeight.w900, color: _MR.brandDark)),
+                        const SizedBox(height: 2),
+                        Text(
+                          [
+                            if (l.location.isNotEmpty) l.location,
+                            if (l.expiresAt.isNotEmpty) 'till ${_date(l.expiresAt)}',
+                          ].join(' · '),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: DT.text(size: 11.5, color: _MR.muted),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(l.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: DT.text(size: 14, weight: FontWeight.w700, color: _MR.ink, height: 1.3)),
-                    const SizedBox(height: 4),
-                    Text(_price(l.price), style: DT.text(size: 15, weight: FontWeight.w900, color: _MR.brandDark)),
-                    const SizedBox(height: 2),
-                    Text(
-                      [
-                        if (l.location.isNotEmpty) l.location,
-                        if (l.expiresAt.isNotEmpty) 'till ${_date(l.expiresAt)}',
-                      ].join(' · '),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: DT.text(size: 11.5, color: _MR.muted),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+              const SizedBox(height: 10),
+              const Divider(height: 1, color: _MR.line),
+              const SizedBox(height: 10),
+              _itemActions(l),
             ],
           ),
         ),
       ),
     );
+  }
+
+  // ---------------------------------------------------------------- edit / sold
+  Widget _smallBtn(String label, IconData icon, VoidCallback? onTap) => SizedBox(
+        height: 36,
+        child: FilledButton.icon(
+          onPressed: onTap,
+          style: FilledButton.styleFrom(
+            backgroundColor: _kBrand, // buttons: only #093C71
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: _kBrand.withValues(alpha: 0.5),
+            disabledForegroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+          icon: Icon(icon, size: 16),
+          label: Text(label, style: DT.text(size: 12.5, weight: FontWeight.w700, color: Colors.white)),
+        ),
+      );
+
+  Widget _itemActions(RemartListing l) {
+    final busy = _soldBusy.contains(l.id);
+    final canSell = l.status == 'active';
+    return Row(
+      children: [
+        Expanded(child: _smallBtn('Edit', Icons.edit_outlined, () => _edit(l))),
+        if (canSell) ...[
+          const SizedBox(width: 10),
+          Expanded(
+            child: _smallBtn(busy ? 'Saving…' : 'Mark as sold', Icons.sell_outlined,
+                busy ? null : () => _markSold(l)),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _edit(RemartListing l) async {
+    final saved = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => RemartEditScreen(listingId: l.id, title: l.title)),
+    );
+    if (saved == true) _loadItems();
+  }
+
+  Future<void> _markSold(RemartListing l) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Mark as sold?', style: DT.text(size: 17, weight: FontWeight.w800, color: _MR.ink)),
+        content: Text('"${l.title}" will no longer be shown to buyers.',
+            style: DT.text(size: 13.5, color: _MR.muted, height: 1.4)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel', style: DT.text(size: 13.5, weight: FontWeight.w700, color: _MR.muted)),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: _kBrand),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Mark as sold'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _soldBusy.add(l.id));
+    final r = await RemartEditService.markSold(l.id);
+    if (!mounted) return;
+    setState(() => _soldBusy.remove(l.id));
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text(r.ok ? 'Marked as sold' : r.message,
+            style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
+        backgroundColor: r.ok ? const Color(0xFF047857) : const Color(0xFFC62828),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ));
+    if (r.ok) _loadItems();
   }
 
   // ---------------------------------------------------------------- enquiries

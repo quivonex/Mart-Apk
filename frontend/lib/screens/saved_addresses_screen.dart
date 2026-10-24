@@ -3,11 +3,13 @@
 // QNX Mart › Saved addresses (delivery addresses used at checkout).
 //   POST order/address/list/     (via CheckoutService.addresses)
 //   POST order/address/create/   (via CheckoutService.addAddress)
+//   POST order/address/update/   (via OrderExtrasService.updateAddress) – "Edit" on a card
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../constants/design_tokens.dart';
 import '../services/checkout_service.dart';
+import '../services/order_extras_service.dart';
 import '../utils/shared_preferences_helper.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
@@ -74,6 +76,23 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
     if (saved != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('Address saved'),
+        behavior: SnackBarBehavior.floating,
+      ));
+      _load();
+    }
+  }
+
+    Future<void> _edit(DeliveryAddress a) async {
+    final saved = await showModalBottomSheet<DeliveryAddress>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _AddAddressSheet(initial: a),
+    );
+    if (saved != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Address updated'),
         behavior: SnackBarBehavior.floating,
       ));
       _load();
@@ -181,6 +200,20 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
               const SizedBox(height: 4),
               Text('PIN ${a.pincode}${a.mobile.isNotEmpty ? '  ·  ${a.mobile}' : ''}',
                   style: DT.text(size: 12, weight: FontWeight.w700, color: _SA.muted)),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 34,
+                child: FilledButton.icon(
+                  onPressed: () => _edit(a),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _kBrand, // buttons: only #093C71
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  icon: const Icon(Icons.edit_outlined, size: 16, color: Colors.white),
+                  label: Text('Edit', style: DT.text(size: 12.5, weight: FontWeight.w700, color: Colors.white)),
+                ),
+              ),
             ],
           ),
         ),
@@ -190,7 +223,9 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
 }
 
 class _AddAddressSheet extends StatefulWidget {
-  const _AddAddressSheet();
+  /// null = new address, otherwise edit this one.
+  final DeliveryAddress? initial;
+  const _AddAddressSheet({this.initial});
 
   @override
   State<_AddAddressSheet> createState() => _AddAddressSheetState();
@@ -208,6 +243,23 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
   @override
   void initState() {
     super.initState();
+    final a = widget.initial;
+    if (a != null) {
+      final v = {
+        'full_name': a.fullName,
+        'mobile_no': a.mobile,
+        'address_line1': a.line1,
+        'address_line2': a.line2,
+        'village': a.village,
+        'taluka': a.taluka,
+        'district': a.district,
+        'city': a.city,
+        'state': a.state,
+        'pincode': a.pincode,
+      };
+      v.forEach((k, t) => _c[k]!.text = t);
+      return;
+    }
     SharedPreferencesHelper.getUsername().then((n) {
       if (mounted && n != null && _c['full_name']!.text.isEmpty) _c['full_name']!.text = n;
     });
@@ -227,7 +279,22 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
       _saving = true;
       _error = null;
     });
-    final r = await CheckoutService.addAddress({for (final e in _c.entries) e.key: e.value.text.trim()});
+    final fields = {for (final e in _c.entries) e.key: e.value.text.trim()};
+    final init = widget.initial;
+    if (init != null) {
+      final r = await OrderExtrasService.updateAddress(init.id, fields);
+      if (!mounted) return;
+      if (r.ok) {
+        Navigator.pop(context, r.data ?? init);
+      } else {
+        setState(() {
+          _saving = false;
+          _error = r.message;
+        });
+      }
+      return;
+    }
+    final r = await CheckoutService.addAddress(fields);
     if (!mounted) return;
     if (r.ok) {
       Navigator.pop(context, r.data);
@@ -302,7 +369,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
                       Row(
                         children: [
                           Expanded(
-                            child: Text('New delivery address',
+                            child: Text(widget.initial == null ? 'New delivery address' : 'Edit address',
                                 style: DT.text(size: 16.5, weight: FontWeight.w800, color: Colors.white)),
                           ),
                           IconButton(
@@ -379,7 +446,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
                           ),
                           child: _saving
                               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                              : Text('Save address', style: DT.text(size: 14.5, weight: FontWeight.w800, color: Colors.white)),
+                              : Text(widget.initial == null ? 'Save address' : 'Update address', style: DT.text(size: 14.5, weight: FontWeight.w800, color: Colors.white)),
                         ),
                       ),
                     ),

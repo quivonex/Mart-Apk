@@ -162,7 +162,9 @@ class ChatThread {
     return ChatThread(
       id: _int(j['id']),
       otherUsername: _str(j['other_username'] ?? j['other_user_name'] ?? j['username']),
-      buyerId: (buyer is Map ? _intOrNull(buyer['id']) : _intOrNull(buyer)) ?? _intOrNull(j['user_one']),
+      // Who started the chat (= buyer). user_one is only the lower user id, so it is NOT used.
+      buyerId: (buyer is Map ? _intOrNull(buyer['id']) : _intOrNull(buyer)) ??
+          _intOrNull(j['buyer_id'] ?? j['started_by'] ?? j['initiated_by'] ?? j['created_by']),
       itemType: _str(item['type']),
       itemTitle: _str(item['title'] ?? item['name']),
       lastMessage: last is Map ? ChatMessage.fromJson(Map<String, dynamic>.from(last)) : null,

@@ -18,11 +18,48 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/chat_models.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'api_urls.dart';
 
 class ChatService {
   ChatService._();
+
+  /// The backend has no offers/respond endpoints yet (olx/urls.py). Set to true
+  /// once `chats/<id>/offers/` and `…/offers/<msg>/respond/` exist.
+  static const bool offersSupported = false;
+
+  /// 401 always means "log in again". 403 only when it is not a business rule
+  /// (e.g. chat_limit_reached comes back as 403 with a `code`).
+  static bool _isAuthError(int code, dynamic j) {
+    if (code == 401) return true;
+    if (code != 403) return false;
+    final c = j is Map ? '${j['code'] ?? ''}'.trim() : '';
+    return c.isEmpty;
+  }
+
+  // ---------------------------------------------------------------- buyer memory
+  // The chat API has no buyer field, so chats started from a detail screen on
+  // this device are remembered as "Buying".
+  static Future<String> _buyKey() async => 'chat_buying_${await SharedPreferencesHelper.getUserId() ?? 0}';
+
+  static Future<void> rememberBuying(int chatId) async {
+    try {
+      final p = await SharedPreferences.getInstance();
+      final k = await _buyKey();
+      final ids = p.getStringList(k) ?? <String>[];
+      if (!ids.contains('$chatId')) await p.setStringList(k, [...ids, '$chatId']);
+    } catch (_) {}
+  }
+
+  static Future<Set<int>> buyingChatIds() async {
+    try {
+      final p = await SharedPreferences.getInstance();
+      return {for (final s in p.getStringList(await _buyKey()) ?? const <String>[]) int.tryParse(s) ?? 0};
+    } catch (_) {
+      return <int>{};
+    }
+  }
 
   static const _timeout = Duration(seconds: 25);
 
@@ -129,7 +166,7 @@ class ChatService {
           'other_user_id': otherUserId,
           kind.idKey: itemId,
         });
-        if (code == 401 || code == 403) return _authFail<int>(j);
+        if (_isAuthError(code, j)) return _authFail<int>(j);
         if (!_ok(code)) return ChatResult<int>.fail(errorText(j, 'Failed to start chat.'));
         final id = _id(_object(j, const ['chat', 'data']));
         if (id == null || id <= 0) return ChatResult<int>.fail(errorText(j, 'Unable to start chat.'));
@@ -139,7 +176,7 @@ class ChatService {
   // ---------------------------------------------------------------- chats
   static Future<ChatResult<List<ChatThread>>> chats() => _guard(() async {
         final (code, j) = await _send('GET', ApiUrls.chatsUrl);
-        if (code == 401 || code == 403) return _authFail<List<ChatThread>>(j);
+        if (_isAuthError(code, j)) return _authFail<List<ChatThread>>(j);
         if (!_ok(code)) return ChatResult<List<ChatThread>>.fail(errorText(j, 'Could not load chats.'));
         final list = [for (final m in _list(j)) ChatThread.fromJson(m)].where((c) => c.id > 0).toList()
           ..sort((a, b) {
@@ -154,13 +191,33 @@ class ChatService {
 
   // ---------------------------------------------------------------- messages
   /// Oldest first.
+  /// The LATEST [pageSize] messages, oldest first.
+  /// The backend pages oldest → newest (page 1 = oldest), so we read `count`
+  /// from page 1 and then load the last page (plus the one before it when the
+  /// last page is short).
   static Future<ChatResult<List<ChatMessage>>> messages(int chatId, {int pageSize = 100}) => _guard(() async {
-        final (code, j) = await _send('GET', ApiUrls.chatMessagesUrl(chatId, pageSize: pageSize));
-        if (code == 401 || code == 403) return _authFail<List<ChatMessage>>(j);
+        Future<(int, dynamic)> page(int n) => _send('GET', ApiUrls.chatMessagesUrl(chatId, page: n, pageSize: pageSize));
+        final (code, j) = await page(1);
+        if (_isAuthError(code, j)) return _authFail<List<ChatMessage>>(j);
         if (!_ok(code)) return ChatResult<List<ChatMessage>>.fail(errorText(j, 'Could not load messages.'));
-        final list = [for (final m in _list(j)) ChatMessage.fromJson(m)].where((m) => m.id > 0).toList()
-          ..sort(compareMessages);
-        return ChatResult.ok(list);
+        final raw = <Map<String, dynamic>>[..._list(j)];
+        final count = j is Map && j['count'] is num ? (j['count'] as num).toInt() : raw.length;
+        final last = count <= pageSize ? 1 : ((count + pageSize - 1) ~/ pageSize);
+        if (last > 1) {
+          raw.clear();
+          for (final n in [last - 1, last]) {
+            final (c2, j2) = await page(n);
+            if (_isAuthError(c2, j2)) return _authFail<List<ChatMessage>>(j2);
+            if (_ok(c2)) raw.addAll(_list(j2));
+          }
+        }
+        final byId = <int, ChatMessage>{};
+        for (final m in raw) {
+          final msg = ChatMessage.fromJson(m);
+          if (msg.id > 0) byId[msg.id] = msg;
+        }
+        final list = byId.values.toList()..sort(compareMessages);
+        return ChatResult.ok(list.length > pageSize ? list.sublist(list.length - pageSize) : list);
       }, 'Could not load messages.');
 
   static int compareMessages(ChatMessage a, ChatMessage b) {
@@ -172,7 +229,7 @@ class ChatService {
   // ---------------------------------------------------------------- send
   static Future<ChatResult<ChatMessage?>> send(int chatId, String text) => _guard(() async {
         final (code, j) = await _send('POST', ApiUrls.chatSendUrl(chatId), body: {'message': text});
-        if (code == 401 || code == 403) return _authFail<ChatMessage?>(j);
+        if (_isAuthError(code, j)) return _authFail<ChatMessage?>(j);
         if (!_ok(code)) {
           return ChatResult<ChatMessage?>.fail(errorText(j, 'Message not sent.'),
               code: _code(j));
@@ -193,7 +250,7 @@ class ChatService {
           'amount': amount.toStringAsFixed(2),
           'message': message,
         });
-        if (code == 401 || code == 403) return _authFail<ChatMessage?>(j);
+        if (_isAuthError(code, j)) return _authFail<ChatMessage?>(j);
         if (!_ok(code)) {
           return ChatResult<ChatMessage?>.fail(errorText(j, 'Offer not sent.'),
               code: _code(j));
@@ -216,7 +273,7 @@ class ChatService {
           if (action == 'counter') 'message': note,
           if (action == 'counter') 'response_note': note,
         });
-        if (code == 401 || code == 403) return _authFail<String>(j);
+        if (_isAuthError(code, j)) return _authFail<String>(j);
         if (!_ok(code) || (j is Map && j['status'] == false)) {
           return ChatResult<String>.fail(errorText(j, 'Could not update the offer.'));
         }

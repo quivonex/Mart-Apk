@@ -16,6 +16,7 @@ import '../constants/design_tokens.dart';
 import '../models/chat_models.dart';
 import '../services/api_urls.dart';
 import '../services/chat_service.dart';
+import '../services/remart_edit_service.dart';
 import '../utils/chat_launcher.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'login_screen.dart';
@@ -91,7 +92,19 @@ class RemartListing {
   final String expiresAt;
   final int viewsCount;
 
+  /// Image ids in the same order as [images] (for edit / delete).
+  final List<int> imageIds;
+  final int? categoryId;
+  final int? subcategoryId;
+  final String address;
+  final String pincode;
+
   RemartListing({
+    this.imageIds = const [],
+    this.categoryId,
+    this.subcategoryId,
+    this.address = '',
+    this.pincode = '',
     this.status = '',
     this.expiresAt = '',
     this.viewsCount = 0,
@@ -121,7 +134,28 @@ class RemartListing {
         if (p != 0) return p;
         return ((a['sort_order'] ?? 0) as num).compareTo((b['sort_order'] ?? 0) as num);
       });
+    // olx/my-listings/ sends only image_s3_key → URL built from the learned S3 base.
+    final imgUrls = <String>[];
+    final imgIds = <int>[];
+    for (final m in imgs) {
+      final key = (m['image_s3_key'] ?? '').toString();
+      var url = (m['image_url'] ?? '').toString();
+      if (url.startsWith('http')) {
+        RemartImageBase.learn(key, url);
+      } else {
+        url = RemartImageBase.url(key) ?? '';
+      }
+      if (!url.startsWith('http')) continue;
+      imgUrls.add(url);
+      imgIds.add(m['id'] is int ? m['id'] as int : int.tryParse('${m['id']}') ?? 0);
+    }
+    int? idOf(dynamic v) => v is int ? v : (v is Map ? idOf(v['id']) : int.tryParse('${v ?? ''}'));
     return RemartListing(
+      imageIds: imgIds,
+      categoryId: idOf(j['category_id'] ?? j['category']),
+      subcategoryId: idOf(j['subcategory_id'] ?? j['subcategory']),
+      address: (j['address'] ?? '').toString(),
+      pincode: (j['pincode'] ?? '').toString(),
       id: j['id'] is int ? j['id'] : int.tryParse('${j['id']}') ?? 0,
       userId: j['user_id'] is int ? j['user_id'] : int.tryParse('${j['user_id'] ?? ''}'),
       title: (j['title'] ?? '').toString(),
@@ -134,10 +168,7 @@ class RemartListing {
       area: (j['area'] ?? '').toString(),
       categoryName: (j['category_name'] ?? '').toString(),
       subcategoryName: (j['subcategory_name'] ?? '').toString(),
-      images: [
-        for (final m in imgs)
-          if ((m['image_url'] ?? '').toString().startsWith('http')) m['image_url'].toString()
-      ],
+      images: imgUrls,
       attributes: j['attributes'] is Map ? Map<String, dynamic>.from(j['attributes']) : const {},
       createdAt: (j['created_at'] ?? '').toString(),
       status: (j['status'] ?? '').toString(),
@@ -213,6 +244,8 @@ class RemartApi {
   /// Items the logged-in user posted (any status).  POST olx/my-listings/
   static Future<(List<RemartListing>, String?)> myListings() async {
     try {
+      // my-listings gives only S3 keys → make sure the image base URL is known
+      await RemartImageBase.ensure();
       final (code, j) = await _authPost('/olx/my-listings/');
       if (code != 200 || j is! Map || j['success'] == false) {
         throw Exception(j is Map ? (j['message'] ?? 'Could not load your items') : 'Could not load your items');

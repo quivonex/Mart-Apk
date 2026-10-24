@@ -6,6 +6,7 @@
 //   [Active]  current subscription (plan, valid till, limits)
 //   [Plans]   Starter / Pro …  → Buy → Razorpay → verify → refresh
 //   [History] my subscriptions (expired / old)
+//   Payment history + plan detail → comm_payment_history_screen.dart
 //
 // Opened from My Chats ("Plans" button) and from the "chat limit reached" dialog.
 // Pops `true` after a successful purchase.
@@ -14,9 +15,11 @@ import 'package:flutter/material.dart';
 import '../constants/design_tokens.dart';
 import '../models/communication_plan_models.dart';
 import '../services/communication_plan_service..dart';
+import '../services/communication_plan_service..dart';
 import '../utils/razorpay_checkout.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'chat_screen.dart' show ChatColors, chatRupees;
+import 'comm_payment_history_screen.dart';
 import 'login_screen.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
@@ -270,6 +273,11 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
           title: Text('Chat & Enquiry Plans', style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
           actions: [
             IconButton(
+              tooltip: 'Payment history',
+              onPressed: _openHistory,
+              icon: const Icon(Icons.receipt_long_outlined),
+            ),
+            IconButton(
               tooltip: 'Refresh',
               onPressed: _loading ? null : _load,
               icon: const Icon(Icons.refresh_rounded),
@@ -279,6 +287,10 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
         body: RefreshIndicator(color: _kBrand, onRefresh: _load, child: _body()),
       ),
     );
+  }
+
+    void _openHistory() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const CommPaymentHistoryScreen()));
   }
 
   Widget _body() {
@@ -303,7 +315,10 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
         _usageCard(),
         const SizedBox(height: 14),
         if (active != null) ...[
-          _activeCard(active),
+          GestureDetector(
+            onTap: () => showCommSubscriptionDetail(context, active.id),
+            child: _activeCard(active),
+          ),
           const SizedBox(height: 14),
         ],
         Text(active == null ? 'Choose a plan' : 'Upgrade / renew',
@@ -319,7 +334,40 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
           const SizedBox(height: 8),
           Text('Past plans', style: DT.text(size: 15, weight: FontWeight.w800, color: ChatColors.ink)),
           const SizedBox(height: 10),
-          for (final s in history) _historyTile(s),
+          for (final s in history)
+            GestureDetector(
+              onTap: () => showCommSubscriptionDetail(context, s.id),
+              child: _historyTile(s),
+            ),
+        ],
+        if (!_needsLogin) ...[
+          const SizedBox(height: 8),
+          Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: _openHistory,
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: ChatColors.line),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.receipt_long_outlined, color: _kBrand, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text('Payment history',
+                          style: DT.text(size: 14, weight: FontWeight.w800, color: ChatColors.ink)),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, color: _kBrand),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ],
     );

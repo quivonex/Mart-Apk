@@ -138,8 +138,11 @@ class NearbyResult {
 
   /// 403 subscription_required – user must buy a plan (token kept).
   final bool needsSubscription;
+
+  /// Current plan from the backend (searches left etc.), when sent.
+  final NearbyActiveSub? plan;
   const NearbyResult(this.ok, this.message, this.places,
-      {this.needsLogin = false, this.needsSubscription = false});
+      {this.needsLogin = false, this.needsSubscription = false, this.plan});
 }
 
 class NearbyPlacesService {
@@ -206,9 +209,16 @@ class NearbyPlacesService {
       // 403 → no active subscription: keep the token, show the plans.
       if (res.statusCode == 403) {
         if (j['subscription_required'] == true || j.isEmpty || '${j['message'] ?? ''}'.toLowerCase().contains('subscri')) {
-          await NearbySubscriptionStore.serverSaysNone();
+          // Limit used up → the backend sends the plan (remaining 0): save it so the
+          // plans screen lets the user buy a new one. No plan at all → forget it.
+          NearbyActiveSub? plan;
+          if (j['subscription'] is Map) {
+            plan = await NearbySubscriptionStore.syncFromServer(Map<String, dynamic>.from(j['subscription']));
+          } else {
+            await NearbySubscriptionStore.serverSaysNone();
+          }
           return NearbyResult(false, msg('No active subscription found. Please purchase a plan.'), const [],
-              needsSubscription: true);
+              needsSubscription: true, plan: plan);
         }
         return NearbyResult(false, msg('You are not allowed to use Nearby Search.'), const []);
       }
@@ -231,7 +241,11 @@ class NearbyPlacesService {
         p.distanceKm = p.hasLocation ? _km(lat, lng, p.lat, p.lng) : -1;
         places.add(p);
       }
-      return NearbyResult(true, '', places);
+      NearbyActiveSub? plan;
+      if (j['subscription'] is Map) {
+        plan = await NearbySubscriptionStore.syncFromServer(Map<String, dynamic>.from(j['subscription']));
+      }
+      return NearbyResult(true, '', places, plan: plan);
     } on TimeoutException {
       return const NearbyResult(false, 'The search took too long. Try a smaller radius.', []);
     } catch (e) {

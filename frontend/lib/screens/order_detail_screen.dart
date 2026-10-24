@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../models/order_model.dart';
 import '../services/order_service.dart';
+import '../services/order_extras_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -564,11 +566,30 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   bool _isLoading = true;
   String? _error;
   bool _isCancelling = false;
+  bool _invoiceBusy = false;
 
   @override
   void initState() {
     super.initState();
     _loadOrderDetail();
+  }
+
+  // POST shipping/download-invoice/ {order_id} → Shiprocket invoice PDF link
+  Future<void> _downloadInvoice() async {
+    setState(() => _invoiceBusy = true);
+    final r = await OrderExtrasService.invoiceUrl(widget.orderId);
+    if (!mounted) return;
+    setState(() => _invoiceBusy = false);
+    if (!r.ok || r.data == null) {
+      _snack(context, r.message, background: const Color(0xFFC62828));
+      return;
+    }
+    final uri = Uri.tryParse(r.data!);
+    final opened = uri != null && await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && mounted) {
+      await Clipboard.setData(ClipboardData(text: r.data!));
+      if (mounted) _snack(context, 'Could not open the invoice. Link copied.');
+    }
   }
 
   Future<void> _loadOrderDetail() async {
@@ -1341,6 +1362,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           foreground: _kBrand,
           border: _kBrand,
           onPressed: _openTracking,
+        ),
+      if (hasShipment && !_isCancelled(_norm(order.status)))
+        _ActionButton(
+          label: _invoiceBusy ? 'Getting invoice...' : 'Download Invoice',
+          icon: Icons.receipt_long_outlined,
+          background: _kBrand, // buttons: only #093C71
+          foreground: Colors.white,
+          border: _kBrand,
+          loading: _invoiceBusy,
+          onPressed: _invoiceBusy ? null : _downloadInvoice,
         ),
       if (order.canCancel && hasShipment)
         _ActionButton(

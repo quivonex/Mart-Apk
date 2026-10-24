@@ -15,6 +15,7 @@ import '../services/my_property_service.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'property_create_screen.dart';
 import 'property_detail_screen.dart';
+import 'property_edit_screen.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -327,13 +328,36 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 4,
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _pill(approvalText, approvalFg, approvalBg),
-                            _pill(running ? 'Live' : 'Not live', running ? const Color(0xFF047857) : _kRed,
-                                running ? const Color(0xFFECFDF5) : _kRedBg),
+                            Expanded(
+                              child: Wrap(
+                                spacing: 6,
+                                runSpacing: 4,
+                                children: [
+                                  _pill(approvalText, approvalFg, approvalBg),
+                                  _pill(running ? 'Live' : 'Not live', running ? const Color(0xFF047857) : _kRed,
+                                      running ? const Color(0xFFECFDF5) : _kRedBg),
+                                ],
+                              ),
+                            ),
+                            if (p.slug.isNotEmpty)
+                              Tooltip(
+                                message: 'Edit property',
+                                child: Material(
+                                  color: _kBrand, // buttons: only #093C71
+                                  shape: const CircleBorder(),
+                                  child: InkWell(
+                                    customBorder: const CircleBorder(),
+                                    onTap: () => _edit(p),
+                                    child: const Padding(
+                                      padding: EdgeInsets.all(7),
+                                      child: Icon(Icons.edit_outlined, size: 16, color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                         const SizedBox(height: 6),
@@ -411,6 +435,14 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
         ],
       ),
     );
+  }
+
+    Future<void> _edit(MyProperty p) async {
+    final saved = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => PropertyEditScreen(propertyId: p.id, slug: p.slug, title: p.title)),
+    );
+    if (saved == true) _load();
   }
 
   Widget _pill(String text, Color fg, Color bg) => Container(

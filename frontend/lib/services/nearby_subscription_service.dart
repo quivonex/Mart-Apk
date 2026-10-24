@@ -22,6 +22,7 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/shared_preferences_helper.dart';
@@ -128,6 +129,10 @@ class NearbyActiveSub {
   final DateTime expiresAt;
   final String orderId;
 
+  /// Searches used / left (from the backend `subscription` object). null = unknown.
+  final int? enquiryUsed;
+  final int? remaining;
+
   const NearbyActiveSub({
     required this.planId,
     required this.planName,
@@ -137,9 +142,17 @@ class NearbyActiveSub {
     required this.startedAt,
     required this.expiresAt,
     this.orderId = '',
+    this.enquiryUsed,
+    this.remaining,
   });
 
-  bool get isActive => DateTime.now().isBefore(expiresAt);
+  bool get dateValid => DateTime.now().isBefore(expiresAt);
+
+  /// All searches of this plan are used (plan still within its dates).
+  bool get exhausted => remaining != null && remaining! <= 0;
+
+  /// Usable = within its dates AND searches left.
+  bool get isActive => dateValid && !exhausted;
 
   /// Whole days left (today counts when some time is left).
   int get daysLeft {
@@ -178,6 +191,8 @@ class NearbyActiveSub {
     'started_at': startedAt.toIso8601String(),
     'expires_at': expiresAt.toIso8601String(),
     'order_id': orderId,
+    if (enquiryUsed != null) 'enquiry_used': enquiryUsed,
+    if (remaining != null) 'remaining_enquiries': remaining,
   };
 
   /// Reads our saved copy and the optional backend object
@@ -198,6 +213,12 @@ class NearbyActiveSub {
       startedAt: start,
       expiresAt: end,
       orderId: '${j['order_id'] ?? ''}',
+      enquiryUsed: j['enquiry_used'] == null ? null : _i(j['enquiry_used']),
+      remaining: j['remaining_enquiries'] != null
+          ? _i(j['remaining_enquiries'])
+          : (j['enquiry_used'] != null && (j['enquiry_limit'] ?? plan['enquiry_limit']) != null
+              ? math.max(0, _i(j['enquiry_limit'] ?? plan['enquiry_limit']) - _i(j['enquiry_used']))
+              : null),
     );
   }
 }
@@ -279,6 +300,30 @@ class NearbySubscriptionStore {
   static Future<void> clear() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(await _key());
+  }
+
+  /// The nearby API sends the current plan with every answer
+  /// ({plan_name, enquiry_limit, enquiry_used, remaining_enquiries, start_date, end_date}).
+  /// Save it so the app knows how many searches are left / when it is used up.
+  static Future<NearbyActiveSub?> syncFromServer(Map<String, dynamic> sub) async {
+    final s = NearbyActiveSub.fromJson(sub);
+    if (s == null) return null;
+    final old = await load();
+    final same = old != null && old.planName == s.planName;
+    final merged = NearbyActiveSub(
+      planId: s.planId.isNotEmpty ? s.planId : (same ? old!.planId : ''),
+      planName: s.planName,
+      price: s.price > 0 ? s.price : (same ? old!.price : 0),
+      durationDays: s.durationDays > 0 ? s.durationDays : s.expiresAt.difference(s.startedAt).inDays,
+      enquiryLimit: s.enquiryLimit,
+      startedAt: s.startedAt,
+      expiresAt: s.expiresAt,
+      orderId: same ? old!.orderId : '',
+      enquiryUsed: s.enquiryUsed,
+      remaining: s.remaining,
+    );
+    await save(merged);
+    return merged;
   }
 
   /// Backend said "no active subscription" → forget an active copy

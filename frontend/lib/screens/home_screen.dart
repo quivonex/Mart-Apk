@@ -32,6 +32,9 @@ import '../models/product_model.dart';
 import '../models/property_model.dart';
 import '../services/admin_image_service.dart';
 import '../services/home_service.dart';
+import '../services/instagram_reel_service.dart';
+import '../services/offer_filter_service.dart';
+import '../services/product_search_service.dart';
 import '../services/real_estate_service.dart';
 import '../utils/cart_helper.dart';
 import '../utils/shared_preferences_helper.dart';
@@ -562,6 +565,19 @@ class HomeContentState extends State<HomeContent> {
   bool _inStockOnly = false;
   int _visibleCount = 10;
 
+  // Server search (product/product/search/) – used for the shopping list
+  String _serverQuery = '';
+  List<Product>? _serverResults; // null = not loaded / failed → local filter
+  bool _searchBusy = false;
+  int _searchSeq = 0;
+
+  // Discount filter (offer/offers/filter-options/)
+  List<DiscountOption> _discountOptions = [];
+  DiscountOption? _discount;
+
+  // Instagram reels (accounts/instagram-reel/list-all/)
+  List<InstagramReel> _instaReels = [];
+
   // Hero banners
   final _heroPage = PageController();
   List<HomeBanner> _hero = [];
@@ -650,7 +666,8 @@ class HomeContentState extends State<HomeContent> {
       case Marketplace.remart:
         await _loadRemart();
       case Marketplace.shopping:
-        await Future.wait([_loadHero(), _loadFinance(), _loadProducts()]);
+        await Future.wait([_loadHero(), _loadFinance(), _loadProducts(), _loadDiscounts(), _loadInstaReels()]);
+        if (_query.isNotEmpty) _runServerSearch(_query);
     }
   }
 
@@ -687,6 +704,43 @@ class HomeContentState extends State<HomeContent> {
       _remart = items;
       _remartError = err;
       if (cats.isNotEmpty) _remartCats = cats;
+    });
+  }
+
+    Future<void> _loadDiscounts() async {
+    final list = await OfferFilterService.options(refresh: true);
+    if (!mounted) return;
+    setState(() {
+      _discountOptions = list;
+      // keep the chosen range if it still exists
+      final d = _discount;
+      _discount = d == null
+          ? null
+          : list.where((o) => o.kind == d.kind && o.label == d.label).firstOrNull;
+    });
+  }
+
+  Future<void> _loadInstaReels() async {
+    final list = await InstagramReelService.all();
+    if (mounted) setState(() => _instaReels = list);
+  }
+
+  /// Server search; the local filter is used until (or if) it answers.
+  Future<void> _runServerSearch(String q) async {
+    final seq = ++_searchSeq;
+    setState(() => _searchBusy = true);
+    final r = await ProductSearchService.search(q);
+    if (!mounted || seq != _searchSeq) return;
+    setState(() {
+      _searchBusy = false;
+      _serverQuery = q;
+      if (r.ok) {
+        // search API does not check is_active → keep products that are live in the app list
+        final live = {for (final p in _products) p.id};
+        _serverResults = live.isEmpty ? r.products : r.products.where((p) => live.contains(p.id)).toList();
+      } else {
+        _serverResults = null;
+      }
     });
   }
 
@@ -862,6 +916,12 @@ class HomeContentState extends State<HomeContent> {
       _visibleCount = 10;
     });
     if (_marketplace == Marketplace.shopping) {
+      if (_query.isNotEmpty) {
+        _runServerSearch(_query);
+      } else {
+        _searchSeq++;
+        _searchBusy = false;
+      }
       _scrollToProducts();
     } else if (_scroll.hasClients) {
       _scroll.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
@@ -922,16 +982,36 @@ class HomeContentState extends State<HomeContent> {
   // =================================================================
   double _num(String s) => double.tryParse(s) ?? 0;
 
+  bool _textMatch(Product p, String q) =>
+      [p.name, p.categoryName, p.brandName, p.companyName, p.subcategoryName]
+          .any((s) => s.toLowerCase().contains(q));
+
+  /// Server results for the current query (ranked) + local text matches.
+  bool get _usingServerSearch =>
+      _query.isNotEmpty && _serverResults != null && _serverQuery == _query;
+
   List<Product> get _filtered {
     final q = _query.toLowerCase();
     final cat = _category?.toLowerCase();
-    final list = _products.where((p) {
+    final server = _usingServerSearch;
+    var base = _products;
+    if (server) {
+      final ids = <int>{};
+      base = [
+        for (final p in _serverResults!)
+          if (ids.add(p.id)) p,
+        for (final p in _products)
+          if (_textMatch(p, q) && ids.add(p.id)) p,
+      ];
+    }
+    final disc = _discount;
+    final list = base.where((p) {
       if (cat != null && p.categoryName.trim().toLowerCase() != cat) return false;
       if (_franchiseOnly && !p.isFranchiseAvailable) return false;
       if (_inStockOnly && (p.stockQuantity ?? 1) <= 0) return false;
-      if (q.isEmpty) return true;
-      return [p.name, p.categoryName, p.brandName, p.companyName, p.subcategoryName]
-          .any((s) => s.toLowerCase().contains(q));
+      if (disc != null && !disc.matches(p.id, p.slug)) return false;
+      if (q.isEmpty || server) return true;
+      return _textMatch(p, q);
     }).toList();
     switch (_sort) {
       case _Sort.newest:
@@ -947,7 +1027,12 @@ class HomeContentState extends State<HomeContent> {
   }
 
   bool get _hasFilters =>
-      _category != null || _query.isNotEmpty || _franchiseOnly || _inStockOnly || _sort != _Sort.newest;
+      _category != null ||
+      _query.isNotEmpty ||
+      _franchiseOnly ||
+      _inStockOnly ||
+      _discount != null ||
+      _sort != _Sort.newest;
 
   void _clearFilters() {
     _searchCtrl.clear();
@@ -956,6 +1041,7 @@ class HomeContentState extends State<HomeContent> {
       _query = '';
       _franchiseOnly = false;
       _inStockOnly = false;
+      _discount = null;
       _sort = _Sort.newest;
       _visibleCount = 10;
     });
@@ -966,6 +1052,8 @@ class HomeContentState extends State<HomeContent> {
     var franchise = _franchiseOnly;
     var inStock = _inStockOnly;
     String? cat = _category;
+    var disc = _discount;
+    if (_discountOptions.isEmpty) _loadDiscounts(); // retry quietly for next time
 
     final apply = await showModalBottomSheet<bool>(
       context: context,
@@ -1011,6 +1099,7 @@ class HomeContentState extends State<HomeContent> {
                           franchise = false;
                           inStock = false;
                           cat = null;
+                          disc = null;
                         }),
                         child: Text('Reset',
                             style: DT.text(size: 13, weight: FontWeight.w700, color: _HC.blue)),
@@ -1043,6 +1132,32 @@ class HomeContentState extends State<HomeContent> {
                     title: Text('In stock only', style: DT.text(size: 13.5, weight: FontWeight.w600)),
                     onChanged: (v) => setSheet(() => inStock = v),
                   ),
+                  if (_discountOptions.isNotEmpty) ...[
+                    const Divider(),
+                    Text('Discount',
+                        style: DT.text(size: 12, weight: FontWeight.w700, color: DT.slate500)),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final o in <DiscountOption?>[null, ..._discountOptions])
+                          ChoiceChip(
+                            label: Text(o == null ? 'Any' : '${o.label} (${o.count})'),
+                            selected: disc == o,
+                            showCheckmark: false,
+                            selectedColor: _HC.blue,
+                            backgroundColor: _HC.pillBg,
+                            side: BorderSide(color: disc == o ? _HC.blue : _HC.pillBorder),
+                            labelStyle: DT.text(
+                                size: 12.5,
+                                weight: FontWeight.w600,
+                                color: disc == o ? Colors.white : _HC.blueText),
+                            onSelected: (_) => setSheet(() => disc = o),
+                          ),
+                      ],
+                    ),
+                  ],
                   if (_categories.isNotEmpty) ...[
                     const Divider(),
                     Text('Category',
@@ -1105,6 +1220,7 @@ class HomeContentState extends State<HomeContent> {
       _franchiseOnly = franchise;
       _inStockOnly = inStock;
       _category = cat;
+      _discount = disc;
       _visibleCount = 10;
     });
     _scrollToProducts();
@@ -1138,6 +1254,10 @@ class HomeContentState extends State<HomeContent> {
                       _financeStrip(),
                       const SizedBox(height: 12), // 🆕 Reduced from 16 to 12
                       _reelsSection(),
+                      if (_instaReels.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        _instagramSection(),
+                      ],
                       const SizedBox(height: 16),
                       _partnerCards(),
                       const SizedBox(height: 20),
@@ -2159,7 +2279,10 @@ class HomeContentState extends State<HomeContent> {
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(size: 15, weight: FontWeight.w900, color: DT.onyx900, letterSpacing: -0.2)),
                   if (!_productsLoading)
-                    Text('${list.length} product${list.length == 1 ? '' : 's'}',
+                    Text(
+                        _searchBusy && _query.isNotEmpty
+                            ? 'Searching…'
+                            : '${list.length} product${list.length == 1 ? '' : 's'}',
                         style: DT.text(size: 11.5, color: DT.slate500)),
                 ],
               ),
@@ -2174,6 +2297,15 @@ class HomeContentState extends State<HomeContent> {
             ),
           ],
         ),
+        if (_searchBusy && _query.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: const LinearProgressIndicator(
+                  minHeight: 2, color: _HC.blue, backgroundColor: _HC.pillBg),
+            ),
+          ),
         const SizedBox(height: 10),
         if (_productsLoading)
           _productGrid(itemCount: 4, builder: (_) => _skeletonCard())
@@ -2611,6 +2743,140 @@ class HomeContentState extends State<HomeContent> {
   }
 
   // ── Live Reels & Demos (now in the old loan section position) ──
+  // ── Instagram reels (accounts/instagram-reel/list-all/) ─────────
+  Future<void> _openInstaReel(InstagramReel r) async {
+    final uri = Uri.tryParse(r.link);
+    if (uri == null) return;
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && mounted) _snack('Could not open Instagram.');
+  }
+
+  Widget _instagramSection() {
+    final reels = _instaReels;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: _panel,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF062A50), Color(0xFF093C71), Color(0xFF1E5A9C)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.camera_alt_outlined, size: 16, color: Colors.white),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Instagram Reels',
+                        style: DT.text(size: 13, weight: FontWeight.w900, color: DT.onyx900)),
+                    Text('Watch our latest reels on Instagram',
+                        style: DT.text(size: 10.5, color: DT.slate500)),
+                  ],
+                ),
+              ),
+              Text('${reels.length}',
+                  style: DT.text(size: 12.5, weight: FontWeight.w800, color: _HC.blue)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 168,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: reels.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (_, i) {
+                final r = reels[i];
+                return SizedBox(
+                  width: 112,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () => _openInstaReel(r),
+                      child: Ink(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: i.isEven
+                                ? const [Color(0xFF062A50), Color(0xFF093C71), Color(0xFF1E5A9C)]
+                                : const [Color(0xFF093C71), Color(0xFF1E5A9C), Color(0xFF062A50)],
+                          ),
+                        ),
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              right: -14,
+                              top: -14,
+                              child: Icon(Icons.camera_alt_outlined,
+                                  size: 70, color: Colors.white.withValues(alpha: 0.08)),
+                            ),
+                            Center(
+                              child: Container(
+                                width: 42,
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white.withValues(alpha: 0.18),
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.6)),
+                                ),
+                                child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 26),
+                              ),
+                            ),
+                            Positioned(
+                              left: 10,
+                              right: 10,
+                              bottom: 10,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    r.title.isNotEmpty ? r.title : r.shortLabel,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: DT.text(
+                                        size: 11.5, weight: FontWeight.w800, color: Colors.white, height: 1.25),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.open_in_new_rounded, size: 11, color: Color(0xFFC9DBEE)),
+                                      const SizedBox(width: 3),
+                                      Text('Instagram',
+                                          style: DT.text(size: 9.5, weight: FontWeight.w600, color: const Color(0xFFC9DBEE))),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _reelsSection() {
     final reels = buildReels(_products);
     if (reels.isEmpty) return const SizedBox.shrink();
