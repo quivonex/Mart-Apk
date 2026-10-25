@@ -21,6 +21,7 @@ import '../models/chat_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'api_urls.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class ChatService {
   ChatService._();
@@ -119,14 +120,14 @@ class ChatService {
 
   static Future<ChatResult<T>> _authFail<T>(dynamic body) async {
     await SharedPreferencesHelper.clearAll();
-    return ChatResult<T>.fail(errorText(body, 'Session expired. Please login again.'), needsLogin: true);
+    return ChatResult<T>.fail(errorText(body, tr('Session expired. Please login again.')), needsLogin: true);
   }
 
   static Future<ChatResult<T>> _guard<T>(Future<ChatResult<T>> Function() run, String fallback) async {
     try {
       return await run();
     } on TimeoutException {
-      return ChatResult<T>.fail('The server is taking too long. Please try again.');
+      return ChatResult<T>.fail(tr('The server is taking too long. Please try again.'));
     } catch (_) {
       return ChatResult<T>.fail(fallback);
     }
@@ -167,17 +168,17 @@ class ChatService {
           kind.idKey: itemId,
         });
         if (_isAuthError(code, j)) return _authFail<int>(j);
-        if (!_ok(code)) return ChatResult<int>.fail(errorText(j, 'Failed to start chat.'));
+        if (!_ok(code)) return ChatResult<int>.fail(errorText(j, tr('Failed to start chat.')));
         final id = _id(_object(j, const ['chat', 'data']));
-        if (id == null || id <= 0) return ChatResult<int>.fail(errorText(j, 'Unable to start chat.'));
+        if (id == null || id <= 0) return ChatResult<int>.fail(errorText(j, tr('Unable to start chat.')));
         return ChatResult<int>.ok(id);
-      }, 'Failed to start chat.');
+      }, tr('Failed to start chat.'));
 
   // ---------------------------------------------------------------- chats
   static Future<ChatResult<List<ChatThread>>> chats() => _guard(() async {
         final (code, j) = await _send('GET', ApiUrls.chatsUrl);
         if (_isAuthError(code, j)) return _authFail<List<ChatThread>>(j);
-        if (!_ok(code)) return ChatResult<List<ChatThread>>.fail(errorText(j, 'Could not load chats.'));
+        if (!_ok(code)) return ChatResult<List<ChatThread>>.fail(errorText(j, tr('Could not load chats.')));
         final list = [for (final m in _list(j)) ChatThread.fromJson(m)].where((c) => c.id > 0).toList()
           ..sort((a, b) {
             final x = a.activityAt, y = b.activityAt;
@@ -187,7 +188,7 @@ class ChatService {
             return y.compareTo(x);
           });
         return ChatResult.ok(list);
-      }, 'Could not load chats.');
+      }, tr('Could not load chats.'));
 
   // ---------------------------------------------------------------- messages
   /// Oldest first.
@@ -199,7 +200,7 @@ class ChatService {
         Future<(int, dynamic)> page(int n) => _send('GET', ApiUrls.chatMessagesUrl(chatId, page: n, pageSize: pageSize));
         final (code, j) = await page(1);
         if (_isAuthError(code, j)) return _authFail<List<ChatMessage>>(j);
-        if (!_ok(code)) return ChatResult<List<ChatMessage>>.fail(errorText(j, 'Could not load messages.'));
+        if (!_ok(code)) return ChatResult<List<ChatMessage>>.fail(errorText(j, tr('Could not load messages.')));
         final raw = <Map<String, dynamic>>[..._list(j)];
         final count = j is Map && j['count'] is num ? (j['count'] as num).toInt() : raw.length;
         final last = count <= pageSize ? 1 : ((count + pageSize - 1) ~/ pageSize);
@@ -218,7 +219,7 @@ class ChatService {
         }
         final list = byId.values.toList()..sort(compareMessages);
         return ChatResult.ok(list.length > pageSize ? list.sublist(list.length - pageSize) : list);
-      }, 'Could not load messages.');
+      }, tr('Could not load messages.'));
 
   static int compareMessages(ChatMessage a, ChatMessage b) {
     final x = a.createdAt, y = b.createdAt;
@@ -231,11 +232,11 @@ class ChatService {
         final (code, j) = await _send('POST', ApiUrls.chatSendUrl(chatId), body: {'message': text});
         if (_isAuthError(code, j)) return _authFail<ChatMessage?>(j);
         if (!_ok(code)) {
-          return ChatResult<ChatMessage?>.fail(errorText(j, 'Message not sent.'),
+          return ChatResult<ChatMessage?>.fail(errorText(j, tr('Message not sent.')),
               code: _code(j));
         }
         return ChatResult<ChatMessage?>.ok(_messageFrom(j));
-      }, 'Message not sent.');
+      }, tr('Message not sent.'));
 
   static ChatMessage? _messageFrom(dynamic j) {
     final m = _object(j, const ['message', 'data']);
@@ -252,11 +253,11 @@ class ChatService {
         });
         if (_isAuthError(code, j)) return _authFail<ChatMessage?>(j);
         if (!_ok(code)) {
-          return ChatResult<ChatMessage?>.fail(errorText(j, 'Offer not sent.'),
+          return ChatResult<ChatMessage?>.fail(errorText(j, tr('Offer not sent.')),
               code: _code(j));
         }
         return ChatResult<ChatMessage?>.ok(_messageFrom(j));
-      }, 'Offer not sent.');
+      }, tr('Offer not sent.'));
 
   /// action: accept | reject | counter (counter needs [amount]).
   static Future<ChatResult<String>> respondOffer(
@@ -275,10 +276,10 @@ class ChatService {
         });
         if (_isAuthError(code, j)) return _authFail<String>(j);
         if (!_ok(code) || (j is Map && j['status'] == false)) {
-          return ChatResult<String>.fail(errorText(j, 'Could not update the offer.'));
+          return ChatResult<String>.fail(errorText(j, tr('Could not update the offer.')));
         }
-        return ChatResult<String>.ok(errorText(j, 'Done.'));
-      }, 'Could not update the offer.');
+        return ChatResult<String>.ok(errorText(j, tr('Done.')));
+      }, tr('Could not update the offer.'));
 
   // ---------------------------------------------------------------- read (silent)
   static Future<void> markRead(int chatId) async {

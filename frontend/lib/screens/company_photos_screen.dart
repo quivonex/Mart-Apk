@@ -12,6 +12,7 @@ import '../constants/design_tokens.dart';
 import '../models/company_model.dart';
 import '../services/company_service.dart';
 import '../widgets/company_ui.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -45,7 +46,7 @@ class _CompanyPhotosScreenState extends State<CompanyPhotosScreen> {
   Future<void> _pick() async {
     final room = _maxPhotos - _total;
     if (room <= 0) {
-      showCompanySnack(context, 'You can keep up to $_maxPhotos photos.', error: true);
+      showCompanySnack(context, tr('You can keep up to {0} photos.', [_maxPhotos]), error: true);
       return;
     }
     try {
@@ -62,16 +63,16 @@ class _CompanyPhotosScreenState extends State<CompanyPhotosScreen> {
         _newBytes.addAll(bytes);
       });
       if (picked.length > room) {
-        showCompanySnack(context, 'Only $room more photo(s) added (limit $_maxPhotos).');
+        showCompanySnack(context, tr('Only {0} more photo(s) added (limit {1}).', [room, _maxPhotos]));
       }
     } catch (e) {
-      showCompanySnack(context, 'Could not open gallery: $e', error: true);
+      showCompanySnack(context, tr('Could not open gallery: {0}', [e]), error: true);
     }
   }
 
   Future<void> _camera() async {
     if (_total >= _maxPhotos) {
-      showCompanySnack(context, 'You can keep up to $_maxPhotos photos.', error: true);
+      showCompanySnack(context, tr('You can keep up to {0} photos.', [_maxPhotos]), error: true);
       return;
     }
     try {
@@ -85,7 +86,7 @@ class _CompanyPhotosScreenState extends State<CompanyPhotosScreen> {
         _newBytes.add(bytes);
       });
     } catch (e) {
-      showCompanySnack(context, 'Could not open camera: $e', error: true);
+      showCompanySnack(context, tr('Could not open camera: {0}', [e]), error: true);
     }
   }
 
@@ -101,7 +102,7 @@ class _CompanyPhotosScreenState extends State<CompanyPhotosScreen> {
     setState(() => _saving = false);
 
     if (res.isSuccess) {
-      showCompanySnack(context, 'Photos saved');
+      showCompanySnack(context, tr('Photos saved'));
       Navigator.pop(context, true);
     } else {
       showCompanySnack(context, res.displayMessage, error: true);
@@ -112,9 +113,9 @@ class _CompanyPhotosScreenState extends State<CompanyPhotosScreen> {
     if (!_dirty) return true;
     return confirmAction(
       context,
-      title: 'Discard changes?',
-      message: 'Your photo changes have not been saved.',
-      confirmLabel: 'Discard',
+      title: tr('Discard changes?'),
+      message: tr('Your photo changes have not been saved.'),
+      confirmLabel: tr('Discard'),
       destructive: true,
     );
   }
@@ -130,14 +131,14 @@ class _CompanyPhotosScreenState extends State<CompanyPhotosScreen> {
       child: Scaffold(
         backgroundColor: DT.background,
         appBar: CompanyTopBar(
-          title: 'Photos',
-          subtitle: '${widget.company.name} · $_total of $_maxPhotos',
+          title: tr('Photos'),
+          subtitle: tr('{0} · {1} of {2}', [widget.company.name, _total, _maxPhotos]),
         ),
         body: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
           children: [
             Text(
-              'Buyers see these on your company page. Tap a photo to remove it.',
+              tr('Buyers see these on your company page. Tap a photo to remove it.'),
               style: DT.text(size: 12.5, color: DT.slate500, height: 1.45),
             ),
             const SizedBox(height: 14),
@@ -177,7 +178,7 @@ class _CompanyPhotosScreenState extends State<CompanyPhotosScreen> {
             ),
             if (_toDelete.isNotEmpty) ...[
               const SizedBox(height: 12),
-              Text('${_toDelete.length} photo(s) will be removed when you save.',
+              Text(tr('{0} photo(s) will be removed when you save.', [_toDelete.length]),
                   style: DT.text(size: 12, color: _kRed, weight: FontWeight.w600)),
             ],
           ],
@@ -214,7 +215,7 @@ class _CompanyPhotosScreenState extends State<CompanyPhotosScreen> {
                     height: 22,
                     child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
                   )
-                      : Text('Save photos',
+                      : Text(tr('Save photos'),
                       style: DT.text(
                           size: 14.5,
                           weight: FontWeight.w700,
@@ -282,7 +283,7 @@ class _Tile extends StatelessWidget {
                     color: DT.emerald700,
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Text('New',
+                  child: Text(tr('New'),
                       style: DT.text(size: 10, weight: FontWeight.w700, color: Colors.white)),
                 ),
               ),
@@ -322,7 +323,7 @@ class _AddTile extends StatelessWidget {
                 const SizedBox(height: 8),
                 ListTile(
                   leading: const Icon(Icons.photo_library_outlined, color: _kBrand),
-                  title: Text('Choose from gallery',
+                  title: Text(tr('Choose from gallery'),
                       style: DT.text(size: 14, weight: FontWeight.w600)),
                   onTap: () {
                     Navigator.pop(ctx);
@@ -331,7 +332,7 @@ class _AddTile extends StatelessWidget {
                 ),
                 ListTile(
                   leading: const Icon(Icons.photo_camera_outlined, color: _kBrand),
-                  title: Text('Take a photo', style: DT.text(size: 14, weight: FontWeight.w600)),
+                  title: Text(tr('Take a photo'), style: DT.text(size: 14, weight: FontWeight.w600)),
                   onTap: () {
                     Navigator.pop(ctx);
                     onCamera();
@@ -347,7 +348,7 @@ class _AddTile extends StatelessWidget {
           children: [
             const Icon(Icons.add_photo_alternate_outlined, color: _kBrand, size: 28),
             const SizedBox(height: 4),
-            Text('Add photo',
+            Text(tr('Add photo'),
                 style: DT.text(size: 11.5, weight: FontWeight.w700, color: _kBrand)),
           ],
         ),

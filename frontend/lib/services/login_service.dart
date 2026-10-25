@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/login_model.dart';
 import 'api_urls.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class LoginService {
   // Login API call
@@ -23,7 +24,7 @@ class LoginService {
         return LoginResponse.fromJson(responseData);
       } else {
         // Error - extract message from response
-        String errorMessage = 'Login failed';
+        String errorMessage = tr('Login failed');
         if (responseData is Map && responseData.containsKey('message')) {
           errorMessage = responseData['message'];
         } else if (responseData is Map && responseData.containsKey('error')) {
@@ -38,7 +39,7 @@ class LoginService {
       if (e is Exception) {
         throw Exception(e.toString());
       }
-      throw Exception('Network error. Please check your connection.');
+      throw Exception(tr('Network error. Please check your connection.'));
     }
   }
 }

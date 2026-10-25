@@ -25,6 +25,7 @@ import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../constants/design_tokens.dart';
 import '../services/remart_post_service.dart';
 import '../utils/shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -256,7 +257,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
       _registerAttribute(created);
       _newAttrKeys.add(created.key);
     });
-    _snack('"${created.name}" added — fill it in below');
+    _snack(tr('"{0}" added — fill it in below', [created.name]));
   }
 
   // ===================================================================
@@ -265,7 +266,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
   Future<void> _addPhotos() async {
     final left = _maxPhotos - _photos.length;
     if (left <= 0) {
-      _snack('You can add up to $_maxPhotos photos', error: true);
+      _snack(tr('You can add up to {0} photos', [_maxPhotos]), error: true);
       return;
     }
     final source = await _pickSource();
@@ -286,9 +287,9 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
         _photos.addAll(take);
         _photoBytes.addAll(bytes);
       });
-      if (picked.length > left) _snack('Only $left more photo${left == 1 ? '' : 's'} added (max $_maxPhotos)');
+      if (picked.length > left) _snack(tr('Only {0} more photo{1} added (max {2})', [left, left == 1 ? '' : 's', _maxPhotos]));
     } catch (e) {
-      _snack('Could not open photos: $e', error: true);
+      _snack(tr('Could not open photos: {0}', [e]), error: true);
     }
   }
 
@@ -309,13 +310,13 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                   height: 4,
                   decoration: BoxDecoration(color: DT.slate300, borderRadius: BorderRadius.circular(2))),
               const SizedBox(height: 14),
-              Text('Add photos', style: DT.text(size: 16, weight: FontWeight.w800)),
+              Text(tr('Add photos'), style: DT.text(size: 16, weight: FontWeight.w800)),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: _sourceTile(ctx, Icons.photo_camera_outlined, 'Camera', ImageSource.camera)),
+                  Expanded(child: _sourceTile(ctx, Icons.photo_camera_outlined, tr('Camera'), ImageSource.camera)),
                   const SizedBox(width: 12),
-                  Expanded(child: _sourceTile(ctx, Icons.photo_library_outlined, 'Gallery', ImageSource.gallery)),
+                  Expanded(child: _sourceTile(ctx, Icons.photo_library_outlined, tr('Gallery'), ImageSource.gallery)),
                 ],
               ),
             ],
@@ -337,7 +338,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
           children: [
             Icon(icon, color: _brand, size: 28),
             const SizedBox(height: 6),
-            Text(label, style: DT.text(size: 13, weight: FontWeight.w700, color: _brandDark)),
+            Text(tr(label), style: DT.text(size: 13, weight: FontWeight.w700, color: _brandDark)),
           ],
         ),
       ),
@@ -364,7 +365,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
-        content: Text(msg, style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
+        content: Text(tr(msg), style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
         backgroundColor: error ? _kRed : DT.onyx900,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
@@ -373,14 +374,14 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
   }
 
   String? _checkExtras() {
-    if (_photos.isEmpty) return 'Add at least one photo';
-    if (_categoryId == null) return 'Choose a category';
-    if (_subcategories.isNotEmpty && _subcategoryId == null) return 'Choose a subcategory';
+    if (_photos.isEmpty) return tr('Add at least one photo');
+    if (_categoryId == null) return tr('Choose a category');
+    if (_subcategories.isNotEmpty && _subcategoryId == null) return tr('Choose a subcategory');
     for (final a in _attributes.where((a) => a.required)) {
       final v = _attrCtrls[a.key]?.text.trim() ?? _attrValues[a.key];
-      if (v == null || (v is String && v.isEmpty)) return '${a.name} is required';
+      if (v == null || (v is String && v.isEmpty)) return tr('{0} is required', [a.name]);
     }
-    if (!_firstFree && _pricedPlans.isNotEmpty && _plan == null) return 'Choose a listing plan';
+    if (!_firstFree && _pricedPlans.isNotEmpty && _plan == null) return tr('Choose a listing plan');
     return null;
   }
 
@@ -409,13 +410,13 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
     final formOk = _formKey.currentState!.validate();
     final extra = _checkExtras();
     if (!formOk || extra != null) {
-      _snack(extra ?? 'Please fix the highlighted fields', error: true);
+      _snack(extra ?? tr('Please fix the highlighted fields'), error: true);
       return;
     }
 
     setState(() {
       _busy = true;
-      _busyText = 'Uploading ${_photos.length} photo${_photos.length == 1 ? '' : 's'}…';
+      _busyText = tr('Uploading {0} photo{1}…', [_photos.length, _photos.length == 1 ? '' : 's']);
     });
     final r = await RemartPostService.createListing(
       fields: {
@@ -438,7 +439,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
     if (!mounted) return;
     setState(() => _busy = false);
     if (!r.ok || r.data == null) {
-      _snack(r.ok ? 'Listing saved but no id was returned.' : r.message, error: true);
+      _snack(r.ok ? tr('Listing saved but no id was returned.') : r.message, error: true);
       return;
     }
     _createdListingId = r.data;
@@ -447,10 +448,10 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
     final info = RemartPostService.lastCreated;
     if (info != null && info.id == r.data && info.isLive) {
       await _done(
-        title: 'Your item is live!',
+        title: tr('Your item is live!'),
         message: info.freePeriodDays > 0
-            ? '${_titleCtrl.text.trim()} is on QNX ReMart free for ${info.freePeriodDays} days.'
-            : (info.message.isNotEmpty ? info.message : '${_titleCtrl.text.trim()} is now on QNX ReMart.'),
+            ? tr('{0} is on QNX ReMart free for {1} days.', [_titleCtrl.text.trim(), info.freePeriodDays])
+            : (info.message.isNotEmpty ? info.message : tr('{0} is now on QNX ReMart.', [_titleCtrl.text.trim()])),
       );
       return;
     }
@@ -462,14 +463,14 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
       });
       await _paymentPending(info?.message.isNotEmpty == true
           ? info!.message
-          : 'This item needs a listing plan to go live.');
+          : tr('This item needs a listing plan to go live.'));
       return;
     }
 
     if (_plan == null) {
       await _done(
-        title: 'Item submitted',
-        message: 'Your item has been saved. It will appear on QNX ReMart once it is activated.',
+        title: tr('Item submitted'),
+        message: tr('Your item has been saved. It will appear on QNX ReMart once it is activated.'),
       );
       return;
     }
@@ -480,13 +481,13 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
     final plan = _plan;
     if (plan == null) return;
     if (kIsWeb) {
-      await _paymentPending('Online payment works in the QNX Mart Android app. Open the app to activate this item.');
+      await _paymentPending(tr('Online payment works in the QNX Mart Android app. Open the app to activate this item.'));
       return;
     }
 
     setState(() {
       _busy = true;
-      _busyText = 'Starting payment…';
+      _busyText = tr('Starting payment…');
     });
     final created = await RemartPostService.createPayment(listingId, plan.id);
     if (!mounted) return;
@@ -501,7 +502,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
     final amount = (d['amount_paise'] as num?)?.toInt() ?? int.tryParse('${d['amount_paise']}') ?? 0;
     if (orderId.isEmpty || key.isEmpty || amount <= 0) {
       setState(() => _busy = false);
-      await _paymentPending('Payment could not be started.');
+      await _paymentPending(tr('Payment could not be started.'));
       return;
     }
 
@@ -532,7 +533,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
     } catch (e) {
       razorpay.clear();
       if (mounted) setState(() => _busy = false);
-      if (mounted) await _paymentPending('Could not open payment: $e');
+      if (mounted) await _paymentPending(tr('Could not open payment: {0}', [e]));
       return;
     }
 
@@ -543,12 +544,12 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
       setState(() => _busy = false);
       final cancelled = failure != null && failure.code == Razorpay.PAYMENT_CANCELLED;
       await _paymentPending(cancelled
-          ? 'Payment was cancelled.'
-          : (failure?.message?.isNotEmpty == true ? 'Payment failed: ${failure!.message}' : 'Payment failed.'));
+          ? tr('Payment was cancelled.')
+          : (failure?.message?.isNotEmpty == true ? tr('Payment failed: {0}', [failure!.message]) : tr('Payment failed.')));
       return;
     }
 
-    setState(() => _busyText = 'Confirming payment…');
+    setState(() => _busyText = tr('Confirming payment…'));
     final v = await RemartPostService.verifyPayment(
       orderId: success.orderId ?? orderId,
       paymentId: success.paymentId ?? '',
@@ -557,12 +558,12 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
     if (!mounted) return;
     setState(() => _busy = false);
     if (!v.ok) {
-      await _paymentPending('${v.message}\nIf money was deducted, contact support with reference ${success.paymentId}.');
+      await _paymentPending(tr('{0}\nIf money was deducted, contact support with reference {1}.', [v.message, success.paymentId]));
       return;
     }
     await _done(
-      title: 'Your item is live!',
-      message: '${_titleCtrl.text.trim()} is now on QNX ReMart for ${plan.durationDays} days.',
+      title: tr('Your item is live!'),
+      message: tr('{0} is now on QNX ReMart for {1} days.', [_titleCtrl.text.trim(), plan.durationDays]),
     );
   }
 
@@ -578,10 +579,10 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
           decoration: const BoxDecoration(color: _kOrangeBg, shape: BoxShape.circle),
           child: const Icon(Icons.hourglass_top_rounded, color: _kOrangeDark, size: 28),
         ),
-        title: Text('Item saved – payment pending',
+        title: Text(tr('Item saved – payment pending'),
             textAlign: TextAlign.center, style: DT.text(size: 17, weight: FontWeight.w800)),
         content: Text(
-          '$reason\n\nYour item is saved but will go live only after the plan payment.',
+          tr('{0}\n\nYour item is saved but will go live only after the plan payment.', [reason]),
           textAlign: TextAlign.center,
           style: DT.text(size: 13, color: DT.slate500, height: 1.45),
         ),
@@ -598,7 +599,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                     side: const BorderSide(color: DT.slate200),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Later'),
+                  child: Text(tr('Later')),
                 ),
               ),
               const SizedBox(width: 10),
@@ -611,7 +612,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Pay now'),
+                  child: Text(tr('Pay now')),
                 ),
               ),
             ],
@@ -640,8 +641,8 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
           decoration: const BoxDecoration(color: DT.emerald50, shape: BoxShape.circle),
           child: const Icon(Icons.check_rounded, color: DT.emerald700, size: 34),
         ),
-        title: Text(title, textAlign: TextAlign.center, style: DT.text(size: 18, weight: FontWeight.w800)),
-        content: Text(message,
+        title: Text(tr(title), textAlign: TextAlign.center, style: DT.text(size: 18, weight: FontWeight.w800)),
+        content: Text(tr(message),
             textAlign: TextAlign.center, style: DT.text(size: 13, color: DT.slate500, height: 1.45)),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
@@ -655,7 +656,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('Done'),
+              child: Text(tr('Done')),
             ),
           ),
         ],
@@ -671,13 +672,13 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
     final leave = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Discard this item?'),
-        content: const Text('Your photos and details will be lost.'),
+        title: Text(tr('Discard this item?')),
+        content: Text(tr('Your photos and details will be lost.')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Keep editing')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('Keep editing'))),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Discard', style: DT.text(size: 14, weight: FontWeight.w700, color: _kRed)),
+            child: Text(tr('Discard'), style: DT.text(size: 14, weight: FontWeight.w700, color: _kRed)),
           ),
         ],
       ),
@@ -755,7 +756,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
             children: [
               const SizedBox(width: 4),
               IconButton(
-                tooltip: 'Back',
+                tooltip: tr('Back'),
                 onPressed: () => Navigator.maybePop(context),
                 icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
               ),
@@ -764,11 +765,11 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Sell on QNX ReMart',
+                    Text(tr('Sell on QNX ReMart'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: 18, weight: FontWeight.w700, letterSpacing: -0.3, color: Colors.white)),
-                    Text('Used & resale items',
+                    Text(tr('Used & resale items'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: 12, color: const Color(0xFFC9DBEE))),
@@ -785,10 +786,10 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
 
   Widget _hero() {
     final steps = [
-      ('Photos', _photos.isNotEmpty),
-      ('Category', _categoryId != null),
-      ('Details', _titleCtrl.text.trim().length >= 3 && _priceCtrl.text.trim().isNotEmpty),
-      ('Plan', _firstFree || (_pricedPlans.isEmpty ? _categoryId != null : _plan != null)),
+      (tr('Photos'), _photos.isNotEmpty),
+      (tr('Category'), _categoryId != null),
+      (tr('Details'), _titleCtrl.text.trim().length >= 3 && _priceCtrl.text.trim().isNotEmpty),
+      (tr('Plan'), _firstFree || (_pricedPlans.isEmpty ? _categoryId != null : _plan != null)),
     ];
     final doneCount = steps.where((s) => s.$2).length;
     return Container(
@@ -821,9 +822,9 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Post your item',
+                    Text(tr('Post your item'),
                         style: DT.text(size: 16.5, weight: FontWeight.w800, color: Colors.white)),
-                    Text('Good photos and a clear price sell faster',
+                    Text(tr('Good photos and a clear price sell faster'),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: 12, color: const Color(0xFFC9DBEE))),
@@ -853,7 +854,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                           size: 14, color: s.$2 ? Colors.white : const Color(0xFFA3C1E0)),
                       const SizedBox(width: 4),
                       Flexible(
-                        child: Text(s.$1,
+                        child: Text(tr(s.$1),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: DT.text(
@@ -883,7 +884,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
         const Icon(Icons.lock_clock_outlined, color: _kOrangeDark, size: 20),
         const SizedBox(width: 10),
         Expanded(
-          child: Text('Item saved. Complete the plan payment to make it live.',
+          child: Text(tr('Item saved. Complete the plan payment to make it live.'),
               style: DT.text(size: 12.5, weight: FontWeight.w600, color: _kOrangeDark)),
         ),
       ],
@@ -895,9 +896,9 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
     final missing = _showErrors && _photos.isEmpty;
     return _Section(
       icon: Icons.photo_library_outlined,
-      title: 'Photos',
+      title: tr('Photos'),
       subtitle: '${_photos.length}/$_maxPhotos · first photo is the cover',
-      error: missing ? 'Add at least one photo' : null,
+      error: missing ? tr('Add at least one photo') : null,
       child: LayoutBuilder(builder: (context, box) {
         const gap = 10.0;
         final size = (box.maxWidth - gap * 2) / 3;
@@ -923,7 +924,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                     children: [
                       Icon(Icons.add_a_photo_outlined, color: missing ? _kRed : _brand, size: 26),
                       const SizedBox(height: 6),
-                      Text(_photos.isEmpty ? 'Add photos' : 'Add more',
+                      Text(_photos.isEmpty ? tr('Add photos') : tr('Add more'),
                           style: DT.text(size: 12, weight: FontWeight.w700, color: missing ? _kRed : _brand)),
                     ],
                   ),
@@ -956,7 +957,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
               decoration: BoxDecoration(color: _brand, borderRadius: BorderRadius.circular(99)),
-              child: Text('Cover', style: DT.text(size: 10, weight: FontWeight.w800, color: Colors.white)),
+              child: Text(tr('Cover'), style: DT.text(size: 10, weight: FontWeight.w800, color: Colors.white)),
             ),
           ),
         Positioned(
@@ -979,23 +980,23 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
   Widget _categorySection() {
     Widget body;
     if (_loadingCategories) {
-      body = const _Notice('Loading categories…', loading: true);
+      body = _Notice(tr('Loading categories…'), loading: true);
     } else if (_categoryError != null) {
       body = _Notice(_categoryError!, error: true, onRetry: _loadCategories);
     } else if (_categories.isEmpty) {
-      body = const _Notice('No ReMart categories are available yet.', error: true);
+      body = _Notice(tr('No ReMart categories are available yet.'), error: true);
     } else {
       body = Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _Label('Category', required: true),
+          _Label(tr('Category'), required: true),
           _chips(_categories, _categoryId, _selectCategory),
           if (_categoryId != null) ...[
             const SizedBox(height: 16),
             if (_loadingSubcategories)
-              const _Notice('Loading subcategories…', loading: true)
+              _Notice(tr('Loading subcategories…'), loading: true)
             else if (_subcategories.isNotEmpty) ...[
-              const _Label('Subcategory', required: true),
+              _Label(tr('Subcategory'), required: true),
               _chips(_subcategories, _subcategoryId, _selectSubcategory),
             ],
           ],
@@ -1006,9 +1007,9 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
         (_categoryId == null || (_subcategories.isNotEmpty && _subcategoryId == null));
     return _Section(
       icon: Icons.category_outlined,
-      title: 'Category',
-      subtitle: 'Where should buyers find it?',
-      error: missing ? 'Choose a category and subcategory' : null,
+      title: tr('Category'),
+      subtitle: tr('Where should buyers find it?'),
+      error: missing ? tr('Choose a category and subcategory') : null,
       child: body,
     );
   }
@@ -1019,7 +1020,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
     children: [
       for (final o in items)
         ChoiceChip(
-          label: Text(o.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+          label: Text(trData(o.name), maxLines: 1, overflow: TextOverflow.ellipsis),
           selected: o.id == selected,
           showCheckmark: false,
           selectedColor: _brand,
@@ -1039,13 +1040,13 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
     final created = _attributes.where((a) => _newAttrKeys.contains(a.key)).toList();
     return _Section(
       icon: Icons.tune_rounded,
-      title: 'More about the item',
-      subtitle: 'Details buyers look for in this category',
+      title: tr('More about the item'),
+      subtitle: tr('Details buyers look for in this category'),
       trailing: _loadingAttributes || locked || _subcategoryId == null
           ? null
           : _createAttributeButton(),
       child: _loadingAttributes
-          ? const _Notice('Loading fields…', loading: true)
+          ? _Notice(tr('Loading fields…'), loading: true)
           : Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1084,7 +1085,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
           children: [
             const Icon(Icons.add_circle_outline_rounded, size: 15, color: _brand),
             const SizedBox(width: 4),
-            Text('Create attribute', style: DT.text(size: 11.5, weight: FontWeight.w700, color: _brandDark)),
+            Text(tr('Create attribute'), style: DT.text(size: 11.5, weight: FontWeight.w700, color: _brandDark)),
           ],
         ),
       ),
@@ -1107,11 +1108,11 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
           child: const Icon(Icons.playlist_add_rounded, color: _brand, size: 24),
         ),
         const SizedBox(height: 10),
-        Text('No extra fields for this subcategory',
+        Text(tr('No extra fields for this subcategory'),
             textAlign: TextAlign.center,
             style: DT.text(size: 13, weight: FontWeight.w700, color: DT.onyx800)),
         const SizedBox(height: 4),
-        Text('Add details like Brand, Model or Year so buyers can compare easily.',
+        Text(tr('Add details like Brand, Model or Year so buyers can compare easily.'),
             textAlign: TextAlign.center,
             style: DT.text(size: 11.5, color: DT.slate500, height: 1.4)),
         if (!locked) ...[
@@ -1130,7 +1131,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 icon: const Icon(Icons.add_rounded, size: 18, color: Colors.white),
-                label: Text('Create attribute',
+                label: Text(tr('Create attribute'),
                     style: DT.text(size: 13, weight: FontWeight.w700, color: Colors.white)),
               ),
             ),
@@ -1154,7 +1155,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: const Color(0xFFA7F3D0)),
           ),
-          child: Text('NEW', style: DT.text(size: 9, weight: FontWeight.w800, color: _green, letterSpacing: 0.6)),
+          child: Text(tr('NEW'), style: DT.text(size: 9, weight: FontWeight.w800, color: _green, letterSpacing: 0.6)),
         ),
       ),
     ],
@@ -1175,7 +1176,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
             const Icon(Icons.auto_awesome_rounded, size: 16, color: Color(0xFF1E5A9C)),
             const SizedBox(width: 6),
             Expanded(
-              child: Text('Attributes you added (${created.length})',
+              child: Text(tr('Attributes you added ({0})', [created.length]),
                   style: DT.text(size: 12.5, weight: FontWeight.w800, color: const Color(0xFF062A50))),
             ),
           ],
@@ -1236,7 +1237,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
           child: Row(
             children: [
               Expanded(
-                child: Text(a.name,
+                child: Text(trData(a.name),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: DT.text(size: 13.5, weight: FontWeight.w600, color: DT.onyx800)),
@@ -1262,7 +1263,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
               children: [
                 for (final o in a.options)
                   ChoiceChip(
-                    label: Text(o, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    label: Text(tr(o), maxLines: 1, overflow: TextOverflow.ellipsis),
                     selected: sel == o,
                     showCheckmark: false,
                     selectedColor: _kTint,
@@ -1294,15 +1295,15 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
           ],
           style: _inputStyle,
           decoration: _input(
-            hint: a.type == 'year' ? 'e.g. ${DateTime.now().year - 2}' : 'Enter ${a.name.toLowerCase()}',
+            hint: a.type == 'year' ? 'e.g. ${DateTime.now().year - 2}' : tr('Enter {0}', [a.name.toLowerCase()]),
             icon: a.type == 'year' ? Icons.calendar_today_outlined : Icons.edit_note_rounded,
           ),
           validator: (v) {
             final t = (v ?? '').trim();
-            if (a.required && t.isEmpty) return '${a.name} is required';
+            if (a.required && t.isEmpty) return tr('{0} is required', [a.name]);
             if (a.type == 'year' && t.isNotEmpty) {
               final y = int.tryParse(t) ?? 0;
-              if (y < 1900 || y > DateTime.now().year) return 'Enter a valid year';
+              if (y < 1900 || y > DateTime.now().year) return tr('Enter a valid year');
             }
             return null;
           },
@@ -1314,24 +1315,24 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
   // ---------------------------------------------------------------- details
   Widget _detailsSection() => _Section(
     icon: Icons.inventory_2_outlined,
-    title: 'Item details',
-    subtitle: 'What are you selling?',
+    title: tr('Item details'),
+    subtitle: tr('What are you selling?'),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _Label('Title', required: true),
+        _Label(tr('Title'), required: true),
         TextFormField(
           controller: _titleCtrl,
           maxLength: 120,
           textCapitalization: TextCapitalization.sentences,
           onChanged: (_) => setState(() {}),
           style: _inputStyle,
-          decoration: _input(hint: 'e.g. Exide 150Ah inverter battery, 1 year old', icon: Icons.title_rounded)
+          decoration: _input(hint: tr('e.g. Exide 150Ah inverter battery, 1 year old'), icon: Icons.title_rounded)
               .copyWith(counterText: ''),
-          validator: (v) => (v ?? '').trim().length < 5 ? 'Write a title of at least 5 characters' : null,
+          validator: (v) => (v ?? '').trim().length < 5 ? tr('Write a title of at least 5 characters') : null,
         ),
         const SizedBox(height: 14),
-        const _Label('Description', required: true),
+        _Label(tr('Description'), required: true),
         TextFormField(
           controller: _descCtrl,
           minLines: 4,
@@ -1341,13 +1342,13 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
           textCapitalization: TextCapitalization.sentences,
           style: _inputStyle.copyWith(fontWeight: FontWeight.w500),
           decoration: _input(
-            hint: 'Condition, age, reason for selling, what is included…',
+            hint: tr('Condition, age, reason for selling, what is included…'),
             tinted: true,
           ),
-          validator: (v) => (v ?? '').trim().length < 20 ? 'Describe the item in at least 20 characters' : null,
+          validator: (v) => (v ?? '').trim().length < 20 ? tr('Describe the item in at least 20 characters') : null,
         ),
         const SizedBox(height: 10),
-        const _Label('Condition', required: true),
+        _Label(tr('Condition'), required: true),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -1355,7 +1356,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
             for (final (value, label, icon) in _conditions)
               ChoiceChip(
                 avatar: Icon(icon, size: 16, color: _condition == value ? Colors.white : DT.slate500),
-                label: Text(label),
+                label: Text(tr(label)),
                 selected: _condition == value,
                 showCheckmark: false,
                 selectedColor: _brand,
@@ -1369,9 +1370,9 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        const _Label('You are selling as', required: true),
+        _Label(tr('You are selling as'), required: true),
         _segmented(
-          [('individual', 'Individual', Icons.person_outline_rounded), ('business', 'Business', Icons.storefront_outlined)],
+          [('individual', tr('Individual'), Icons.person_outline_rounded), ('business', tr('Business'), Icons.storefront_outlined)],
           _sellerType,
               (v) => setState(() => _sellerType = v),
         ),
@@ -1405,7 +1406,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                         Icon(icon, size: 17, color: value == v ? _brand : DT.slate500),
                         const SizedBox(width: 6),
                         Flexible(
-                          child: Text(label,
+                          child: Text(tr(label),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: DT.text(
@@ -1423,12 +1424,12 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
   // ---------------------------------------------------------------- price
   Widget _priceSection() => _Section(
     icon: Icons.currency_rupee_rounded,
-    title: 'Price',
-    subtitle: 'Set a fair price to sell quickly',
+    title: tr('Price'),
+    subtitle: tr('Set a fair price to sell quickly'),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _Label('Price (₹)', required: true),
+        _Label(tr('Price (₹)'), required: true),
         TextFormField(
           controller: _priceCtrl,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -1446,7 +1447,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
           ),
           validator: (v) {
             final p = double.tryParse((v ?? '').trim());
-            if (p == null || p <= 0) return 'Enter a price';
+            if (p == null || p <= 0) return tr('Enter a price');
             return null;
           },
         ),
@@ -1466,9 +1467,9 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Price is negotiable',
+                    Text(tr('Price is negotiable'),
                         style: DT.text(size: 13.5, weight: FontWeight.w700, color: DT.onyx800)),
-                    Text('Buyers can make you an offer',
+                    Text(tr('Buyers can make you an offer'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: 11.5, color: DT.slate500)),
@@ -1490,8 +1491,8 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
   // ---------------------------------------------------------------- location
   Widget _locationSection() => _Section(
     icon: Icons.location_on_outlined,
-    title: 'Location',
-    subtitle: 'Buyers search by city',
+    title: tr('Location'),
+    subtitle: tr('Buyers search by city'),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1502,13 +1503,13 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const _Label('City', required: true),
+                  _Label(tr('City'), required: true),
                   TextFormField(
                     controller: _cityCtrl,
                     textCapitalization: TextCapitalization.words,
                     style: _inputStyle,
-                    decoration: _input(hint: 'e.g. Pune', icon: Icons.location_city_outlined),
-                    validator: (v) => (v ?? '').trim().length < 2 ? 'Enter city' : null,
+                    decoration: _input(hint: tr('e.g. Pune'), icon: Icons.location_city_outlined),
+                    validator: (v) => (v ?? '').trim().length < 2 ? tr('Enter city') : null,
                   ),
                 ],
               ),
@@ -1518,7 +1519,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const _Label('Pincode'),
+                  _Label(tr('Pincode')),
                   TextFormField(
                     controller: _pincodeCtrl,
                     keyboardType: TextInputType.number,
@@ -1528,7 +1529,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                     validator: (v) {
                       final t = (v ?? '').trim();
                       if (t.isEmpty) return null;
-                      return RegExp(r'^[1-9]\d{5}$').hasMatch(t) ? null : '6 digits';
+                      return RegExp(r'^[1-9]\d{5}$').hasMatch(t) ? null : tr('6 digits');
                     },
                   ),
                 ],
@@ -1537,15 +1538,15 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
           ],
         ),
         const SizedBox(height: 14),
-        const _Label('Area / locality'),
+        _Label(tr('Area / locality')),
         TextFormField(
           controller: _areaCtrl,
           textCapitalization: TextCapitalization.words,
           style: _inputStyle,
-          decoration: _input(hint: 'e.g. Hadapsar', icon: Icons.map_outlined),
+          decoration: _input(hint: tr('e.g. Hadapsar'), icon: Icons.map_outlined),
         ),
         const SizedBox(height: 14),
-        const _Label('Address'),
+        _Label(tr('Address')),
         TextFormField(
           controller: _addressCtrl,
           minLines: 2,
@@ -1553,7 +1554,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
           keyboardType: TextInputType.multiline,
           textCapitalization: TextCapitalization.sentences,
           style: _inputStyle.copyWith(fontWeight: FontWeight.w500),
-          decoration: _input(hint: 'Shown only to buyers you talk to', tinted: true),
+          decoration: _input(hint: tr('Shown only to buyers you talk to'), tinted: true),
         ),
       ],
     ),
@@ -1578,10 +1579,10 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Your first listing is FREE',
+                  Text(tr('Your first listing is FREE'),
                       style: DT.text(size: 14, weight: FontWeight.w800, color: DT.emerald700)),
                   const SizedBox(height: 2),
-                  Text('No plan or payment needed – it goes live as soon as you post.',
+                  Text(tr('No plan or payment needed – it goes live as soon as you post.'),
                       style: DT.text(size: 12, color: DT.emerald700, height: 1.4)),
                 ],
               ),
@@ -1590,11 +1591,11 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
         ),
       );
     } else if (_categoryId == null) {
-      body = const _Notice('Choose a category to see listing plans.');
+      body = _Notice(tr('Choose a category to see listing plans.'));
     } else if (_loadingPlans) {
-      body = const _Notice('Loading plans…', loading: true);
+      body = _Notice(tr('Loading plans…'), loading: true);
     } else if (_pricedPlans.isEmpty) {
-      body = const _Notice('No paid plan is set for this category. Your item will be saved and go live once it is activated.');
+      body = _Notice(tr('No paid plan is set for this category. Your item will be saved and go live once it is activated.'));
     } else {
       body = Column(
         children: [
@@ -1607,8 +1608,8 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
     }
     return _Section(
       icon: Icons.workspace_premium_outlined,
-      title: 'Listing plan',
-      subtitle: 'How long your item stays live',
+      title: tr('Listing plan'),
+      subtitle: tr('How long your item stays live'),
       child: body,
     );
   }
@@ -1637,14 +1638,14 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(p.name,
+                    Text(trData(p.name),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: 14.5, weight: FontWeight.w800, color: DT.onyx900)),
                     const SizedBox(height: 2),
                     Text(
                       [
-                        '${p.durationDays} days live',
+                        tr('{0} days live', [p.durationDays]),
                         if (p.description.trim().isNotEmpty) p.description.trim(),
                       ].join(' · '),
                       maxLines: 2,
@@ -1655,7 +1656,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(_rupees(p.price ?? 0),
+              Text(tr(_rupees(p.price ?? 0)),
                   style: DT.text(size: 17, weight: FontWeight.w900, color: sel ? _brand : DT.onyx900)),
             ],
           ),
@@ -1669,8 +1670,8 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
     final plan = _plan;
     final locked = _createdListingId != null;
     final label = locked
-        ? 'Pay ${_rupees(plan?.price ?? 0)} & go live'
-        : (plan != null ? 'Post & pay ${_rupees(plan.price ?? 0)}' : (_firstFree ? 'Post item for free' : 'Post item'));
+        ? tr('Pay {0} & go live', [_rupees(plan?.price ?? 0)])
+        : (plan != null ? tr('Post & pay {0}', [_rupees(plan.price ?? 0)]) : (_firstFree ? tr('Post item for free') : tr('Post item')));
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -1691,7 +1692,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('${plan.durationDays} days', style: DT.text(size: 11.5, color: DT.slate500)),
-                      Text(_rupees(plan.price ?? 0), style: DT.text(size: 18, weight: FontWeight.w900)),
+                      Text(tr(_rupees(plan.price ?? 0)), style: DT.text(size: 18, weight: FontWeight.w900)),
                     ],
                   ),
                 ),
@@ -1725,7 +1726,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white)),
                           const SizedBox(width: 10),
                           Flexible(
-                            child: Text(_busyText,
+                            child: Text(tr(_busyText),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
@@ -1738,7 +1739,7 @@ class _RemartAddProductScreenState extends State<RemartAddProductScreen> {
                           Icon(locked || plan != null ? Icons.lock_rounded : Icons.upload_rounded, size: 18),
                           const SizedBox(width: 8),
                           Flexible(
-                            child: Text(label,
+                            child: Text(tr(label),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: DT.text(size: 15, weight: FontWeight.w700, color: Colors.white)),
@@ -1784,7 +1785,7 @@ InputDecoration _input({String? hint, IconData? icon, bool tinted = false}) {
   OutlineInputBorder b(Color c, [double w = 1]) =>
       OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: c, width: w));
   return InputDecoration(
-    hintText: hint,
+    hintText: trN(hint),
     hintStyle: DT.text(size: 13.5, color: DT.slate400),
     hintMaxLines: 2,
     prefixIcon: icon == null ? null : Icon(icon, size: 19, color: _brand),
@@ -1843,11 +1844,11 @@ class _Section extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title,
+                    Text(tr(title),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: 14.5, weight: FontWeight.w700, color: DT.onyx900)),
-                    Text(subtitle,
+                    Text(tr(subtitle),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: 11.5, color: DT.slate500)),
@@ -1865,7 +1866,7 @@ class _Section extends StatelessWidget {
               children: [
                 const Icon(Icons.error_outline_rounded, size: 15, color: _kRed),
                 const SizedBox(width: 6),
-                Expanded(child: Text(error!, style: DT.text(size: 12, weight: FontWeight.w600, color: _kRed))),
+                Expanded(child: Text(tr(error!), style: DT.text(size: 12, weight: FontWeight.w600, color: _kRed))),
               ],
             ),
           ],
@@ -1885,7 +1886,7 @@ class _Label extends StatelessWidget {
     padding: const EdgeInsets.only(bottom: 6),
     child: Text.rich(
       TextSpan(
-        text: text,
+        text: tr(text),
         style: DT.text(size: 12, weight: FontWeight.w600, color: DT.onyx700),
         children: [
           if (required) TextSpan(text: ' *', style: DT.text(size: 12, color: const Color(0xFFC62828))),
@@ -1921,7 +1922,7 @@ class _Notice extends StatelessWidget {
               size: 18, color: error ? _kRed : _kBrand),
         const SizedBox(width: 10),
         Expanded(
-          child: Text(text,
+          child: Text(tr(text),
               style: DT.text(size: 12.5, color: error ? _kRed : _kBrandDark, height: 1.4)),
         ),
         if (onRetry != null)
@@ -1932,7 +1933,7 @@ class _Notice extends StatelessWidget {
               minimumSize: const Size(0, 32),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: Text('Retry', style: DT.text(size: 12.5, weight: FontWeight.w700, color: error ? _kRed : _brand)),
+            child: Text(tr('Retry'), style: DT.text(size: 12.5, weight: FontWeight.w700, color: error ? _kRed : _brand)),
           ),
       ],
     ),
@@ -1943,11 +1944,11 @@ class _Notice extends StatelessWidget {
 // CREATE ATTRIBUTE (olx/attributes/create/)
 // =====================================================================
 (IconData, String) _attrTypeMeta(String type) => switch (type) {
-  'number' => (Icons.pin_outlined, 'Number'),
-  'select' => (Icons.checklist_rounded, 'Options'),
-  'boolean' => (Icons.toggle_on_outlined, 'Yes / No'),
-  'year' => (Icons.calendar_today_outlined, 'Year'),
-  _ => (Icons.short_text_rounded, 'Text'),
+  'number' => (Icons.pin_outlined, tr('Number')),
+  'select' => (Icons.checklist_rounded, tr('Options')),
+  'boolean' => (Icons.toggle_on_outlined, tr('Yes / No')),
+  'year' => (Icons.calendar_today_outlined, tr('Year')),
+  _ => (Icons.short_text_rounded, tr('Text')),
 };
 
 class _CreateAttributeSheet extends StatefulWidget {
@@ -2017,7 +2018,7 @@ class _CreateAttributeSheetState extends State<_CreateAttributeSheet> {
     });
     if (!_formKey.currentState!.validate()) return;
     if (_type == 'select' && _options.length < 2) {
-      setState(() => _error = 'Add at least 2 options for a choice field');
+      setState(() => _error = tr('Add at least 2 options for a choice field'));
       return;
     }
     setState(() => _saving = true);
@@ -2037,7 +2038,7 @@ class _CreateAttributeSheetState extends State<_CreateAttributeSheet> {
       setState(() {
         _saving = false;
         _error = r.message.toLowerCase().contains('already exists')
-            ? 'An attribute with this name already exists for this subcategory.'
+            ? tr('An attribute with this name already exists for this subcategory.')
             : r.message;
       });
     }
@@ -2069,27 +2070,27 @@ class _CreateAttributeSheetState extends State<_CreateAttributeSheet> {
                     keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                     padding: const EdgeInsets.fromLTRB(18, 18, 18, 12),
                     children: [
-                      const _Label('Attribute name', required: true),
+                      _Label(tr('Attribute name'), required: true),
                       TextFormField(
                         controller: _name,
                         autofocus: true,
                         textCapitalization: TextCapitalization.words,
                         inputFormatters: [LengthLimitingTextInputFormatter(60)],
                         style: _inputStyle,
-                        decoration: _input(hint: 'e.g. Brand, Fuel type, RAM', icon: Icons.label_outline_rounded),
+                        decoration: _input(hint: tr('e.g. Brand, Fuel type, RAM'), icon: Icons.label_outline_rounded),
                         onChanged: (_) => setState(() {}),
                         validator: (v) {
                           final t = (v ?? '').trim();
-                          if (t.isEmpty) return 'Enter the attribute name';
-                          if (t.length < 2) return 'Too short';
+                          if (t.isEmpty) return tr('Enter the attribute name');
+                          if (t.length < 2) return tr('Too short');
                           if (widget.takenKeys.contains(RemartAttribute.keyFrom(t))) {
-                            return 'This field already exists in the form';
+                            return tr('This field already exists in the form');
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 16),
-                      const _Label('Field type', required: true),
+                      _Label(tr('Field type'), required: true),
                       LayoutBuilder(builder: (context, c) {
                         const gap = 8.0;
                         final cols = c.maxWidth >= 380 ? 5 : 3;
@@ -2102,7 +2103,7 @@ class _CreateAttributeSheetState extends State<_CreateAttributeSheet> {
                       }),
                       if (_type == 'select') ...[
                         const SizedBox(height: 16),
-                        const _Label('Options', required: true),
+                        _Label(tr('Options'), required: true),
                         Row(
                           children: [
                             Expanded(
@@ -2111,7 +2112,7 @@ class _CreateAttributeSheetState extends State<_CreateAttributeSheet> {
                                 focusNode: _optionFocus,
                                 textCapitalization: TextCapitalization.words,
                                 style: _inputStyle,
-                                decoration: _input(hint: 'Type an option (or a, b, c)', icon: Icons.add_task_rounded),
+                                decoration: _input(hint: tr('Type an option (or a, b, c)'), icon: Icons.add_task_rounded),
                                 onSubmitted: (_) => _addOptions(),
                               ),
                             ),
@@ -2127,14 +2128,14 @@ class _CreateAttributeSheetState extends State<_CreateAttributeSheet> {
                                   padding: const EdgeInsets.symmetric(horizontal: 16),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 ),
-                                child: Text('Add', style: DT.text(size: 13, weight: FontWeight.w700, color: Colors.white)),
+                                child: Text(tr('Add'), style: DT.text(size: 13, weight: FontWeight.w700, color: Colors.white)),
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 10),
                         if (_options.isEmpty)
-                          Text('No options yet — add at least 2.',
+                          Text(tr('No options yet — add at least 2.'),
                               style: DT.text(size: 11.5, color: DT.slate500))
                         else
                           Wrap(
@@ -2143,7 +2144,7 @@ class _CreateAttributeSheetState extends State<_CreateAttributeSheet> {
                             children: [
                               for (var i = 0; i < _options.length; i++)
                                 InputChip(
-                                  label: Text(_options[i], maxLines: 1, overflow: TextOverflow.ellipsis),
+                                  label: Text(tr(_options[i]), maxLines: 1, overflow: TextOverflow.ellipsis),
                                   labelStyle: DT.text(size: 12, weight: FontWeight.w600, color: _brandDark),
                                   backgroundColor: _kTint,
                                   side: const BorderSide(color: _kLine),
@@ -2170,9 +2171,9 @@ class _CreateAttributeSheetState extends State<_CreateAttributeSheet> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Required field',
+                                  Text(tr('Required field'),
                                       style: DT.text(size: 13, weight: FontWeight.w700, color: DT.onyx800)),
-                                  Text('Sellers must fill this in',
+                                  Text(tr('Sellers must fill this in'),
                                       style: DT.text(size: 11, color: DT.slate500)),
                                 ],
                               ),
@@ -2227,13 +2228,13 @@ class _CreateAttributeSheetState extends State<_CreateAttributeSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Create attribute',
+                  Text(tr('Create attribute'),
                       style: DT.text(size: 16.5, weight: FontWeight.w800, color: Colors.white)),
                   const SizedBox(height: 2),
                   Text(
                     widget.subcategoryName.isEmpty
-                        ? 'New field for this subcategory'
-                        : 'New field for ${widget.subcategoryName}',
+                        ? tr('New field for this subcategory')
+                        : tr('New field for {0}', [widget.subcategoryName]),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: DT.text(size: 12, color: const Color(0xD9FFFFFF)),
@@ -2272,7 +2273,7 @@ class _CreateAttributeSheetState extends State<_CreateAttributeSheet> {
           children: [
             Icon(icon, size: 20, color: sel ? _brand : DT.slate500),
             const SizedBox(height: 4),
-            Text(label,
+            Text(tr(label),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: DT.text(size: 11, weight: FontWeight.w700, color: sel ? _brandDark : DT.onyx700)),
@@ -2284,13 +2285,13 @@ class _CreateAttributeSheetState extends State<_CreateAttributeSheet> {
 
   /// Small live preview of how the field will look in the form.
   Widget _preview() {
-    final name = _name.text.trim().isEmpty ? 'Attribute name' : _name.text.trim();
+    final name = _name.text.trim().isEmpty ? tr('Attribute name') : _name.text.trim();
     Widget field;
     switch (_type) {
       case 'boolean':
         field = Row(
           children: [
-            Expanded(child: Text(name, style: DT.text(size: 13, weight: FontWeight.w600, color: DT.onyx800))),
+            Expanded(child: Text(tr(name), style: DT.text(size: 13, weight: FontWeight.w600, color: DT.onyx800))),
             Switch.adaptive(value: true, activeTrackColor: _brand, onChanged: null),
           ],
         );
@@ -2312,7 +2313,7 @@ class _CreateAttributeSheetState extends State<_CreateAttributeSheet> {
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: i == 0 ? _brand : DT.slate200),
                     ),
-                    child: Text(opts[i],
+                    child: Text(tr(opts[i]),
                         style: DT.text(size: 11.5, weight: FontWeight.w700, color: i == 0 ? _brandDark : DT.onyx700)),
                   ),
               ],
@@ -2342,8 +2343,8 @@ class _CreateAttributeSheetState extends State<_CreateAttributeSheet> {
                       _type == 'year'
                           ? 'e.g. ${DateTime.now().year - 2}'
                           : _type == 'number'
-                          ? 'e.g. 128'
-                          : 'Enter ${name.toLowerCase()}',
+                          ? tr('e.g. 128')
+                          : tr('Enter {0}', [name.toLowerCase()]),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(size: 12.5, color: DT.slate400),
@@ -2365,7 +2366,7 @@ class _CreateAttributeSheetState extends State<_CreateAttributeSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('PREVIEW', style: DT.text(size: 10, weight: FontWeight.w800, color: DT.slate500, letterSpacing: 0.8)),
+          Text(tr('PREVIEW'), style: DT.text(size: 10, weight: FontWeight.w800, color: DT.slate500, letterSpacing: 0.8)),
           const SizedBox(height: 8),
           field,
         ],
@@ -2399,7 +2400,7 @@ class _CreateAttributeSheetState extends State<_CreateAttributeSheet> {
                 ? const SizedBox(
                 width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.check_rounded, size: 18, color: Colors.white),
-            label: Text(_saving ? 'Creating…' : 'Create attribute',
+            label: Text(_saving ? tr('Creating…') : tr('Create attribute'),
                 style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
           ),
         ),

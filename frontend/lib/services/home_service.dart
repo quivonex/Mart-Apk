@@ -18,6 +18,7 @@ import '../utils/shared_preferences_helper.dart';
 import 'api_urls.dart';
 import 'cart_service.dart';
 import 'product_service.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class HomeService {
   static const _timeout = Duration(seconds: 20);
@@ -34,15 +35,15 @@ class HomeService {
     if (res.statusCode >= 200 && res.statusCode < 300 && decoded is Map<String, dynamic>) {
       return decoded;
     }
-    throw Exception(decoded is Map ? (decoded['message'] ?? 'Request failed') : 'Request failed');
+    throw Exception(decoded is Map ? (decoded['message'] ?? tr('Request failed')) : tr('Request failed'));
   }
 
   static String _err(Object e) {
     final s = e.toString().replaceFirst('Exception: ', '');
     if (s.contains('SocketException') || s.contains('ClientException')) {
-      return 'Could not reach the server.';
+      return tr('Could not reach the server.');
     }
-    if (s.contains('TimeoutException')) return 'The server took too long to respond.';
+    if (s.contains('TimeoutException')) return tr('The server took too long to respond.');
     return s;
   }
 

@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'api_urls.dart';
 import '../models/property_model.dart';
 import '../utils/shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class RealEstateService {
   // ─────────────────────────────────────────────────────────
@@ -30,7 +31,7 @@ class RealEstateService {
       } catch (_) {
         return PropertyResponse(
           status: false,
-          message: 'Invalid response from server',
+          message: tr('Invalid response from server'),
           data: [],
         );
       }
@@ -42,25 +43,25 @@ class RealEstateService {
       return PropertyResponse(
         status: false,
         message: jsonData['message']?.toString() ??
-            'Failed to load properties',
+            tr('Failed to load properties'),
         data: [],
       );
     } on SocketException {
       return PropertyResponse(
         status: false,
-        message: 'No internet connection. Please check your network.',
+        message: tr('No internet connection. Please check your network.'),
         data: [],
       );
     } on HttpException {
       return PropertyResponse(
         status: false,
-        message: 'Server error. Please try again later.',
+        message: tr('Server error. Please try again later.'),
         data: [],
       );
     } catch (e) {
       return PropertyResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
         data: [],
       );
     }
@@ -94,7 +95,7 @@ class RealEstateService {
       } catch (_) {
         return AmenitiesListResponse(
           status: false,
-          message: 'Invalid response from server',
+          message: tr('Invalid response from server'),
           data: [],
         );
       }
@@ -106,25 +107,25 @@ class RealEstateService {
       return AmenitiesListResponse(
         status: false,
         message: jsonData['message']?.toString() ??
-            'Failed to load amenities',
+            tr('Failed to load amenities'),
         data: [],
       );
     } on SocketException {
       return AmenitiesListResponse(
         status: false,
-        message: 'No internet connection. Please check your network.',
+        message: tr('No internet connection. Please check your network.'),
         data: [],
       );
     } on HttpException {
       return AmenitiesListResponse(
         status: false,
-        message: 'Server error. Please try again later.',
+        message: tr('Server error. Please try again later.'),
         data: [],
       );
     } catch (e) {
       return AmenitiesListResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
         data: [],
       );
     }
@@ -156,7 +157,7 @@ class RealEstateService {
       } catch (_) {
         return PropertyDetailResponse(
           status: false,
-          message: 'Invalid response from server',
+          message: tr('Invalid response from server'),
         );
       }
 
@@ -167,22 +168,22 @@ class RealEstateService {
       return PropertyDetailResponse(
         status: false,
         message: jsonData['message']?.toString() ??
-            'Failed to load property details',
+            tr('Failed to load property details'),
       );
     } on SocketException {
       return PropertyDetailResponse(
         status: false,
-        message: 'No internet connection. Please check your network.',
+        message: tr('No internet connection. Please check your network.'),
       );
     } on HttpException {
       return PropertyDetailResponse(
         status: false,
-        message: 'Server error. Please try again later.',
+        message: tr('Server error. Please try again later.'),
       );
     } catch (e) {
       return PropertyDetailResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
       );
     }
   }

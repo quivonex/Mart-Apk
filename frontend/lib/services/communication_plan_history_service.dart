@@ -15,6 +15,7 @@
 import '../models/communication_plan_models.dart';
 import 'api_urls.dart';
 import 'qnx_api.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class CommPayment {
   final int id;
@@ -61,9 +62,9 @@ class CommPayment {
       );
 
   String get statusLabel => switch (status) {
-        'paid' => 'Paid',
-        'failed' => 'Failed',
-        'created' => 'Not completed',
+        'paid' => tr('Paid'),
+        'failed' => tr('Failed'),
+        'created' => tr('Not completed'),
         _ => status.isEmpty ? '—' : status[0].toUpperCase() + status.substring(1),
       };
 
@@ -90,7 +91,7 @@ class CommunicationPlanHistoryService {
       'page_size': pageSize,
     });
     if (!r.ok) {
-      return CommResult.fail(r.error('Could not load payment history.'), needsLogin: r.authFailed);
+      return CommResult.fail(r.error(tr('Could not load payment history.')), needsLogin: r.authFailed);
     }
     final m = r.map;
     final items = r.list.map(CommPayment.fromJson).toList();
@@ -105,10 +106,10 @@ class CommunicationPlanHistoryService {
   static Future<CommResult<CommSubscription>> subscriptionDetail(int subscriptionId) async {
     final r = await QnxApi.post(ApiUrls.commSubscriptionDetailUrl, {'subscription_id': subscriptionId});
     if (!r.ok) {
-      return CommResult.fail(r.error('Could not load plan details.'), needsLogin: r.authFailed);
+      return CommResult.fail(r.error(tr('Could not load plan details.')), needsLogin: r.authFailed);
     }
     final d = r.map['data'];
-    if (d is! Map) return const CommResult.fail('Plan details are not available.');
+    if (d is! Map) return CommResult.fail(tr('Plan details are not available.'));
     return CommResult.ok(CommSubscription.fromJson(Map<String, dynamic>.from(d)));
   }
 }

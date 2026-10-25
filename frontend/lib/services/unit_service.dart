@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import '../services/api_urls.dart';
 import '../models/unit_model.dart';
 import '../utils/shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class UnitService {
   static Future<Map<String, String>> _headers() async {
@@ -35,13 +36,13 @@ class UnitService {
     } on SocketException {
       return UnitListResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
         data: [],
       );
     } catch (e) {
       return UnitListResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
         data: [],
       );
     }
@@ -72,12 +73,12 @@ class UnitService {
     } on SocketException {
       return UnitActionResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
       );
     } catch (e) {
       return UnitActionResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
       );
     }
   }
@@ -109,12 +110,12 @@ class UnitService {
     } on SocketException {
       return UnitActionResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
       );
     } catch (e) {
       return UnitActionResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
       );
     }
   }
@@ -138,12 +139,12 @@ class UnitService {
     } on SocketException {
       return UnitActionResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
       );
     } catch (e) {
       return UnitActionResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
       );
     }
   }
@@ -167,12 +168,12 @@ class UnitService {
     } on SocketException {
       return UnitActionResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
       );
     } catch (e) {
       return UnitActionResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
       );
     }
   }

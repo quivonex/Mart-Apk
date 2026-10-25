@@ -5,6 +5,7 @@ import '../services/forgot_password_service.dart';
 import '../constants/app_constants.dart';
 import '../widgets/logo_widget.dart';
 import 'login_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -47,12 +48,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   // Send OTP
   Future<void> _sendOtp() async {
     if (_emailController.text.trim().isEmpty) {
-      _showErrorDialog('Error', 'Please enter your email');
+      _showErrorDialog(tr('Error'), tr('Please enter your email'));
       return;
     }
 
     if (!_emailController.text.contains('@')) {
-      _showErrorDialog('Error', 'Please enter a valid email');
+      _showErrorDialog(tr('Error'), tr('Please enter a valid email'));
       return;
     }
 
@@ -72,24 +73,24 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         _currentStep = 1; // Move to OTP verification step
       });
 
-      _showSuccessDialog('OTP Sent', 'OTP has been sent to your email address');
+      _showSuccessDialog(tr('OTP Sent'), tr('OTP has been sent to your email address'));
     } catch (e) {
       setState(() {
         _isSendingOtp = false;
       });
-      _showErrorDialog('Failed', e.toString().replaceFirst('Exception: ', ''));
+      _showErrorDialog(tr('Failed'), e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
   // Verify OTP
   Future<void> _verifyOtp() async {
     if (_otpController.text.trim().isEmpty) {
-      _showErrorDialog('Error', 'Please enter the OTP');
+      _showErrorDialog(tr('Error'), tr('Please enter the OTP'));
       return;
     }
 
     if (_otpController.text.length < 6) {
-      _showErrorDialog('Error', 'Please enter a valid 6-digit OTP');
+      _showErrorDialog(tr('Error'), tr('Please enter a valid 6-digit OTP'));
       return;
     }
 
@@ -111,12 +112,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         _currentStep = 2; // Move to reset password step
       });
 
-      _showSuccessDialog('Verified', 'OTP verified successfully!');
+      _showSuccessDialog(tr('Verified'), tr('OTP verified successfully!'));
     } catch (e) {
       setState(() {
         _isVerifyingOtp = false;
       });
-      _showErrorDialog('Verification Failed', e.toString().replaceFirst('Exception: ', ''));
+      _showErrorDialog(tr('Verification Failed'), e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
@@ -124,32 +125,32 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Future<void> _resetPassword() async {
     // Validate passwords
     if (_passwordController.text.trim().isEmpty) {
-      _showErrorDialog('Error', 'Please enter a new password');
+      _showErrorDialog(tr('Error'), tr('Please enter a new password'));
       return;
     }
 
     if (_passwordController.text.length < 8) {
-      _showErrorDialog('Error', 'Password must be at least 8 characters');
+      _showErrorDialog(tr('Error'), tr('Password must be at least 8 characters'));
       return;
     }
 
     if (!RegExp(r'[A-Z]').hasMatch(_passwordController.text)) {
-      _showErrorDialog('Error', 'Password must contain at least 1 uppercase letter');
+      _showErrorDialog(tr('Error'), tr('Password must contain at least 1 uppercase letter'));
       return;
     }
 
     if (!RegExp(r'[0-9]').hasMatch(_passwordController.text)) {
-      _showErrorDialog('Error', 'Password must contain at least 1 digit');
+      _showErrorDialog(tr('Error'), tr('Password must contain at least 1 digit'));
       return;
     }
 
     if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(_passwordController.text)) {
-      _showErrorDialog('Error', 'Password must contain at least 1 special character');
+      _showErrorDialog(tr('Error'), tr('Password must contain at least 1 special character'));
       return;
     }
 
     if (_passwordController.text != _confirmPasswordController.text) {
-      _showErrorDialog('Error', 'Passwords do not match');
+      _showErrorDialog(tr('Error'), tr('Passwords do not match'));
       return;
     }
 
@@ -171,8 +172,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       });
 
       _showSuccessDialog(
-        'Password Reset Successful',
-        'Your password has been reset. Please sign in.',
+        tr('Password Reset Successful'),
+        tr('Your password has been reset. Please sign in.'),
         onOk: () {
           Navigator.pushReplacement(
             context,
@@ -184,7 +185,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       setState(() {
         _isLoading = false;
       });
-      _showErrorDialog('Reset Failed', e.toString().replaceFirst('Exception: ', ''));
+      _showErrorDialog(tr('Reset Failed'), e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
@@ -206,7 +207,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             ),
             const SizedBox(width: 10),
             Text(
-              title,
+              tr(title),
               style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -216,7 +217,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ],
         ),
         content: Text(
-          message,
+          tr(message),
           style: GoogleFonts.inter(
             fontSize: 14,
             color: AppConstants.textSecondary,
@@ -232,7 +233,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
             ),
             child: Text(
-              'OK',
+              tr('OK'),
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -262,7 +263,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             ),
             const SizedBox(width: 10),
             Text(
-              title,
+              tr(title),
               style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -272,7 +273,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ],
         ),
         content: Text(
-          message,
+          tr(message),
           style: GoogleFonts.inter(
             fontSize: 14,
             color: AppConstants.textSecondary,
@@ -291,7 +292,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
             ),
             child: Text(
-              'OK',
+              tr('OK'),
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -320,7 +321,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
         ),
         title: Text(
-          'Forgot Password',
+          tr('Forgot Password'),
           style: GoogleFonts.inter(
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -364,10 +365,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         const SizedBox(height: 6),
                         Text(
                           _currentStep == 0
-                              ? 'Reset Your Password'
+                              ? tr('Reset Your Password')
                               : (_currentStep == 1
-                              ? 'Verify OTP'
-                              : 'Create New Password'),
+                              ? tr('Verify OTP')
+                              : tr('Create New Password')),
                           style: GoogleFonts.inter(
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
@@ -377,10 +378,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         ),
                         Text(
                           _currentStep == 0
-                              ? 'Enter your email to receive OTP'
+                              ? tr('Enter your email to receive OTP')
                               : (_currentStep == 1
-                              ? 'Enter the OTP sent to your email'
-                              : 'Enter your new password'),
+                              ? tr('Enter the OTP sent to your email')
+                              : tr('Enter your new password')),
                           style: GoogleFonts.inter(
                             fontSize: 14,
                             color: AppConstants.textSecondary,
@@ -394,7 +395,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   // Step Indicator
                   Row(
                     children: [
-                      _buildStepIndicator(0, 'Email', _currentStep >= 0),
+                      _buildStepIndicator(0, tr('Email'), _currentStep >= 0),
                       Expanded(
                         child: Container(
                           height: 2,
@@ -412,7 +413,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               : Colors.grey.shade300,
                         ),
                       ),
-                      _buildStepIndicator(2, 'Reset', _currentStep >= 2),
+                      _buildStepIndicator(2, tr('Reset'), _currentStep >= 2),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -423,7 +424,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Email Address',
+                          tr('Email Address'),
                           style: GoogleFonts.inter(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -434,8 +435,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
-                          decoration: const InputDecoration(
-                            hintText: 'Enter your registered email',
+                          decoration: InputDecoration(
+                            hintText: tr('Enter your registered email'),
                             prefixIcon: Icon(
                               Icons.email_outlined,
                               color: AppConstants.textLight,
@@ -469,7 +470,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'OTP sent to ${_emailController.text}',
+                                  tr('OTP sent to {0}', [_emailController.text]),
                                   style: GoogleFonts.inter(
                                     fontSize: 13,
                                     color: AppConstants.textSecondary,
@@ -481,7 +482,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         ),
                         const SizedBox(height: 20),
                         Text(
-                          'Enter OTP',
+                          tr('Enter OTP'),
                           style: GoogleFonts.inter(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -493,8 +494,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           controller: _otpController,
                           keyboardType: TextInputType.number,
                           maxLength: 6,
-                          decoration: const InputDecoration(
-                            hintText: 'Enter 6-digit OTP',
+                          decoration: InputDecoration(
+                            hintText: tr('Enter 6-digit OTP'),
                             prefixIcon: Icon(
                               Icons.password_outlined,
                               color: AppConstants.textLight,
@@ -509,7 +510,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             TextButton(
                               onPressed: _isSendingOtp ? null : _sendOtp,
                               child: Text(
-                                _isSendingOtp ? 'Sending...' : 'Resend OTP',
+                                _isSendingOtp ? tr('Sending...') : tr('Resend OTP'),
                                 style: GoogleFonts.inter(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
@@ -536,7 +537,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      'Verified',
+                                      tr('Verified'),
                                       style: GoogleFonts.inter(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
@@ -557,7 +558,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'New Password',
+                          tr('New Password'),
                           style: GoogleFonts.inter(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -569,7 +570,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           controller: _passwordController,
                           obscureText: _obscurePassword,
                           decoration: InputDecoration(
-                            hintText: 'Enter new password',
+                            hintText: tr('Enter new password'),
                             prefixIcon: const Icon(
                               Icons.lock_outline,
                               color: AppConstants.textLight,
@@ -591,7 +592,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Confirm Password',
+                          tr('Confirm Password'),
                           style: GoogleFonts.inter(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -603,7 +604,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           controller: _confirmPasswordController,
                           obscureText: _obscureConfirmPassword,
                           decoration: InputDecoration(
-                            hintText: 'Confirm new password',
+                            hintText: tr('Confirm new password'),
                             prefixIcon: const Icon(
                               Icons.lock_outline,
                               color: AppConstants.textLight,
@@ -634,7 +635,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Password Requirements:',
+                                tr('Password Requirements:'),
                                 style: GoogleFonts.inter(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
@@ -643,10 +644,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '• Minimum 8 characters\n'
-                                    '• At least 1 uppercase letter\n'
-                                    '• At least 1 digit\n'
-                                    '• At least 1 special character (@\$!%*?&)',
+                                tr('• Minimum 8 characters\n• At least 1 uppercase letter\n• At least 1 digit\n• At least 1 special character (@\$!%*?&)'),
                                 style: GoogleFonts.inter(
                                   fontSize: 12,
                                   color: AppConstants.textSecondary,
@@ -689,10 +687,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       )
                           : Text(
                         _currentStep == 0
-                            ? 'Send OTP'
+                            ? tr('Send OTP')
                             : (_currentStep == 1
-                            ? 'Verify OTP'
-                            : 'Reset Password'),
+                            ? tr('Verify OTP')
+                            : tr('Reset Password')),
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -707,7 +705,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Remember your password?',
+                        tr('Remember your password?'),
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           color: AppConstants.textSecondary,
@@ -721,8 +719,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           foregroundColor: _kBrand,
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                         ),
-                        child: const Text(
-                          'Login',
+                        child: Text(
+                          tr('Login'),
                           style: TextStyle(fontWeight: FontWeight.w600),
                         ),
                       ),
@@ -761,7 +759,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          label,
+          tr(label),
           style: GoogleFonts.inter(
             fontSize: 9,
             fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,

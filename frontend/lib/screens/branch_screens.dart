@@ -12,6 +12,7 @@ import '../services/catalog_service.dart';
 import '../widgets/catalog_widgets.dart';
 import '../widgets/company_ui.dart';
 import '../widgets/product_ui.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -100,7 +101,7 @@ class _BranchManageScreenState extends State<BranchManageScreen> {
       },
       child: Scaffold(
         backgroundColor: DT.background,
-        appBar: CompanyTopBar(title: 'Branches', subtitle: widget.companyName),
+        appBar: CompanyTopBar(title: tr('Branches'), subtitle: tr(widget.companyName)),
         floatingActionButton: _items.isEmpty
             ? null
             : FloatingActionButton.extended(
@@ -108,7 +109,7 @@ class _BranchManageScreenState extends State<BranchManageScreen> {
           backgroundColor: _kBrand, // buttons: only #093C71
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add_rounded),
-          label: Text('Add branch',
+          label: Text(tr('Add branch'),
               style: DT.text(size: 13.5, weight: FontWeight.w700, color: Colors.white)),
         ),
         body: CatalogManageList<CatalogBranch>(
@@ -116,8 +117,8 @@ class _BranchManageScreenState extends State<BranchManageScreen> {
           error: _error,
           items: _items,
           emptyIcon: Icons.store_mall_directory_outlined,
-          emptyTitle: 'No branches yet',
-          emptyMessage: 'Add a branch if this company sells from more than one location.',
+          emptyTitle: tr('No branches yet'),
+          emptyMessage: tr('Add a branch if this company sells from more than one location.'),
           onRefresh: _load,
           onAdd: () => _openForm(),
           onEdit: _openForm,
@@ -213,37 +214,37 @@ class _BranchFormScreenState extends State<BranchFormScreen> {
             children: [
               _infoCard(
                 icon: Icons.storefront_outlined,
-                title: _isEdit ? 'Edit branch' : 'New branch',
+                title: _isEdit ? tr('Edit branch') : tr('New branch'),
                 subtitle:
-                'Branches let you sell from more than one location',
+                tr('Branches let you sell from more than one location'),
               ),
               const SizedBox(height: 16),
               _sectionCard(
                 icon: Icons.info_outline,
-                title: 'Branch information',
-                subtitle: 'Contact details for this location',
+                title: tr('Branch information'),
+                subtitle: tr('Contact details for this location'),
                 children: [
-                  PxLabel('Branch name', required: true),
+                  PxLabel(tr('Branch name'), required: true),
                   TextFormField(
                     controller: _name,
                     textCapitalization: TextCapitalization.words,
                     style: DT.text(
                         size: 14, weight: FontWeight.w600, color: DT.onyx900),
                     decoration: pxInputDecoration(
-                      hint: 'e.g. Mumbai HQ',
+                      hint: tr('e.g. Mumbai HQ'),
                       icon: Icons.store_outlined,
                       iconColor: _brand,
                     ),
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) {
-                        return 'Branch name is required';
+                        return tr('Branch name is required');
                       }
-                      if (v.trim().length < 2) return 'Minimum 2 characters';
+                      if (v.trim().length < 2) return tr('Minimum 2 characters');
                       return null;
                     },
                   ),
                   const SizedBox(height: 14),
-                  PxLabel('Phone number', optional: true),
+                  PxLabel(tr('Phone number'), optional: true),
                   TextFormField(
                     controller: _phone,
                     keyboardType: TextInputType.phone,
@@ -254,7 +255,7 @@ class _BranchFormScreenState extends State<BranchFormScreen> {
                     style: DT.text(
                         size: 14, weight: FontWeight.w600, color: DT.onyx900),
                     decoration: pxInputDecoration(
-                      hint: '10-digit mobile number',
+                      hint: tr('10-digit mobile number'),
                       icon: Icons.phone_outlined,
                       iconColor: _brand,
                     ),
@@ -263,11 +264,11 @@ class _BranchFormScreenState extends State<BranchFormScreen> {
                       if (t.isEmpty) return null;
                       return RegExp(r'^[6-9]\d{9}$').hasMatch(t)
                           ? null
-                          : 'Enter a valid 10-digit number';
+                          : tr('Enter a valid 10-digit number');
                     },
                   ),
                   const SizedBox(height: 14),
-                  PxLabel('Email', optional: true),
+                  PxLabel(tr('Email'), optional: true),
                   TextFormField(
                     controller: _email,
                     keyboardType: TextInputType.emailAddress,
@@ -283,11 +284,11 @@ class _BranchFormScreenState extends State<BranchFormScreen> {
                       if (t.isEmpty) return null;
                       return RegExp(r'^[\w.+-]+@[\w-]+\.[\w.-]+$').hasMatch(t)
                           ? null
-                          : 'Invalid email';
+                          : tr('Invalid email');
                     },
                   ),
                   const SizedBox(height: 14),
-                  PxLabel('Address', optional: true),
+                  PxLabel(tr('Address'), optional: true),
                   TextFormField(
                     controller: _address,
                     maxLines: 3,
@@ -296,7 +297,7 @@ class _BranchFormScreenState extends State<BranchFormScreen> {
                     style: DT.text(
                         size: 14, weight: FontWeight.w500, color: DT.onyx900),
                     decoration: pxInputDecoration(
-                      hint: 'Street, area, city',
+                      hint: tr('Street, area, city'),
                       icon: Icons.location_on_outlined,
                       iconColor: _brand,
                       tinted: true,
@@ -332,7 +333,7 @@ class _BranchFormScreenState extends State<BranchFormScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    tooltip: 'Back',
+                    tooltip: tr('Back'),
                     onPressed: () => Navigator.maybePop(context),
                     icon: const Icon(Icons.arrow_back_rounded,
                         color: Colors.white, size: 24),
@@ -344,7 +345,7 @@ class _BranchFormScreenState extends State<BranchFormScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _isEdit ? 'Edit branch' : 'Add branch',
+                          _isEdit ? tr('Edit branch') : tr('Add branch'),
                           style: DT.text(
                               size: 18,
                               weight: FontWeight.w700,
@@ -352,7 +353,7 @@ class _BranchFormScreenState extends State<BranchFormScreen> {
                               letterSpacing: -0.3),
                         ),
                         Text(
-                          widget.companyName,
+                          tr(widget.companyName),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(
@@ -398,13 +399,13 @@ class _BranchFormScreenState extends State<BranchFormScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
+                Text(tr(title),
                     style: DT.text(
                         size: 14,
                         weight: FontWeight.w800,
                         color: DT.onyx900)),
                 const SizedBox(height: 2),
-                Text(subtitle,
+                Text(tr(subtitle),
                     style:
                     DT.text(size: 11.5, color: DT.slate500, height: 1.4)),
               ],
@@ -453,14 +454,14 @@ class _BranchFormScreenState extends State<BranchFormScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title,
+                      Text(tr(title),
                           style: DT.text(
                               size: 14,
                               weight: FontWeight.w700,
                               color: DT.onyx900,
                               height: 1.2)),
                       const SizedBox(height: 2),
-                      Text(subtitle,
+                      Text(tr(subtitle),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(size: 11.5, color: DT.slate500)),
@@ -523,7 +524,7 @@ class _BranchFormScreenState extends State<BranchFormScreen> {
                     const Icon(Icons.check_rounded, size: 20),
                     const SizedBox(width: 8),
                     Text(
-                      _isEdit ? 'Save changes' : 'Add branch',
+                      _isEdit ? tr('Save changes') : tr('Add branch'),
                       style: DT.text(
                           size: 15,
                           weight: FontWeight.w700,

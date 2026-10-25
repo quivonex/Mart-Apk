@@ -16,6 +16,7 @@ import '../models/registration_model.dart';
 import '../services/registration_service.dart';
 import 'login_screen.dart';
 import 'terms_conditions_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 // ── Logo-matched palette (private to this screen) ─────────────
 const _brand = Color(0xFF093C71); // #093C71 – primary (logo "QNX" blue)
@@ -120,14 +121,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _stage = _Stage.otp;
       });
       _startResendTimer();
-      _snack(resend ? 'A new OTP has been sent to $_email' : 'OTP sent to $_email');
+      _snack(resend ? tr('A new OTP has been sent to {0}', [_email]) : tr('OTP sent to {0}', [_email]));
       Future.delayed(const Duration(milliseconds: 250), () {
         if (mounted) _otpFocus.requestFocus();
       });
     } catch (e) {
       if (!mounted) return;
       setState(() => _sendingOtp = false);
-      _showErrorDialog('Could not send OTP', _clean(e));
+      _showErrorDialog(tr('Could not send OTP'), _clean(e));
     }
   }
 
@@ -147,7 +148,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _verifyOtp() async {
     final otp = _otpController.text.trim();
     if (otp.length != _otpLength) {
-      setState(() => _otpError = 'Enter the $_otpLength-digit OTP');
+      setState(() => _otpError = tr('Enter the {0}-digit OTP', [_otpLength]));
       return;
     }
     FocusScope.of(context).unfocus();
@@ -163,7 +164,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _verifyingOtp = false;
         _stage = _Stage.details;
       });
-      _snack('Email verified. Complete your details.');
+      _snack(tr('Email verified. Complete your details.'));
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -191,7 +192,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _showTermsError = !_agreeTerms);
     if (!ok) return;
     if (!_agreeTerms) {
-      _showConditionDialog('Terms required', 'Please agree to the Terms & Conditions to continue.');
+      _showConditionDialog(tr('Terms required'), tr('Please agree to the Terms & Conditions to continue.'));
       return;
     }
 
@@ -208,8 +209,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
       setState(() => _registering = false);
       _showSuccessDialog(
-        'Account created 🎉',
-        'Welcome to QNXMart B2B, ${_nameController.text.trim().split(' ').first}! Please sign in to continue.',
+        tr('Account created 🎉'),
+        tr('Welcome to QNXMart B2B, {0}! Please sign in to continue.', [_nameController.text.trim().split(' ').first]),
         onOk: () => Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -218,7 +219,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _registering = false);
-      _showErrorDialog('Registration failed', _clean(e));
+      _showErrorDialog(tr('Registration failed'), _clean(e));
     }
   }
 
@@ -240,14 +241,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final leave = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Leave registration?', style: DT.text(size: 17, weight: FontWeight.w800)),
-        content: Text('You will need to verify your email again.',
+        title: Text(tr('Leave registration?'), style: DT.text(size: 17, weight: FontWeight.w800)),
+        content: Text(tr('You will need to verify your email again.'),
             style: DT.text(size: 13.5, color: DT.slate500, height: 1.45)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Stay')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('Stay'))),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Leave', style: DT.text(size: 14, weight: FontWeight.w700, color: _red)),
+            child: Text(tr('Leave'), style: DT.text(size: 14, weight: FontWeight.w700, color: _red)),
           ),
         ],
       ),
@@ -266,7 +267,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           children: [
             const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
             const SizedBox(width: 10),
-            Expanded(child: Text(msg, style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white))),
+            Expanded(child: Text(tr(msg), style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white))),
           ],
         ),
         backgroundColor: _green,
@@ -326,9 +327,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
           child: Icon(icon, color: iconColor, size: 28),
         ),
-        title: Text(title,
+        title: Text(tr(title),
             textAlign: TextAlign.center, style: DT.text(size: 17, weight: FontWeight.w800, color: DT.onyx900)),
-        content: Text(message,
+        content: Text(tr(message),
             textAlign: TextAlign.center, style: DT.text(size: 13.5, color: DT.slate500, height: 1.5)),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
@@ -346,7 +347,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 minimumSize: const Size.fromHeight(46),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: Text('OK', style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
+              child: Text(tr('OK'), style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
             ),
           ),
         ],
@@ -452,10 +453,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       errorBuilder: (_, __, ___) => Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('QNX',
+                          Text(tr('QNX'),
                               style: DT.text(size: 19, weight: FontWeight.w900, color: _navy, letterSpacing: -0.8)),
                           const SizedBox(width: 3),
-                          Text('MART',
+                          Text(tr('MART'),
                               style: DT.text(size: 19, weight: FontWeight.w800, color: _red, letterSpacing: -0.4)),
                         ],
                       ),
@@ -468,23 +469,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       color: _orange,
                       borderRadius: BorderRadius.circular(999),
                     ),
-                    child: Text('B2B',
+                    child: Text(tr('B2B'),
                         style: DT.text(size: 10, weight: FontWeight.w800, color: Colors.white, letterSpacing: 1)),
                   ),
                 ],
               ),
               const SizedBox(height: 6),
-              Text('Market chalega nahi, daudega',
+              Text(tr('Market chalega nahi, daudega'),
                   style: DT.text(size: 11, weight: FontWeight.w700, color: const Color(0xFFFFD8A8))),
               const SizedBox(height: 22),
-              Text('Create your account ✨',
+              Text(tr('Create your account ✨'),
                   style: DT.text(size: 26, weight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5)),
               const SizedBox(height: 6),
               Text(
                 switch (_stage) {
-                  _Stage.email => 'Start with your email – we\'ll send you a one-time code.',
-                  _Stage.otp => 'Check your inbox and enter the 6-digit code.',
-                  _Stage.details => 'Almost done! Tell us a little about you.',
+                  _Stage.email => tr('Start with your email – we\'ll send you a one-time code.'),
+                  _Stage.otp => tr('Check your inbox and enter the 6-digit code.'),
+                  _Stage.details => tr('Almost done! Tell us a little about you.'),
                 },
                 style: DT.text(size: 13.5, color: _brandLine, height: 1.45),
               ),
@@ -553,7 +554,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   size: 18, color: done || active ? Colors.white : DT.slate400),
             ),
             const SizedBox(height: 6),
-            Text(label,
+            Text(tr(label),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: DT.text(
@@ -578,11 +579,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     return Row(
       children: [
-        dot(0, 'Email', Icons.mail_outline_rounded),
+        dot(0, tr('Email'), Icons.mail_outline_rounded),
         line(0),
-        dot(1, 'Verify', Icons.password_rounded),
+        dot(1, tr('Verify'), Icons.password_rounded),
         line(1),
-        dot(2, 'Details', Icons.person_outline_rounded),
+        dot(2, tr('Details'), Icons.person_outline_rounded),
       ],
     );
   }
@@ -598,9 +599,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         children: [
           Row(
             children: [
-              Expanded(child: _label('Email address', required: !locked)),
+              Expanded(child: _label(tr('Email address'), required: !locked)),
               if (locked && !verified)
-                _linkButton('Change', Icons.edit_outlined, _busy ? null : _changeEmail),
+                _linkButton(tr('Change'), Icons.edit_outlined, _busy ? null : _changeEmail),
             ],
           ),
           TextFormField(
@@ -625,7 +626,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   children: [
                     const Icon(Icons.verified_rounded, color: _green, size: 18),
                     const SizedBox(width: 4),
-                    Text('Verified', style: DT.text(size: 12, weight: FontWeight.w800, color: _green)),
+                    Text(tr('Verified'), style: DT.text(size: 12, weight: FontWeight.w800, color: _green)),
                   ],
                 ),
               )
@@ -633,16 +634,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             validator: (v) {
               final t = (v ?? '').trim();
-              if (t.isEmpty) return 'Please enter your email';
-              if (!RegExp(r'^[\w\-.+]+@([\w\-]+\.)+[\w\-]{2,}$').hasMatch(t)) return 'Please enter a valid email';
+              if (t.isEmpty) return tr('Please enter your email');
+              if (!RegExp(r'^[\w\-.+]+@([\w\-]+\.)+[\w\-]{2,}$').hasMatch(t)) return tr('Please enter a valid email');
               return null;
             },
           ),
           if (!locked) ...[
             const SizedBox(height: 16),
             _primaryButton(
-              label: 'Send OTP',
-              busyLabel: 'Sending OTP…',
+              label: tr('Send OTP'),
+              busyLabel: tr('Sending OTP…'),
               icon: Icons.send_rounded,
               busy: _sendingOtp,
               onPressed: _busy ? null : _sendOtp,
@@ -653,7 +654,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const Icon(Icons.info_outline_rounded, size: 15, color: DT.slate400),
                 const SizedBox(width: 6),
                 Expanded(
-                  child: Text('We\'ll send a 6-digit code to verify this email.',
+                  child: Text(tr('We\'ll send a 6-digit code to verify this email.'),
                       style: DT.text(size: 11.5, color: DT.slate500)),
                 ),
               ],
@@ -689,14 +690,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Enter verification code',
+                    Text(tr('Enter verification code'),
                         style: DT.text(size: 14, weight: FontWeight.w800, color: DT.onyx900)),
                     Text.rich(
                       TextSpan(
-                        text: 'Sent to ',
+                        text: tr('Sent to '),
                         style: DT.text(size: 12, color: DT.slate500),
                         children: [
-                          TextSpan(text: _email, style: DT.text(size: 12, weight: FontWeight.w700, color: DT.onyx800)),
+                          TextSpan(text: tr(_email), style: DT.text(size: 12, weight: FontWeight.w700, color: DT.onyx800)),
                         ],
                       ),
                       maxLines: 1,
@@ -725,26 +726,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
               children: [
                 const Icon(Icons.error_outline_rounded, size: 15, color: _red),
                 const SizedBox(width: 6),
-                Expanded(child: Text(_otpError!, style: DT.text(size: 12, weight: FontWeight.w600, color: _red))),
+                Expanded(child: Text(tr(_otpError!), style: DT.text(size: 12, weight: FontWeight.w600, color: _red))),
               ],
             ),
           ],
           const SizedBox(height: 12),
           Row(
             children: [
-              Text('Didn\'t get it?', style: DT.text(size: 12.5, color: DT.slate500)),
+              Text(tr('Didn\'t get it?'), style: DT.text(size: 12.5, color: DT.slate500)),
               const SizedBox(width: 4),
               if (_resendIn > 0)
-                Text('Resend in ${_resendIn}s', style: DT.text(size: 12.5, weight: FontWeight.w700, color: DT.slate400))
+                Text(tr('Resend in {0}s', [_resendIn]), style: DT.text(size: 12.5, weight: FontWeight.w700, color: DT.slate400))
               else
-                _linkButton(_sendingOtp ? 'Sending…' : 'Resend OTP', Icons.refresh_rounded,
+                _linkButton(_sendingOtp ? tr('Sending…') : tr('Resend OTP'), Icons.refresh_rounded,
                     _busy ? null : () => _sendOtp(resend: true)),
             ],
           ),
           const SizedBox(height: 14),
           _primaryButton(
-            label: 'Verify OTP',
-            busyLabel: 'Verifying…',
+            label: tr('Verify OTP'),
+            busyLabel: tr('Verifying…'),
             icon: Icons.verified_user_outlined,
             busy: _verifyingOtp,
             onPressed: _busy ? null : _verifyOtp,
@@ -761,20 +762,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _sectionTitle(Icons.badge_outlined, 'Your details'),
+          _sectionTitle(Icons.badge_outlined, tr('Your details')),
           const SizedBox(height: 12),
-          _label('Full name', required: true),
+          _label(tr('Full name'), required: true),
           TextFormField(
             controller: _nameController,
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.next,
             autofillHints: const [AutofillHints.name],
             style: _inputStyle,
-            decoration: _input(hint: 'Enter your full name', icon: Icons.person_outline_rounded),
-            validator: (v) => (v ?? '').trim().length < 2 ? 'Please enter your name' : null,
+            decoration: _input(hint: tr('Enter your full name'), icon: Icons.person_outline_rounded),
+            validator: (v) => (v ?? '').trim().length < 2 ? tr('Please enter your name') : null,
           ),
           const SizedBox(height: 14),
-          _label('Mobile number', required: true),
+          _label(tr('Mobile number'), required: true),
           TextFormField(
             controller: _phoneController,
             keyboardType: TextInputType.phone,
@@ -782,15 +783,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
             autofillHints: const [AutofillHints.telephoneNumberNational],
             inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
             style: _inputStyle,
-            decoration: _input(hint: '10-digit mobile number', icon: Icons.phone_outlined).copyWith(
+            decoration: _input(hint: tr('10-digit mobile number'), icon: Icons.phone_outlined).copyWith(
               prefixText: '+91  ',
               prefixStyle: DT.text(size: 14, weight: FontWeight.w700, color: DT.slate500),
             ),
             validator: (v) =>
-            RegExp(r'^[6-9]\d{9}$').hasMatch((v ?? '').trim()) ? null : 'Enter a valid 10-digit mobile number',
+            RegExp(r'^[6-9]\d{9}$').hasMatch((v ?? '').trim()) ? null : tr('Enter a valid 10-digit mobile number'),
           ),
           const SizedBox(height: 14),
-          _label('Address', required: true),
+          _label(tr('Address'), required: true),
           TextFormField(
             controller: _addressController,
             minLines: 2,
@@ -798,29 +799,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
             keyboardType: TextInputType.multiline,
             textCapitalization: TextCapitalization.sentences,
             style: _inputStyle.copyWith(fontWeight: FontWeight.w500),
-            decoration: _input(hint: 'Shop / office, area, city', icon: Icons.location_on_outlined, filled: DT.slate50),
-            validator: (v) => (v ?? '').trim().length < 5 ? 'Please enter your address' : null,
+            decoration: _input(hint: tr('Shop / office, area, city'), icon: Icons.location_on_outlined, filled: DT.slate50),
+            validator: (v) => (v ?? '').trim().length < 5 ? tr('Please enter your address') : null,
           ),
           const SizedBox(height: 20),
-          _sectionTitle(Icons.lock_outline_rounded, 'Login details'),
+          _sectionTitle(Icons.lock_outline_rounded, tr('Login details')),
           const SizedBox(height: 12),
-          _label('Username', required: true),
+          _label(tr('Username'), required: true),
           TextFormField(
             controller: _usernameController,
             textInputAction: TextInputAction.next,
             autofillHints: const [AutofillHints.newUsername],
             inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
             style: _inputStyle,
-            decoration: _input(hint: 'Choose a username', icon: Icons.alternate_email_rounded),
+            decoration: _input(hint: tr('Choose a username'), icon: Icons.alternate_email_rounded),
             validator: (v) {
               final t = (v ?? '').trim();
-              if (t.isEmpty) return 'Please choose a username';
-              if (t.length < 3) return 'Username must be at least 3 characters';
+              if (t.isEmpty) return tr('Please choose a username');
+              if (t.length < 3) return tr('Username must be at least 3 characters');
               return null;
             },
           ),
           const SizedBox(height: 14),
-          _label('Password', required: true),
+          _label(tr('Password'), required: true),
           TextFormField(
             controller: _passwordController,
             obscureText: _obscurePassword,
@@ -829,14 +830,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
             onChanged: (_) => setState(() {}),
             style: _inputStyle,
             decoration: _input(
-              hint: 'Create a strong password',
+              hint: tr('Create a strong password'),
               icon: Icons.lock_outline_rounded,
               suffix: _eye(_obscurePassword, () => setState(() => _obscurePassword = !_obscurePassword)),
             ),
             validator: (v) {
               final p = v ?? '';
-              if (p.isEmpty) return 'Please create a password';
-              if (_passwordRules.any((r) => !r.$2(p))) return 'Password does not meet all the rules below';
+              if (p.isEmpty) return tr('Please create a password');
+              if (_passwordRules.any((r) => !r.$2(p))) return tr('Password does not meet all the rules below');
               return null;
             },
           ),
@@ -847,7 +848,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             children: [for (final r in _passwordRules) _ruleChip(r.$1, r.$2(_passwordController.text))],
           ),
           const SizedBox(height: 14),
-          _label('Confirm password', required: true),
+          _label(tr('Confirm password'), required: true),
           TextFormField(
             controller: _confirmPasswordController,
             obscureText: _obscureConfirm,
@@ -858,7 +859,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             },
             style: _inputStyle,
             decoration: _input(
-              hint: 'Re-enter your password',
+              hint: tr('Re-enter your password'),
               icon: Icons.lock_outline_rounded,
               suffix: _confirmPasswordController.text.isNotEmpty &&
                   _confirmPasswordController.text == _passwordController.text
@@ -869,8 +870,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   : _eye(_obscureConfirm, () => setState(() => _obscureConfirm = !_obscureConfirm)),
             ),
             validator: (v) {
-              if ((v ?? '').isEmpty) return 'Please confirm your password';
-              if (v != _passwordController.text) return 'Passwords do not match';
+              if ((v ?? '').isEmpty) return tr('Please confirm your password');
+              if (v != _passwordController.text) return tr('Passwords do not match');
               return null;
             },
           ),
@@ -878,8 +879,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           _termsRow(),
           const SizedBox(height: 18),
           _primaryButton(
-            label: 'Create account',
-            busyLabel: 'Creating account…',
+            label: tr('Create account'),
+            busyLabel: tr('Creating account…'),
             icon: Icons.arrow_forward_rounded,
             busy: _registering,
             onPressed: _busy ? null : _register,
@@ -913,7 +914,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           Icon(ok ? Icons.check_rounded : (pending ? Icons.priority_high_rounded : Icons.circle_outlined),
               size: 13, color: ok ? _green : (pending ? _orange : DT.slate400)),
           const SizedBox(width: 4),
-          Text(label,
+          Text(tr(label),
               style: DT.text(
                   size: 11,
                   weight: FontWeight.w700,
@@ -963,7 +964,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 padding: const EdgeInsets.only(top: 2),
                 child: Text.rich(
                   TextSpan(
-                    text: 'I agree to the ',
+                    text: tr('I agree to the '),
                     style: DT.text(size: 12.5, color: DT.slate500, height: 1.4),
                     children: [
                       WidgetSpan(
@@ -971,7 +972,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         baseline: TextBaseline.alphabetic,
                         child: GestureDetector(
                           onTap: _openTerms,
-                          child: Text('Terms & Conditions',
+                          child: Text(tr('Terms & Conditions'),
                               style: DT.text(
                                   size: 12.5,
                                   weight: FontWeight.w700,
@@ -985,7 +986,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         baseline: TextBaseline.alphabetic,
                         child: GestureDetector(
                           onTap: _openTerms,
-                          child: Text('Privacy Policy',
+                          child: Text(tr('Privacy Policy'),
                               style: DT.text(
                                   size: 12.5,
                                   weight: FontWeight.w700,
@@ -1013,7 +1014,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             const Icon(Icons.warning_amber_rounded, size: 15, color: _orange),
             const SizedBox(width: 6),
             Expanded(
-              child: Text('Please accept the Terms & Conditions to continue',
+              child: Text(tr('Please accept the Terms & Conditions to continue'),
                   style: DT.text(size: 12, weight: FontWeight.w600, color: _orangeDark)),
             ),
           ],
@@ -1049,11 +1050,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Already have an account?',
+                    Text(tr('Already have an account?'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: 14, weight: FontWeight.w800, color: DT.onyx900)),
-                    Text('Sign in to continue', style: DT.text(size: 12, color: DT.slate500)),
+                    Text(tr('Sign in to continue'), style: DT.text(size: 12, color: DT.slate500)),
                   ],
                 ),
               ),
@@ -1064,7 +1065,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   color: _brand,
                   borderRadius: BorderRadius.circular(999),
                 ),
-                child: Text('Login', style: DT.text(size: 12.5, weight: FontWeight.w800, color: Colors.white)),
+                child: Text(tr('Login'), style: DT.text(size: 12.5, weight: FontWeight.w800, color: Colors.white)),
               ),
             ],
           ),
@@ -1081,7 +1082,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           const Icon(Icons.verified_user_outlined, size: 15, color: DT.slate400),
           const SizedBox(width: 6),
           Flexible(
-            child: Text('Your details are encrypted and secure',
+            child: Text(tr('Your details are encrypted and secure'),
                 style: DT.text(size: 11.5, color: DT.slate400)),
           ),
         ],
@@ -1099,7 +1100,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     OutlineInputBorder b(Color c, [double w = 1]) =>
         OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: c, width: w));
     return InputDecoration(
-      hintText: hint,
+      hintText: tr(hint),
       hintStyle: DT.text(size: 13.5, color: DT.slate400),
       prefixIcon: Icon(icon, size: 19, color: _brand),
       prefixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 20),
@@ -1119,7 +1120,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _eye(bool obscure, VoidCallback onTap) => IconButton(
-    tooltip: obscure ? 'Show password' : 'Hide password',
+    tooltip: obscure ? tr('Show password') : tr('Hide password'),
     onPressed: onTap,
     icon: Icon(obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: DT.slate400, size: 20),
   );
@@ -1128,7 +1129,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     padding: const EdgeInsets.only(bottom: 6),
     child: Text.rich(
       TextSpan(
-        text: text,
+        text: tr(text),
         style: DT.text(size: 12, weight: FontWeight.w600, color: DT.onyx700),
         children: [
           if (required) TextSpan(text: ' *', style: DT.text(size: 12, color: _red)),
@@ -1146,7 +1147,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: Icon(icon, size: 17, color: _brand),
       ),
       const SizedBox(width: 10),
-      Text(title, style: DT.text(size: 14.5, weight: FontWeight.w800, color: DT.onyx900)),
+      Text(tr(title), style: DT.text(size: 14.5, weight: FontWeight.w800, color: DT.onyx900)),
       const SizedBox(width: 10),
       const Expanded(child: Divider(height: 1, color: DT.slate100)),
     ],
@@ -1155,7 +1156,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _linkButton(String label, IconData icon, VoidCallback? onTap) => TextButton.icon(
     onPressed: onTap,
     icon: Icon(icon, size: 15),
-    label: Text(label, style: DT.text(size: 12.5, weight: FontWeight.w700, color: onTap == null ? DT.slate400 : _brand)),
+    label: Text(tr(label), style: DT.text(size: 12.5, weight: FontWeight.w700, color: onTap == null ? DT.slate400 : _brand)),
     style: TextButton.styleFrom(
       foregroundColor: _brand,
       padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -1199,7 +1200,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Icon(icon, size: 19),
                 const SizedBox(width: 10),
                 Flexible(
-                  child: Text(busy ? busyLabel : label,
+                  child: Text(tr(busy ? busyLabel : label),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(size: 15, weight: FontWeight.w800, color: Colors.white)),
@@ -1286,7 +1287,7 @@ class _OtpBoxes extends StatelessWidget {
           border: Border.all(color: color, width: active || hasError ? 2 : 1.2),
         ),
         child: Text(
-          filled ? text[i] : '',
+          tr(filled ? text[i] : ''),
           style: DT.text(size: 22, weight: FontWeight.w800, color: hasError ? _red : DT.onyx900),
         ),
       ),

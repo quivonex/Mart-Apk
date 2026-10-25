@@ -6,6 +6,7 @@ import 'package:http_parser/http_parser.dart';
 import '../models/marketing_partner_enquiry_model.dart';
 import 'api_urls.dart';
 import '../models/marketing_partner_enquiry_model.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class PartnerService {
   /// Submit Marketing Partner Enquiry
@@ -68,19 +69,19 @@ class PartnerService {
         } catch (_) {
           return MarketingPartnerEnquiryResponse(
             status: false,
-            message: 'Something went wrong. Please try again.',
+            message: tr('Something went wrong. Please try again.'),
           );
         }
       }
     } on SocketException {
       return MarketingPartnerEnquiryResponse(
         status: false,
-        message: 'No internet connection. Please check your network.',
+        message: tr('No internet connection. Please check your network.'),
       );
     } catch (e) {
       return MarketingPartnerEnquiryResponse(
         status: false,
-        message: 'Something went wrong. Please try again.',
+        message: tr('Something went wrong. Please try again.'),
       );
     }
   }

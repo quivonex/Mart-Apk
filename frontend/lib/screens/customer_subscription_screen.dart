@@ -18,6 +18,7 @@ import '../constants/design_tokens.dart';
 import '../services/customer_subscription_service.dart';
 import '../utils/login_gate.dart';
 import '../utils/shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -72,12 +73,12 @@ String _date(DateTime? d) {
   if (d == null) return '—';
   const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   final l = d.toLocal();
-  return '${l.day} ${m[l.month - 1]} ${l.year}';
+  return '${l.day} ${tr(m[l.month - 1])} ${l.year}';
 }
 
 /// Opens the subscription screen (asks to log in first). True = a plan was bought.
 Future<bool> openCustomerSubscription(BuildContext context, {String? reason}) async {
-  if (!await ensureLoggedIn(context, reason: 'buy a subscription')) return false;
+  if (!await ensureLoggedIn(context, reason: tr('buy a subscription'))) return false;
   if (!context.mounted) return false;
   final bought = await Navigator.push<bool>(
     context,
@@ -135,7 +136,7 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
-        content: Text(msg, style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
+        content: Text(tr(msg), style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
         backgroundColor: error ? _kRed : _CS.ink,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
@@ -147,7 +148,7 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
   Future<void> _buy(CustomerPlan plan) async {
     if (_buyingPlanId != null) return;
     if (kIsWeb) {
-      _snack('Online payment works in the QNX Mart Android app.', error: true);
+      _snack(tr('Online payment works in the QNX Mart Android app.'), error: true);
       return;
     }
     setState(() => _buyingPlanId = plan.id);
@@ -159,7 +160,7 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
     final amount = (d?['amount_paise'] as int?) ?? 0;
     if (!created.ok || orderId.isEmpty || key.isEmpty || amount <= 0) {
       setState(() => _buyingPlanId = null);
-      _snack(created.ok ? 'Payment could not be started.' : created.message, error: true);
+      _snack(created.ok ? tr('Payment could not be started.') : created.message, error: true);
       return;
     }
 
@@ -189,7 +190,7 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
     } catch (e) {
       razorpay.clear();
       if (mounted) setState(() => _buyingPlanId = null);
-      if (mounted) _snack('Could not open payment: $e', error: true);
+      if (mounted) _snack(tr('Could not open payment: {0}', [e]), error: true);
       return;
     }
 
@@ -199,7 +200,7 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
     if (success == null) {
       setState(() => _buyingPlanId = null);
       final cancelled = failure != null && failure.code == Razorpay.PAYMENT_CANCELLED;
-      _snack(cancelled ? 'Payment was cancelled.' : 'Payment failed${failure?.message != null ? ': ${failure!.message}' : '.'}',
+      _snack(cancelled ? tr('Payment was cancelled.') : tr('Payment failed{0}', [failure?.message != null ? ': ${failure!.message}' : '.']),
           error: true);
       return;
     }
@@ -212,7 +213,7 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
     if (!mounted) return;
     setState(() => _buyingPlanId = null);
     if (!v.ok) {
-      _snack('${v.message}. If money was deducted, contact support with ${success.paymentId}.', error: true);
+      _snack(tr('{0}. If money was deducted, contact support with {1}.', [v.message, success.paymentId]), error: true);
       return;
     }
     _bought = true;
@@ -227,8 +228,8 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
           decoration: const BoxDecoration(color: _CS.greenBg, shape: BoxShape.circle),
           child: const Icon(Icons.check_rounded, color: _CS.greenDark, size: 34),
         ),
-        title: Text('Subscription active!', textAlign: TextAlign.center, style: DT.text(size: 18, weight: FontWeight.w800)),
-        content: Text('${plan.name}: ${plan.enquiryLimit} enquiries for ${plan.durationDays} days.',
+        title: Text(tr('Subscription active!'), textAlign: TextAlign.center, style: DT.text(size: 18, weight: FontWeight.w800)),
+        content: Text(tr('{0}: {1} enquiries for {2} days.', [plan.name, plan.enquiryLimit, plan.durationDays]),
             textAlign: TextAlign.center, style: DT.text(size: 13, color: _CS.muted, height: 1.45)),
         actions: [
           SizedBox(
@@ -237,7 +238,7 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
               style: FilledButton.styleFrom(
                   backgroundColor: _kBrand, minimumSize: const Size.fromHeight(46)),
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Continue'),
+              child: Text(tr('Continue')),
             ),
           ),
         ],
@@ -266,7 +267,7 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
           flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)),
           foregroundColor: Colors.white,
           elevation: 0,
-          title: Text('My Subscription', style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
+          title: Text(tr('My Subscription'), style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
         ),
         body: _loading
             ? const Center(child: CircularProgressIndicator(color: _CS.brand))
@@ -280,15 +281,15 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
               if (_error != null) ...[_errorBox(_error!), const SizedBox(height: 14)],
               _currentCard(),
               const SizedBox(height: 22),
-              _sectionTitle(_current == null ? 'Choose a plan' : 'Upgrade / renew', Icons.workspace_premium_outlined),
+              _sectionTitle(_current == null ? tr('Choose a plan') : tr('Upgrade / renew'), Icons.workspace_premium_outlined),
               const SizedBox(height: 10),
               if (_plans.isEmpty)
-                _emptyBox('No plans are available right now.')
+                _emptyBox(tr('No plans are available right now.'))
               else
                 for (final p in _plans) ...[_planCard(p), const SizedBox(height: 12)],
               if (_history.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                _sectionTitle('History', Icons.history_rounded),
+                _sectionTitle(tr('History'), Icons.history_rounded),
                 const SizedBox(height: 10),
                 for (final h in _history) _historyRow(h),
               ],
@@ -310,7 +311,7 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
       children: [
         const Icon(Icons.info_outline_rounded, color: _CS.orange, size: 20),
         const SizedBox(width: 10),
-        Expanded(child: Text(text, style: DT.text(size: 12.5, weight: FontWeight.w600, color: const Color(0xFF9A3412), height: 1.4))),
+        Expanded(child: Text(tr(text), style: DT.text(size: 12.5, weight: FontWeight.w600, color: const Color(0xFF9A3412), height: 1.4))),
       ],
     ),
   );
@@ -326,8 +327,8 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
       children: [
         const Icon(Icons.error_outline_rounded, color: _kRed, size: 18),
         const SizedBox(width: 8),
-        Expanded(child: Text(text, style: DT.text(size: 12.5, weight: FontWeight.w600, color: _kRed))),
-        TextButton(onPressed: _load, child: const Text('Retry')),
+        Expanded(child: Text(tr(text), style: DT.text(size: 12.5, weight: FontWeight.w600, color: _kRed))),
+        TextButton(onPressed: _load, child: Text(tr('Retry'))),
       ],
     ),
   );
@@ -340,7 +341,7 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
       borderRadius: BorderRadius.circular(14),
       border: Border.all(color: _CS.line),
     ),
-    child: Text(text, style: DT.text(size: 13, color: _CS.muted)),
+    child: Text(tr(text), style: DT.text(size: 13, color: _CS.muted)),
   );
 
   Widget _sectionTitle(String text, IconData icon) => Row(
@@ -352,7 +353,7 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
         child: Icon(icon, size: 16, color: _CS.brand),
       ),
       const SizedBox(width: 8),
-      Text(text, style: DT.text(size: 16, weight: FontWeight.w800, color: _CS.ink)),
+      Text(tr(text), style: DT.text(size: 16, weight: FontWeight.w800, color: _CS.ink)),
     ],
   );
 
@@ -379,9 +380,9 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('No active subscription', style: DT.text(size: 15, weight: FontWeight.w800, color: _CS.ink)),
+                  Text(tr('No active subscription'), style: DT.text(size: 15, weight: FontWeight.w800, color: _CS.ink)),
                   const SizedBox(height: 2),
-                  Text('Buy a plan to send enquiries on properties posted by owners and agents.',
+                  Text(tr('Buy a plan to send enquiries on properties posted by owners and agents.'),
                       style: DT.text(size: 12, color: _CS.muted, height: 1.4)),
                 ],
               ),
@@ -408,13 +409,13 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
           Row(
             children: [
               Expanded(
-                child: Text(c.planName,
+                child: Text(trData(c.planName),
                     style: DT.text(size: 18, weight: FontWeight.w800, color: Colors.white)),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                 decoration: BoxDecoration(color: _CS.green, borderRadius: BorderRadius.circular(20)),
-                child: Text('ACTIVE', style: DT.text(size: 10, weight: FontWeight.w800, color: Colors.white, letterSpacing: 0.8)),
+                child: Text(tr('ACTIVE'), style: DT.text(size: 10, weight: FontWeight.w800, color: Colors.white, letterSpacing: 0.8)),
               ),
             ],
           ),
@@ -426,7 +427,7 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
               const SizedBox(width: 6),
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
-                child: Text('of ${c.enquiryLimit} enquiries left',
+                child: Text(tr('of {0} enquiries left', [c.enquiryLimit]),
                     style: DT.text(size: 12.5, weight: FontWeight.w600, color: const Color(0xCCFFFFFF))),
               ),
             ],
@@ -442,7 +443,7 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
             ),
           ),
           const SizedBox(height: 12),
-          Text('Valid till ${_date(c.endDate)}',
+          Text(tr('Valid till {0}', [_date(c.endDate)]),
               style: DT.text(size: 12, weight: FontWeight.w600, color: const Color(0xCCFFFFFF))),
         ],
       ),
@@ -470,13 +471,13 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(p.name, style: DT.text(size: 16, weight: FontWeight.w800, color: _CS.ink)),
+                    Text(trData(p.name), style: DT.text(size: 16, weight: FontWeight.w800, color: _CS.ink)),
                     const SizedBox(height: 2),
-                    Text('${p.durationDays} days validity', style: DT.text(size: 12, color: _CS.muted)),
+                    Text(tr('{0} days validity', [p.durationDays]), style: DT.text(size: 12, color: _CS.muted)),
                   ],
                 ),
               ),
-              Text(_inr(p.price), style: DT.text(size: 22, weight: FontWeight.w900, color: _CS.brandDark)),
+              Text(tr(_inr(p.price)), style: DT.text(size: 22, weight: FontWeight.w900, color: _CS.brandDark)),
             ],
           ),
           const SizedBox(height: 12),
@@ -505,7 +506,7 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
                 ),
                 child: busy
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : Text('Buy for ${_inr(p.price)}',
+                    : Text(tr('Buy for {0}', [_inr(p.price)]),
                     style: DT.text(size: 14.5, weight: FontWeight.w800, color: Colors.white)),
               ),
             ),
@@ -523,7 +524,7 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
       children: [
         Icon(icon, size: 13, color: _CS.brand),
         const SizedBox(width: 4),
-        Text(text, style: DT.text(size: 11.5, weight: FontWeight.w700, color: _CS.brandDark)),
+        Text(tr(text), style: DT.text(size: 11.5, weight: FontWeight.w700, color: _CS.brandDark)),
       ],
     ),
   );
@@ -546,13 +547,13 @@ class _CustomerSubscriptionScreenState extends State<CustomerSubscriptionScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(h.planName, style: DT.text(size: 13.5, weight: FontWeight.w700, color: _CS.ink)),
-                Text('${_date(h.startDate)} – ${_date(h.endDate)} · ${h.enquiryUsed}/${h.enquiryLimit} used',
+                Text(trData(h.planName), style: DT.text(size: 13.5, weight: FontWeight.w700, color: _CS.ink)),
+                Text(tr('{0} – {1} · {2}/{3} used', [_date(h.startDate), _date(h.endDate), h.enquiryUsed, h.enquiryLimit]),
                     style: DT.text(size: 11.5, color: _CS.muted)),
               ],
             ),
           ),
-          Text(h.status.isEmpty ? '' : h.status[0].toUpperCase() + h.status.substring(1),
+          Text(tr(h.status.isEmpty ? '' : h.status[0].toUpperCase() + h.status.substring(1)),
               style: DT.text(size: 11.5, weight: FontWeight.w800, color: color)),
         ],
       ),

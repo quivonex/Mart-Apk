@@ -4,6 +4,7 @@ import '../models/cart_model.dart';
 import '../services/cart_service.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'checkout_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 /// Design tokens – QNX MART logo colours: brand #093C71 (all buttons),
 /// red = errors, amber/orange = accents & conditions.
@@ -66,12 +67,10 @@ String? _friendlyShipNote(String? raw) {
       m.contains('float') ||
       m.contains('invalid literal') ||
       m.contains('weight')) {
-    return 'Shipping could not be calculated for one of the selected products '
-        '(its weight / size is not set up correctly). The seller has been asked '
-        'to fix it – shipping will be confirmed at checkout.';
+    return tr('Shipping could not be calculated for one of the selected products (its weight / size is not set up correctly). The seller has been asked to fix it – shipping will be confirmed at checkout.');
   }
   if (m.contains('traceback') || m.contains('exception') || m.length > 160) {
-    return 'Shipping will be calculated at checkout.';
+    return tr('Shipping will be calculated at checkout.');
   }
   return raw;
 }
@@ -127,7 +126,7 @@ class _CartScreenState extends State<CartScreen> {
       if (_userId == null) {
         if (!mounted) return;
         setState(() {
-          _error = 'User not logged in. Please login first.';
+          _error = tr('User not logged in. Please login first.');
           _isLoading = false;
         });
         return;
@@ -139,7 +138,7 @@ class _CartScreenState extends State<CartScreen> {
       if (token == null) {
         if (!mounted) return;
         setState(() {
-          _error = 'Session expired. Please login again.';
+          _error = tr('Session expired. Please login again.');
           _isLoading = false;
         });
         return;
@@ -161,7 +160,7 @@ class _CartScreenState extends State<CartScreen> {
           }
           _knownIds.removeWhere((id) => !ids.contains(id));
         } else {
-          _error = 'Failed to load cart items';
+          _error = tr('Failed to load cart items');
         }
         _isLoading = false;
       });
@@ -227,9 +226,9 @@ class _CartScreenState extends State<CartScreen> {
 
   String get _shippingText {
     if (_selectedItems.isEmpty) return '₹0';
-    if (_shipLoading) return 'Calculating…';
+    if (_shipLoading) return tr('Calculating…');
     if (_shipEstimate != null) return '₹${_inr(_shipEstimate!)}';
-    return 'At checkout'; // 🆕 Dynamic: If API doesn't provide an estimate
+    return tr('At checkout'); // 🆕 Dynamic: If API doesn't provide an estimate
   }
 
   void _toggleSelect(CartItemModel item) => setState(() {
@@ -286,19 +285,19 @@ class _CartScreenState extends State<CartScreen> {
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Text('Remove item?', style: _t(17, FontWeight.w800, _C.slate900)),
+        title: Text(tr('Remove item?'), style: _t(17, FontWeight.w800, _C.slate900)),
         content: Text(
-          '${item.productName} will be removed from your cart.',
+          tr('{0} will be removed from your cart.', [item.productName]),
           style: _t(13, FontWeight.w500, _C.slate500, height: 1.4),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: _t(13, FontWeight.w700, _C.slate600)),
+            child: Text(tr('Cancel'), style: _t(13, FontWeight.w700, _C.slate600)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Remove', style: _t(13, FontWeight.w800, _C.red)),
+            child: Text(tr('Remove'), style: _t(13, FontWeight.w800, _C.red)),
           ),
         ],
       ),
@@ -354,20 +353,20 @@ class _CartScreenState extends State<CartScreen> {
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Text('Clear entire cart?',
+        title: Text(tr('Clear entire cart?'),
             style: _t(17, FontWeight.w800, _C.slate900)),
         content: Text(
-          'All ${_cartItems.length} items will be removed from your cart.',
+          tr('All {0} items will be removed from your cart.', [_cartItems.length]),
           style: _t(13, FontWeight.w500, _C.slate500, height: 1.4),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: _t(13, FontWeight.w700, _C.slate600)),
+            child: Text(tr('Cancel'), style: _t(13, FontWeight.w700, _C.slate600)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Clear All', style: _t(13, FontWeight.w800, _C.red)),
+            child: Text(tr('Clear All'), style: _t(13, FontWeight.w800, _C.red)),
           ),
         ],
       ),
@@ -393,7 +392,7 @@ class _CartScreenState extends State<CartScreen> {
     setState(() => _isBusy = false);
 
     if (failed > 0) {
-      _showSnackBar('$failed item(s) could not be removed', isError: true);
+      _showSnackBar(tr('{0} item(s) could not be removed', [failed]), isError: true);
       await _loadCartItems();
     } else {
       setState(() {
@@ -401,7 +400,7 @@ class _CartScreenState extends State<CartScreen> {
         _selected.clear();
         _knownIds.clear();
       });
-      _showSnackBar('Cart cleared');
+      _showSnackBar(tr('Cart cleared'));
     }
   }
 
@@ -409,7 +408,7 @@ class _CartScreenState extends State<CartScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: _t(13, FontWeight.w600, Colors.white)),
+        content: Text(tr(message), style: _t(13, FontWeight.w600, Colors.white)),
         backgroundColor: isError ? _C.red : _C.slate900,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -470,11 +469,11 @@ class _CartScreenState extends State<CartScreen> {
                           size: 46, color: _C.blue600),
                     ),
                     const SizedBox(height: 22),
-                    Text('Your cart is empty',
+                    Text(tr('Your cart is empty'),
                         style: _t(20, FontWeight.w800, _C.slate900, ls: -0.3)),
                     const SizedBox(height: 8),
                     Text(
-                      'Start adding products from the catalog',
+                      tr('Start adding products from the catalog'),
                       textAlign: TextAlign.center,
                       style: _t(13, FontWeight.w500, _C.slate500),
                     ),
@@ -491,7 +490,7 @@ class _CartScreenState extends State<CartScreen> {
                             borderRadius: BorderRadius.circular(12)),
                       ),
                       icon: const Icon(Icons.refresh, size: 18),
-                      label: Text('Refresh Cart',
+                      label: Text(tr('Refresh Cart'),
                           style: _t(14, FontWeight.w700, Colors.white)),
                     ),
                   ],
@@ -521,11 +520,11 @@ class _CartScreenState extends State<CartScreen> {
               child: const Icon(Icons.error_outline, size: 44, color: _C.red),
             ),
             const SizedBox(height: 20),
-            Text('Failed to load cart',
+            Text(tr('Failed to load cart'),
                 style: _t(18, FontWeight.w800, _C.slate900)),
             const SizedBox(height: 8),
             Text(
-              _error!,
+              tr(_error!),
               textAlign: TextAlign.center,
               style: _t(13, FontWeight.w500, _C.slate500, height: 1.45),
             ),
@@ -542,7 +541,7 @@ class _CartScreenState extends State<CartScreen> {
                     borderRadius: BorderRadius.circular(12)),
               ),
               icon: const Icon(Icons.refresh, size: 18),
-              label: Text('Retry', style: _t(14, FontWeight.w700, Colors.white)),
+              label: Text(tr('Retry'), style: _t(14, FontWeight.w700, Colors.white)),
             ),
           ],
         ),
@@ -601,11 +600,11 @@ class _CartScreenState extends State<CartScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Active B2B Cart',
+              Text(tr('Active B2B Cart'),
                   style: _t(18, FontWeight.w800, _C.slate900, ls: -0.4)),
               const SizedBox(height: 2),
               Text(
-                '$count ${count == 1 ? 'Item' : 'Items'} • Factory Direct Verification',
+                tr('{0} {1} • Factory Direct Verification', [count, count == 1 ? 'Item' : 'Items']),
                 style: _t(12, FontWeight.w500, _C.slate500),
               ),
             ],
@@ -619,7 +618,7 @@ class _CartScreenState extends State<CartScreen> {
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: Text('Clear All', style: _t(12, FontWeight.w700, _C.blue600)),
+          child: Text(tr('Clear All'), style: _t(12, FontWeight.w700, _C.blue600)),
         ),
       ],
     );
@@ -653,7 +652,7 @@ class _CartScreenState extends State<CartScreen> {
               ),
               Expanded(
                 child: Text(
-                  _allSelected ? 'All items selected' : 'Select all',
+                  _allSelected ? tr('All items selected') : tr('Select all'),
                   style: _t(13, FontWeight.w700, _C.slate900),
                 ),
               ),
@@ -709,7 +708,7 @@ class _CartScreenState extends State<CartScreen> {
                 Row(
                   children: [
                     Flexible(
-                      child: Text('GST INPUT ELIGIBLE',
+                      child: Text(tr('GST INPUT ELIGIBLE'),
                           overflow: TextOverflow.ellipsis,
                           style: _t(11, FontWeight.w800, _C.amber300, ls: 0.8)),
                     ),
@@ -721,7 +720,7 @@ class _CartScreenState extends State<CartScreen> {
                         color: const Color(0x33FFFFFF),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Text('GST invoice',
+                      child: Text(tr('GST invoice'),
                           style: _t(10, FontWeight.w600, Colors.white)),
                     ),
                   ],
@@ -732,12 +731,12 @@ class _CartScreenState extends State<CartScreen> {
                     style: _t(11, FontWeight.w400, const Color(0xFFE2E8F0),
                         height: 1.4),
                     children: [
-                      const TextSpan(text: 'Prices include GST. '),
+                      TextSpan(text: tr('Prices include GST. ')),
                       TextSpan(
-                        text: 'Claim input tax credit',
+                        text: tr('Claim input tax credit'),
                         style: _t(11, FontWeight.w800, Colors.white),
                       ),
-                      const TextSpan(text: ' on the GST invoice for this order'),
+                      TextSpan(text: tr(' on the GST invoice for this order')),
                     ],
                   ),
                 ),
@@ -827,7 +826,7 @@ class _CartScreenState extends State<CartScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              item.productName,
+                              trData(item.productName),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: _t(14, FontWeight.w800, _C.slate900,
@@ -849,7 +848,7 @@ class _CartScreenState extends State<CartScreen> {
                       if (item.productCode.isNotEmpty) ...[
                         const SizedBox(height: 3),
                         Text(
-                          item.productCode,
+                          tr(item.productCode),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.robotoMono(
@@ -872,7 +871,7 @@ class _CartScreenState extends State<CartScreen> {
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(color: _C.amber200),
                             ),
-                            child: Text('B2B Price',
+                            child: Text(tr('B2B Price'),
                                 style: _t(10, FontWeight.w700, _C.amber800)),
                           ),
                         ],
@@ -904,7 +903,7 @@ class _CartScreenState extends State<CartScreen> {
                 const SizedBox(width: 5),
                 Expanded(
                   child: Text(
-                    cod ? 'COD Available' : 'Prepaid only',
+                    cod ? tr('COD Available') : tr('Prepaid only'),
                     style: _t(11, FontWeight.w600,
                         cod ? _C.emerald700 : _C.slate500),
                   ),
@@ -940,7 +939,7 @@ class _CartScreenState extends State<CartScreen> {
           _StepperButton(
             icon: isLast ? Icons.delete_outline : Icons.remove,
             color: isLast ? _C.red : _C.slate600,
-            tooltip: isLast ? 'Remove item' : 'Decrease quantity',
+            tooltip: isLast ? tr('Remove item') : tr('Decrease quantity'),
             onTap: busy ? null : () => _changeQuantity(item, -1),
           ),
           SizedBox(
@@ -962,7 +961,7 @@ class _CartScreenState extends State<CartScreen> {
           _StepperButton(
             icon: Icons.add,
             color: _C.blue600,
-            tooltip: 'Increase quantity',
+            tooltip: tr('Increase quantity'),
             onTap: busy ? null : () => _changeQuantity(item, 1),
           ),
         ],
@@ -989,7 +988,7 @@ class _CartScreenState extends State<CartScreen> {
               Icon(icon, size: 19, color: color),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(text,
+                child: Text(tr(text),
                     style: _t(10.5, FontWeight.w600, _C.slate600, height: 1.25)),
               ),
             ],
@@ -1000,9 +999,9 @@ class _CartScreenState extends State<CartScreen> {
 
     return Row(
       children: [
-        badge(Icons.shield_outlined, _C.emerald600, 'OnyxSafe Escrow Protected'),
+        badge(Icons.shield_outlined, _C.emerald600, tr('OnyxSafe Escrow Protected')),
         const SizedBox(width: 8),
-        badge(Icons.credit_card_outlined, _C.blue600, 'Trade Credit: 30 Days'),
+        badge(Icons.credit_card_outlined, _C.blue600, tr('Trade Credit: 30 Days')),
       ],
     );
   }
@@ -1043,17 +1042,17 @@ class _CartScreenState extends State<CartScreen> {
           // ── 1. Subtotal Row ──
           _vRow(
             label: count == 0
-                ? 'Subtotal (no items selected)'
-                : 'Subtotal ($count ${count == 1 ? 'item' : 'items'} · $units qty)',
+                ? tr('Subtotal (no items selected)')
+                : tr('Subtotal ({0} {1} · {2} qty)', [count, count == 1 ? 'item' : 'items', units]),
             value: '₹${_inr(_subtotal)}',
           ),
           const SizedBox(height: 6),
 
           // ── 2. Tax Row ──
           _vRow(
-            label: 'Tax (12% GST)',
-            labelTrailing: const Tooltip(
-              message: 'Tax is calculated as 12% of the subtotal.',
+            label: tr('Tax (12% GST)'),
+            labelTrailing: Tooltip(
+              message: tr('Tax is calculated as 12% of the subtotal.'),
               triggerMode: TooltipTriggerMode.tap,
               child: Padding(
                 padding: EdgeInsets.only(left: 4),
@@ -1066,14 +1065,14 @@ class _CartScreenState extends State<CartScreen> {
 
           // ── 3. Shipping Row ──
           _vRow(
-            label: _shipEstimate != null ? 'Shipping (estimated)' : 'Shipping & Freight',
+            label: _shipEstimate != null ? tr('Shipping (estimated)') : tr('Shipping & Freight'),
             labelTrailing: _shipPincode == null && _shipNote == null
                 ? null
                 : Padding(
               padding: const EdgeInsets.only(left: 4),
               child: Tooltip(
                 message: _shipNote ??
-                    'Live courier rate to your saved address. Final charge is confirmed at checkout.',
+                    tr('Live courier rate to your saved address. Final charge is confirmed at checkout.'),
                 triggerMode: TooltipTriggerMode.tap,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
@@ -1083,7 +1082,7 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                   child: Text(
                       _shipPincode != null && _shipPincode!.isNotEmpty
-                          ? 'Bulk Hub'
+                          ? tr('Bulk Hub')
                           : 'info',
                       style: _t(9, FontWeight.w700, _C.amber700)),
                 ),
@@ -1098,8 +1097,8 @@ class _CartScreenState extends State<CartScreen> {
 
           // ── 4. Total Row ──
           _vRow(
-            label: 'Total',
-            labelSuffix: 'Including all statutory taxes',
+            label: tr('Total'),
+            labelSuffix: tr('Including all statutory taxes'),
             value: '₹${_inr(_total)}',
             isTotal: true,
           ),
@@ -1143,7 +1142,7 @@ class _CartScreenState extends State<CartScreen> {
                   children: [
                     Flexible(
                       child: Text(
-                        count == 0 ? 'Select items to checkout' : 'Proceed to Checkout ($count)',
+                        count == 0 ? tr('Select items to checkout') : tr('Proceed to Checkout ({0})', [count]),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: _t(13, FontWeight.w800, count == 0 ? _C.slate500 : Colors.white),
@@ -1183,7 +1182,7 @@ class _CartScreenState extends State<CartScreen> {
                 children: [
                   Flexible(
                     child: Text(
-                      label,
+                      tr(label),
                       style: _t(
                           isTotal ? 12 : 11.5,
                           isTotal ? FontWeight.w800 : FontWeight.w500,
@@ -1197,7 +1196,7 @@ class _CartScreenState extends State<CartScreen> {
               if (labelSuffix != null) ...[
                 const SizedBox(height: 2),
                 Text(
-                  labelSuffix,
+                  tr(labelSuffix),
                   style: _t(9.5, FontWeight.w500, _C.slate400),
                 ),
               ],
@@ -1206,7 +1205,7 @@ class _CartScreenState extends State<CartScreen> {
         ),
         const SizedBox(width: 8),
         Text(
-          value,
+          tr(value),
           style: _t(
             isTotal ? 18 : 11.5,
             isTotal ? FontWeight.w800 : FontWeight.w700,
@@ -1239,7 +1238,7 @@ class _StepperButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: tooltip,
+      message: tr(tooltip),
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,

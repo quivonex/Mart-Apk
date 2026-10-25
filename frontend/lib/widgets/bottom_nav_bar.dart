@@ -11,6 +11,7 @@
 
 import 'package:flutter/material.dart';
 import '../constants/design_tokens.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 
@@ -86,7 +87,7 @@ class _NavItem extends StatelessWidget {
     return Semantics(
       selected: active,
       button: true,
-      label: badge > 0 ? '${tab.label}, $badge items' : tab.label,
+      label: badge > 0 ? tr('{0}, {1} items', [tab.label, badge]) : tab.label,
       child: InkResponse(
         onTap: onTap,
         radius: 36,
@@ -134,7 +135,7 @@ class _NavItem extends StatelessWidget {
                             border: Border.all(color: Colors.white, width: 1.5),
                           ),
                           child: Text(
-                            badge > 99 ? '99+' : '$badge',
+                            tr(badge > 99 ? '99+' : '$badge'),
                             style: DT.text(size: 9, weight: FontWeight.w800, color: Colors.white),
                           ),
                         ),
@@ -150,7 +151,7 @@ class _NavItem extends StatelessWidget {
                   weight: active ? FontWeight.w800 : FontWeight.w500,
                   color: active ? tab.color : DT.slate500,
                 ),
-                child: Text(tab.label, maxLines: 1, overflow: TextOverflow.ellipsis),
+                child: Text(tr(tab.label), maxLines: 1, overflow: TextOverflow.ellipsis),
               ),
             ],
           ),

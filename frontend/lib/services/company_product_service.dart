@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'api_urls.dart';
 import '../models/company_product_model.dart';
 import '../utils/shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class CompanyProductService {
   static Future<Map<String, String>> _jsonHeaders() async {
@@ -50,7 +51,7 @@ class CompanyProductService {
       } catch (_) {
         return CompanyProductsListResponse(
           status: false,
-          message: 'Invalid response from server',
+          message: tr('Invalid response from server'),
           data: [],
         );
       }
@@ -61,19 +62,19 @@ class CompanyProductService {
       return CompanyProductsListResponse(
         status: false,
         message: jsonData['message']?.toString() ??
-            'Failed to load products',
+            tr('Failed to load products'),
         data: [],
       );
     } on SocketException {
       return CompanyProductsListResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
         data: [],
       );
     } catch (e) {
       return CompanyProductsListResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
         data: [],
       );
     }
@@ -136,7 +137,7 @@ class CompanyProductService {
       } catch (_) {
         return CompanyProductActionResponse(
           status: false,
-          message: 'Invalid response from server',
+          message: tr('Invalid response from server'),
         );
       }
 
@@ -144,12 +145,12 @@ class CompanyProductService {
     } on SocketException {
       return CompanyProductActionResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
       );
     } catch (e) {
       return CompanyProductActionResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
       );
     }
   }
@@ -222,7 +223,7 @@ class CompanyProductService {
       } catch (_) {
         return CompanyProductActionResponse(
           status: false,
-          message: 'Invalid response from server',
+          message: tr('Invalid response from server'),
         );
       }
 
@@ -230,12 +231,12 @@ class CompanyProductService {
     } on SocketException {
       return CompanyProductActionResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
       );
     } catch (e) {
       return CompanyProductActionResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
       );
     }
   }

@@ -25,6 +25,7 @@ import 'package:http/http.dart' as http;
 import 'api_urls.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'nearby_subscription_service.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class NearbyPlace {
   final String placeId;
@@ -164,10 +165,10 @@ class NearbyPlacesService {
   }) async {
     final token = await SharedPreferencesHelper.getAccessToken();
     if (token == null || token.isEmpty) {
-      return const NearbyResult(false, 'Please log in to search nearby places.', [], needsLogin: true);
+      return NearbyResult(false, tr('Please log in to search nearby places.'), [], needsLogin: true);
     }
     final q = keyword.trim();
-    if (q.isEmpty) return const NearbyResult(false, 'Keyword is required.', []);
+    if (q.isEmpty) return NearbyResult(false, tr('Keyword is required.'), []);
     try {
       final res = await http
           .post(
@@ -203,7 +204,7 @@ class NearbyPlacesService {
       // 401 → session expired: remove token, ask to log in again.
       if (res.statusCode == 401) {
         await SharedPreferencesHelper.clearAll();
-        return NearbyResult(false, msg('Your session has expired. Please log in again.'), const [],
+        return NearbyResult(false, msg(tr('Your session has expired. Please log in again.')), const [],
             needsLogin: true);
       }
       // 403 → no active subscription: keep the token, show the plans.
@@ -217,20 +218,20 @@ class NearbyPlacesService {
           } else {
             await NearbySubscriptionStore.serverSaysNone();
           }
-          return NearbyResult(false, msg('No active subscription found. Please purchase a plan.'), const [],
+          return NearbyResult(false, msg(tr('No active subscription found. Please purchase a plan.')), const [],
               needsSubscription: true, plan: plan);
         }
-        return NearbyResult(false, msg('You are not allowed to use Nearby Search.'), const []);
+        return NearbyResult(false, msg(tr('You are not allowed to use Nearby Search.')), const []);
       }
       if (!parsed) {
-        return NearbyResult(false, 'Server error (${res.statusCode}). Please try again.', const []);
+        return NearbyResult(false, tr('Server error ({0}). Please try again.', [res.statusCode]), const []);
       }
 
       // Option A {status:true} or Option B Google style {status:"OK" | "ZERO_RESULTS"}.
       final st = j['status'];
       final okStatus = st == true || st == 'OK' || st == 'ZERO_RESULTS' || (st == null && j['results'] is List);
       if (res.statusCode < 200 || res.statusCode >= 300 || !okStatus) {
-        return NearbyResult(false, msg('Search failed (${res.statusCode}).'), const []);
+        return NearbyResult(false, msg(tr('Search failed ({0}).', [res.statusCode])), const []);
       }
 
       final seen = <String>{};
@@ -247,14 +248,14 @@ class NearbyPlacesService {
       }
       return NearbyResult(true, '', places, plan: plan);
     } on TimeoutException {
-      return const NearbyResult(false, 'The search took too long. Try a smaller radius.', []);
+      return NearbyResult(false, tr('The search took too long. Try a smaller radius.'), []);
     } catch (e) {
       final s = e.toString();
       return NearbyResult(
         false,
         s.contains('SocketException') || s.contains('ClientException')
-            ? 'Could not reach the server.'
-            : 'Something went wrong: $s',
+            ? tr('Could not reach the server.')
+            : tr('Something went wrong: {0}', [s]),
         const [],
       );
     }

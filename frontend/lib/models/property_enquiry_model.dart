@@ -1,3 +1,4 @@
+import 'package:qnx_mart/l10n/app_language.dart';
 class PropertyEnquiryRequest {
   final int property;              // required
   final String customerName;       // required, min 2 chars
@@ -136,14 +137,14 @@ class PropertyEnquiryResponse {
   bool get isSuccess => success == true;
 
   static String _fieldLabel(String key) => switch (key) {
-    'property' => 'Property',
-    'customer_name' => 'Name',
-    'customer_email' => 'Email',
-    'customer_mobile' => 'Mobile',
-    'flat_type' => 'Flat type',
-    'budget_min' => 'Min budget',
-    'budget_max' => 'Max budget',
-    'message' => 'Message',
+    'property' => tr('Property'),
+    'customer_name' => tr('Name'),
+    'customer_email' => tr('Email'),
+    'customer_mobile' => tr('Mobile'),
+    'flat_type' => tr('Flat type'),
+    'budget_min' => tr('Min budget'),
+    'budget_max' => tr('Max budget'),
+    'message' => tr('Message'),
     _ => key.replaceAll('_', ' '),
   };
 
@@ -156,7 +157,7 @@ class PropertyEnquiryResponse {
   /// User-friendly message — never just "Something went wrong".
   String get displayMessage {
     if (isSuccess) {
-      return message ?? 'Enquiry submitted successfully.';
+      return message ?? tr('Enquiry submitted successfully.');
     }
 
     if (errors != null && errors!.isNotEmpty) {
@@ -164,14 +165,14 @@ class PropertyEnquiryResponse {
       final text = _firstText(errors![key]);
       if (key == 'non_field_errors') return text;
       if (key == 'property' && text.toLowerCase().contains('invalid pk')) {
-        return 'This property is no longer available for enquiries.';
+        return tr('This property is no longer available for enquiries.');
       }
       return '${_fieldLabel(key)}: $text';
     }
 
     if (detail != null && detail!.isNotEmpty) {
       if (statusCode == 401 || statusCode == 403) {
-        return 'Please log in again to send an enquiry. ($detail)';
+        return tr('Please log in again to send an enquiry. ({0})', [detail]);
       }
       return detail!;
     }
@@ -180,11 +181,11 @@ class PropertyEnquiryResponse {
     if (m != null && m.isNotEmpty) return m;
 
     return switch (statusCode) {
-      null => 'Could not send enquiry. Please try again.',
-      401 || 403 => 'Please log in again to send an enquiry.',
-      404 => 'Enquiry service not found (404). Please check the server URL.',
-      >= 500 => 'Server error ($statusCode). Please try again in a moment.',
-      _ => 'Could not send enquiry (HTTP $statusCode).',
+      null => tr('Could not send enquiry. Please try again.'),
+      401 || 403 => tr('Please log in again to send an enquiry.'),
+      404 => tr('Enquiry service not found (404). Please check the server URL.'),
+      >= 500 => tr('Server error ({0}). Please try again in a moment.', [statusCode]),
+      _ => tr('Could not send enquiry (HTTP {0}).', [statusCode]),
     };
   }
 

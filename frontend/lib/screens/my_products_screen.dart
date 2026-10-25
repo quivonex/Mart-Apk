@@ -22,6 +22,7 @@ import 'category_screens.dart';
 import 'product_create_screen.dart';
 import 'unit_screens.dart';
 import 'branch_screens.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -84,7 +85,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
       if (r.ok) {
         _items = r.items;
       } else {
-        _error = r.message ?? 'Could not load products';
+        _error = r.message ?? tr('Could not load products');
       }
     });
   }
@@ -140,17 +141,16 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
         builder: (ctx) => AlertDialog(
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rLg)),
-          title: Text('Update already in review',
+          title: Text(tr('Update already in review'),
               style: DT.text(size: 17, weight: FontWeight.w800)),
           content: Text(
-            'Changes to ${p.name} are waiting for admin approval. You can edit again once '
-                'that request is approved or rejected.',
+            tr('Changes to {0} are waiting for admin approval. You can edit again once that request is approved or rejected.', [p.name]),
             style: DT.text(size: 13, color: DT.onyx600, height: 1.5),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text('OK',
+              child: Text(tr('OK'),
                   style: DT.text(size: 14, weight: FontWeight.w700, color: _kBrand)),
             ),
           ],
@@ -167,7 +167,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
 
   Future<void> _restock(MyProduct p) async {
     if (p.hasPendingUpdate) {
-      showCompanySnack(context, 'An update for this product is already in review.',
+      showCompanySnack(context, tr('An update for this product is already in review.'),
           error: true);
       return;
     }
@@ -188,7 +188,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
     setState(() => _busyIds.remove(p.id));
     showCompanySnack(
       context,
-      res.ok ? 'Stock update to $newStock sent for approval' : res.message,
+      res.ok ? tr('Stock update to {0} sent for approval', [newStock]) : res.message,
       error: !res.ok,
     );
     if (res.ok) _load();
@@ -198,11 +198,11 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
     final hide = p.isActive;
     final ok = await confirmAction(
       context,
-      title: hide ? 'Hide ${p.name}?' : 'Show ${p.name}?',
+      title: hide ? tr('Hide {0}?', [p.name]) : tr('Show {0}?', [p.name]),
       message: hide
-          ? 'Buyers will not see this product until you show it again.'
-          : 'The product will be visible to buyers again (if approved).',
-      confirmLabel: hide ? 'Hide product' : 'Show product',
+          ? tr('Buyers will not see this product until you show it again.')
+          : tr('The product will be visible to buyers again (if approved).'),
+      confirmLabel: hide ? tr('Hide product') : tr('Show product'),
       destructive: hide,
     );
     if (!ok || !mounted) return;
@@ -224,7 +224,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
       builder: (ctx) {
         Widget opt(_Sort s, String label, IconData icon) => ListTile(
           leading: Icon(icon, color: _sort == s ? _kBrand : DT.slate500),
-          title: Text(label,
+          title: Text(tr(label),
               style: DT.text(
                   size: 14,
                   weight: _sort == s ? FontWeight.w700 : FontWeight.w500,
@@ -242,14 +242,14 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: Text('Sort products', style: DT.text(size: 16, weight: FontWeight.w800)),
+                  child: Text(tr('Sort products'), style: DT.text(size: 16, weight: FontWeight.w800)),
                 ),
               ),
-              opt(_Sort.newest, 'Newest first', Icons.schedule_rounded),
-              opt(_Sort.nameAz, 'Name A–Z', Icons.sort_by_alpha_rounded),
-              opt(_Sort.priceLow, 'Price: low to high', Icons.trending_up_rounded),
-              opt(_Sort.priceHigh, 'Price: high to low', Icons.trending_down_rounded),
-              opt(_Sort.stockLow, 'Stock: lowest first', Icons.inventory_2_outlined),
+              opt(_Sort.newest, tr('Newest first'), Icons.schedule_rounded),
+              opt(_Sort.nameAz, tr('Name A–Z'), Icons.sort_by_alpha_rounded),
+              opt(_Sort.priceLow, tr('Price: low to high'), Icons.trending_up_rounded),
+              opt(_Sort.priceHigh, tr('Price: high to low'), Icons.trending_down_rounded),
+              opt(_Sort.stockLow, tr('Stock: lowest first'), Icons.inventory_2_outlined),
               const SizedBox(height: 8),
             ],
           ),
@@ -263,7 +263,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
     final companyId = widget.companyId ?? _items.firstOrNull?.companyId;
     final companyName = widget.companyName ??
         _items.where((p) => p.companyId == companyId).firstOrNull?.companyName ??
-        'Company';
+        tr('Company');
     final action = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.white,
@@ -278,24 +278,24 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
             if (companyId != null) ...[
               ListTile(
                 leading: const Icon(Icons.category_outlined, color: _kBrand),
-                title: Text('Categories & subcategories',
+                title: Text(tr('Categories & subcategories'),
                     style: DT.text(size: 14, weight: FontWeight.w600)),
                 onTap: () => Navigator.pop(ctx, 'categories'),
               ),
               ListTile(
                 leading: const Icon(Icons.store_mall_directory_outlined, color: _kBrand),
-                title: Text('Branches', style: DT.text(size: 14, weight: FontWeight.w600)),
+                title: Text(tr('Branches'), style: DT.text(size: 14, weight: FontWeight.w600)),
                 onTap: () => Navigator.pop(ctx, 'branches'),
               ),
             ],
             ListTile(
               leading: const Icon(Icons.straighten_rounded, color: _kBrand),
-              title: Text('Units', style: DT.text(size: 14, weight: FontWeight.w600)),
+              title: Text(tr('Units'), style: DT.text(size: 14, weight: FontWeight.w600)),
               onTap: () => Navigator.pop(ctx, 'units'),
             ),
             ListTile(
               leading: const Icon(Icons.refresh_rounded, color: _kBrand),
-              title: Text('Refresh', style: DT.text(size: 14, weight: FontWeight.w600)),
+              title: Text(tr('Refresh'), style: DT.text(size: 14, weight: FontWeight.w600)),
               onTap: () => Navigator.pop(ctx, 'refresh'),
             ),
             const SizedBox(height: 8),
@@ -345,7 +345,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
 
   // ── Dark header ─────────────────────────────────────────
   Widget _header() {
-    final subtitle = widget.companyName ?? 'Merchant inventory & catalog';
+    final subtitle = widget.companyName ?? tr('Merchant inventory & catalog');
     return Container(
       decoration: const BoxDecoration(
         color: DT.onyx900,
@@ -359,7 +359,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
               padding: const EdgeInsets.fromLTRB(6, 8, 6, 6),
               child: Row(
                 children: [
-                  _headerIcon(Icons.arrow_back_rounded, 'Back', () => Navigator.maybePop(context),
+                  _headerIcon(Icons.arrow_back_rounded, tr('Back'), () => Navigator.maybePop(context),
                       color: Colors.white),
                   const SizedBox(width: 4),
                   Expanded(
@@ -368,7 +368,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                       children: [
                         Row(
                           children: [
-                            Text('My Products',
+                            Text(tr('My Products'),
                                 style: DT.text(
                                     size: 18,
                                     weight: FontWeight.w700,
@@ -381,7 +381,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                                 color: _kBrand,
                                 borderRadius: BorderRadius.circular(999),
                               ),
-                              child: Text('B2B',
+                              child: Text(tr('B2B'),
                                   style: DT.text(
                                       size: 10,
                                       weight: FontWeight.w800,
@@ -391,17 +391,17 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                           ],
                         ),
                         const SizedBox(height: 2),
-                        Text(subtitle,
+                        Text(tr(subtitle),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: DT.text(size: 12, color: DT.slate400)),
                       ],
                     ),
                   ),
-                  _headerIcon(Icons.search_rounded, 'Search', () => _searchFocus.requestFocus()),
+                  _headerIcon(Icons.search_rounded, tr('Search'), () => _searchFocus.requestFocus()),
                   Stack(
                     children: [
-                      _headerIcon(Icons.filter_list_rounded, 'Sort', _openSort),
+                      _headerIcon(Icons.filter_list_rounded, tr('Sort'), _openSort),
                       if (_sort != _Sort.newest)
                         Positioned(
                           top: 10,
@@ -418,7 +418,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                         ),
                     ],
                   ),
-                  _headerIcon(Icons.more_vert_rounded, 'More', _openMore),
+                  _headerIcon(Icons.more_vert_rounded, tr('More'), _openMore),
                 ],
               ),
             ),
@@ -428,15 +428,15 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.fromLTRB(16, 2, 16, 12),
                 children: [
-                  _metric('Total', '${_items.length} items', null, _Filter.all,
+                  _metric(tr('Total'), '${_items.length} items', null, _Filter.all,
                       const Color(0xCC1E293B), const Color(0x99334155), DT.slate400, Colors.white),
-                  _metric('Approved', '${_count(_Filter.approved)}', PX.emerald500,
+                  _metric(tr('Approved'), '${_count(_Filter.approved)}', PX.emerald500,
                       _Filter.approved, const Color(0x99022C22), const Color(0x99065F46),
                       DT.emerald300, const Color(0xFFD1FAE5)),
-                  _metric('In review', '${_count(_Filter.review)}', PX.amber400, _Filter.review,
+                  _metric(tr('In review'), '${_count(_Filter.review)}', PX.amber400, _Filter.review,
                       const Color(0x99451A03), const Color(0x9992400E), DT.amber300,
                       _kOrangeBg),
-                  _metric('Low stock', '${_count(_Filter.lowStock)}', PX.rose400,
+                  _metric(tr('Low stock'), '${_count(_Filter.lowStock)}', PX.rose400,
                       _Filter.lowStock, const Color(0xCC1E293B), const Color(0x99334155),
                       const Color(0xFFFDA4AF), const Color(0xFFFFE4E6)),
                 ],
@@ -450,7 +450,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
 
   Widget _headerIcon(IconData icon, String tip, VoidCallback onTap, {Color color = DT.slate300}) =>
       IconButton(
-        tooltip: tip,
+        tooltip: tr(tip),
         onPressed: onTap,
         icon: Icon(icon, color: color, size: 22),
         splashRadius: 20,
@@ -479,7 +479,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                 const SizedBox(width: 6),
               ],
               Text('$label: ', style: DT.text(size: 12, weight: FontWeight.w500, color: labelColor)),
-              Text(value, style: DT.text(size: 12, weight: FontWeight.w700, color: valueColor)),
+              Text(tr(value), style: DT.text(size: 12, weight: FontWeight.w700, color: valueColor)),
             ],
           ),
         ),
@@ -490,12 +490,12 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
   // ── Search + filter chips ───────────────────────────────
   Widget _searchAndFilters() {
     final chips = <(_Filter, String)>[
-      (_Filter.all, 'All products'),
-      (_Filter.approved, 'Approved'),
-      (_Filter.review, 'In review'),
-      (_Filter.rejected, 'Rejected'),
-      (_Filter.hidden, 'Hidden'),
-      (_Filter.lowStock, 'Low stock'),
+      (_Filter.all, tr('All products')),
+      (_Filter.approved, tr('Approved')),
+      (_Filter.review, tr('In review')),
+      (_Filter.rejected, tr('Rejected')),
+      (_Filter.hidden, tr('Hidden')),
+      (_Filter.lowStock, tr('Low stock')),
     ];
     return Container(
       color: Colors.white,
@@ -510,7 +510,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
               onChanged: (v) => setState(() => _query = v),
               style: DT.text(size: 13.5, weight: FontWeight.w500),
               decoration: InputDecoration(
-                hintText: 'Search by name, product code or category…',
+                hintText: tr('Search by name, product code or category…'),
                 hintStyle: DT.text(size: 13.5, color: DT.slate400),
                 prefixIcon: const Icon(Icons.search_rounded, color: DT.slate400, size: 20),
                 suffixIcon: _query.isEmpty
@@ -574,7 +574,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
         ),
         child: Row(
           children: [
-            Text(label,
+            Text(tr(label),
                 style: DT.text(
                     size: 12, weight: FontWeight.w600, color: sel ? Colors.white : DT.onyx700)),
             const SizedBox(width: 6),
@@ -602,9 +602,9 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
     if (_error != null && _items.isEmpty) {
       return StateView(
         icon: Icons.cloud_off_rounded,
-        title: 'Could not load products',
-        message: _error!,
-        actionLabel: 'Try again',
+        title: tr('Could not load products'),
+        message: tr(_error!),
+        actionLabel: tr('Try again'),
         onAction: _load,
         isError: true,
       );
@@ -612,9 +612,9 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
     if (_items.isEmpty) {
       return StateView(
         icon: Icons.inventory_2_outlined,
-        title: 'No products yet',
-        message: 'Add your first product. It goes live once the admin approves it.',
-        actionLabel: 'Add product',
+        title: tr('No products yet'),
+        message: tr('Add your first product. It goes live once the admin approves it.'),
+        actionLabel: tr('Add product'),
         onAction: _openCreate,
       );
     }
@@ -631,7 +631,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
           Icon(Icons.search_off_rounded, size: 40, color: DT.slate300),
           const SizedBox(height: 10),
           Text(
-            _query.isNotEmpty ? 'No products match "$_query"' : 'Nothing in this filter',
+            _query.isNotEmpty ? tr('No products match "{0}"', [_query]) : tr('Nothing in this filter'),
             textAlign: TextAlign.center,
             style: DT.text(size: 13.5, color: DT.slate500),
           ),
@@ -683,7 +683,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                   child: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
                 ),
                 const SizedBox(width: 10),
-                Text('Add Product',
+                Text(tr('Add Product'),
                     style: DT.text(
                         size: 14, weight: FontWeight.w700, color: Colors.white, letterSpacing: -0.2)),
               ],
@@ -780,7 +780,7 @@ class _ProductCard extends StatelessWidget {
           const SizedBox(height: 2),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Text(p.brandName.toUpperCase(),
+            child: Text(tr(p.brandName.toUpperCase()),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: DT.text(size: 8.5, weight: FontWeight.w700, color: DT.slate500)),
@@ -823,7 +823,7 @@ class _ProductCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: Text(p.name,
+              child: Text(trData(p.name),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: DT.text(size: 14, weight: FontWeight.w700, height: 1.25)),
@@ -849,14 +849,14 @@ class _ProductCard extends StatelessWidget {
                   }
                 },
                 itemBuilder: (_) => [
-                  _menuItem('edit', Icons.edit_outlined, 'Edit details'),
-                  _menuItem('restock', Icons.autorenew_rounded, 'Restock'),
+                  _menuItem('edit', Icons.edit_outlined, tr('Edit details')),
+                  _menuItem('restock', Icons.autorenew_rounded, tr('Restock')),
                   if (p.productCode.isNotEmpty)
-                    _menuItem('code', Icons.copy_rounded, 'Copy product code'),
+                    _menuItem('code', Icons.copy_rounded, tr('Copy product code')),
                   _menuItem(
                     'toggle',
                     p.isActive ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                    p.isActive ? 'Hide from buyers' : 'Show to buyers',
+                    p.isActive ? tr('Hide from buyers') : tr('Show to buyers'),
                     color: p.isActive ? _kRed : PX.emerald600,
                   ),
                 ],
@@ -867,13 +867,13 @@ class _ProductCard extends StatelessWidget {
         const SizedBox(height: 3),
         Text.rich(
           TextSpan(
-            text: p.catalogLine.isEmpty ? 'Uncategorised' : p.catalogLine,
+            text: p.catalogLine.isEmpty ? tr('Uncategorised') : p.catalogLine,
             style: DT.text(size: 12, weight: FontWeight.w500, color: DT.slate500),
             children: [
               if (p.brandName.isNotEmpty) ...[
                 const TextSpan(text: ' • '),
                 TextSpan(
-                    text: p.brandName,
+                    text: tr(p.brandName),
                     style: DT.text(size: 12, weight: FontWeight.w600, color: DT.onyx700)),
               ],
             ],
@@ -887,12 +887,12 @@ class _ProductCard extends StatelessWidget {
           spacing: 8,
           runSpacing: 4,
           children: [
-            Text(formatRupees(p.finalPrice),
+            Text(tr(formatRupees(p.finalPrice)),
                 style: DT.text(size: 16, weight: FontWeight.w800, color: DT.onyx900)),
             if (p.hasDiscount)
               Padding(
                 padding: const EdgeInsets.only(bottom: 1.5),
-                child: Text(formatRupees(p.price),
+                child: Text(tr(formatRupees(p.price)),
                     style: DT.text(
                         size: 12, color: DT.slate400, decoration: TextDecoration.lineThrough)),
               ),
@@ -903,7 +903,7 @@ class _ProductCard extends StatelessWidget {
                   color: DT.emerald50,
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: Text('${p.discountPercent}% off',
+                child: Text(tr('{0}% off', [p.discountPercent]),
                     style: DT.text(size: 11, weight: FontWeight.w700, color: PX.emerald600)),
               ),
             if (p.unitName.isNotEmpty)
@@ -929,8 +929,8 @@ class _ProductCard extends StatelessWidget {
                   icon: Icons.visibility_off_outlined,
                   border: DT.slate200),
             if (p.hasPendingUpdate)
-              const PxPill(
-                  text: 'update in review',
+              PxPill(
+                  text: tr('update in review'),
                   bg: _kTint,
                   fg: _kBrand,
                   icon: Icons.sync_rounded,
@@ -940,7 +940,7 @@ class _ProductCard extends StatelessWidget {
         ),
         if (p.productCode.isNotEmpty) ...[
           const SizedBox(height: 8),
-          Text('CODE: ${p.productCode}',
+          Text(tr('CODE: {0}', [p.productCode]),
               style: TextStyle(
                   fontFamily: 'monospace',
                   fontSize: 10,
@@ -958,7 +958,7 @@ class _ProductCard extends StatelessWidget {
           children: [
             Icon(icon, size: 18, color: color ?? DT.onyx700),
             const SizedBox(width: 10),
-            Text(label,
+            Text(tr(label),
                 style: DT.text(size: 13.5, weight: FontWeight.w600, color: color ?? DT.onyx900)),
           ],
         ),
@@ -967,8 +967,8 @@ class _ProductCard extends StatelessWidget {
   Widget _statusPill() => switch (product.review) {
     ProductReviewStatus.approved => const PxPill(
         text: 'approved', bg: PX.emerald100, fg: DT.emerald700, icon: Icons.check_rounded),
-    ProductReviewStatus.pending => const PxPill(
-        text: 'in review', bg: _kOrangeBg, fg: _kOrangeDark, icon: Icons.schedule_rounded),
+    ProductReviewStatus.pending => PxPill(
+        text: tr('in review'), bg: _kOrangeBg, fg: _kOrangeDark, icon: Icons.schedule_rounded),
     ProductReviewStatus.rejected =>
     const PxPill(text: 'rejected', bg: PX.rose50, fg: _kRed, icon: Icons.close_rounded),
   };
@@ -985,7 +985,7 @@ class _ProductCard extends StatelessWidget {
       ),
       child: Text.rich(
         TextSpan(
-          text: p.isOutOfStock ? 'Out of stock' : 'Stock: ',
+          text: p.isOutOfStock ? tr('Out of stock') : tr('Stock: '),
           style: DT.text(size: 11, weight: FontWeight.w600, color: low ? _kRed : DT.onyx700),
           children: [
             if (!p.isOutOfStock)
@@ -1023,7 +1023,7 @@ class _ProductCard extends StatelessWidget {
                 children: [
                   Icon(icon, size: 16, color: primary ? _kBrand : DT.onyx600),
                   const SizedBox(width: 6),
-                  Text(label,
+                  Text(tr(label),
                       style: DT.text(
                           size: 12,
                           weight: primary ? FontWeight.w700 : FontWeight.w600,
@@ -1038,10 +1038,10 @@ class _ProductCard extends StatelessWidget {
       children: [
         Expanded(
           child: btn(
-              label: 'Edit details', icon: Icons.edit_outlined, onTap: onEdit, primary: true),
+              label: tr('Edit details'), icon: Icons.edit_outlined, onTap: onEdit, primary: true),
         ),
         const SizedBox(width: 8),
-        btn(label: 'Restock', icon: Icons.autorenew_rounded, onTap: onRestock),
+        btn(label: tr('Restock'), icon: Icons.autorenew_rounded, onTap: onRestock),
       ],
     );
   }
@@ -1081,11 +1081,11 @@ class _RestockSheetState extends State<_RestockSheet> {
   void _submit() {
     final v = _value;
     if (v < 0) {
-      setState(() => _error = 'Enter the new stock quantity');
+      setState(() => _error = tr('Enter the new stock quantity'));
       return;
     }
     if (v == widget.product.stock) {
-      setState(() => _error = 'Stock is already $v');
+      setState(() => _error = tr('Stock is already {0}', [v]));
       return;
     }
     Navigator.pop(context, v);
@@ -1113,23 +1113,23 @@ class _RestockSheetState extends State<_RestockSheet> {
                 ),
               ),
               const SizedBox(height: 16),
-              Text('Restock', style: DT.text(size: 18, weight: FontWeight.w800)),
+              Text(tr('Restock'), style: DT.text(size: 18, weight: FontWeight.w800)),
               const SizedBox(height: 2),
-              Text(p.name,
+              Text(trData(p.name),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: DT.text(size: 12.5, color: DT.slate500)),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Text('Current stock', style: DT.text(size: 12.5, color: DT.slate500)),
+                  Text(tr('Current stock'), style: DT.text(size: 12.5, color: DT.slate500)),
                   const Spacer(),
                   Text('${p.stock}${p.unitName.isEmpty ? '' : ' ${p.unitName.toLowerCase()}'}',
                       style: DT.text(size: 13.5, weight: FontWeight.w700)),
                 ],
               ),
               const SizedBox(height: 12),
-              const PxLabel('New stock quantity', required: true),
+              PxLabel(tr('New stock quantity'), required: true),
               PxTextField(
                 controller: _ctrl,
                 icon: Icons.inventory_outlined,
@@ -1140,12 +1140,12 @@ class _RestockSheetState extends State<_RestockSheet> {
                   FilteringTextInputFormatter.digitsOnly,
                   LengthLimitingTextInputFormatter(7),
                 ],
-                suffixText: p.unitName.isEmpty ? null : p.unitName.toLowerCase(),
+                suffixText: trN(p.unitName.isEmpty ? null : p.unitName.toLowerCase()),
                 onChanged: (_) => setState(() => _error = null),
               ),
               if (_error != null) ...[
                 const SizedBox(height: 6),
-                Text(_error!, style: DT.text(size: 11.5, color: _kRed)),
+                Text(tr(_error!), style: DT.text(size: 11.5, color: _kRed)),
               ],
               const SizedBox(height: 10),
               Wrap(
@@ -1176,8 +1176,7 @@ class _RestockSheetState extends State<_RestockSheet> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Stock changes are sent to the admin as an update request and apply '
-                            'once approved.',
+                        tr('Stock changes are sent to the admin as an update request and apply once approved.'),
                         style: DT.text(size: 12, color: _kBrandDark, height: 1.45),
                       ),
                     ),
@@ -1202,7 +1201,7 @@ class _RestockSheetState extends State<_RestockSheet> {
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
                     ),
-                    child: Text('Send stock update',
+                    child: Text(tr('Send stock update'),
                         style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
                   ),
                 ),

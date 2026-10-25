@@ -18,6 +18,7 @@ import '../services/chat_service.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'communication_plans_screen.dart';
 import 'login_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -78,10 +79,10 @@ String chatDay(DateTime d) {
   final a = DateTime(d.year, d.month, d.day);
   final b = DateTime(now.year, now.month, now.day);
   final diff = b.difference(a).inDays;
-  if (diff == 0) return 'Today';
-  if (diff == 1) return 'Yesterday';
+  if (diff == 0) return tr('Today');
+  if (diff == 1) return tr('Yesterday');
   const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return '${d.day} ${m[d.month - 1]} ${d.year}';
+  return '${d.day} ${tr(m[d.month - 1])} ${d.year}';
 }
 
 class ChatScreen extends StatefulWidget {
@@ -151,8 +152,8 @@ class _ChatScreenState extends State<ChatScreen> {
       final p = widget.suggestedOffer;
       if (_input.text.isEmpty) {
         _input.text = p != null && p > 0
-            ? 'Hi, I am interested. Would you accept ${chatRupees(p)}?'
-            : 'Hi, I am interested. What is your best price?';
+            ? tr('Hi, I am interested. Would you accept {0}?', [chatRupees(p)])
+            : tr('Hi, I am interested. What is your best price?');
       }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _focus.requestFocus();
@@ -282,10 +283,10 @@ class _ChatScreenState extends State<ChatScreen> {
   // ---------------------------------------------------------------- offers
   Future<void> _offerSheet() async {
     final res = await _amountSheet(
-      title: 'Make an offer',
-      button: 'Send offer',
+      title: tr('Make an offer'),
+      button: tr('Send offer'),
       initial: widget.suggestedOffer,
-      noteHint: 'Message (optional)',
+      noteHint: tr('Message (optional)'),
     );
     if (res == null || !mounted) return;
     final (amount, note) = res;
@@ -294,7 +295,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (!mounted) return;
     setState(() => _sending = false);
     if (r.ok) {
-      _snack('Offer of ${chatRupees(amount)} sent.');
+      _snack(tr('Offer of {0} sent.', [chatRupees(amount)]));
       await _pollNow();
       _toBottom();
     } else if (r.needsLogin) {
@@ -314,22 +315,22 @@ class _ChatScreenState extends State<ChatScreen> {
     String note = '';
     if (action == 'counter') {
       final res = await _amountSheet(
-        title: 'Counter offer',
-        button: 'Send counter offer',
+        title: tr('Counter offer'),
+        button: tr('Send counter offer'),
         initial: m.offerAmount,
-        noteHint: 'Message (optional)',
+        noteHint: tr('Message (optional)'),
       );
       if (res == null || !mounted) return;
       final (a, n) = res;
       amount = a;
-      note = n.isEmpty ? 'Can you do ${chatRupees(a)}?' : n;
+      note = n.isEmpty ? tr('Can you do {0}?', [chatRupees(a)]) : n;
     } else {
       final ok = await _confirm(
-        action == 'accept' ? 'Accept offer?' : 'Reject offer?',
+        action == 'accept' ? tr('Accept offer?') : tr('Reject offer?'),
         action == 'accept'
-            ? 'Accept ${chatRupees(m.offerAmount ?? 0)} for this item?'
-            : 'Reject the offer of ${chatRupees(m.offerAmount ?? 0)}?',
-        action == 'accept' ? 'Accept' : 'Reject',
+            ? tr('Accept {0} for this item?', [chatRupees(m.offerAmount ?? 0)])
+            : tr('Reject the offer of {0}?', [chatRupees(m.offerAmount ?? 0)]),
+        action == 'accept' ? tr('Accept') : tr('Reject'),
       );
       if (!ok || !mounted) return;
     }
@@ -338,7 +339,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (!mounted) return;
     setState(() => _sending = false);
     if (r.ok) {
-      _snack(r.data ?? 'Done.');
+      _snack(r.data ?? tr('Done.'));
       await _pollNow();
     } else if (r.needsLogin) {
       setState(() {
@@ -364,7 +365,7 @@ class _ChatScreenState extends State<ChatScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
-        content: Text(msg, style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
+        content: Text(tr(msg), style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
         backgroundColor: error ? ChatColors.red : ChatColors.ink,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 80),
@@ -375,13 +376,13 @@ class _ChatScreenState extends State<ChatScreen> {
   /// chat_limit_reached → offer the Communication Plans.
   Future<void> _limitReached(String message) async {
     final go = await _confirm(
-      'Chat limit reached',
-      message.isEmpty ? 'Your chat limit has been reached. Please purchase a plan to continue.' : message,
-      'View plans',
+      tr('Chat limit reached'),
+      message.isEmpty ? tr('Your chat limit has been reached. Please purchase a plan to continue.') : message,
+      tr('View plans'),
     );
     if (!go || !mounted) return;
     final bought = await openCommunicationPlans(context);
-    if (bought && mounted) _snack('Plan activated. You can send messages again.');
+    if (bought && mounted) _snack(tr('Plan activated. You can send messages again.'));
   }
 
   Future<bool> _confirm(String title, String body, String yes) async {
@@ -391,17 +392,17 @@ class _ChatScreenState extends State<ChatScreen> {
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(title, style: DT.text(size: 17, weight: FontWeight.w800, color: ChatColors.ink)),
-        content: Text(body, style: DT.text(size: 13.5, color: ChatColors.body, height: 1.45)),
+        title: Text(tr(title), style: DT.text(size: 17, weight: FontWeight.w800, color: ChatColors.ink)),
+        content: Text(tr(body), style: DT.text(size: 13.5, color: ChatColors.body, height: 1.45)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: DT.text(size: 14, weight: FontWeight.w700, color: ChatColors.muted)),
+            child: Text(tr('Cancel'), style: DT.text(size: 14, weight: FontWeight.w700, color: ChatColors.muted)),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: _kBrand),
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(yes),
+            child: Text(tr(yes)),
           ),
         ],
       ),
@@ -444,7 +445,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(title, style: DT.text(size: 17, weight: FontWeight.w800, color: ChatColors.ink)),
+                Text(tr(title), style: DT.text(size: 17, weight: FontWeight.w800, color: ChatColors.ink)),
                 const SizedBox(height: 14),
                 TextField(
                   controller: amountCtrl,
@@ -455,8 +456,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   decoration: InputDecoration(
                     prefixText: '₹ ',
                     prefixStyle: DT.text(size: 20, weight: FontWeight.w800, color: _kBrand),
-                    hintText: 'Amount',
-                    errorText: err,
+                    hintText: tr('Amount'),
+                    errorText: trN(err),
                     filled: true,
                     fillColor: ChatColors.tint,
                     enabledBorder: OutlineInputBorder(
@@ -480,7 +481,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   minLines: 1,
                   style: DT.text(size: 14, color: ChatColors.ink),
                   decoration: InputDecoration(
-                    hintText: noteHint,
+                    hintText: tr(noteHint),
                     hintStyle: DT.text(size: 13.5, color: ChatColors.hint),
                     filled: true,
                     fillColor: Colors.white,
@@ -503,12 +504,12 @@ class _ChatScreenState extends State<ChatScreen> {
                     onPressed: () {
                       final v = double.tryParse(amountCtrl.text.trim());
                       if (v == null || v <= 0) {
-                        setSheet(() => err = 'Enter a valid amount');
+                        setSheet(() => err = tr('Enter a valid amount'));
                         return;
                       }
                       Navigator.pop(ctx, (v, noteCtrl.text.trim()));
                     },
-                    child: Text(button, style: DT.text(size: 15, weight: FontWeight.w800, color: Colors.white)),
+                    child: Text(tr(button), style: DT.text(size: 15, weight: FontWeight.w800, color: Colors.white)),
                   ),
                 ),
               ],
@@ -540,12 +541,12 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(widget.title,
+                  Text(trData(widget.title),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(size: 16, weight: FontWeight.w800, color: Colors.white)),
                   if (widget.subtitle.isNotEmpty)
-                    Text(widget.subtitle,
+                    Text(tr(widget.subtitle),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: 11.5, color: Colors.white.withValues(alpha: 0.8))),
@@ -556,7 +557,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Refresh',
+            tooltip: tr('Refresh'),
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh_rounded),
           ),
@@ -576,8 +577,8 @@ class _ChatScreenState extends State<ChatScreen> {
       return const Center(child: CircularProgressIndicator(color: _kBrand, strokeWidth: 3));
     }
     if (_needsLogin) {
-      return _state(Icons.lock_outline_rounded, 'Login required',
-          _error ?? 'Session expired. Please login again.', 'Login', () async {
+      return _state(Icons.lock_outline_rounded, tr('Login required'),
+          _error ?? tr('Session expired. Please login again.'), tr('Login'), () async {
         await Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
         if (!mounted) return;
         final t = await SharedPreferencesHelper.getAccessToken();
@@ -591,11 +592,11 @@ class _ChatScreenState extends State<ChatScreen> {
       });
     }
     if (_error != null && _messages.isEmpty) {
-      return _state(Icons.cloud_off_rounded, 'Could not load messages', _error!, 'Try again', _load);
+      return _state(Icons.cloud_off_rounded, tr('Could not load messages'), _error!, tr('Try again'), _load);
     }
     if (_messages.isEmpty) {
-      return _state(Icons.forum_outlined, 'Say hello 👋',
-          'Ask about price, availability or delivery. Messages appear here.', null, null);
+      return _state(Icons.forum_outlined, tr('Say hello 👋'),
+          tr('Ask about price, availability or delivery. Messages appear here.'), null, null);
     }
 
     // Newest at the bottom (reverse list).
@@ -622,7 +623,7 @@ class _ChatScreenState extends State<ChatScreen> {
           margin: const EdgeInsets.symmetric(vertical: 10),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-          child: Text(text, style: DT.text(size: 11, weight: FontWeight.w700, color: ChatColors.muted)),
+          child: Text(tr(text), style: DT.text(size: 11, weight: FontWeight.w700, color: ChatColors.muted)),
         ),
       );
 
@@ -663,14 +664,14 @@ class _ChatScreenState extends State<ChatScreen> {
                 Align(
                   alignment: Alignment.centerLeft,
                   widthFactor: 1,
-                  child: SelectableText(m.message,
+                  child: SelectableText(tr(m.message),
                       style: DT.text(size: 14, color: mine ? Colors.white : ChatColors.ink, height: 1.35)),
                 ),
                 const SizedBox(height: 3),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(time,
+                    Text(tr(time),
                         style: DT.text(
                             size: 10,
                             color: mine ? Colors.white.withValues(alpha: 0.75) : ChatColors.hint)),
@@ -692,14 +693,14 @@ class _ChatScreenState extends State<ChatScreen> {
                 ? null
                 : () {
                     Clipboard.setData(ClipboardData(text: m.message));
-                    _snack('Message copied');
+                    _snack(tr('Message copied'));
                   },
             child: content,
           ),
           if (m.failed)
             Padding(
               padding: const EdgeInsets.only(top: 2, right: 4),
-              child: Text('Not sent · Tap to retry',
+              child: Text(tr('Not sent · Tap to retry'),
                   style: DT.text(size: 11, weight: FontWeight.w700, color: ChatColors.red)),
             ),
         ],
@@ -710,11 +711,11 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _offerCard(ChatMessage m, bool mine) {
     final st = m.offerStatus.isEmpty ? 'pending' : m.offerStatus;
     final (Color fg, Color bg, String label) = switch (st) {
-      'accepted' => (ChatColors.green, ChatColors.greenBg, 'Accepted'),
-      'rejected' || 'declined' => (ChatColors.red, ChatColors.redBg, 'Rejected'),
-      'countered' => (_kBrand, ChatColors.tint, 'Countered'),
+      'accepted' => (ChatColors.green, ChatColors.greenBg, tr('Accepted')),
+      'rejected' || 'declined' => (ChatColors.red, ChatColors.redBg, tr('Rejected')),
+      'countered' => (_kBrand, ChatColors.tint, tr('Countered')),
       'expired' || 'cancelled' => (ChatColors.muted, ChatColors.line, st[0].toUpperCase() + st.substring(1)),
-      _ => (ChatColors.orangeText, ChatColors.orangeBg, 'Pending'),
+      _ => (ChatColors.orangeText, ChatColors.orangeBg, tr('Pending')),
     };
     final canRespond = ChatService.offersSupported && !mine && m.id > 0 && m.isPendingOffer && !_sending;
     return Container(
@@ -734,37 +735,37 @@ class _ChatScreenState extends State<ChatScreen> {
               children: [
                 Icon(Icons.local_offer_rounded, size: 15, color: mine ? _kBrand : ChatColors.orangeText),
                 const SizedBox(width: 5),
-                Text(mine ? 'YOUR OFFER' : 'OFFER',
+                Text(mine ? tr('YOUR OFFER') : tr('OFFER'),
                     style: DT.text(
                         size: 10.5, weight: FontWeight.w800, color: mine ? _kBrand : ChatColors.orangeText)),
                 const Spacer(),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-                  child: Text(label, style: DT.text(size: 10.5, weight: FontWeight.w800, color: fg)),
+                  child: Text(tr(label), style: DT.text(size: 10.5, weight: FontWeight.w800, color: fg)),
                 ),
               ],
             ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
-            child: Text(chatRupees(m.offerAmount ?? 0),
+            child: Text(tr(chatRupees(m.offerAmount ?? 0)),
                 style: DT.text(size: 22, weight: FontWeight.w800, color: ChatColors.ink, letterSpacing: -0.4)),
           ),
           if (m.message.isNotEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 2, 12, 0),
-              child: Text(m.message, style: DT.text(size: 13, color: ChatColors.body, height: 1.35)),
+              child: Text(tr(m.message), style: DT.text(size: 13, color: ChatColors.body, height: 1.35)),
             ),
           if (m.offerNote.isNotEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-              child: Text('Note: ${m.offerNote}',
+              child: Text(tr('Note: {0}', [m.offerNote]),
                   style: DT.text(size: 12, color: ChatColors.muted, height: 1.35)),
             ),
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-            child: Text(m.createdAt == null ? '' : chatClock(m.createdAt!),
+            child: Text(tr(m.createdAt == null ? '' : chatClock(m.createdAt!)),
                 textAlign: TextAlign.right, style: DT.text(size: 10, color: ChatColors.hint)),
           ),
           if (canRespond) ...[
@@ -773,11 +774,11 @@ class _ChatScreenState extends State<ChatScreen> {
               padding: const EdgeInsets.all(8),
               child: Row(
                 children: [
-                  Expanded(child: _offerBtn('Reject', () => _respond(m, 'reject'), filled: false)),
+                  Expanded(child: _offerBtn(tr('Reject'), () => _respond(m, 'reject'), filled: false)),
                   const SizedBox(width: 6),
-                  Expanded(child: _offerBtn('Counter', () => _respond(m, 'counter'), filled: false)),
+                  Expanded(child: _offerBtn(tr('Counter'), () => _respond(m, 'counter'), filled: false)),
                   const SizedBox(width: 6),
-                  Expanded(child: _offerBtn('Accept', () => _respond(m, 'accept'), filled: true)),
+                  Expanded(child: _offerBtn(tr('Accept'), () => _respond(m, 'accept'), filled: true)),
                 ],
               ),
             ),
@@ -797,7 +798,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 onPressed: onTap,
-                child: Text(label, style: DT.text(size: 12.5, weight: FontWeight.w800, color: Colors.white)),
+                child: Text(tr(label), style: DT.text(size: 12.5, weight: FontWeight.w800, color: Colors.white)),
               )
             : OutlinedButton(
                 style: OutlinedButton.styleFrom(
@@ -807,7 +808,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 onPressed: onTap,
-                child: Text(label, style: DT.text(size: 12.5, weight: FontWeight.w800, color: _kBrand)),
+                child: Text(tr(label), style: DT.text(size: 12.5, weight: FontWeight.w800, color: _kBrand)),
               ),
       );
 
@@ -827,7 +828,7 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             if (canOffer)
               Tooltip(
-                message: 'Make an offer',
+                message: tr('Make an offer'),
                 child: Material(
                   color: ChatColors.tint,
                   shape: const CircleBorder(),
@@ -854,7 +855,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 onSubmitted: (_) => _send(),
                 style: DT.text(size: 14.5, color: ChatColors.ink),
                 decoration: InputDecoration(
-                  hintText: 'Type a message…',
+                  hintText: tr('Type a message…'),
                   hintStyle: DT.text(size: 14, color: ChatColors.hint),
                   isDense: true,
                   filled: true,
@@ -901,10 +902,10 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          Text(title,
+          Text(tr(title),
               textAlign: TextAlign.center, style: DT.text(size: 16, weight: FontWeight.w800, color: ChatColors.ink)),
           const SizedBox(height: 4),
-          Text(body,
+          Text(tr(body),
               textAlign: TextAlign.center, style: DT.text(size: 13, color: ChatColors.muted, height: 1.45)),
           if (button != null && onTap != null) ...[
             const SizedBox(height: 14),
@@ -912,7 +913,7 @@ class _ChatScreenState extends State<ChatScreen> {
               child: FilledButton(
                 style: FilledButton.styleFrom(backgroundColor: _kBrand),
                 onPressed: onTap,
-                child: Text(button),
+                child: Text(tr(button)),
               ),
             ),
           ],
@@ -942,7 +943,7 @@ class ChatAvatar extends StatelessWidget {
         color: light ? Colors.white.withValues(alpha: 0.18) : ChatColors.tint,
         border: light ? Border.all(color: Colors.white.withValues(alpha: 0.35)) : null,
       ),
-      child: Text(initials,
+      child: Text(tr(initials),
           style: DT.text(size: size * 0.36, weight: FontWeight.w800, color: light ? Colors.white : _kBrand)),
     );
   }

@@ -11,6 +11,7 @@ import '../constants/design_tokens.dart';
 import '../services/checkout_service.dart';
 import '../services/order_extras_service.dart';
 import '../utils/shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -74,8 +75,8 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
       builder: (_) => const _AddAddressSheet(),
     );
     if (saved != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Address saved'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(tr('Address saved')),
         behavior: SnackBarBehavior.floating,
       ));
       _load();
@@ -91,8 +92,8 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
       builder: (_) => _AddAddressSheet(initial: a),
     );
     if (saved != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Address updated'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(tr('Address updated')),
         behavior: SnackBarBehavior.floating,
       ));
       _load();
@@ -108,14 +109,14 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
         flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)),
         foregroundColor: Colors.white,
         elevation: 0,
-        title: Text('Saved addresses', style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
+        title: Text(tr('Saved addresses'), style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _add,
         backgroundColor: _kBrand, // buttons: only #093C71
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_location_alt_outlined),
-        label: Text('Add address', style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
+        label: Text(tr('Add address'), style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: _SA.brand))
@@ -126,10 +127,10 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
           children: [
             if (_error != null)
-              _msg(Icons.cloud_off_rounded, 'Could not load addresses', _error!)
+              _msg(Icons.cloud_off_rounded, tr('Could not load addresses'), _error!)
             else if (_list.isEmpty)
-              _msg(Icons.location_off_outlined, 'No saved addresses',
-                  'Add an address to see live shipping in your cart and check out faster.')
+              _msg(Icons.location_off_outlined, tr('No saved addresses'),
+                  tr('Add an address to see live shipping in your cart and check out faster.'))
             else
               for (var i = 0; i < _list.length; i++) ...[
                 _card(_list[i], first: i == 0),
@@ -152,9 +153,9 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
           child: Icon(icon, size: 38, color: _SA.brand),
         ),
         const SizedBox(height: 16),
-        Text(title, style: DT.text(size: 16, weight: FontWeight.w800, color: _SA.ink)),
+        Text(tr(title), style: DT.text(size: 16, weight: FontWeight.w800, color: _SA.ink)),
         const SizedBox(height: 6),
-        Text(body, textAlign: TextAlign.center, style: DT.text(size: 13, color: _SA.muted, height: 1.45)),
+        Text(tr(body), textAlign: TextAlign.center, style: DT.text(size: 13, color: _SA.muted, height: 1.45)),
       ],
     ),
   );
@@ -183,22 +184,22 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: Text(a.fullName.isEmpty ? 'Address' : a.fullName,
+                    child: Text(a.fullName.isEmpty ? tr('Address') : a.fullName,
                         style: DT.text(size: 14.5, weight: FontWeight.w800, color: _SA.ink)),
                   ),
                   if (first)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(color: _SA.tint, borderRadius: BorderRadius.circular(20)),
-                      child: Text('Used for shipping estimate',
+                      child: Text(tr('Used for shipping estimate'),
                           style: DT.text(size: 9.5, weight: FontWeight.w800, color: _SA.brand)),
                     ),
                 ],
               ),
               const SizedBox(height: 4),
-              Text(a.oneLine, style: DT.text(size: 12.5, color: DT.onyx700, height: 1.45)),
+              Text(tr(a.oneLine), style: DT.text(size: 12.5, color: DT.onyx700, height: 1.45)),
               const SizedBox(height: 4),
-              Text('PIN ${a.pincode}${a.mobile.isNotEmpty ? '  ·  ${a.mobile}' : ''}',
+              Text(tr('PIN {0}{1}', [a.pincode, a.mobile.isNotEmpty ? '  ·  ${a.mobile}' : '']),
                   style: DT.text(size: 12, weight: FontWeight.w700, color: _SA.muted)),
               const SizedBox(height: 10),
               SizedBox(
@@ -211,7 +212,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   icon: const Icon(Icons.edit_outlined, size: 16, color: Colors.white),
-                  label: Text('Edit', style: DT.text(size: 12.5, weight: FontWeight.w700, color: Colors.white)),
+                  label: Text(tr('Edit'), style: DT.text(size: 12.5, weight: FontWeight.w700, color: Colors.white)),
                 ),
               ),
             ],
@@ -307,7 +308,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
   }
 
   InputDecoration _dec(String label) => InputDecoration(
-    labelText: label,
+    labelText: tr(label),
     labelStyle: DT.text(size: 13, color: _SA.muted),
     isDense: true,
     filled: true,
@@ -330,7 +331,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
       decoration: _dec(required ? '$label *' : label),
       validator: (v) {
         final t = (v ?? '').trim();
-        if (required && t.isEmpty) return 'Required';
+        if (required && t.isEmpty) return tr('Required');
         return check?.call(t);
       },
     );
@@ -369,7 +370,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
                       Row(
                         children: [
                           Expanded(
-                            child: Text(widget.initial == null ? 'New delivery address' : 'Edit address',
+                            child: Text(widget.initial == null ? tr('New delivery address') : tr('Edit address'),
                                 style: DT.text(size: 16.5, weight: FontWeight.w800, color: Colors.white)),
                           ),
                           IconButton(
@@ -386,42 +387,42 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
                     shrinkWrap: true,
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                     children: [
-                      _f('full_name', 'Full name'),
+                      _f('full_name', tr('Full name')),
                       const SizedBox(height: 10),
-                      _f('mobile_no', 'Mobile number',
+                      _f('mobile_no', tr('Mobile number'),
                           keyboard: TextInputType.phone,
                           fmt: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
-                          check: (t) => RegExp(r'^[6-9]\d{9}$').hasMatch(t) ? null : 'Enter a valid 10-digit number'),
+                          check: (t) => RegExp(r'^[6-9]\d{9}$').hasMatch(t) ? null : tr('Enter a valid 10-digit number')),
                       const SizedBox(height: 10),
-                      _f('address_line1', 'House / building, street'),
+                      _f('address_line1', tr('House / building, street')),
                       const SizedBox(height: 10),
-                      _f('address_line2', 'Landmark / area', required: false),
+                      _f('address_line2', tr('Landmark / area'), required: false),
                       const SizedBox(height: 10),
                       Row(children: [
-                        Expanded(child: _f('village', 'Village / locality', required: false)),
+                        Expanded(child: _f('village', tr('Village / locality'), required: false)),
                         const SizedBox(width: 10),
-                        Expanded(child: _f('taluka', 'Taluka', required: false)),
+                        Expanded(child: _f('taluka', tr('Taluka'), required: false)),
                       ]),
                       const SizedBox(height: 10),
                       Row(children: [
-                        Expanded(child: _f('district', 'District', required: false)),
+                        Expanded(child: _f('district', tr('District'), required: false)),
                         const SizedBox(width: 10),
-                        Expanded(child: _f('city', 'City')),
+                        Expanded(child: _f('city', tr('City'))),
                       ]),
                       const SizedBox(height: 10),
                       Row(children: [
-                        Expanded(child: _f('state', 'State')),
+                        Expanded(child: _f('state', tr('State'))),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: _f('pincode', 'Pincode',
+                          child: _f('pincode', tr('Pincode'),
                               keyboard: TextInputType.number,
                               fmt: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)],
-                              check: (t) => t.length == 6 ? null : '6 digits'),
+                              check: (t) => t.length == 6 ? null : tr('6 digits')),
                         ),
                       ]),
                       if (_error != null) ...[
                         const SizedBox(height: 12),
-                        Text(_error!, style: DT.text(size: 12.5, weight: FontWeight.w600, color: _kRed)),
+                        Text(tr(_error!), style: DT.text(size: 12.5, weight: FontWeight.w600, color: _kRed)),
                       ],
                     ],
                   ),
@@ -446,7 +447,7 @@ class _AddAddressSheetState extends State<_AddAddressSheet> {
                           ),
                           child: _saving
                               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                              : Text(widget.initial == null ? 'Save address' : 'Update address', style: DT.text(size: 14.5, weight: FontWeight.w800, color: Colors.white)),
+                              : Text(widget.initial == null ? tr('Save address') : tr('Update address'), style: DT.text(size: 14.5, weight: FontWeight.w800, color: Colors.white)),
                         ),
                       ),
                     ),

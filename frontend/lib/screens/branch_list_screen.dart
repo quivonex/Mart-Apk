@@ -4,6 +4,7 @@ import '../constants/app_constants.dart';
 import '../models/branch_model.dart';
 import '../services/branch_service.dart';
 import 'branch_create_edit_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -49,7 +50,7 @@ class _BranchListScreenState extends State<BranchListScreen> {
       if (res.isSuccess) {
         _branches = res.data;
       } else {
-        _error = res.message ?? 'Failed to load branches';
+        _error = res.message ?? tr('Failed to load branches');
       }
     });
   }
@@ -79,19 +80,19 @@ class _BranchListScreenState extends State<BranchListScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(
-          b.isActive ? 'Deactivate Branch?' : 'Reactivate Branch?',
+          b.isActive ? tr('Deactivate Branch?') : tr('Reactivate Branch?'),
           style: GoogleFonts.inter(fontWeight: FontWeight.w700),
         ),
         content: Text(
           b.isActive
-              ? 'This branch will be marked as inactive.'
-              : 'This branch will be activated again.',
+              ? tr('This branch will be marked as inactive.')
+              : tr('This branch will be activated again.'),
           style: GoogleFonts.inter(fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(tr('Cancel')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -99,7 +100,7 @@ class _BranchListScreenState extends State<BranchListScreen> {
               backgroundColor: _kBrand, // buttons: only #093C71
               foregroundColor: Colors.white,
             ),
-            child: Text(b.isActive ? 'Deactivate' : 'Reactivate'),
+            child: Text(b.isActive ? tr('Deactivate') : tr('Reactivate')),
           ),
         ],
       ),
@@ -115,7 +116,7 @@ class _BranchListScreenState extends State<BranchListScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(res.displayMessage),
+        content: Text(tr(res.displayMessage)),
         backgroundColor:
         res.isSuccess ? const Color(0xFF10B981) : _kRed,
         behavior: SnackBarBehavior.floating,
@@ -135,7 +136,7 @@ class _BranchListScreenState extends State<BranchListScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          'Branches',
+          tr('Branches'),
           style: GoogleFonts.inter(
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -149,7 +150,7 @@ class _BranchListScreenState extends State<BranchListScreen> {
         backgroundColor: _kBrand,
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text(
-          'Add Branch',
+          tr('Add Branch'),
           style: GoogleFonts.inter(
             fontSize: 13,
             fontWeight: FontWeight.w600,
@@ -215,7 +216,7 @@ class _BranchListScreenState extends State<BranchListScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      b.name,
+                      trData(b.name),
                       style: GoogleFonts.inter(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
@@ -224,7 +225,7 @@ class _BranchListScreenState extends State<BranchListScreen> {
                     ),
                     if (b.companyName.isNotEmpty)
                       Text(
-                        b.companyName,
+                        tr(b.companyName),
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           color: AppConstants.textSecondary,
@@ -243,7 +244,7 @@ class _BranchListScreenState extends State<BranchListScreen> {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  b.isActive ? 'Active' : 'Inactive',
+                  b.isActive ? tr('Active') : tr('Inactive'),
                   style: GoogleFonts.inter(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -267,7 +268,7 @@ class _BranchListScreenState extends State<BranchListScreen> {
                   onPressed: () => _openEdit(b),
                   icon: const Icon(Icons.edit_outlined, size: 16),
                   label: Text(
-                    'Edit',
+                    tr('Edit'),
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -294,7 +295,7 @@ class _BranchListScreenState extends State<BranchListScreen> {
                     size: 16,
                   ),
                   label: Text(
-                    b.isActive ? 'Deactivate' : 'Reactivate',
+                    b.isActive ? tr('Deactivate') : tr('Reactivate'),
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -324,7 +325,7 @@ class _BranchListScreenState extends State<BranchListScreen> {
         const SizedBox(width: 6),
         Expanded(
           child: Text(
-            text,
+            tr(text),
             style: GoogleFonts.inter(
               fontSize: 12,
               color: AppConstants.textSecondary,
@@ -361,7 +362,7 @@ class _BranchListScreenState extends State<BranchListScreen> {
             ),
             const SizedBox(height: 20),
             Text(
-              isErr ? 'Failed to Load' : 'No Branches Yet',
+              isErr ? tr('Failed to Load') : tr('No Branches Yet'),
               style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -370,7 +371,7 @@ class _BranchListScreenState extends State<BranchListScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              _error ?? 'Start by adding your first branch.',
+              _error ?? tr('Start by adding your first branch.'),
               style: GoogleFonts.inter(
                 fontSize: 14,
                 color: AppConstants.textSecondary,
@@ -391,7 +392,7 @@ class _BranchListScreenState extends State<BranchListScreen> {
               icon: Icon(isErr ? Icons.refresh : Icons.add,
                   color: Colors.white, size: 18),
               label: Text(
-                isErr ? 'Retry' : 'Add Branch',
+                isErr ? tr('Retry') : tr('Add Branch'),
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,

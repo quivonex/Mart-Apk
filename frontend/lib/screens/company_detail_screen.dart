@@ -16,6 +16,7 @@ import 'company_photos_screen.dart';
 import 'company_products_list_screen.dart';
 import 'company_stock_screen.dart';
 import 'supplier_list_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -61,7 +62,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
       if (res.isSuccess) {
         _c = res.data!;
       } else {
-        _error = res.message ?? 'Could not refresh company';
+        _error = res.message ?? tr('Could not refresh company');
       }
     });
   }
@@ -83,12 +84,11 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
     final deactivate = _c.isActive;
     final ok = await confirmAction(
       context,
-      title: deactivate ? 'Deactivate ${_c.name}?' : 'Restore ${_c.name}?',
+      title: deactivate ? tr('Deactivate {0}?', [_c.name]) : tr('Restore {0}?', [_c.name]),
       message: deactivate
-          ? 'The company and its listings will be hidden from buyers. '
-          'You can restore it any time from this screen.'
-          : 'The company will be visible to buyers again.',
-      confirmLabel: deactivate ? 'Deactivate' : 'Restore',
+          ? tr('The company and its listings will be hidden from buyers. You can restore it any time from this screen.')
+          : tr('The company will be visible to buyers again.'),
+      confirmLabel: deactivate ? tr('Deactivate') : tr('Restore'),
       destructive: deactivate,
     );
     if (!ok || !mounted) return;
@@ -108,7 +108,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
     if (url.isEmpty) return;
     if (!url.contains(':')) url = 'https://$url';
     final ok = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    if (!ok && mounted) showCompanySnack(context, 'Could not open $raw', error: true);
+    if (!ok && mounted) showCompanySnack(context, tr('Could not open {0}', [raw]), error: true);
   }
 
   String _digits(String s) => s.replaceAll(RegExp(r'[^0-9]'), '');
@@ -121,11 +121,11 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
     return Scaffold(
       backgroundColor: DT.background,
       appBar: CompanyTopBar(
-        title: _c.name,
-        subtitle: _refreshing ? 'Refreshing…' : 'Company details',
+        title: tr(_c.name),
+        subtitle: _refreshing ? tr('Refreshing…') : tr('Company details'),
         actions: [
           IconButton(
-            tooltip: 'Edit',
+            tooltip: tr('Edit'),
             onPressed: () => _open(CompanyCreateEditScreen(existing: _c)),
             icon: const Icon(Icons.edit_outlined, color: DT.onyx700),
           ),
@@ -179,10 +179,10 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
   // ---------- Header ----------
   Widget _header() {
     final pill = !_c.isActive
-        ? _pill('Inactive', DT.slate100, DT.onyx600)
+        ? _pill(tr('Inactive'), DT.slate100, DT.onyx600)
         : _c.isPaid
-        ? _pill('Paid', DT.emerald50, DT.emerald700)
-        : _pill('Payment pending', _kOrangeBg, _kOrangeDark);
+        ? _pill(tr('Paid'), DT.emerald50, DT.emerald700)
+        : _pill(tr('Payment pending'), _kOrangeBg, _kOrangeDark);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -200,16 +200,16 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_c.name,
+                Text(trData(_c.name),
                     style: DT.text(size: 18, weight: FontWeight.w800, letterSpacing: -0.4)),
                 if (_c.companySlogan.isNotEmpty) ...[
                   const SizedBox(height: 2),
-                  Text(_c.companySlogan,
+                  Text(tr(_c.companySlogan),
                       style: DT.text(size: 12.5, color: DT.slate500, height: 1.35)),
                 ],
                 if (_c.ownerName.isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  Text('Owned by ${_c.ownerName}',
+                  Text(tr('Owned by {0}', [_c.ownerName]),
                       style: DT.text(size: 12, weight: FontWeight.w600, color: DT.onyx700)),
                 ],
                 const SizedBox(height: 10),
@@ -234,7 +234,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
   Widget _pill(String text, Color bg, Color fg) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
     decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
-    child: Text(text, style: DT.text(size: 11, weight: FontWeight.w700, color: fg)),
+    child: Text(tr(text), style: DT.text(size: 11, weight: FontWeight.w700, color: fg)),
   );
 
   Widget _payBanner() {
@@ -253,10 +253,10 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Registration fee not paid',
+                Text(tr('Registration fee not paid'),
                     style: DT.text(size: 13.5, weight: FontWeight.w700, color: _kBrandDark)),
                 const SizedBox(height: 2),
-                Text('Pay to activate the admin panel and shipping pickup.',
+                Text(tr('Pay to activate the admin panel and shipping pickup.'),
                     style: DT.text(size: 12, color: DT.onyx600, height: 1.4)),
               ],
             ),
@@ -271,7 +271,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
             ),
-            child: Text('Pay now',
+            child: Text(tr('Pay now'),
                 style: DT.text(size: 12.5, weight: FontWeight.w700, color: Colors.white)),
           ),
         ],
@@ -292,12 +292,12 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
           const Icon(Icons.visibility_off_outlined, color: DT.onyx600),
           const SizedBox(width: 12),
           Expanded(
-            child: Text('This company is deactivated and hidden from buyers.',
+            child: Text(tr('This company is deactivated and hidden from buyers.'),
                 style: DT.text(size: 12.5, color: DT.onyx700, height: 1.4)),
           ),
           TextButton(
             onPressed: _toggleActive,
-            child: Text('Restore',
+            child: Text(tr('Restore'),
                 style: DT.text(size: 13, weight: FontWeight.w700, color: _kBrand)),
           ),
         ],
@@ -317,12 +317,12 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
         const Icon(Icons.error_outline_rounded, size: 18, color: _kRed),
         const SizedBox(width: 8),
         Expanded(
-          child: Text('$_error. Showing saved details.',
+          child: Text(tr('{0}. Showing saved details.', [_error]),
               style: DT.text(size: 12, color: _kRed, weight: FontWeight.w600)),
         ),
         GestureDetector(
           onTap: _load,
-          child: Text('Retry',
+          child: Text(tr('Retry'),
               style: DT.text(size: 12, weight: FontWeight.w700, color: _kRed)),
         ),
       ],
@@ -332,14 +332,14 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
   // ---------- Actions grid ----------
   Widget _actions() {
     final tiles = <_ActionTile>[
-      _ActionTile(Icons.inventory_2_outlined, 'Products',
+      _ActionTile(Icons.inventory_2_outlined, tr('Products'),
               () => _open(CompanyProductsListScreen(companyId: _c.id, companyName: _c.name), reload: false)),
-      _ActionTile(Icons.local_shipping_outlined, 'Suppliers',
+      _ActionTile(Icons.local_shipping_outlined, tr('Suppliers'),
               () => _open(SupplierListScreen(company: _c), reload: false)),
-      _ActionTile(Icons.bar_chart_rounded, 'Stock',
+      _ActionTile(Icons.bar_chart_rounded, tr('Stock'),
               () => _open(CompanyStockScreen(company: _c), reload: false)),
       _ActionTile(Icons.photo_library_outlined,
-          _c.images.isEmpty ? 'Photos' : 'Photos (${_c.images.length})',
+          _c.images.isEmpty ? tr('Photos') : tr('Photos ({0})', [_c.images.length]),
               () => _open(CompanyPhotosScreen(company: _c))),
     ];
 
@@ -374,7 +374,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
                     child: Icon(t.icon, color: _kBrand, size: 20),
                   ),
                   const SizedBox(height: 6),
-                  Text(t.label,
+                  Text(tr(t.label),
                       textAlign: TextAlign.center,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -392,16 +392,16 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
     final extraEmails = _c.multipleEmailIds.where((e) => e != _c.email).join(', ');
     final extraPhones = _c.contacts.where((e) => e != _c.phoneNumber).join(', ');
     return SectionCard(
-      title: 'Contact',
+      title: tr('Contact'),
       child: Column(children: [
         InfoLine(
             icon: Icons.phone_outlined,
-            label: 'Phone',
+            label: tr('Phone'),
             value: _c.phoneNumber,
             onTap: () => _launch('tel:${_digits(_c.phoneNumber)}')),
         InfoLine(
             icon: Icons.chat_outlined,
-            label: 'WhatsApp',
+            label: tr('WhatsApp'),
             value: _c.whatsappNo,
             onTap: () {
               final d = _digits(_c.whatsappNo);
@@ -409,14 +409,14 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
             }),
         InfoLine(
             icon: Icons.mail_outline_rounded,
-            label: 'Email',
+            label: tr('Email'),
             value: _c.email,
             onTap: () => _launch('mailto:${_c.email}')),
-        InfoLine(icon: Icons.alternate_email_rounded, label: 'Other emails', value: extraEmails),
-        InfoLine(icon: Icons.contacts_outlined, label: 'Other phones', value: extraPhones),
+        InfoLine(icon: Icons.alternate_email_rounded, label: tr('Other emails'), value: extraEmails),
+        InfoLine(icon: Icons.contacts_outlined, label: tr('Other phones'), value: extraPhones),
         if ([_c.phoneNumber, _c.whatsappNo, _c.email, extraEmails, extraPhones]
             .every((s) => s.trim().isEmpty))
-          _emptyLine('No contact details yet. Tap edit to add them.'),
+          _emptyLine(tr('No contact details yet. Tap edit to add them.')),
       ]),
     );
   }
@@ -427,13 +427,13 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
         .join(', ');
     final hasMap = _c.latitude.isNotEmpty && _c.longitude.isNotEmpty;
     return SectionCard(
-      title: 'Address',
+      title: tr('Address'),
       trailing: hasMap
           ? TextButton.icon(
         onPressed: () => _launch(
             'https://www.google.com/maps/search/?api=1&query=${_c.latitude},${_c.longitude}'),
         icon: const Icon(Icons.map_outlined, size: 16),
-        label: Text('Map',
+        label: Text(tr('Map'),
             style: DT.text(size: 12, weight: FontWeight.w700, color: _kBrand)),
         style: TextButton.styleFrom(
           foregroundColor: _kBrand,
@@ -443,29 +443,29 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
       )
           : null,
       child: Column(children: [
-        InfoLine(icon: Icons.home_work_outlined, label: 'Address', value: _c.address),
-        InfoLine(icon: Icons.location_on_outlined, label: 'Area', value: area),
-        InfoLine(icon: Icons.markunread_mailbox_outlined, label: 'Pincode', value: _c.pincode),
+        InfoLine(icon: Icons.home_work_outlined, label: tr('Address'), value: _c.address),
+        InfoLine(icon: Icons.location_on_outlined, label: tr('Area'), value: area),
+        InfoLine(icon: Icons.markunread_mailbox_outlined, label: tr('Pincode'), value: _c.pincode),
         InfoLine(
-            icon: Icons.local_shipping_outlined, label: 'Pickup', value: _c.pickupLocation),
+            icon: Icons.local_shipping_outlined, label: tr('Pickup'), value: _c.pickupLocation),
         if ([_c.address, area, _c.pincode, _c.pickupLocation].every((s) => s.trim().isEmpty))
-          _emptyLine('No address yet.'),
+          _emptyLine(tr('No address yet.')),
       ]),
     );
   }
 
   Widget _businessSection() {
     return SectionCard(
-      title: 'Business details',
+      title: tr('Business details'),
       child: Column(children: [
-        InfoLine(icon: Icons.receipt_long_outlined, label: 'GST', value: _c.gstNumber),
-        InfoLine(icon: Icons.badge_outlined, label: 'PAN', value: _c.companyPanNo),
+        InfoLine(icon: Icons.receipt_long_outlined, label: tr('GST'), value: _c.gstNumber),
+        InfoLine(icon: Icons.badge_outlined, label: tr('PAN'), value: _c.companyPanNo),
         InfoLine(
-            icon: Icons.assignment_outlined, label: 'Registration', value: _c.registrationNo),
-        InfoLine(icon: Icons.numbers_rounded, label: 'IAN no.', value: _c.ianNo),
+            icon: Icons.assignment_outlined, label: tr('Registration'), value: _c.registrationNo),
+        InfoLine(icon: Icons.numbers_rounded, label: tr('IAN no.'), value: _c.ianNo),
         InfoLine(
-            icon: Icons.event_outlined, label: 'Since', value: _c.farmRegistrationYear),
-        InfoLine(icon: Icons.schedule_outlined, label: 'Joined', value: _fmtDate(_c.createdAt)),
+            icon: Icons.event_outlined, label: tr('Since'), value: _c.farmRegistrationYear),
+        InfoLine(icon: Icons.schedule_outlined, label: tr('Joined'), value: _fmtDate(_c.createdAt)),
       ]),
     );
   }
@@ -482,34 +482,34 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
 
   Widget _onlineSection() {
     InfoLine link(IconData i, String l, String v) =>
-        InfoLine(icon: i, label: l, value: _short(v), onTap: () => _launch(v));
+        InfoLine(icon: i, label: tr(l), value: _short(v), onTap: () => _launch(v));
     return SectionCard(
-      title: 'Online',
+      title: tr('Online'),
       child: Column(children: [
-        link(Icons.language_rounded, 'Website', _c.websiteUrl),
-        link(Icons.facebook_rounded, 'Facebook', _c.facebookUrl),
-        link(Icons.camera_alt_outlined, 'Instagram', _c.instagramUrl),
-        link(Icons.work_outline_rounded, 'LinkedIn', _c.linkedinUrl),
-        link(Icons.smart_display_outlined, 'YouTube', _c.youtubeUrl),
-        link(Icons.privacy_tip_outlined, 'Privacy', _c.privacyPolicyUrl),
-        link(Icons.gavel_outlined, 'Terms', _c.termsConditionsUrl),
+        link(Icons.language_rounded, tr('Website'), _c.websiteUrl),
+        link(Icons.facebook_rounded, tr('Facebook'), _c.facebookUrl),
+        link(Icons.camera_alt_outlined, tr('Instagram'), _c.instagramUrl),
+        link(Icons.work_outline_rounded, tr('LinkedIn'), _c.linkedinUrl),
+        link(Icons.smart_display_outlined, tr('YouTube'), _c.youtubeUrl),
+        link(Icons.privacy_tip_outlined, tr('Privacy'), _c.privacyPolicyUrl),
+        link(Icons.gavel_outlined, tr('Terms'), _c.termsConditionsUrl),
       ]),
     );
   }
 
   Widget _aboutSection() {
     return SectionCard(
-      title: 'About',
+      title: tr('About'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (_c.shortDescription.isNotEmpty)
-            Text(_c.shortDescription,
+            Text(trData(_c.shortDescription),
                 style: DT.text(size: 13, weight: FontWeight.w600, height: 1.5)),
           if (_c.shortDescription.isNotEmpty && _c.longDescription.isNotEmpty)
             const SizedBox(height: 8),
           if (_c.longDescription.isNotEmpty)
-            Text(_c.longDescription,
+            Text(tr(_c.longDescription),
                 style: DT.text(size: 12.5, color: DT.onyx600, height: 1.55)),
         ],
       ),
@@ -518,14 +518,14 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
 
   Widget _photosSection() {
     return SectionCard(
-      title: 'Photos',
+      title: tr('Photos'),
       trailing: TextButton(
         onPressed: () => _open(CompanyPhotosScreen(company: _c)),
-        child: Text(_c.images.isEmpty ? 'Add' : 'Manage',
+        child: Text(_c.images.isEmpty ? tr('Add') : tr('Manage'),
             style: DT.text(size: 12.5, weight: FontWeight.w700, color: _kBrand)),
       ),
       child: _c.images.isEmpty
-          ? _emptyLine('Add photos of your shop, warehouse or products.')
+          ? _emptyLine(tr('Add photos of your shop, warehouse or products.'))
           : SizedBox(
         height: 84,
         child: ListView.separated(
@@ -558,7 +558,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
       onPressed: _busy ? null : _toggleActive,
       icon: Icon(
           deactivate ? Icons.visibility_off_outlined : Icons.restore_rounded, size: 18),
-      label: Text(deactivate ? 'Deactivate company' : 'Restore company',
+      label: Text(deactivate ? tr('Deactivate company') : tr('Restore company'),
           style: DT.text(
               size: 13.5,
               weight: FontWeight.w700,
@@ -574,7 +574,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
 
   Widget _emptyLine(String text) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 4),
-    child: Text(text, style: DT.text(size: 12.5, color: DT.slate500, height: 1.4)),
+    child: Text(tr(text), style: DT.text(size: 12.5, color: DT.slate500, height: 1.4)),
   );
 
   String _short(String url) =>
@@ -585,7 +585,7 @@ class _CompanyDetailScreenState extends State<CompanyDetailScreen> {
     if (d == null) return '';
     const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     final l = d.toLocal();
-    return '${l.day} ${m[l.month - 1]} ${l.year}';
+    return '${l.day} ${tr(m[l.month - 1])} ${l.year}';
   }
 }
 

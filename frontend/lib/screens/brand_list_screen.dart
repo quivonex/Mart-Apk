@@ -4,6 +4,7 @@ import '../constants/app_constants.dart';
 import '../models/brand_model.dart';
 import '../services/brand_service.dart';
 import 'brand_create_edit_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -42,7 +43,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
       if (res.isSuccess) {
         _items = res.data;
       } else {
-        _error = res.message ?? 'Failed to load brands';
+        _error = res.message ?? tr('Failed to load brands');
       }
     });
   }
@@ -72,19 +73,19 @@ class _BrandListScreenState extends State<BrandListScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(
-          b.isActive ? 'Deactivate Brand?' : 'Reactivate Brand?',
+          b.isActive ? tr('Deactivate Brand?') : tr('Reactivate Brand?'),
           style: GoogleFonts.inter(fontWeight: FontWeight.w700),
         ),
         content: Text(
           b.isActive
-              ? 'This brand will be marked as inactive.'
-              : 'This brand will be activated again.',
+              ? tr('This brand will be marked as inactive.')
+              : tr('This brand will be activated again.'),
           style: GoogleFonts.inter(fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(tr('Cancel')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -92,7 +93,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
               backgroundColor:
               b.isActive ? _kRed : _kBrand,
             ),
-            child: Text(b.isActive ? 'Deactivate' : 'Reactivate'),
+            child: Text(b.isActive ? tr('Deactivate') : tr('Reactivate')),
           ),
         ],
       ),
@@ -108,7 +109,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(res.displayMessage),
+        content: Text(tr(res.displayMessage)),
         backgroundColor:
         res.isSuccess ? const Color(0xFF10B981) : _kRed,
         behavior: SnackBarBehavior.floating,
@@ -128,7 +129,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
         backgroundColor: _kBrand,
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text(
-          'Add Brand',
+          tr('Add Brand'),
           style: GoogleFonts.inter(
             fontSize: 13,
             fontWeight: FontWeight.w600,
@@ -194,7 +195,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      b.name,
+                      trData(b.name),
                       style: GoogleFonts.inter(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
@@ -223,7 +224,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  b.isActive ? 'Active' : 'Inactive',
+                  b.isActive ? tr('Active') : tr('Inactive'),
                   style: GoogleFonts.inter(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -236,7 +237,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
           if (b.description.isNotEmpty) ...[
             const SizedBox(height: 10),
             Text(
-              b.description,
+              trData(b.description),
               style: GoogleFonts.inter(
                 fontSize: 12,
                 color: AppConstants.textSecondary,
@@ -254,7 +255,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
                   onPressed: () => _openEdit(b),
                   icon: const Icon(Icons.edit_outlined, size: 16),
                   label: Text(
-                    'Edit',
+                    tr('Edit'),
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -281,7 +282,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
                     size: 16,
                   ),
                   label: Text(
-                    b.isActive ? 'Deactivate' : 'Reactivate',
+                    b.isActive ? tr('Deactivate') : tr('Reactivate'),
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -330,7 +331,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
             ),
             const SizedBox(height: 20),
             Text(
-              isErr ? 'Failed to Load' : 'No Brands Yet',
+              isErr ? tr('Failed to Load') : tr('No Brands Yet'),
               style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -339,7 +340,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              _error ?? 'Start by adding your first brand.',
+              _error ?? tr('Start by adding your first brand.'),
               style: GoogleFonts.inter(
                 fontSize: 14,
                 color: AppConstants.textSecondary,
@@ -360,7 +361,7 @@ class _BrandListScreenState extends State<BrandListScreen> {
               icon: Icon(isErr ? Icons.refresh : Icons.add,
                   color: Colors.white, size: 18),
               label: Text(
-                isErr ? 'Retry' : 'Add Brand',
+                isErr ? tr('Retry') : tr('Add Brand'),
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,

@@ -20,6 +20,7 @@ import 'package:image_picker/image_picker.dart';
 import '../models/property_model.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'api_urls.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class PropertyDocumentUpload {
   final String fileName;
@@ -85,7 +86,7 @@ class PropertyCreateService {
         final d = jsonDecode(res.body);
         j = d is Map<String, dynamic> ? d : {};
       } catch (_) {
-        return AmenityCreateResult(ok: false, message: 'Server error (${res.statusCode}). Please try again.');
+        return AmenityCreateResult(ok: false, message: tr('Server error ({0}). Please try again.', [res.statusCode]));
       }
       final ok = res.statusCode >= 200 && res.statusCode < 300 && (j['status'] == true || j['success'] == true);
       if (ok && j['data'] is Map) {
@@ -96,13 +97,13 @@ class PropertyCreateService {
       }
       return AmenityCreateResult(ok: false, message: _errorText(j, res.statusCode));
     } on TimeoutException {
-      return const AmenityCreateResult(ok: false, message: 'The server took too long to respond.');
+      return AmenityCreateResult(ok: false, message: tr('The server took too long to respond.'));
     } catch (e) {
       final s = e.toString();
       if (s.contains('SocketException') || s.contains('ClientException')) {
-        return const AmenityCreateResult(ok: false, message: 'Could not reach the server.');
+        return AmenityCreateResult(ok: false, message: tr('Could not reach the server.'));
       }
-      return AmenityCreateResult(ok: false, message: 'Something went wrong: $s');
+      return AmenityCreateResult(ok: false, message: tr('Something went wrong: {0}', [s]));
     }
   }
 
@@ -133,7 +134,7 @@ class PropertyCreateService {
     try {
       final token = await SharedPreferencesHelper.getAccessToken();
       if (token == null || token.isEmpty) {
-        return PropertyCreateResult(ok: false, message: 'Please log in to list a property.');
+        return PropertyCreateResult(ok: false, message: tr('Please log in to list a property.'));
       }
       final req = http.MultipartRequest('POST', Uri.parse('${ApiUrls.baseUrl}/real_estate/property/create/'))
         ..headers.addAll({'Accept': 'application/json', 'Authorization': 'Bearer $token'})
@@ -173,7 +174,7 @@ class PropertyCreateService {
         final d = jsonDecode(res.body);
         j = d is Map<String, dynamic> ? d : {};
       } catch (_) {
-        return PropertyCreateResult(ok: false, message: 'Server error (${res.statusCode}). Please try again.');
+        return PropertyCreateResult(ok: false, message: tr('Server error ({0}). Please try again.', [res.statusCode]));
       }
 
       if (res.statusCode >= 200 && res.statusCode < 300 && j['success'] == true) {
@@ -188,13 +189,13 @@ class PropertyCreateService {
       }
       return PropertyCreateResult(ok: false, message: _errorText(j, res.statusCode));
     } on TimeoutException {
-      return PropertyCreateResult(ok: false, message: 'Upload took too long. Check your connection and try again.');
+      return PropertyCreateResult(ok: false, message: tr('Upload took too long. Check your connection and try again.'));
     } catch (e) {
       final s = e.toString();
       if (s.contains('SocketException') || s.contains('ClientException')) {
-        return PropertyCreateResult(ok: false, message: 'Could not reach the server.');
+        return PropertyCreateResult(ok: false, message: tr('Could not reach the server.'));
       }
-      return PropertyCreateResult(ok: false, message: 'Something went wrong: $s');
+      return PropertyCreateResult(ok: false, message: tr('Something went wrong: {0}', [s]));
     }
   }
 
@@ -213,7 +214,7 @@ class PropertyCreateService {
       final label = key.replaceAll('_', ' ');
       return key == 'non_field_errors' ? text : '${label[0].toUpperCase()}${label.substring(1)}: $text';
     }
-    if (code == 401) return 'Session expired. Please log in again.';
+    if (code == 401) return tr('Session expired. Please log in again.');
     return (j['message'] ?? j['error'] ?? 'Could not create the property ($code).').toString();
   }
 }

@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/product_model.dart';
 import 'api_urls.dart';
 import '../utils/shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class ProductService {
   // Get Latest Approved Products (Home Screen)
@@ -24,9 +25,9 @@ class ProductService {
       if (response.statusCode == 200) {
         return LatestProductsResponse.fromJson(responseData);
       } else if (response.statusCode == 401) {
-        throw Exception('Session expired. Please login again.');
+        throw Exception(tr('Session expired. Please login again.'));
       } else {
-        String errorMessage = 'Failed to load latest products';
+        String errorMessage = tr('Failed to load latest products');
         if (responseData is Map) {
           if (responseData.containsKey('message')) {
             errorMessage = responseData['message'];
@@ -42,7 +43,7 @@ class ProductService {
       if (e is Exception) {
         throw Exception(e.toString());
       }
-      throw Exception('Network error. Please check your connection.');
+      throw Exception(tr('Network error. Please check your connection.'));
     }
   }
 
@@ -62,7 +63,7 @@ class ProductService {
       if (response.statusCode == 200) {
         return ApprovedProductListResponse.fromJson(responseData);
       } else {
-        String errorMessage = 'Failed to load products';
+        String errorMessage = tr('Failed to load products');
         if (responseData is Map) {
           if (responseData.containsKey('message')) {
             errorMessage = responseData['message'];
@@ -78,7 +79,7 @@ class ProductService {
       if (e is Exception) {
         throw Exception(e.toString());
       }
-      throw Exception('Network error. Please check your connection.');
+      throw Exception(tr('Network error. Please check your connection.'));
     }
   }
 }

@@ -16,6 +16,7 @@ import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../constants/design_tokens.dart';
 import '../models/company_model.dart';
 import '../services/company_service.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class CompanyPaymentHelper {
   CompanyPaymentHelper._();
@@ -37,12 +38,12 @@ class CompanyPaymentHelper {
     // razorpay_flutter is Android/iOS only; on web open() never returns.
     if (kIsWeb) {
       _snack(context,
-          'Online payment works in the QNX Mart Android app. Open My Companies on your phone to pay.');
+          tr('Online payment works in the QNX Mart Android app. Open My Companies on your phone to pay.'));
       return false;
     }
 
     // ---------- 1. Create order ----------
-    _showLoader(context, 'Preparing payment…');
+    _showLoader(context, tr('Preparing payment…'));
     final order = await CompanyService.createPaymentOrder(company.id);
     if (!context.mounted) return false;
     _hideLoader(context);
@@ -54,7 +55,7 @@ class CompanyPaymentHelper {
     }
 
     if (!order.isSuccess) {
-      _snack(context, order.message ?? 'Could not start payment', error: true);
+      _snack(context, order.message ?? tr('Could not start payment'), error: true);
       return false;
     }
 
@@ -96,7 +97,7 @@ class CompanyPaymentHelper {
       });
     } catch (e) {
       razorpay.clear();
-      if (context.mounted) _snack(context, 'Could not open payment: $e', error: true);
+      if (context.mounted) _snack(context, tr('Could not open payment: {0}', [e]), error: true);
       return false;
     }
 
@@ -105,21 +106,21 @@ class CompanyPaymentHelper {
     if (!context.mounted) return false;
 
     if (result.cancelled) {
-      _snack(context, 'Payment cancelled. You can pay later from My Companies.');
+      _snack(context, tr('Payment cancelled. You can pay later from My Companies.'));
       return false;
     }
     if (result.walletName != null) {
       _snack(context,
-          '${result.walletName} selected. Complete the payment there, then pull to refresh.');
+          tr('{0} selected. Complete the payment there, then pull to refresh.', [result.walletName]));
       return false;
     }
     if (!result.ok) {
-      _snack(context, result.errorMessage ?? 'Payment failed', error: true);
+      _snack(context, result.errorMessage ?? tr('Payment failed'), error: true);
       return false;
     }
 
     // ---------- 3. Verify on backend ----------
-    _showLoader(context, 'Confirming payment…');
+    _showLoader(context, tr('Confirming payment…'));
     final verify = await CompanyService.verifyPayment(
       paymentId: result.paymentId!,
       orderId: result.orderId ?? order.orderId!,
@@ -163,7 +164,7 @@ class CompanyPaymentHelper {
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: Text(text,
+                  child: Text(tr(text),
                       style: DT.text(size: 14, weight: FontWeight.w600)),
                 ),
               ],
@@ -207,15 +208,14 @@ class CompanyPaymentHelper {
                 ),
               ),
               const SizedBox(height: 18),
-              Text('Registration fee',
+              Text(tr('Registration fee'),
                   style: DT.text(size: 13, color: DT.slate500, weight: FontWeight.w600)),
               const SizedBox(height: 4),
-              Text(order.amountLabel,
+              Text(tr(order.amountLabel),
                   style: DT.text(size: 32, weight: FontWeight.w800, letterSpacing: -0.8)),
               const SizedBox(height: 4),
               Text(
-                'One-time fee to activate ${company.name} on QNX Mart B2B. '
-                    'Your company admin panel and pickup location are set up after payment.',
+                tr('One-time fee to activate {0} on QNX Mart B2B. Your company admin panel and pickup location are set up after payment.', [company.name]),
                 style: DT.text(size: 12.5, color: DT.onyx600, height: 1.45),
               ),
               const SizedBox(height: 18),
@@ -230,7 +230,7 @@ class CompanyPaymentHelper {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(DT.rMd)),
                   ),
-                  child: Text('Pay ${order.amountLabel}',
+                  child: Text(tr('Pay {0}', [order.amountLabel]),
                       style: DT.text(
                           size: 14.5, weight: FontWeight.w700, color: Colors.white)),
                 ),
@@ -238,7 +238,7 @@ class CompanyPaymentHelper {
               const SizedBox(height: 6),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: Text('Not now',
+                child: Text(tr('Not now'),
                     style: DT.text(size: 13, weight: FontWeight.w600, color: DT.slate500)),
               ),
             ],
@@ -266,15 +266,13 @@ class CompanyPaymentHelper {
           decoration: const BoxDecoration(color: DT.emerald50, shape: BoxShape.circle),
           child: const Icon(Icons.check_rounded, color: DT.emerald700, size: 32),
         ),
-        title: Text('Payment received',
+        title: Text(tr('Payment received'),
             textAlign: TextAlign.center,
             style: DT.text(size: 18, weight: FontWeight.w800)),
         content: Text(
           order.alreadyPaid
-              ? '${company.name} is registered.'
-              '${paymentId.isNotEmpty ? '\nReference: $paymentId' : ''}'
-              : '${company.name} is now registered. ${order.amountLabel} paid.\n'
-              'Reference: $paymentId',
+              ? tr('{0} is registered.{1}', [company.name, paymentId.isNotEmpty ? '\nReference: $paymentId' : ''])
+              : tr('{0} is now registered. {1} paid.\nReference: {2}', [company.name, order.amountLabel, paymentId]),
           textAlign: TextAlign.center,
           style: DT.text(size: 13, color: DT.onyx600, height: 1.5),
         ),
@@ -289,7 +287,7 @@ class CompanyPaymentHelper {
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
               ),
-              child: Text('Done',
+              child: Text(tr('Done'),
                   style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
             ),
           ),
@@ -308,17 +306,16 @@ class CompanyPaymentHelper {
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rLg)),
-        title: Text('Payment not confirmed yet',
+        title: Text(tr('Payment not confirmed yet'),
             style: DT.text(size: 17, weight: FontWeight.w800)),
         content: Text(
-          '${message ?? 'We could not confirm your payment with the server.'}\n\n'
-              'If money was deducted, keep this reference and contact support:\n$paymentId',
+          tr('{0}\n\nIf money was deducted, keep this reference and contact support:\n{1}', [message ?? 'We could not confirm your payment with the server.', paymentId]),
           style: DT.text(size: 13, color: DT.onyx600, height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('OK', style: DT.text(size: 14, weight: FontWeight.w700, color: DT.blue800)),
+            child: Text(tr('OK'), style: DT.text(size: 14, weight: FontWeight.w700, color: DT.blue800)),
           ),
         ],
       ),
@@ -329,7 +326,7 @@ class CompanyPaymentHelper {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
-        content: Text(msg,
+        content: Text(tr(msg),
             style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
         backgroundColor: error ? DT.error : DT.onyx900,
         behavior: SnackBarBehavior.floating,
@@ -363,7 +360,7 @@ class _CheckoutResult {
     paymentId: r.paymentId,
     orderId: r.orderId,
     signature: r.signature,
-    errorMessage: r.paymentId == null ? 'No payment id returned' : null,
+    errorMessage: r.paymentId == null ? tr('No payment id returned') : null,
   );
 
   factory _CheckoutResult.failure(PaymentFailureResponse r) => _CheckoutResult._(
@@ -374,11 +371,11 @@ class _CheckoutResult {
   factory _CheckoutResult.wallet(String name) => _CheckoutResult._(walletName: name);
 
   static String _friendly(PaymentFailureResponse r) {
-    if (r.code == Razorpay.NETWORK_ERROR) return 'Network error during payment. Try again.';
+    if (r.code == Razorpay.NETWORK_ERROR) return tr('Network error during payment. Try again.');
     final m = r.message ?? '';
     // Razorpay sometimes sends a JSON string as message.
     final match = RegExp(r'"description"\s*:\s*"([^"]+)"').firstMatch(m);
     if (match != null) return match.group(1)!;
-    return m.isNotEmpty ? m : 'Payment failed';
+    return m.isNotEmpty ? m : tr('Payment failed');
   }
 }

@@ -4,6 +4,7 @@ import '../constants/app_constants.dart';
 import '../models/unit_model.dart';
 import '../services/unit_service.dart';
 import 'unit_create_edit_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -49,7 +50,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
       if (res.isSuccess) {
         _items = res.data;
       } else {
-        _error = res.message ?? 'Failed to load units';
+        _error = res.message ?? tr('Failed to load units');
       }
     });
   }
@@ -79,26 +80,26 @@ class _UnitListScreenState extends State<UnitListScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(
-          u.isActive ? 'Deactivate Unit?' : 'Reactivate Unit?',
+          u.isActive ? tr('Deactivate Unit?') : tr('Reactivate Unit?'),
           style: GoogleFonts.inter(fontWeight: FontWeight.w700),
         ),
         content: Text(
           u.isActive
-              ? 'This unit will be marked as inactive.'
-              : 'This unit will be activated again.',
+              ? tr('This unit will be marked as inactive.')
+              : tr('This unit will be activated again.'),
           style: GoogleFonts.inter(fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(tr('Cancel')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: _kBrand, // buttons: only #093C71
             ),
-            child: Text(u.isActive ? 'Deactivate' : 'Reactivate'),
+            child: Text(u.isActive ? tr('Deactivate') : tr('Reactivate')),
           ),
         ],
       ),
@@ -114,7 +115,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(res.displayMessage),
+        content: Text(tr(res.displayMessage)),
         backgroundColor:
         res.isSuccess ? const Color(0xFF10B981) : Color(0xFFC62828),
         behavior: SnackBarBehavior.floating,
@@ -134,7 +135,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          'Units',
+          tr('Units'),
           style: GoogleFonts.inter(
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -148,7 +149,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
         backgroundColor: _kBrand,
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text(
-          'Add Unit',
+          tr('Add Unit'),
           style: GoogleFonts.inter(
             fontSize: 13,
             fontWeight: FontWeight.w600,
@@ -220,7 +221,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        u.name,
+                        trData(u.name),
                         style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
@@ -229,7 +230,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
                       ),
                       if (u.shortName.isNotEmpty)
                         Text(
-                          'Short: ${u.shortName}',
+                          tr('Short: {0}', [u.shortName]),
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             color: AppConstants.textSecondary,
@@ -247,7 +248,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    u.isActive ? 'Active' : 'Inactive',
+                    u.isActive ? tr('Active') : tr('Inactive'),
                     style: GoogleFonts.inter(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
@@ -272,7 +273,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
                     onPressed: () => _openEdit(u),
                     icon: const Icon(Icons.edit_outlined, size: 16),
                     label: Text(
-                      'Edit',
+                      tr('Edit'),
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -299,7 +300,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
                       size: 16,
                     ),
                     label: Text(
-                      u.isActive ? 'Deactivate' : 'Reactivate',
+                      u.isActive ? tr('Deactivate') : tr('Reactivate'),
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -346,7 +347,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
             ),
             const SizedBox(height: 20),
             Text(
-              isErr ? 'Failed to Load' : 'No Units Yet',
+              isErr ? tr('Failed to Load') : tr('No Units Yet'),
               style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -355,7 +356,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              _error ?? 'Start by adding your first unit.',
+              _error ?? tr('Start by adding your first unit.'),
               style: GoogleFonts.inter(
                 fontSize: 14,
                 color: AppConstants.textSecondary,
@@ -376,7 +377,7 @@ class _UnitListScreenState extends State<UnitListScreen> {
               icon: Icon(isErr ? Icons.refresh : Icons.add,
                   color: Colors.white, size: 18),
               label: Text(
-                isErr ? 'Retry' : 'Add Unit',
+                isErr ? tr('Retry') : tr('Add Unit'),
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,

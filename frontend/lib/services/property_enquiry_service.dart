@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'api_urls.dart';
 import '../models/property_enquiry_model.dart';
 import '../utils/shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class PropertyEnquiryService {
   /// Submit property enquiry.
@@ -24,7 +25,7 @@ class PropertyEnquiryService {
     if (request.property <= 0) {
       return PropertyEnquiryResponse(
         success: false,
-        message: 'Property details are not loaded. Please go back and open the property again.',
+        message: tr('Property details are not loaded. Please go back and open the property again.'),
       );
     }
 
@@ -42,7 +43,7 @@ class PropertyEnquiryService {
     } on TimeoutException {
       return PropertyEnquiryResponse(
         success: false,
-        message: 'The server took too long to respond. Please try again.',
+        message: tr('The server took too long to respond. Please try again.'),
       );
     } catch (e) {
       debugPrint('[PropertyEnquiry] request failed: $e');
@@ -52,12 +53,12 @@ class PropertyEnquiryService {
       if (s.contains('SocketException') || s.contains('ClientException')) {
         return PropertyEnquiryResponse(
           success: false,
-          message: 'Could not reach the server. Check your internet / server and try again.',
+          message: tr('Could not reach the server. Check your internet / server and try again.'),
         );
       }
       return PropertyEnquiryResponse(
         success: false,
-        message: 'Could not send enquiry: ${s.replaceFirst('Exception: ', '')}',
+        message: tr('Could not send enquiry: {0}', [s.replaceFirst('Exception: ', '')]),
       );
     }
   }
@@ -94,10 +95,10 @@ class PropertyEnquiryService {
         success: ok,
         statusCode: res.statusCode,
         message: ok
-            ? 'Enquiry submitted successfully.'
+            ? tr('Enquiry submitted successfully.')
             : res.statusCode >= 500
-            ? 'Server error (${res.statusCode}). Please try again in a moment.'
-            : 'Could not send enquiry (HTTP ${res.statusCode}).',
+            ? tr('Server error ({0}). Please try again in a moment.', [res.statusCode])
+            : tr('Could not send enquiry (HTTP {0}).', [res.statusCode]),
       );
     }
 
@@ -107,7 +108,7 @@ class PropertyEnquiryService {
       return PropertyEnquiryResponse(
         success: true,
         statusCode: res.statusCode,
-        message: r.message ?? 'Enquiry submitted successfully.',
+        message: r.message ?? tr('Enquiry submitted successfully.'),
       );
     }
     return r;

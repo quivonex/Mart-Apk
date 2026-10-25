@@ -9,6 +9,7 @@ import '../models/catalog_models.dart';
 import '../services/catalog_service.dart';
 import '../widgets/catalog_widgets.dart';
 import '../widgets/company_ui.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -86,7 +87,7 @@ class _SubCategoryManageScreenState extends State<SubCategoryManageScreen> {
         // ✅ FIX: Wrapped in PreferredSize with height 65 to prevent 1px overflow
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(65),
-          child: CompanyTopBar(title: 'Subcategories', subtitle: widget.category.name),
+          child: CompanyTopBar(title: tr('Subcategories'), subtitle: tr(widget.category.name)),
         ),
         floatingActionButton: _items.isEmpty
             ? null
@@ -95,7 +96,7 @@ class _SubCategoryManageScreenState extends State<SubCategoryManageScreen> {
           backgroundColor: _kBrand,
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add_rounded),
-          label: Text('Add subcategory',
+          label: Text(tr('Add subcategory'),
               style: DT.text(size: 13.5, weight: FontWeight.w700, color: Colors.white)),
         ),
         body: CatalogManageList<CatalogSubCategory>(
@@ -103,9 +104,9 @@ class _SubCategoryManageScreenState extends State<SubCategoryManageScreen> {
           error: _error,
           items: _items,
           emptyIcon: Icons.account_tree_outlined,
-          emptyTitle: 'No subcategories yet',
+          emptyTitle: tr('No subcategories yet'),
           emptyMessage:
-          'Split ${widget.category.name} into smaller groups, e.g. Car Batteries, Inverter Batteries.',
+          tr('Split {0} into smaller groups, e.g. Car Batteries, Inverter Batteries.', [widget.category.name]),
           onRefresh: _load,
           onAdd: () => _openForm(),
           onEdit: _openForm,
@@ -172,25 +173,25 @@ class _SubCategoryFormScreenState extends State<SubCategoryFormScreen> {
   @override
   Widget build(BuildContext context) {
     return CatalogFormScaffold(
-      title: _isEdit ? 'Edit subcategory' : 'Add subcategory',
-      subtitle: 'In ${widget.category.name}',
+      title: _isEdit ? tr('Edit subcategory') : tr('Add subcategory'),
+      subtitle: tr('In {0}', [widget.category.name]),
       formKey: _formKey,
       saving: _saving,
-      saveLabel: _isEdit ? 'Save changes' : 'Add subcategory',
+      saveLabel: _isEdit ? tr('Save changes') : tr('Add subcategory'),
       onSave: _save,
       children: [
         CatalogTextField(
           controller: _name,
-          label: 'Subcategory name *',
-          hint: 'e.g. Inverter Batteries',
+          label: tr('Subcategory name *'),
+          hint: tr('e.g. Inverter Batteries'),
           icon: Icons.account_tree_outlined,
           capitalization: TextCapitalization.words,
-          validator: (v) => (v ?? '').trim().length < 2 ? 'Enter the subcategory name' : null,
+          validator: (v) => (v ?? '').trim().length < 2 ? tr('Enter the subcategory name') : null,
         ),
         const SizedBox(height: 12),
         CatalogTextField(
           controller: _desc,
-          label: 'Description',
+          label: tr('Description'),
           icon: Icons.notes_outlined,
           maxLines: 3,
           capitalization: TextCapitalization.sentences,

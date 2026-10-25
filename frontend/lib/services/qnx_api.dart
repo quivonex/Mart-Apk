@@ -17,6 +17,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import '../utils/shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 enum QnxAuth { required, optional, none }
 
@@ -72,7 +73,7 @@ class QnxResponse {
 
   String error(String fallback) {
     if (networkError != null) return networkError!;
-    if (code == 401) return 'Please login again.';
+    if (code == 401) return tr('Please login again.');
     final b = body;
     if (b is Map) {
       for (final k in const ['detail', 'message', 'error', 'errors']) {
@@ -91,7 +92,7 @@ class QnxResponse {
         if (v is List && v.isNotEmpty && v.first is String) return '${e.key}: ${v.first}';
       }
     }
-    if (code >= 500) return 'Server error ($code). Please try again.';
+    if (code >= 500) return tr('Server error ({0}). Please try again.', [code]);
     return fallback;
   }
 }
@@ -126,9 +127,9 @@ class QnxApi {
   static String _netText(Object e) {
     final s = '$e';
     if (e is TimeoutException || s.contains('TimeoutException')) {
-      return 'The server took too long to respond.';
+      return tr('The server took too long to respond.');
     }
-    return 'Could not reach the server. Check your internet.';
+    return tr('Could not reach the server. Check your internet.');
   }
 
   static Future<QnxResponse> post(
@@ -200,7 +201,7 @@ DateTime? qDate(dynamic v) {
 String qDateLabel(DateTime? d, {bool time = false}) {
   if (d == null) return '';
   const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  final base = '${d.day} ${m[d.month - 1]} ${d.year}';
+  final base = '${d.day} ${tr(m[d.month - 1])} ${d.year}';
   if (!time) return base;
   final h = d.hour % 12 == 0 ? 12 : d.hour % 12;
   final mm = d.minute.toString().padLeft(2, '0');

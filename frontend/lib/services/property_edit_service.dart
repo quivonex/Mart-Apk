@@ -16,6 +16,7 @@
 
 import 'api_urls.dart';
 import 'qnx_api.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class PropertyEditResult {
   final bool ok;
@@ -41,9 +42,9 @@ class PropertyEditService {
     final files = [for (final f in newImages) QnxFile('images', f.name, f.bytes)];
     final r = await QnxApi.multipart(ApiUrls.propertyUpdateUrl, body, files);
     if (!r.ok) {
-      return PropertyEditResult(false, r.error('Could not save your changes.'), needsLogin: r.authFailed);
+      return PropertyEditResult(false, r.error(tr('Could not save your changes.')), needsLogin: r.authFailed);
     }
     final msg = qStr(r.map['message']);
-    return PropertyEditResult(true, msg.isEmpty ? 'Property updated.' : msg);
+    return PropertyEditResult(true, msg.isEmpty ? tr('Property updated.') : msg);
   }
 }

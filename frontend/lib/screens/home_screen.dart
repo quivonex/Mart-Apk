@@ -42,6 +42,7 @@ import '../widgets/app_bar_widget.dart';
 import '../widgets/auto_image_carousel.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/home_drawer.dart';
+import '../widgets/language_button.dart';
 import '../widgets/property_filter_panel.dart';
 import 'account_screen.dart';
 import 'cart_screen.dart';
@@ -74,6 +75,7 @@ import 'my_properties_screen.dart';
 import 'my_remart_screen.dart';
 import 'nearby_search_screen.dart';
 import 'ai_chat_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -179,11 +181,11 @@ class _HomeScreenState extends State<HomeScreen> {
       final go = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Login required'),
-          content: const Text('Please log in to continue.'),
+          title: Text(tr('Login required')),
+          content: Text(tr('Please log in to continue.')),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Login')),
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('Cancel'))),
+            TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('Login'))),
           ],
         ),
       );
@@ -390,9 +392,9 @@ class _HomeScreenState extends State<HomeScreen> {
               errorBuilder: (_, __, ___) => Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('QNX', style: DT.text(size: 15, weight: FontWeight.w900, color: _HC.darkBlue, letterSpacing: -0.6)),
+                  Text(tr('QNX'), style: DT.text(size: 15, weight: FontWeight.w900, color: _HC.darkBlue, letterSpacing: -0.6)),
                   const SizedBox(width: 3),
-                  Text('MART', style: DT.text(size: 15, weight: FontWeight.w800, color: _HC.red, letterSpacing: -0.3)),
+                  Text(tr('MART'), style: DT.text(size: 15, weight: FontWeight.w800, color: _HC.red, letterSpacing: -0.3)),
                 ],
               ),
             ),
@@ -439,7 +441,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(color: Colors.white, width: 2),
                   ),
-                  child: Text(badge > 99 ? '99+' : '$badge',
+                  child: Text(tr(badge > 99 ? '99+' : '$badge'),
                       style: DT.text(size: 9, weight: FontWeight.w800, color: Colors.white)),
                 ),
               ),
@@ -451,7 +453,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _profileButton() {
     return PopupMenuButton<String>(
-      tooltip: 'Account',
+      tooltip: tr('Account'),
       offset: const Offset(0, 42),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       onSelected: (v) {
@@ -468,17 +470,17 @@ class _HomeScreenState extends State<HomeScreen> {
         if (_loggedIn)
           PopupMenuItem(
             enabled: false,
-            child: Text(_userName.isEmpty ? 'My account' : 'Hi, $_userName',
+            child: Text(_userName.isEmpty ? tr('My account') : tr('Hi, {0}', [_userName]),
                 style: DT.text(size: 13, weight: FontWeight.w800, color: DT.onyx900)),
           ),
-        _menu('account', Icons.person_outline_rounded, 'My account'),
-        _menu('orders', Icons.receipt_long_outlined, 'My orders'),
-        _menu('company_list', Icons.apartment_rounded, 'My companies'),
-        _menu('my_products', Icons.inventory_2_outlined, 'My products'),
+        _menu('account', Icons.person_outline_rounded, tr('My account')),
+        _menu('orders', Icons.receipt_long_outlined, tr('My orders')),
+        _menu('company_list', Icons.apartment_rounded, tr('My companies')),
+        _menu('my_products', Icons.inventory_2_outlined, tr('My products')),
         const PopupMenuDivider(),
         _loggedIn
-            ? _menu('logout', Icons.logout_rounded, 'Log out', color: _kRed)
-            : _menu('login', Icons.login_rounded, 'Login / Register', color: _HC.blue),
+            ? _menu('logout', Icons.logout_rounded, tr('Log out'), color: _kRed)
+            : _menu('login', Icons.login_rounded, tr('Login / Register'), color: _HC.blue),
       ],
       child: Container(
         height: 34,
@@ -511,7 +513,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Row(children: [
           Icon(icon, size: 19, color: color ?? DT.onyx700),
           const SizedBox(width: 10),
-          Text(label, style: DT.text(size: 13.5, weight: FontWeight.w600, color: color ?? DT.onyx900)),
+          Text(tr(label), style: DT.text(size: 13.5, weight: FontWeight.w600, color: color ?? DT.onyx900)),
         ]),
       );
 }
@@ -684,7 +686,7 @@ class HomeContentState extends State<HomeContent> {
       if (r.status) {
         _props = r.data;
       } else {
-        _propsError = r.message ?? 'Could not load properties';
+        _propsError = r.message ?? tr('Could not load properties');
       }
     });
   }
@@ -881,7 +883,7 @@ class HomeContentState extends State<HomeContent> {
 
   /// Chat button (bottom right) -> QNX AI Assistant. Needs login.
   Future<void> _openAssistant() async {
-    if (!await ensureLoggedIn(context, reason: 'chat with QNX Assistant')) return;
+    if (!await ensureLoggedIn(context, reason: tr('chat with QNX Assistant'))) return;
     if (!mounted) return;
     Navigator.push(context, MaterialPageRoute(builder: (_) => const AiChatScreen()));
   }
@@ -932,7 +934,7 @@ class HomeContentState extends State<HomeContent> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
-        content: Text(msg),
+        content: Text(tr(msg)),
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1070,7 +1072,7 @@ class HomeContentState extends State<HomeContent> {
             dense: true,
             activeColor: _HC.blue,
             contentPadding: EdgeInsets.zero,
-            title: Text(label, style: DT.text(size: 13.5, weight: FontWeight.w600)),
+            title: Text(tr(label), style: DT.text(size: 13.5, weight: FontWeight.w600)),
             onChanged: (v) => setSheet(() => sort = v!),
           );
           return SafeArea(
@@ -1091,7 +1093,7 @@ class HomeContentState extends State<HomeContent> {
                   const SizedBox(height: 14),
                   Row(
                     children: [
-                      Text('Filters', style: DT.text(size: 18, weight: FontWeight.w800)),
+                      Text(tr('Filters'), style: DT.text(size: 18, weight: FontWeight.w800)),
                       const Spacer(),
                       TextButton(
                         onPressed: () => setSheet(() {
@@ -1101,17 +1103,17 @@ class HomeContentState extends State<HomeContent> {
                           cat = null;
                           disc = null;
                         }),
-                        child: Text('Reset',
+                        child: Text(tr('Reset'),
                             style: DT.text(size: 13, weight: FontWeight.w700, color: _HC.blue)),
                       ),
                     ],
                   ),
                   const SizedBox(height: 6),
-                  Text('Sort by', style: DT.text(size: 12, weight: FontWeight.w700, color: DT.slate500)),
-                  sortTile(_Sort.newest, 'Newest first'),
-                  sortTile(_Sort.priceLow, 'Price: low to high'),
-                  sortTile(_Sort.priceHigh, 'Price: high to low'),
-                  sortTile(_Sort.nameAz, 'Name: A to Z'),
+                  Text(tr('Sort by'), style: DT.text(size: 12, weight: FontWeight.w700, color: DT.slate500)),
+                  sortTile(_Sort.newest, tr('Newest first')),
+                  sortTile(_Sort.priceLow, tr('Price: low to high')),
+                  sortTile(_Sort.priceHigh, tr('Price: high to low')),
+                  sortTile(_Sort.nameAz, tr('Name: A to Z')),
                   const Divider(),
                   SwitchListTile(
                     value: franchise,
@@ -1119,7 +1121,7 @@ class HomeContentState extends State<HomeContent> {
                     contentPadding: EdgeInsets.zero,
                     activeThumbColor: Colors.white,
                     activeTrackColor: _HC.blue,
-                    title: Text('Franchise available',
+                    title: Text(tr('Franchise available'),
                         style: DT.text(size: 13.5, weight: FontWeight.w600)),
                     onChanged: (v) => setSheet(() => franchise = v),
                   ),
@@ -1129,12 +1131,12 @@ class HomeContentState extends State<HomeContent> {
                     contentPadding: EdgeInsets.zero,
                     activeThumbColor: Colors.white,
                     activeTrackColor: _HC.blue,
-                    title: Text('In stock only', style: DT.text(size: 13.5, weight: FontWeight.w600)),
+                    title: Text(tr('In stock only'), style: DT.text(size: 13.5, weight: FontWeight.w600)),
                     onChanged: (v) => setSheet(() => inStock = v),
                   ),
                   if (_discountOptions.isNotEmpty) ...[
                     const Divider(),
-                    Text('Discount',
+                    Text(tr('Discount'),
                         style: DT.text(size: 12, weight: FontWeight.w700, color: DT.slate500)),
                     const SizedBox(height: 8),
                     Wrap(
@@ -1143,7 +1145,7 @@ class HomeContentState extends State<HomeContent> {
                       children: [
                         for (final o in <DiscountOption?>[null, ..._discountOptions])
                           ChoiceChip(
-                            label: Text(o == null ? 'Any' : '${o.label} (${o.count})'),
+                            label: Text(o == null ? tr('Any') : '${o.label} (${o.count})'),
                             selected: disc == o,
                             showCheckmark: false,
                             selectedColor: _HC.blue,
@@ -1160,7 +1162,7 @@ class HomeContentState extends State<HomeContent> {
                   ],
                   if (_categories.isNotEmpty) ...[
                     const Divider(),
-                    Text('Category',
+                    Text(tr('Category'),
                         style: DT.text(size: 12, weight: FontWeight.w700, color: DT.slate500)),
                     const SizedBox(height: 8),
                     Wrap(
@@ -1169,7 +1171,7 @@ class HomeContentState extends State<HomeContent> {
                       children: [
                         for (final c in [null, ..._categories.map((e) => e.name)])
                           ChoiceChip(
-                            label: Text(c ?? 'All'),
+                            label: Text(c ?? tr('All')),
                             selected: cat == c,
                             showCheckmark: false,
                             selectedColor: _HC.blue,
@@ -1202,7 +1204,7 @@ class HomeContentState extends State<HomeContent> {
                           elevation: 0,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         ),
-                        child: Text('Show products',
+                        child: Text(tr('Show products'),
                             style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
                       ),
                     ),
@@ -1323,14 +1325,16 @@ class HomeContentState extends State<HomeContent> {
               errorBuilder: (_, __, ___) => Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('QNX', style: DT.text(size: 15, weight: FontWeight.w900, color: _HC.darkBlue, letterSpacing: -0.6)),
+                  Text(tr('QNX'), style: DT.text(size: 15, weight: FontWeight.w900, color: _HC.darkBlue, letterSpacing: -0.6)),
                   const SizedBox(width: 3),
-                  Text('MART', style: DT.text(size: 15, weight: FontWeight.w800, color: _HC.red, letterSpacing: -0.3)),
+                  Text(tr('MART'), style: DT.text(size: 15, weight: FontWeight.w800, color: _HC.red, letterSpacing: -0.3)),
                 ],
               ),
             ),
           ),
           const Spacer(),
+          const LanguageButton(), // English / मराठी / हिंदी
+          const SizedBox(width: 8),
           _roundIcon(
             icon: Icons.shopping_cart_outlined,
             badge: widget.cartCount,
@@ -1372,7 +1376,7 @@ class HomeContentState extends State<HomeContent> {
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(color: Colors.white, width: 2),
                   ),
-                  child: Text(badge > 99 ? '99+' : '$badge',
+                  child: Text(tr(badge > 99 ? '99+' : '$badge'),
                       style: DT.text(size: 9, weight: FontWeight.w800, color: Colors.white)),
                 ),
               ),
@@ -1384,7 +1388,7 @@ class HomeContentState extends State<HomeContent> {
 
   Widget _profileButton() {
     return PopupMenuButton<String>(
-      tooltip: 'Account',
+      tooltip: tr('Account'),
       offset: const Offset(0, 42),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       onSelected: (v) {
@@ -1401,17 +1405,17 @@ class HomeContentState extends State<HomeContent> {
         if (widget.loggedIn)
           PopupMenuItem(
             enabled: false,
-            child: Text(widget.userName.isEmpty ? 'My account' : 'Hi, ${widget.userName}',
+            child: Text(widget.userName.isEmpty ? tr('My account') : tr('Hi, {0}', [widget.userName]),
                 style: DT.text(size: 13, weight: FontWeight.w800, color: DT.onyx900)),
           ),
-        _menu('account', Icons.person_outline_rounded, 'My account'),
-        _menu('orders', Icons.receipt_long_outlined, 'My orders'),
-        _menu('company_list', Icons.apartment_rounded, 'My companies'),
-        _menu('my_products', Icons.inventory_2_outlined, 'My products'),
+        _menu('account', Icons.person_outline_rounded, tr('My account')),
+        _menu('orders', Icons.receipt_long_outlined, tr('My orders')),
+        _menu('company_list', Icons.apartment_rounded, tr('My companies')),
+        _menu('my_products', Icons.inventory_2_outlined, tr('My products')),
         const PopupMenuDivider(),
         widget.loggedIn
-            ? _menu('logout', Icons.logout_rounded, 'Log out', color: _kRed)
-            : _menu('login', Icons.login_rounded, 'Login / Register', color: _HC.blue),
+            ? _menu('logout', Icons.logout_rounded, tr('Log out'), color: _kRed)
+            : _menu('login', Icons.login_rounded, tr('Login / Register'), color: _HC.blue),
       ],
       child: Container(
         height: 34,
@@ -1444,7 +1448,7 @@ class HomeContentState extends State<HomeContent> {
         child: Row(children: [
           Icon(icon, size: 19, color: color ?? DT.onyx700),
           const SizedBox(width: 10),
-          Text(label, style: DT.text(size: 13.5, weight: FontWeight.w600, color: color ?? DT.onyx900)),
+          Text(tr(label), style: DT.text(size: 13.5, weight: FontWeight.w600, color: color ?? DT.onyx900)),
         ]),
       );
 
@@ -1490,7 +1494,7 @@ class HomeContentState extends State<HomeContent> {
           boxShadow: sel ? const [BoxShadow(color: Color(0x33093C71), blurRadius: 6, offset: Offset(0, 2))] : null,
         ),
         // Active pill shows the full name, the others a short one (as in the design).
-        child: Text(sel ? m.title : m.shortTitle,
+        child: Text(tr(sel ? m.title : m.shortTitle),
             style: DT.text(
                 size: 12.5,
                 weight: FontWeight.w700,
@@ -1582,9 +1586,9 @@ class HomeContentState extends State<HomeContent> {
               style: DT.text(size: 13, weight: FontWeight.w500),
               decoration: InputDecoration(
                 hintText: switch (_marketplace) {
-                  Marketplace.shopping => 'Search products, services...',
-                  Marketplace.realEstate => 'Search city, area or property...',
-                  Marketplace.remart => 'Search used & resale items...',
+                  Marketplace.shopping => tr('Search products, services...'),
+                  Marketplace.realEstate => tr('Search city, area or property...'),
+                  Marketplace.remart => tr('Search used & resale items...'),
                 },
                 hintStyle: DT.text(size: 13, color: DT.slate400),
                 isDense: true,
@@ -1653,19 +1657,19 @@ class HomeContentState extends State<HomeContent> {
 
   List<Widget> _marketChips() => switch (_marketplace) {
     Marketplace.shopping => [
-      _chip(null, 'All Categories', Icons.grid_view_rounded),
+      _chip(null, tr('All Categories'), Icons.grid_view_rounded),
       for (final c in _categories) _chip(c.name, c.name, Icons.sell_outlined),
     ],
     Marketplace.realEstate => [
       _pillChip(
-        label: 'All Properties',
+        label: tr('All Properties'),
         icon: Icons.apartment_rounded,
         selected: _propType == null,
         onTap: () => setState(() => _propType = null),
       ),
       for (final t in _propertyTypes)
         _pillChip(
-          label: _typeLabel(t),
+          label: tr(_typeLabel(t)),
           icon: _typeIcon(t),
           selected: _propType == t,
           onTap: () => setState(() => _propType = t),
@@ -1673,14 +1677,14 @@ class HomeContentState extends State<HomeContent> {
     ],
     Marketplace.remart => [
       _pillChip(
-        label: 'All Remart Items',
+        label: tr('All Remart Items'),
         icon: Icons.recycling_rounded,
         selected: _remartCat == null,
         onTap: () => setState(() => _remartCat = null),
       ),
       for (final (id, name) in _remartCats)
         _pillChip(
-          label: name,
+          label: tr(name),
           icon: Icons.sell_rounded,
           selected: _remartCat == id,
           onTap: () => setState(() => _remartCat = id),
@@ -1714,7 +1718,7 @@ class HomeContentState extends State<HomeContent> {
             children: [
               Icon(icon, size: 15, color: selected ? Colors.white : _HC.blue),
               const SizedBox(width: 6),
-              Text(label,
+              Text(tr(label),
                   style: DT.text(size: 12.5, weight: FontWeight.w700, color: selected ? Colors.white : _HC.blue)),
             ],
           ),
@@ -1727,7 +1731,7 @@ class HomeContentState extends State<HomeContent> {
     final sel = (value == null && _category == null) ||
         (value != null && _category?.toLowerCase() == value.toLowerCase());
     return _pillChip(
-      label: label,
+      label: tr(label),
       icon: icon,
       selected: sel,
       onTap: () => selectCategory(value, scroll: true),
@@ -1849,7 +1853,7 @@ class HomeContentState extends State<HomeContent> {
         errorBuilder: (_, __, ___) => Container(
           color: const Color(0xFFE2E8F0),
           alignment: Alignment.center,
-          child: Text(b.title.isEmpty ? 'QNXMart' : b.title,
+          child: Text(b.title.isEmpty ? tr('QNXMart') : b.title,
               style: DT.text(size: 16, weight: FontWeight.w700, color: DT.slate500)),
         ),
       ),
@@ -1895,28 +1899,28 @@ class HomeContentState extends State<HomeContent> {
   List<Widget Function()> get _fallbackSlides => [
         () => _fallbackSlide(
       colors: const [Color(0xFFA43A08), Color(0xFFD8500C), Color(0xFFB23B05)],
-      kicker: 'NEW · Buy · Sell · Rent · Invest',
+      kicker: tr('NEW · Buy · Sell · Rent · Invest'),
       kickerColor: const Color(0xFFFED7AA),
-      title: 'Properties',
-      subtitle: 'Explore verified properties from trusted corporate partners.',
+      title: tr('Properties'),
+      subtitle: tr('Explore verified properties from trusted corporate partners.'),
       icon: Icons.apartment_rounded,
       onTap: () => setMarketplace(Marketplace.realEstate),
     ),
         () => _fallbackSlide(
       colors: const [Color(0xFF062A50), Color(0xFF093C71)],
-      kicker: 'QNXMART B2B · Small business. Stronger together.',
+      kicker: tr('QNXMART B2B · Small business. Stronger together.'),
       kickerColor: const Color(0xFFC9DBEE),
-      title: 'Fresh Look.\nBigger Possibilities.',
-      subtitle: 'Trusted marketplace for products, services and properties.',
+      title: tr('Fresh Look.\nBigger Possibilities.'),
+      subtitle: tr('Trusted marketplace for products, services and properties.'),
       icon: Icons.storefront_rounded,
       onTap: () => widget.onNavigate('products'),
     ),
         () => _fallbackSlide(
       colors: const [Color(0xFF093C71), Color(0xFF062A50)],
-      kicker: 'Easy bank loans',
+      kicker: tr('Easy bank loans'),
       kickerColor: const Color(0xFFFDE68A),
-      title: '9.99% p.a.',
-      subtitle: 'Minimum documentation · Quick approval · Flexible repayment.',
+      title: tr('9.99% p.a.'),
+      subtitle: tr('Minimum documentation · Quick approval · Flexible repayment.'),
       icon: Icons.account_balance_rounded,
       onTap: () => widget.onNavigate('loan_enquiry'),
     ),
@@ -1952,14 +1956,14 @@ class HomeContentState extends State<HomeContent> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(kicker.toUpperCase(),
+                    Text(tr(kicker.toUpperCase()),
                         style: DT.text(size: 10.5, weight: FontWeight.w800, color: kickerColor, letterSpacing: 1)),
                     const SizedBox(height: 6),
-                    Text(title,
+                    Text(tr(title),
                         style: DT.text(
                             size: 26, weight: FontWeight.w900, color: Colors.white, height: 1.1, letterSpacing: -0.5)),
                     const SizedBox(height: 8),
-                    Text(subtitle,
+                    Text(tr(subtitle),
                         style: DT.text(size: 12.5, color: Colors.white.withValues(alpha: 0.88), height: 1.5)),
                   ],
                 ),
@@ -2009,7 +2013,7 @@ class HomeContentState extends State<HomeContent> {
               fit: BoxFit.contain,
               errorBuilder: (_, __, ___) => Center(
                 child: Text(
-                  b.title,
+                  trData(b.title),
                   textAlign: TextAlign.center,
                   style: DT.text(size: 10, weight: FontWeight.w800, color: _HC.darkBlue),
                 ),
@@ -2024,7 +2028,7 @@ class HomeContentState extends State<HomeContent> {
               fit: BoxFit.contain,
               errorBuilder: (_, __, ___) => Center(
                 child: Text(
-                  name,
+                  tr(name),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   style: DT.text(size: 9.5, weight: FontWeight.w800, color: _HC.darkBlue, height: 1.15),
@@ -2075,7 +2079,7 @@ class HomeContentState extends State<HomeContent> {
                               ),
                             ),
                             Text(
-                              'Get Your Loan',
+                              tr('Get Your Loan'),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: DT.text(
@@ -2085,7 +2089,7 @@ class HomeContentState extends State<HomeContent> {
                               ),
                             ),
                             Text(
-                              'Fast approval',
+                              tr('Fast approval'),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: DT.text(size: 7.5, color: DT.slate500),
@@ -2122,12 +2126,12 @@ class HomeContentState extends State<HomeContent> {
     return Row(
       children: [
         Expanded(
-          child: _partnerCard(Icons.groups_rounded, 'Marketing Partner', 'Partner catalogs',
+          child: _partnerCard(Icons.groups_rounded, tr('Marketing Partner'), tr('Partner catalogs'),
                   () => widget.onNavigate('marketing_partner'), big: true),
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: _partnerCard(Icons.apartment_rounded, 'Info Company', 'Governance profile', _openInfoCompany, big: true),
+          child: _partnerCard(Icons.apartment_rounded, tr('Info Company'), tr('Governance profile'), _openInfoCompany, big: true),
         ),
       ],
     );
@@ -2158,12 +2162,12 @@ class HomeContentState extends State<HomeContent> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title,
+                    Text(tr(title),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: big ? 12 : 13, weight: FontWeight.w800, color: Colors.white)),
                     const SizedBox(height: 1),
-                    Text(subtitle,
+                    Text(tr(subtitle),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(
@@ -2212,10 +2216,10 @@ class HomeContentState extends State<HomeContent> {
                   child: Icon(icon, color: _HC.blue),
                 ),
                 const SizedBox(width: 12),
-                Expanded(child: Text(title, style: DT.text(size: 18, weight: FontWeight.w800))),
+                Expanded(child: Text(tr(title), style: DT.text(size: 18, weight: FontWeight.w800))),
               ]),
               const SizedBox(height: 12),
-              Text(body, style: DT.text(size: 13.5, color: DT.onyx600, height: 1.55)),
+              Text(tr(body), style: DT.text(size: 13.5, color: DT.onyx600, height: 1.55)),
               const SizedBox(height: 16),
               for (final (label, ic, onTap) in actions) ...[
                 OutlinedButton.icon(
@@ -2224,7 +2228,7 @@ class HomeContentState extends State<HomeContent> {
                     onTap();
                   },
                   icon: Icon(ic, size: 18),
-                  label: Text(label, style: DT.text(size: 13.5, weight: FontWeight.w700, color: _HC.navy)),
+                  label: Text(tr(label), style: DT.text(size: 13.5, weight: FontWeight.w700, color: _HC.navy)),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: _HC.navy,
                     minimumSize: const Size.fromHeight(46),
@@ -2243,16 +2247,14 @@ class HomeContentState extends State<HomeContent> {
 
   void _openInfoCompany() => _infoSheet(
     icon: Icons.business_rounded,
-    title: 'Info Company',
-    body: 'QNXMart B2B connects verified companies, buyers and partners. Sellers are '
-        'registered companies, products are approved by our team before they go live, '
-        'and payments are processed securely.',
+    title: tr('Info Company'),
+    body: tr('QNXMart B2B connects verified companies, buyers and partners. Sellers are registered companies, products are approved by our team before they go live, and payments are processed securely.'),
     actions: [
-      ('Terms & Conditions', Icons.description_outlined, () {
+      (tr('Terms & Conditions'), Icons.description_outlined, () {
         Navigator.push(
             context, MaterialPageRoute(builder: (_) => const TermsConditionsScreen()));
       }),
-      ('Register your company', Icons.apartment_rounded,
+      (tr('Register your company'), Icons.apartment_rounded,
           () => widget.onNavigate('company_list')),
     ],
   );
@@ -2261,7 +2263,7 @@ class HomeContentState extends State<HomeContent> {
   Widget _productsSection() {
     final list = _filtered;
     final shown = list.take(_visibleCount).toList();
-    final title = _query.isNotEmpty ? 'Results for "$_query"' : (_category ?? 'Latest products');
+    final title = _query.isNotEmpty ? tr('Results for "{0}"', [_query]) : (_category ?? tr('Latest products'));
 
     return Column(
       key: _productsKey,
@@ -2274,14 +2276,14 @@ class HomeContentState extends State<HomeContent> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
+                  Text(tr(title),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(size: 15, weight: FontWeight.w900, color: DT.onyx900, letterSpacing: -0.2)),
                   if (!_productsLoading)
                     Text(
                         _searchBusy && _query.isNotEmpty
-                            ? 'Searching…'
+                            ? tr('Searching…')
                             : '${list.length} product${list.length == 1 ? '' : 's'}',
                         style: DT.text(size: 11.5, color: DT.slate500)),
                 ],
@@ -2291,7 +2293,7 @@ class HomeContentState extends State<HomeContent> {
               onTap: _hasFilters ? _clearFilters : () => widget.onNavigate('products'),
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 2),
-                child: Text(_hasFilters ? 'CLEAR' : 'VIEW ALL',
+                child: Text(_hasFilters ? tr('CLEAR') : tr('VIEW ALL'),
                     style: DT.text(size: 12.5, weight: FontWeight.w800, color: _HC.blue, letterSpacing: 1)),
               ),
             ),
@@ -2310,11 +2312,11 @@ class HomeContentState extends State<HomeContent> {
         if (_productsLoading)
           _productGrid(itemCount: 4, builder: (_) => _skeletonCard())
         else if (_productsError != null && _products.isEmpty)
-          _messageCard(Icons.cloud_off_rounded, 'Could not load products', _productsError!,
-              action: 'Retry', onAction: _loadProducts)
+          _messageCard(Icons.cloud_off_rounded, tr('Could not load products'), _productsError!,
+              action: tr('Retry'), onAction: _loadProducts)
         else if (list.isEmpty)
-            _messageCard(Icons.search_off_rounded, 'No products found', 'Try another category or clear the filters.',
-                action: _hasFilters ? 'Clear filters' : null, onAction: _clearFilters)
+            _messageCard(Icons.search_off_rounded, tr('No products found'), tr('Try another category or clear the filters.'),
+                action: _hasFilters ? tr('Clear filters') : null, onAction: _clearFilters)
           else ...[
               _productGrid(itemCount: shown.length, builder: (i) => _productCard(shown[i])),
               if (list.length > shown.length) ...[
@@ -2328,7 +2330,7 @@ class HomeContentState extends State<HomeContent> {
                       onTap: () => setState(() => _visibleCount += 10),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
-                        child: Text('Load more (${list.length - shown.length} left)',
+                        child: Text(tr('Load more ({0} left)', [list.length - shown.length]),
                             style: DT.text(size: 12.5, weight: FontWeight.w700, color: _HC.blue)),
                       ),
                     ),
@@ -2373,7 +2375,7 @@ class HomeContentState extends State<HomeContent> {
     final sub = [
       if (p.brandName.isNotEmpty) p.brandName,
       if (stock != null)
-        stock <= 0 ? 'Out of stock' : '$stock${p.unitName.isEmpty ? '' : ' ${p.unitName.toUpperCase()}'}'
+        stock <= 0 ? tr('Out of stock') : '$stock${p.unitName.isEmpty ? '' : ' ${p.unitName.toUpperCase()}'}'
       else if (p.categoryName.isNotEmpty)
         p.categoryName,
     ].join(' · ');
@@ -2383,7 +2385,7 @@ class HomeContentState extends State<HomeContent> {
       alignment: Alignment.center,
       padding: const EdgeInsets.all(8),
       child: Text(
-        p.brandName.isNotEmpty ? p.brandName : p.name,
+        tr(p.brandName.isNotEmpty ? p.brandName : p.name),
         textAlign: TextAlign.center,
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
@@ -2438,7 +2440,7 @@ class HomeContentState extends State<HomeContent> {
                                 children: [
                                   const Text('🏪', style: TextStyle(fontSize: 9)),
                                   const SizedBox(width: 4),
-                                  Text('Franchise',
+                                  Text(tr('Franchise'),
                                       style: DT.text(size: 9.5, weight: FontWeight.w800, color: Colors.white)),
                                 ],
                               ),
@@ -2450,12 +2452,12 @@ class HomeContentState extends State<HomeContent> {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(p.name,
+              Text(trData(p.name),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: DT.text(size: 12.5, weight: FontWeight.w800, color: DT.onyx800)),
               const SizedBox(height: 1),
-              Text(sub.isEmpty ? ' ' : sub,
+              Text(tr(sub.isEmpty ? ' ' : sub),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: DT.text(
@@ -2498,7 +2500,7 @@ class HomeContentState extends State<HomeContent> {
                         ),
                       ),
                       child: Text(
-                        'Enquiry',
+                        tr('Enquiry'),
                         style: DT.text(
                           size: 10,
                           weight: FontWeight.w700,
@@ -2523,7 +2525,7 @@ class HomeContentState extends State<HomeContent> {
                         ),
                       ),
                       child: Text(
-                        'Cart',
+                        tr('Cart'),
                         style: DT.text(
                           size: 10,
                           weight: FontWeight.w700,
@@ -2603,7 +2605,7 @@ class HomeContentState extends State<HomeContent> {
                 children: [
                   Expanded(
                     child: Text(
-                      [p.categoryName, p.brandName].where((s) => s.isNotEmpty).join(' · ').toUpperCase(),
+                      tr([p.categoryName, p.brandName].where((s) => s.isNotEmpty).join(' · ').toUpperCase()),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(size: 10.5, weight: FontWeight.w800, color: DT.slate500, letterSpacing: 0.6),
@@ -2613,13 +2615,13 @@ class HomeContentState extends State<HomeContent> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(color: _HC.pillBg, borderRadius: BorderRadius.circular(999)),
-                      child: Text('🏪 Franchise',
+                      child: Text(tr('🏪 Franchise'),
                           style: DT.text(size: 10.5, weight: FontWeight.w800, color: _HC.blue)),
                     ),
                 ],
               ),
               const SizedBox(height: 4),
-              Text(p.name, style: DT.text(size: 18, weight: FontWeight.w800, color: DT.onyx900, height: 1.25)),
+              Text(trData(p.name), style: DT.text(size: 18, weight: FontWeight.w800, color: DT.onyx900, height: 1.25)),
               const SizedBox(height: 8),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -2638,7 +2640,7 @@ class HomeContentState extends State<HomeContent> {
                       margin: const EdgeInsets.only(bottom: 3),
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(color: DT.emerald50, borderRadius: BorderRadius.circular(4)),
-                      child: Text('$off% off',
+                      child: Text(tr('{0}% off', [off]),
                           style: DT.text(size: 11, weight: FontWeight.w800, color: DT.emerald700)),
                     ),
                   ],
@@ -2648,8 +2650,8 @@ class HomeContentState extends State<HomeContent> {
                 const SizedBox(height: 6),
                 Text(
                   stock <= 0
-                      ? 'Out of stock'
-                      : 'In stock: $stock${p.unitName.isEmpty ? '' : ' ${p.unitName.toUpperCase()}'}',
+                      ? tr('Out of stock')
+                      : tr('In stock: {0}{1}', [stock, p.unitName.isEmpty ? '' : ' ${p.unitName.toUpperCase()}']),
                   style: DT.text(
                       size: 12.5, weight: FontWeight.w700, color: stock <= 0 ? _kRed : _HC.green),
                 ),
@@ -2660,7 +2662,7 @@ class HomeContentState extends State<HomeContent> {
                   const Icon(Icons.storefront_outlined, size: 15, color: DT.slate400),
                   const SizedBox(width: 5),
                   Expanded(
-                    child: Text('Sold by ${p.companyName}',
+                    child: Text(tr('Sold by {0}', [p.companyName]),
                         maxLines: 1, overflow: TextOverflow.ellipsis, style: DT.text(size: 12.5, color: DT.onyx600)),
                   ),
                 ]),
@@ -2696,7 +2698,7 @@ class HomeContentState extends State<HomeContent> {
             children: [
               Icon(icon, size: compact ? 13 : 15, color: primary ? Colors.white : DT.onyx900),
               SizedBox(width: compact ? 3 : 5),
-              Text(label,
+              Text(tr(label),
                   style: DT.text(
                       size: compact ? 11 : 12.5, weight: FontWeight.w800, color: primary ? Colors.white : DT.onyx900)),
             ],
@@ -2722,9 +2724,9 @@ class HomeContentState extends State<HomeContent> {
         children: [
           Icon(icon, size: 36, color: DT.slate400),
           const SizedBox(height: 8),
-          Text(title, style: DT.text(size: 15, weight: FontWeight.w700)),
+          Text(tr(title), style: DT.text(size: 15, weight: FontWeight.w700)),
           const SizedBox(height: 4),
-          Text(body, textAlign: TextAlign.center, style: DT.text(size: 12.5, color: DT.slate500)),
+          Text(tr(body), textAlign: TextAlign.center, style: DT.text(size: 12.5, color: DT.slate500)),
           if (action != null && onAction != null) ...[
             const SizedBox(height: 12),
             OutlinedButton(
@@ -2734,7 +2736,7 @@ class HomeContentState extends State<HomeContent> {
                 side: const BorderSide(color: _HC.pillBorder),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
               ),
-              child: Text(action, style: DT.text(size: 13, weight: FontWeight.w700, color: _HC.blue)),
+              child: Text(tr(action), style: DT.text(size: 13, weight: FontWeight.w700, color: _HC.blue)),
             ),
           ],
         ],
@@ -2748,7 +2750,7 @@ class HomeContentState extends State<HomeContent> {
     final uri = Uri.tryParse(r.link);
     if (uri == null) return;
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!ok && mounted) _snack('Could not open Instagram.');
+    if (!ok && mounted) _snack(tr('Could not open Instagram.'));
   }
 
   Widget _instagramSection() {
@@ -2779,9 +2781,9 @@ class HomeContentState extends State<HomeContent> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Instagram Reels',
+                    Text(tr('Instagram Reels'),
                         style: DT.text(size: 13, weight: FontWeight.w900, color: DT.onyx900)),
-                    Text('Watch our latest reels on Instagram',
+                    Text(tr('Watch our latest reels on Instagram'),
                         style: DT.text(size: 10.5, color: DT.slate500)),
                   ],
                 ),
@@ -2845,7 +2847,7 @@ class HomeContentState extends State<HomeContent> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    r.title.isNotEmpty ? r.title : r.shortLabel,
+                                    tr(r.title.isNotEmpty ? r.title : r.shortLabel),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                     style: DT.text(
@@ -2856,7 +2858,7 @@ class HomeContentState extends State<HomeContent> {
                                     children: [
                                       const Icon(Icons.open_in_new_rounded, size: 11, color: Color(0xFFC9DBEE)),
                                       const SizedBox(width: 3),
-                                      Text('Instagram',
+                                      Text(tr('Instagram'),
                                           style: DT.text(size: 9.5, weight: FontWeight.w600, color: const Color(0xFFC9DBEE))),
                                     ],
                                   ),
@@ -2900,15 +2902,15 @@ class HomeContentState extends State<HomeContent> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Live Reels & Demos',
+                    Text(tr('Live Reels & Demos'),
                         style: DT.text(size: 13, weight: FontWeight.w900, color: DT.onyx900)),
-                    Text('Tap to shop while watching', style: DT.text(size: 10.5, color: DT.slate500)),
+                    Text(tr('Tap to shop while watching'), style: DT.text(size: 10.5, color: DT.slate500)),
                   ],
                 ),
               ),
               GestureDetector(
                 onTap: () => openFull(0),
-                child: Text('VIEW ALL',
+                child: Text(tr('VIEW ALL'),
                     style: DT.text(size: 12.5, weight: FontWeight.w800, color: _HC.blue, letterSpacing: 1)),
               ),
             ],
@@ -2977,7 +2979,7 @@ class HomeContentState extends State<HomeContent> {
                                       decoration: const BoxDecoration(color: Color(0xFFC62828), shape: BoxShape.circle),
                                     ),
                                     const SizedBox(width: 6),
-                                    Text('PRODUCT VIDEO',
+                                    Text(tr('PRODUCT VIDEO'),
                                         style: DT.text(
                                             size: 10,
                                             weight: FontWeight.w800,
@@ -3016,7 +3018,7 @@ class HomeContentState extends State<HomeContent> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 if (kicker.isNotEmpty)
-                                  Text(kicker,
+                                  Text(tr(kicker),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: DT.text(
@@ -3024,7 +3026,7 @@ class HomeContentState extends State<HomeContent> {
                                           weight: FontWeight.w700,
                                           color: const Color(0xFFFCD34D),
                                           letterSpacing: 0.8)),
-                                Text(r.product.name,
+                                Text(trData(r.product.name),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: DT.text(size: 14.5, weight: FontWeight.w800, color: Colors.white)),
@@ -3060,14 +3062,14 @@ class HomeContentState extends State<HomeContent> {
   }
 
   String _typeLabel(String t) => switch (t) {
-    'flat' => 'Flat / Apartment',
-    'villa' => 'Villa / Bungalow',
-    'plot' => 'Plot / Land',
-    'commercial' => 'Commercial Space',
-    'shop' => 'Shop / Retail',
-    'office' => 'Office Space',
-    'warehouse' => 'Warehouse',
-    'other' => 'Other',
+    'flat' => tr('Flat / Apartment'),
+    'villa' => tr('Villa / Bungalow'),
+    'plot' => tr('Plot / Land'),
+    'commercial' => tr('Commercial Space'),
+    'shop' => tr('Shop / Retail'),
+    'office' => tr('Office Space'),
+    'warehouse' => tr('Warehouse'),
+    'other' => tr('Other'),
     _ => t.isEmpty ? t : t[0].toUpperCase() + t.substring(1),
   };
 
@@ -3126,14 +3128,14 @@ class HomeContentState extends State<HomeContent> {
     if (_propsLoading && _props.isEmpty) {
       body = _cardGrid(itemCount: 4, extent: 330, builder: (_) => _skeletonCard());
     } else if (_propsError != null && _props.isEmpty) {
-      body = _messageCard(Icons.cloud_off_rounded, 'Could not load properties', _propsError!,
-          action: 'Retry', onAction: _loadProperties);
+      body = _messageCard(Icons.cloud_off_rounded, tr('Could not load properties'), _propsError!,
+          action: tr('Retry'), onAction: _loadProperties);
     } else if (list.isEmpty) {
       body = _messageCard(
         Icons.search_off_rounded,
-        _props.isEmpty ? 'No properties yet' : 'No properties match',
-        _props.isEmpty ? 'Approved properties will appear here.' : 'Try changing the filters or search.',
-        action: (filtersOn > 0 || _query.isNotEmpty) ? 'Clear all filters' : null,
+        _props.isEmpty ? tr('No properties yet') : tr('No properties match'),
+        _props.isEmpty ? tr('Approved properties will appear here.') : tr('Try changing the filters or search.'),
+        action: (filtersOn > 0 || _query.isNotEmpty) ? tr('Clear all filters') : null,
         onAction: _clearPropertyFilters,
       );
     } else {
@@ -3145,10 +3147,10 @@ class HomeContentState extends State<HomeContent> {
       children: [
         _darkBand(
           icon: Icons.apartment_rounded,
-          title: 'Properties',
+          title: tr('Properties'),
           subtitle: _propsLoading && _props.isEmpty
-              ? 'Loading…'
-              : '${list.length} propert${list.length == 1 ? 'y' : 'ies'} found',
+              ? tr('Loading…')
+              : tr('{0} propert{1} found', [list.length, list.length == 1 ? 'y' : 'ies']),
           activeFilters: filtersOn,
           onFilters: _openPropertyFilters,
         ),
@@ -3180,13 +3182,13 @@ class HomeContentState extends State<HomeContent> {
                   Icon(icon, color: Colors.white, size: 28),
                   const SizedBox(width: 8),
                   Flexible(
-                    child: Text(title,
+                    child: Text(tr(title),
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: 24, weight: FontWeight.w800, color: Colors.white)),
                   ),
                 ]),
                 const SizedBox(height: 2),
-                Text(subtitle, style: DT.text(size: 14, color: Colors.white70)),
+                Text(tr(subtitle), style: DT.text(size: 14, color: Colors.white70)),
               ],
             ),
           ),
@@ -3206,7 +3208,7 @@ class HomeContentState extends State<HomeContent> {
                   children: [
                     const Icon(Icons.filter_alt_rounded, color: Colors.white, size: 18),
                     const SizedBox(width: 6),
-                    Text('Filters', style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
+                    Text(tr('Filters'), style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
                     if (activeFilters > 0) ...[
                       const SizedBox(width: 6),
                       Container(
@@ -3288,7 +3290,7 @@ class HomeContentState extends State<HomeContent> {
           borderRadius: BorderRadius.circular(999),
           border: Border.all(color: border),
         ),
-        child: Text(text,
+        child: Text(tr(text),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: DT.text(size: 10.5, weight: FontWeight.w700, color: fg)),
@@ -3299,7 +3301,7 @@ class HomeContentState extends State<HomeContent> {
       Icon(Icons.location_on_rounded, size: compact ? 12 : 15, color: const Color(0xFF0EA5E9)),
       SizedBox(width: compact ? 2 : 4),
       Expanded(
-        child: Text(text,
+        child: Text(tr(text),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: DT.text(size: compact ? 10.5 : 13, weight: FontWeight.w700, color: DT.onyx900)),
@@ -3311,12 +3313,12 @@ class HomeContentState extends State<HomeContent> {
     children: [
       Expanded(
           child: _cardButton(
-              icon: Icons.visibility_outlined, label: 'Details', compact: compact, onTap: onDetails)),
+              icon: Icons.visibility_outlined, label: tr('Details'), compact: compact, onTap: onDetails)),
       SizedBox(width: compact ? 4 : 6),
       Expanded(
         child: _cardButton(
             icon: Icons.chat_bubble_outline_rounded,
-            label: 'Enquiry',
+            label: tr('Enquiry'),
             primary: true,
             compact: compact,
             onTap: onEnquiry),
@@ -3340,7 +3342,7 @@ class HomeContentState extends State<HomeContent> {
           Row(
             children: [
               Expanded(
-                child: Text(p.typeLabel.toUpperCase(),
+                child: Text(tr(p.typeLabel.toUpperCase()),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: DT.text(size: 8.5, weight: FontWeight.w800, color: DT.onyx800, letterSpacing: 0.3)),
@@ -3349,7 +3351,7 @@ class HomeContentState extends State<HomeContent> {
             ],
           ),
           const SizedBox(height: 3),
-          Text(p.displayTitle,
+          Text(tr(p.displayTitle),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: DT.text(size: 12.5, weight: FontWeight.w800, color: DT.onyx900, height: 1.25)),
@@ -3362,7 +3364,7 @@ class HomeContentState extends State<HomeContent> {
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
-            child: Text(p.formattedMinPrice,
+            child: Text(tr(p.formattedMinPrice),
                 style: DT.text(size: 14.5, weight: FontWeight.w900, color: DT.onyx900)),
           ),
           const SizedBox(height: 6),
@@ -3383,7 +3385,7 @@ class HomeContentState extends State<HomeContent> {
       borderRadius: BorderRadius.circular(999),
       border: Border.all(color: DT.slate300),
     ),
-    child: Text(text,
+    child: Text(tr(text),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: DT.text(size: 9, weight: FontWeight.w700, color: DT.onyx700)),
@@ -3403,7 +3405,7 @@ class HomeContentState extends State<HomeContent> {
 
   Future<void> _openPropertyEnquiry(Property p) async {
     if (p.slug.isEmpty) return;
-    if (!await ensureLoggedIn(context, reason: 'send an enquiry')) return;
+    if (!await ensureLoggedIn(context, reason: tr('send an enquiry'))) return;
     if (!mounted) return;
     showDialog(
       context: context,
@@ -3416,7 +3418,7 @@ class HomeContentState extends State<HomeContent> {
     if (r.isSuccess && r.data != null) {
       Navigator.push(context, MaterialPageRoute(builder: (_) => PropertyEnquiryScreen(property: r.data!)));
     } else {
-      _snack(r.message ?? 'Could not open the enquiry form');
+      _snack(r.message ?? tr('Could not open the enquiry form'));
     }
   }
 
@@ -3456,14 +3458,14 @@ class HomeContentState extends State<HomeContent> {
     if (_remartLoading && _remart.isEmpty) {
       body = _cardGrid(itemCount: 4, extent: 400, builder: (_) => _skeletonCard());
     } else if (_remartError != null && _remart.isEmpty) {
-      body = _messageCard(Icons.cloud_off_rounded, 'Could not load items', _remartError!,
-          action: 'Retry', onAction: _loadRemart);
+      body = _messageCard(Icons.cloud_off_rounded, tr('Could not load items'), _remartError!,
+          action: tr('Retry'), onAction: _loadRemart);
     } else if (list.isEmpty) {
       body = _messageCard(
         Icons.search_off_rounded,
-        _remart.isEmpty ? 'No items yet' : 'No items found',
-        _remart.isEmpty ? 'Used & resale listings will appear here.' : 'Try another category, search or filter.',
-        action: _remart.isEmpty ? 'Sell an item' : 'Clear filters',
+        _remart.isEmpty ? tr('No items yet') : tr('No items found'),
+        _remart.isEmpty ? tr('Used & resale listings will appear here.') : tr('Try another category, search or filter.'),
+        action: _remart.isEmpty ? tr('Sell an item') : tr('Clear filters'),
         onAction: _remart.isEmpty ? () => openRemartPosting(context) : _clearRemartFilters,
       );
     } else {
@@ -3475,10 +3477,10 @@ class HomeContentState extends State<HomeContent> {
       children: [
         _darkBand(
           icon: Icons.storefront_outlined,
-          title: 'Products',
+          title: tr('Products'),
           subtitle: _remartLoading && _remart.isEmpty
-              ? 'Loading…'
-              : '${list.length} product${list.length == 1 ? '' : 's'} found',
+              ? tr('Loading…')
+              : tr('{0} product{1} found', [list.length, list.length == 1 ? '' : 's']),
           activeFilters: [
             _rmSort != _Sort.newest,
             _rmCondition != null,
@@ -3527,13 +3529,13 @@ class HomeContentState extends State<HomeContent> {
           Row(
             children: [
               Expanded(
-                child: Text(l.categoryName.toUpperCase(),
+                child: Text(tr(l.categoryName.toUpperCase()),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: DT.text(size: 11, weight: FontWeight.w800, color: DT.onyx900)),
               ),
               if (_myUserId != null && l.userId == _myUserId) ...[
-                _outlineChip('Your listing', fg: _HC.blue, border: _HC.pillBorder, bg: _HC.pillBg),
+                _outlineChip(tr('Your listing'), fg: _HC.blue, border: _HC.pillBorder, bg: _HC.pillBg),
                 const SizedBox(width: 4),
               ],
               if (l.conditionLabel.isNotEmpty)
@@ -3542,12 +3544,12 @@ class HomeContentState extends State<HomeContent> {
             ],
           ),
           const SizedBox(height: 5),
-          Text(l.title,
+          Text(trData(l.title),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: DT.text(size: 15, weight: FontWeight.w800, color: DT.onyx900)),
           if (l.description.isNotEmpty)
-            Text(l.description,
+            Text(trData(l.description),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: DT.text(size: 12.5, color: DT.onyx600)),
@@ -3563,13 +3565,13 @@ class HomeContentState extends State<HomeContent> {
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
-                  child: Text(_rupeeSpaced(l.price),
+                  child: Text(tr(_rupeeSpaced(l.price)),
                       style: DT.text(size: 18, weight: FontWeight.w900, color: DT.onyx900)),
                 ),
               ),
               if (l.negotiable) ...[
                 const SizedBox(width: 6),
-                _outlineChip('Negotiable',
+                _outlineChip(tr('Negotiable'),
                     fg: const Color(0xFFB45309), border: const Color(0xFFFCD34D), bg: const Color(0xFFFFFBEB)),
               ],
             ],
@@ -3625,7 +3627,7 @@ class HomeContentState extends State<HomeContent> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheet) {
           Widget choice(String label, bool sel, VoidCallback onTap) => ChoiceChip(
-            label: Text(label),
+            label: Text(tr(label)),
             selected: sel,
             showCheckmark: false,
             selectedColor: _HC.blue,
@@ -3636,7 +3638,7 @@ class HomeContentState extends State<HomeContent> {
           );
           Widget title(String t) => Padding(
             padding: const EdgeInsets.only(top: 14, bottom: 8),
-            child: Text(t, style: DT.text(size: 12, weight: FontWeight.w700, color: DT.slate500)),
+            child: Text(tr(t), style: DT.text(size: 12, weight: FontWeight.w700, color: DT.slate500)),
           );
           return Padding(
             padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
@@ -3648,7 +3650,7 @@ class HomeContentState extends State<HomeContent> {
                   padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
                   children: [
                     Row(children: [
-                      Text('Filters', style: DT.text(size: 18, weight: FontWeight.w800)),
+                      Text(tr('Filters'), style: DT.text(size: 18, weight: FontWeight.w800)),
                       const Spacer(),
                       TextButton(
                         onPressed: () => setSheet(() {
@@ -3658,29 +3660,29 @@ class HomeContentState extends State<HomeContent> {
                           negotiable = false;
                           cityCtrl.clear();
                         }),
-                        child: Text('Reset', style: DT.text(size: 13, weight: FontWeight.w700, color: _HC.blue)),
+                        child: Text(tr('Reset'), style: DT.text(size: 13, weight: FontWeight.w700, color: _HC.blue)),
                       ),
                     ]),
-                    title('Sort by'),
+                    title(tr('Sort by')),
                     Wrap(spacing: 8, runSpacing: 8, children: [
-                      choice('Newest', sort == _Sort.newest, () => setSheet(() => sort = _Sort.newest)),
-                      choice('Price: low → high', sort == _Sort.priceLow, () => setSheet(() => sort = _Sort.priceLow)),
-                      choice('Price: high → low', sort == _Sort.priceHigh, () => setSheet(() => sort = _Sort.priceHigh)),
+                      choice(tr('Newest'), sort == _Sort.newest, () => setSheet(() => sort = _Sort.newest)),
+                      choice(tr('Price: low → high'), sort == _Sort.priceLow, () => setSheet(() => sort = _Sort.priceLow)),
+                      choice(tr('Price: high → low'), sort == _Sort.priceHigh, () => setSheet(() => sort = _Sort.priceHigh)),
                     ]),
-                    title('Condition'),
+                    title(tr('Condition')),
                     Wrap(spacing: 8, runSpacing: 8, children: [
                       for (final (v, label) in conditions)
                         choice(label, condition == v, () => setSheet(() => condition = v)),
                     ]),
-                    title('Seller'),
+                    title(tr('Seller')),
                     Wrap(spacing: 8, runSpacing: 8, children: [
                       for (final (v, label) in sellers) choice(label, seller == v, () => setSheet(() => seller = v)),
                     ]),
-                    title('City / area'),
+                    title(tr('City / area')),
                     TextField(
                       controller: cityCtrl,
                       decoration: InputDecoration(
-                        hintText: 'e.g. Satara',
+                        hintText: tr('e.g. Satara'),
                         prefixIcon: const Icon(Icons.location_on_outlined),
                         isDense: true,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -3692,7 +3694,7 @@ class HomeContentState extends State<HomeContent> {
                       contentPadding: EdgeInsets.zero,
                       activeThumbColor: Colors.white,
                       activeTrackColor: _HC.blue,
-                      title: Text('Negotiable price only', style: DT.text(size: 13.5, weight: FontWeight.w600)),
+                      title: Text(tr('Negotiable price only'), style: DT.text(size: 13.5, weight: FontWeight.w600)),
                       onChanged: (v) => setSheet(() => negotiable = v),
                     ),
                     const SizedBox(height: 10),
@@ -3713,7 +3715,7 @@ class HomeContentState extends State<HomeContent> {
                             elevation: 0,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           ),
-                          child: Text('Show items',
+                          child: Text(tr('Show items'),
                               style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
                         ),
                       ),
@@ -3813,7 +3815,7 @@ class _ChatBotButtonState extends State<_ChatBotButton> with SingleTickerProvide
   Widget build(BuildContext context) {
     final scale = _pressed ? 0.92 : (_hover ? 1.14 : 1.0);
     return Tooltip(
-      message: 'Chat with QNX Assistant',
+      message: tr('Chat with QNX Assistant'),
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         onEnter: (_) => setState(() => _hover = true),
@@ -3828,7 +3830,7 @@ class _ChatBotButtonState extends State<_ChatBotButton> with SingleTickerProvide
           onTap: widget.onTap,
           child: Semantics(
             button: true,
-            label: 'Chat with QNX Assistant',
+            label: tr('Chat with QNX Assistant'),
             child: AnimatedScale(
               scale: scale,
               duration: const Duration(milliseconds: 180),

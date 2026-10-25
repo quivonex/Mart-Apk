@@ -21,6 +21,7 @@ import 'package:http/http.dart' as http;
 import '../models/communication_plan_models.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'api_urls.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class CommunicationPlanService {
   CommunicationPlanService._();
@@ -82,14 +83,14 @@ class CommunicationPlanService {
 
   static Future<CommResult<T>> _auth<T>(dynamic j) async {
     await SharedPreferencesHelper.clearAll();
-    return CommResult<T>.fail(_errorText(j, 'Session expired. Please login again.'), needsLogin: true);
+    return CommResult<T>.fail(_errorText(j, tr('Session expired. Please login again.')), needsLogin: true);
   }
 
   static Future<CommResult<T>> _guard<T>(Future<CommResult<T>> Function() run, String fallback) async {
     try {
       return await run();
     } on TimeoutException {
-      return CommResult<T>.fail('The server is taking too long. Please try again.');
+      return CommResult<T>.fail(tr('The server is taking too long. Please try again.'));
     } catch (_) {
       return CommResult<T>.fail(fallback);
     }
@@ -106,11 +107,11 @@ class CommunicationPlanService {
     final (code, j) = await _post(ApiUrls.commPlansUrl, {});
     if (code == 401 || code == 403) return _auth<List<CommPlan>>(j);
     if (!_okCode(code) || !_okBody(j)) {
-      return CommResult<List<CommPlan>>.fail(_errorText(j, 'Unable to load plans.'));
+      return CommResult<List<CommPlan>>.fail(_errorText(j, tr('Unable to load plans.')));
     }
     final list = [for (final m in _list(j)) CommPlan.fromJson(m)].where((p) => p.id > 0).toList();
     return CommResult.ok(list);
-  }, 'Unable to load plans.');
+  }, tr('Unable to load plans.'));
 
   // ---------------------------------------------------------------- my subscriptions
   static Future<CommResult<List<CommSubscription>>> mySubscriptions() => _guard(() async {
@@ -118,7 +119,7 @@ class CommunicationPlanService {
     if (code == 401 || code == 403) return _auth<List<CommSubscription>>(j);
     if (!_okCode(code) || !_okBody(j)) {
       return CommResult<List<CommSubscription>>.fail(
-          _errorText(j, 'Unable to load your subscriptions.'));
+          _errorText(j, tr('Unable to load your subscriptions.')));
     }
     final list = [for (final m in _list(j)) CommSubscription.fromJson(m)]
       ..sort((a, b) {
@@ -128,7 +129,7 @@ class CommunicationPlanService {
         return y.compareTo(x);
       });
     return CommResult.ok(list);
-  }, 'Unable to load your subscriptions.');
+  }, tr('Unable to load your subscriptions.'));
 
   // ---------------------------------------------------------------- usage (silent)
   static Future<CommUsage?> chatUsage() => _usage(ApiUrls.commChatUsageUrl);
@@ -149,7 +150,7 @@ class CommunicationPlanService {
     final (code, j) = await _post(ApiUrls.commCreateOrderUrl, {'plan_id': plan.id});
     if (code == 401 || code == 403) return _auth<CommOrder>(j);
     if (!_okCode(code) || !_okBody(j)) {
-      return CommResult<CommOrder>.fail(_errorText(j, 'Failed to create subscription order.'));
+      return CommResult<CommOrder>.fail(_errorText(j, tr('Failed to create subscription order.')));
     }
     final d = (j is Map && j['data'] is Map) ? Map<String, dynamic>.from(j['data']) : <String, dynamic>{};
     String pick(List<String> keys) {
@@ -163,7 +164,7 @@ class CommunicationPlanService {
     final orderId = pick(const ['razorpay_order_id', 'order_id']);
     final key = pick(const ['razorpay_key_id', 'razorpay_key', 'key_id', 'key']);
     if (orderId.isEmpty || key.isEmpty) {
-      return CommResult<CommOrder>.fail(_errorText(j, 'Failed to create subscription order.'));
+      return CommResult<CommOrder>.fail(_errorText(j, tr('Failed to create subscription order.')));
     }
     final paise = int.tryParse(pick(const ['amount_in_paise', 'amount_paise', 'amount'])) ??
         (plan.price * 100).round();
@@ -176,7 +177,7 @@ class CommunicationPlanService {
       currency: currency.isEmpty ? 'INR' : currency,
       planName: name.isEmpty ? plan.name : name,
     ));
-  }, 'Failed to create subscription order.');
+  }, tr('Failed to create subscription order.'));
 
   // ---------------------------------------------------------------- verify
   static Future<CommResult<String>> verify({
@@ -192,8 +193,8 @@ class CommunicationPlanService {
         });
         if (code == 401 || code == 403) return _auth<String>(j);
         if (!_okCode(code) || !_okBody(j)) {
-          return CommResult<String>.fail(_errorText(j, 'Payment verification failed.'));
+          return CommResult<String>.fail(_errorText(j, tr('Payment verification failed.')));
         }
-        return CommResult.ok(_errorText(j, 'Subscription activated successfully.'));
-      }, 'Payment verification failed.');
+        return CommResult.ok(_errorText(j, tr('Subscription activated successfully.')));
+      }, tr('Payment verification failed.'));
 }

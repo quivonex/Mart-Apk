@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../constants/design_tokens.dart';
 import '../models/marketing_partner_enquiry_model.dart';
 import '../services/partner_service.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -138,7 +139,7 @@ class _MarketingPartnerEnquiryScreenState
         _profileImageBytes = bytes;
       });
     } catch (e) {
-      _showSnack('Could not open ${source == ImageSource.camera ? 'camera' : 'gallery'}: $e',
+      _showSnack(tr('Could not open {0}: {1}', [source == ImageSource.camera ? 'camera' : 'gallery', e]),
           isError: true);
     }
   }
@@ -153,7 +154,7 @@ class _MarketingPartnerEnquiryScreenState
   void _applyReferral() {
     FocusScope.of(context).unfocus();
     if (_referredByCodeController.text.trim().isEmpty) {
-      _showSnack('Enter a referral code first', isError: true);
+      _showSnack(tr('Enter a referral code first'), isError: true);
       return;
     }
     setState(() => _referralApplied = true);
@@ -167,7 +168,7 @@ class _MarketingPartnerEnquiryScreenState
   Future<void> _submitForm() async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) {
-      _showSnack('Fill in the highlighted fields', isError: true);
+      _showSnack(tr('Fill in the highlighted fields'), isError: true);
       return;
     }
 
@@ -201,7 +202,7 @@ class _MarketingPartnerEnquiryScreenState
         _resetForm();
         await _showSuccessSheet(response.message.isNotEmpty
             ? response.message
-            : 'Application submitted');
+            : tr('Application submitted'));
       } else {
         _showSnack(response.allErrorMessages, isError: true);
       }
@@ -245,7 +246,7 @@ class _MarketingPartnerEnquiryScreenState
       ..showSnackBar(
         SnackBar(
           content: Text(
-            message,
+            tr(message),
             style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white),
           ),
           backgroundColor: isError ? _kRed : DT.onyx900,
@@ -283,13 +284,13 @@ class _MarketingPartnerEnquiryScreenState
               ),
               const SizedBox(height: 14),
               Text(
-                message,
+                tr(message),
                 textAlign: TextAlign.center,
                 style: DT.text(size: 16, weight: FontWeight.w700),
               ),
               const SizedBox(height: 6),
               Text(
-                'Our partner team will verify your details and contact you on your mobile number.',
+                tr('Our partner team will verify your details and contact you on your mobile number.'),
                 textAlign: TextAlign.center,
                 style: DT.text(
                     size: 12.5, color: DT.onyx600, height: 1.5),
@@ -318,7 +319,7 @@ class _MarketingPartnerEnquiryScreenState
                         borderRadius: BorderRadius.circular(DT.rMd),
                       ),
                     ),
-                    child: Text('Done',
+                    child: Text(tr('Done'),
                         style: DT.text(
                             size: 14,
                             weight: FontWeight.w700,
@@ -347,15 +348,15 @@ class _MarketingPartnerEnquiryScreenState
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('How partner onboarding works',
+              Text(tr('How partner onboarding works'),
                   style: DT.text(size: 16, weight: FontWeight.w700)),
               const SizedBox(height: 14),
-              _helpRow(Icons.edit_note_rounded, 'Details',
-                  'Fill in this form. Only name, mobile and pincode are required.'),
-              _helpRow(Icons.verified_user_outlined, 'Verification',
-                  'Our team checks your details and may call you.'),
-              _helpRow(Icons.task_alt_rounded, 'Approval',
-                  'Once approved, your partner account is activated.'),
+              _helpRow(Icons.edit_note_rounded, tr('Details'),
+                  tr('Fill in this form. Only name, mobile and pincode are required.')),
+              _helpRow(Icons.verified_user_outlined, tr('Verification'),
+                  tr('Our team checks your details and may call you.')),
+              _helpRow(Icons.task_alt_rounded, tr('Approval'),
+                  tr('Once approved, your partner account is activated.')),
             ],
           ),
         ),
@@ -383,9 +384,9 @@ class _MarketingPartnerEnquiryScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: DT.text(size: 13, weight: FontWeight.w700)),
+                Text(tr(title), style: DT.text(size: 13, weight: FontWeight.w700)),
                 const SizedBox(height: 2),
-                Text(body,
+                Text(tr(body),
                     style: DT.text(size: 12, color: DT.onyx600, height: 1.45)),
               ],
             ),
@@ -452,7 +453,7 @@ class _MarketingPartnerEnquiryScreenState
               child: Row(
                 children: [
                   IconButton(
-                    tooltip: 'Back',
+                    tooltip: tr('Back'),
                     onPressed: () => Navigator.maybePop(context),
                     icon: const Icon(Icons.arrow_back_rounded,
                         color: Colors.white),
@@ -463,7 +464,7 @@ class _MarketingPartnerEnquiryScreenState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Marketing Partner Enquiry',
+                          tr('Marketing Partner Enquiry'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(
@@ -474,7 +475,7 @@ class _MarketingPartnerEnquiryScreenState
                           ),
                         ),
                         Text(
-                          'QN Mart partner network',
+                          tr('QN Mart partner network'),
                           style: DT.text(
                               size: 11,
                               weight: FontWeight.w500,
@@ -484,7 +485,7 @@ class _MarketingPartnerEnquiryScreenState
                     ),
                   ),
                   IconButton(
-                    tooltip: 'How it works',
+                    tooltip: tr('How it works'),
                     onPressed: _showHelp,
                     icon: const Icon(Icons.help_outline_rounded,
                         color: const Color(0xFFC9DBEE), size: 22),
@@ -536,7 +537,7 @@ class _MarketingPartnerEnquiryScreenState
                         border: Border.all(color: _kLine),
                       ),
                       child: Text(
-                        'Partner program',
+                        tr('Partner program'),
                         style: DT.text(
                             size: 10,
                             weight: FontWeight.w700,
@@ -546,7 +547,7 @@ class _MarketingPartnerEnquiryScreenState
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        'B2B channel expansion',
+                        tr('B2B channel expansion'),
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(
                             size: 11.5,
@@ -558,7 +559,7 @@ class _MarketingPartnerEnquiryScreenState
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Earn commissions & grow with QN Mart',
+                  tr('Earn commissions & grow with QN Mart'),
                   style: DT.text(
                     size: 15,
                     weight: FontWeight.w700,
@@ -568,7 +569,7 @@ class _MarketingPartnerEnquiryScreenState
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Refer buyers and suppliers for industrial machinery, MRO and components, and earn on every deal.',
+                  tr('Refer buyers and suppliers for industrial machinery, MRO and components, and earn on every deal.'),
                   style: DT.text(
                     size: 12,
                     color: DT.onyx600,
@@ -613,7 +614,7 @@ class _MarketingPartnerEnquiryScreenState
             ),
             const SizedBox(width: 6),
             Text(
-              label,
+              tr(label),
               style: DT.text(
                 size: 11.5,
                 weight: active ? FontWeight.w700 : FontWeight.w500,
@@ -646,11 +647,11 @@ class _MarketingPartnerEnquiryScreenState
       ),
       child: Row(
         children: [
-          step(1, 'Details', true),
+          step(1, tr('Details'), true),
           line(_kLine),
-          step(2, 'Verification', false),
+          step(2, tr('Verification'), false),
           line(DT.slate200),
-          step(3, 'Approval', false),
+          step(3, tr('Approval'), false),
         ],
       ),
     );
@@ -662,11 +663,11 @@ class _MarketingPartnerEnquiryScreenState
       icon: Icons.person_outline_rounded,
       iconBg: _kTint,
       iconFg: _C.blue600,
-      title: 'Personal Information',
-      subtitle: 'Contact details for your partner agreement',
+      title: tr('Personal Information'),
+      subtitle: tr('Contact details for your partner agreement'),
       children: [
         _field(
-          label: 'Full Name',
+          label: tr('Full Name'),
           required: true,
           child: TextFormField(
             controller: _fullNameController,
@@ -674,14 +675,14 @@ class _MarketingPartnerEnquiryScreenState
             textInputAction: TextInputAction.next,
             style: _inputStyle,
             decoration: _inputDecoration(
-                hint: 'e.g. Rajesh Kumar', icon: Icons.person_outline_rounded),
+                hint: tr('e.g. Rajesh Kumar'), icon: Icons.person_outline_rounded),
             validator: (v) => (v == null || v.trim().isEmpty)
-                ? 'Full name is required'
+                ? tr('Full name is required')
                 : null,
           ),
         ),
         _field(
-          label: 'Email Address',
+          label: tr('Email Address'),
           child: TextFormField(
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
@@ -694,14 +695,14 @@ class _MarketingPartnerEnquiryScreenState
               final regex = RegExp(r'^[\w\-.+]+@([\w-]+\.)+[\w-]{2,}$');
               return regex.hasMatch(value.trim())
                   ? null
-                  : 'Enter a valid email';
+                  : tr('Enter a valid email');
             },
           ),
         ),
         _field(
-          label: 'Mobile Number',
+          label: tr('Mobile Number'),
           required: true,
-          helper: 'Used for verification calls and payout alerts',
+          helper: tr('Used for verification calls and payout alerts'),
           child: TextFormField(
             controller: _mobileController,
             keyboardType: TextInputType.phone,
@@ -725,7 +726,7 @@ class _MarketingPartnerEnquiryScreenState
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('IN',
+                    Text(tr('IN'),
                         style: DT.text(
                             size: 12,
                             weight: FontWeight.w700,
@@ -742,8 +743,8 @@ class _MarketingPartnerEnquiryScreenState
             ),
             validator: (value) {
               final v = value?.trim() ?? '';
-              if (v.isEmpty) return 'Mobile number is required';
-              if (v.length != 10) return 'Enter a 10-digit mobile number';
+              if (v.isEmpty) return tr('Mobile number is required');
+              if (v.length != 10) return tr('Enter a 10-digit mobile number');
               return null;
             },
           ),
@@ -758,14 +759,14 @@ class _MarketingPartnerEnquiryScreenState
       icon: Icons.location_on_outlined,
       iconBg: _kTint,
       iconFg: _C.blue600,
-      title: 'Address Details',
-      subtitle: 'Where you live and the market you cover',
+      title: tr('Address Details'),
+      subtitle: tr('Where you live and the market you cover'),
       children: [
         _field(
-          label: 'State',
+          label: tr('State'),
           child: _dropdown(
             value: _selectedState,
-            hint: 'Select your state',
+            hint: tr('Select your state'),
             icon: Icons.flag_outlined,
             items: _states,
             onChanged: (v) => setState(() => _selectedState = v),
@@ -773,42 +774,42 @@ class _MarketingPartnerEnquiryScreenState
         ),
         _twoColumns(
           _field(
-            label: 'District',
+            label: tr('District'),
             child: TextFormField(
               controller: _districtController,
               textCapitalization: TextCapitalization.words,
               textInputAction: TextInputAction.next,
               style: _inputStyle,
               decoration: _inputDecoration(
-                  hint: 'e.g. Pune', icon: Icons.location_city_rounded),
+                  hint: tr('e.g. Pune'), icon: Icons.location_city_rounded),
             ),
           ),
           _field(
-            label: 'Taluka',
+            label: tr('Taluka'),
             child: TextFormField(
               controller: _talukaController,
               textCapitalization: TextCapitalization.words,
               textInputAction: TextInputAction.next,
               style: _inputStyle,
               decoration: _inputDecoration(
-                  hint: 'e.g. Haveli', icon: Icons.map_outlined),
+                  hint: tr('e.g. Haveli'), icon: Icons.map_outlined),
             ),
           ),
         ),
         _twoColumns(
           _field(
-            label: 'Village / Town',
+            label: tr('Village / Town'),
             child: TextFormField(
               controller: _villageController,
               textCapitalization: TextCapitalization.words,
               textInputAction: TextInputAction.next,
               style: _inputStyle,
               decoration: _inputDecoration(
-                  hint: 'City or locality', icon: Icons.home_work_outlined),
+                  hint: tr('City or locality'), icon: Icons.home_work_outlined),
             ),
           ),
           _field(
-            label: 'Pincode',
+            label: tr('Pincode'),
             required: true,
             child: TextFormField(
               controller: _pincodeController,
@@ -823,8 +824,8 @@ class _MarketingPartnerEnquiryScreenState
                   hint: '411001', icon: Icons.pin_drop_outlined),
               validator: (value) {
                 final v = value?.trim() ?? '';
-                if (v.isEmpty) return 'Required';
-                if (v.length != 6) return 'Enter 6 digits';
+                if (v.isEmpty) return tr('Required');
+                if (v.length != 6) return tr('Enter 6 digits');
                 return null;
               },
             ),
@@ -840,11 +841,11 @@ class _MarketingPartnerEnquiryScreenState
       icon: Icons.work_outline_rounded,
       iconBg: _kTint,
       iconFg: _C.blue600,
-      title: 'Work Information',
-      subtitle: 'Your commercial reach and expertise',
+      title: tr('Work Information'),
+      subtitle: tr('Your commercial reach and expertise'),
       children: [
         _field(
-          label: 'Working Area / Territory',
+          label: tr('Working Area / Territory'),
           child: TextFormField(
             controller: _workingAreaController,
             textCapitalization: TextCapitalization.sentences,
@@ -852,25 +853,25 @@ class _MarketingPartnerEnquiryScreenState
             maxLines: 3,
             style: _inputStyle,
             decoration: _inputDecoration(
-                hint: 'e.g. Bhosari industrial cluster & Chakan MIDC',
+                hint: tr('e.g. Bhosari industrial cluster & Chakan MIDC'),
                 icon: Icons.place_outlined),
           ),
         ),
         _field(
-          label: 'Profession / Business Type',
+          label: tr('Profession / Business Type'),
           child: _dropdown(
             value: _selectedProfession,
-            hint: 'Select your domain',
+            hint: tr('Select your domain'),
             icon: Icons.work_outline_rounded,
             items: _professions,
             onChanged: (v) => setState(() => _selectedProfession = v),
           ),
         ),
         _field(
-          label: 'Experience in B2B / Industrial Sales',
+          label: tr('Experience in B2B / Industrial Sales'),
           child: _dropdown(
             value: _selectedExperience,
-            hint: 'Select years of experience',
+            hint: tr('Select years of experience'),
             icon: Icons.timeline_rounded,
             items: _experiences,
             onChanged: (v) => setState(() => _selectedExperience = v),
@@ -886,8 +887,8 @@ class _MarketingPartnerEnquiryScreenState
       icon: Icons.campaign_outlined,
       iconBg: _kTint,
       iconFg: _C.blue600,
-      title: 'Promotion Platforms',
-      subtitle: 'Channels you use to reach business clients',
+      title: tr('Promotion Platforms'),
+      subtitle: tr('Channels you use to reach business clients'),
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
@@ -895,7 +896,7 @@ class _MarketingPartnerEnquiryScreenState
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
-          'Select multiple',
+          tr('Select multiple'),
           style: DT.text(size: 10, weight: FontWeight.w600, color: _C.blue600),
         ),
       ),
@@ -936,8 +937,8 @@ class _MarketingPartnerEnquiryScreenState
       icon: Icons.badge_outlined,
       iconBg: _kTint,
       iconFg: _C.blue600,
-      title: 'Profile Photo',
-      subtitle: 'Shown on your partner ID badge',
+      title: tr('Profile Photo'),
+      subtitle: tr('Shown on your partner ID badge'),
       children: [
         if (hasImage)
           Row(
@@ -964,7 +965,7 @@ class _MarketingPartnerEnquiryScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _profileImageFile?.name ?? 'Selected photo',
+                      _profileImageFile?.name ?? tr('Selected photo'),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(size: 12.5, weight: FontWeight.w700),
@@ -976,13 +977,13 @@ class _MarketingPartnerEnquiryScreenState
                       children: [
                         _smallButton(
                           icon: Icons.swap_horiz_rounded,
-                          label: 'Change',
+                          label: tr('Change'),
                           color: _C.blue600,
                           onTap: () => _pickImage(ImageSource.gallery),
                         ),
                         _smallButton(
                           icon: Icons.delete_outline_rounded,
-                          label: 'Remove',
+                          label: tr('Remove'),
                           color: _kRed,
                           onTap: _removeImage,
                         ),
@@ -1024,18 +1025,18 @@ class _MarketingPartnerEnquiryScreenState
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'Tap to upload a profile photo',
+                      tr('Tap to upload a profile photo'),
                       style: DT.text(size: 12.5, weight: FontWeight.w700),
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      'JPG, PNG or WEBP',
+                      tr('JPG, PNG or WEBP'),
                       style: DT.text(size: 11, color: DT.slate500),
                     ),
                     const SizedBox(height: 12),
                     _smallButton(
                       icon: Icons.photo_camera_outlined,
-                      label: 'Use camera',
+                      label: tr('Use camera'),
                       color: _C.blue600,
                       onTap: () => _pickImage(ImageSource.camera),
                     ),
@@ -1054,8 +1055,8 @@ class _MarketingPartnerEnquiryScreenState
       icon: Icons.redeem_outlined,
       iconBg: _kTint,
       iconFg: _C.blue600,
-      title: 'Referral',
-      subtitle: 'Enter a partner code if someone referred you',
+      title: tr('Referral'),
+      subtitle: tr('Enter a partner code if someone referred you'),
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1075,7 +1076,7 @@ class _MarketingPartnerEnquiryScreenState
                   letterSpacing: 1.2,
                 ),
                 decoration: _inputDecoration(
-                    hint: 'e.g. QN-PARTNER-88', icon: Icons.confirmation_number_outlined),
+                    hint: tr('e.g. QN-PARTNER-88'), icon: Icons.confirmation_number_outlined),
               ),
             ),
             const SizedBox(width: 8),
@@ -1094,7 +1095,7 @@ class _MarketingPartnerEnquiryScreenState
                 ),
                 child: _referralApplied
                     ? const Icon(Icons.check_rounded, size: 20)
-                    : Text('Apply',
+                    : Text(tr('Apply'),
                     style: DT.text(
                         size: 12.5,
                         weight: FontWeight.w700,
@@ -1119,8 +1120,8 @@ class _MarketingPartnerEnquiryScreenState
               Expanded(
                 child: Text(
                   _referralApplied
-                      ? 'Code added. It will be checked when you submit.'
-                      : 'Referral codes are checked when you submit your application.',
+                      ? tr('Code added. It will be checked when you submit.')
+                      : tr('Referral codes are checked when you submit your application.'),
                   style: DT.text(
                     size: 11.5,
                     weight: FontWeight.w500,
@@ -1187,7 +1188,7 @@ class _MarketingPartnerEnquiryScreenState
                         const Icon(Icons.check_rounded, size: 20),
                         const SizedBox(width: 8),
                         Text(
-                          'Submit Application',
+                          tr('Submit Application'),
                           style: DT.text(
                             size: 14,
                             weight: FontWeight.w700,
@@ -1208,7 +1209,7 @@ class _MarketingPartnerEnquiryScreenState
                   const SizedBox(width: 5),
                   Flexible(
                     child: Text(
-                      'Your details are shared only with the QN Mart partner team',
+                      tr('Your details are shared only with the QN Mart partner team'),
                       textAlign: TextAlign.center,
                       style: DT.text(size: 10.5, color: DT.slate500),
                     ),
@@ -1236,7 +1237,7 @@ class _MarketingPartnerEnquiryScreenState
     );
 
     return InputDecoration(
-      hintText: hint,
+      hintText: trN(hint),
       hintStyle: DT.text(size: 13, weight: FontWeight.w500, color: DT.slate400),
       filled: true,
       fillColor: Colors.white,
@@ -1279,13 +1280,13 @@ class _MarketingPartnerEnquiryScreenState
       style: _inputStyle,
       decoration: _inputDecoration(icon: icon),
       hint: Text(
-        hint,
+        tr(hint),
         style: DT.text(size: 13, weight: FontWeight.w500, color: DT.slate400),
       ),
       items: items
           .map((e) => DropdownMenuItem(
         value: e,
-        child: Text(e, overflow: TextOverflow.ellipsis),
+        child: Text(tr(e), overflow: TextOverflow.ellipsis),
       ))
           .toList(),
       onChanged: onChanged,
@@ -1304,7 +1305,7 @@ class _MarketingPartnerEnquiryScreenState
       children: [
         Text.rich(
           TextSpan(
-            text: label,
+            text: tr(label),
             style: DT.text(size: 12, weight: FontWeight.w600, color: DT.onyx700),
             children: [
               if (required)
@@ -1320,7 +1321,7 @@ class _MarketingPartnerEnquiryScreenState
         child,
         if (helper != null) ...[
           const SizedBox(height: 4),
-          Text(helper, style: DT.text(size: 10.5, color: DT.slate400)),
+          Text(tr(helper), style: DT.text(size: 10.5, color: DT.slate400)),
         ],
       ],
     );
@@ -1359,7 +1360,7 @@ class _MarketingPartnerEnquiryScreenState
             children: [
               Icon(icon, size: 15, color: color),
               const SizedBox(width: 5),
-              Text(label,
+              Text(tr(label),
                   style: DT.text(
                       size: 11.5, weight: FontWeight.w600, color: DT.onyx700)),
             ],
@@ -1428,12 +1429,12 @@ class _SectionCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title,
+                      Text(tr(title),
                           style: DT.text(
                               size: 14, weight: FontWeight.w700, height: 1.2)),
                       const SizedBox(height: 2),
                       Text(
-                        subtitle,
+                        tr(subtitle),
                         style: DT.text(size: 11, color: DT.slate500),
                       ),
                     ],
@@ -1506,7 +1507,7 @@ class _PlatformChip extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    platform.label,
+                    tr(platform.label),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: DT.text(

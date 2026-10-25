@@ -1,3 +1,4 @@
+import 'package:qnx_mart/l10n/app_language.dart';
 // lib/models/supplier_model.dart
 //
 // Matches backend/company/models.py -> suppliers
@@ -102,7 +103,7 @@ class SupplierActionResponse {
   bool get isSuccess => status;
 
   String get displayMessage {
-    if (isSuccess) return message ?? 'Done';
+    if (isSuccess) return message ?? tr('Done');
     final d = data;
     if (d != null && d.isNotEmpty) {
       final key = d.keys.first;
@@ -110,7 +111,7 @@ class SupplierActionResponse {
       final text = err is List && err.isNotEmpty ? err.first.toString() : err.toString();
       return '${_label(key)}: $text';
     }
-    return message ?? 'Something went wrong';
+    return message ?? tr('Something went wrong');
   }
 
   static String _label(String key) =>

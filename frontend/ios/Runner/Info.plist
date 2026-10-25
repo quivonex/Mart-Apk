@@ -50,6 +50,40 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>QNX Mart needs microphone access to record product videos with sound.</string>
 
+	<!-- Local network: dev server on the LAN (http://192.168.x.x) -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>QNX Mart connects to the QNX Mart server on your local network.</string>
+
+	<!-- ═══════════ NETWORK ═══════════ -->
+	<!-- https everywhere; plain http only for local-network IPs (dev server) -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+
+	<!-- ═══════════ LANGUAGES (English / मराठी / हिंदी) ═══════════ -->
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>mr</string>
+		<string>hi</string>
+	</array>
+
+	<!-- ═══════════ OTHER APPS (url_launcher) ═══════════ -->
+	<!-- WhatsApp, phone, email, SMS, Google Maps, Instagram links -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>https</string>
+		<string>http</string>
+		<string>tel</string>
+		<string>mailto</string>
+		<string>sms</string>
+		<string>whatsapp</string>
+		<string>comgooglemaps</string>
+		<string>instagram</string>
+	</array>
+
 	<!-- ═══════════ APP CONFIG ═══════════ -->
 	<key>UIApplicationSceneManifest</key>
 	<dict>

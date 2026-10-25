@@ -18,6 +18,7 @@ import '../services/nearby_subscription_service.dart';
 import '../utils/razorpay_checkout.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'login_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -83,7 +84,7 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
       setState(() {
         _loading = false;
         _needsLogin = true;
-        _error = 'Please log in to see the Nearby Search plans.';
+        _error = tr('Please log in to see the Nearby Search plans.');
       });
       return;
     }
@@ -108,7 +109,7 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
-        content: Text(msg, style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
+        content: Text(tr(msg), style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
         backgroundColor: error ? _SC.red : _SC.ink,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
@@ -124,7 +125,7 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
     if (!mounted) return;
     if (current != null) {
       setState(() => _saved = current);
-      _snack('Your ${current.planName} plan is active till ${nearbyDate(current.expiresAt)}.');
+      _snack(tr('Your {0} plan is active till {1}.', [current.planName, nearbyDate(current.expiresAt)]));
       return;
     }
 
@@ -140,7 +141,7 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
             _error = o.message;
           });
         } else {
-          await _alert('Could not start payment', o.message, error: true);
+          await _alert(tr('Could not start payment'), o.message, error: true);
         }
         return;
       }
@@ -166,11 +167,11 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
       });
       if (!mounted) return;
       if (pay.cancelled) {
-        _snack('Payment cancelled.');
+        _snack(tr('Payment cancelled.'));
         return;
       }
       if (!pay.ok) {
-        await _alert('Payment failed', pay.error, error: true);
+        await _alert(tr('Payment failed'), pay.error, error: true);
         return;
       }
 
@@ -185,9 +186,8 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
       if (v.ok && v.data != null) {
         setState(() => _saved = v.data);
         await _alert(
-          'Subscription activated',
-          '${v.message}\n\n${v.data!.planName} plan is active till ${nearbyDate(v.data!.expiresAt)}.\n'
-              'Reference: ${pay.paymentId}',
+          tr('Subscription activated'),
+          tr('{0}\n\n{1} plan is active till {2}.\nReference: {3}', [v.message, v.data!.planName, nearbyDate(v.data!.expiresAt), pay.paymentId]),
         );
         if (mounted) _load(); // refresh plans (ownership flags, if any)
       } else if (v.needsLogin) {
@@ -197,8 +197,8 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
         });
       } else {
         await _alert(
-          'Payment not confirmed',
-          '${v.message}\n\nIf money was deducted, keep this reference and contact support:\n${pay.paymentId}',
+          tr('Payment not confirmed'),
+          tr('{0}\n\nIf money was deducted, keep this reference and contact support:\n{1}', [v.message, pay.paymentId]),
           error: true,
         );
       }
@@ -220,9 +220,9 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
         child: Icon(error ? Icons.error_outline_rounded : Icons.check_rounded,
             color: error ? _SC.red : _SC.green, size: 30),
       ),
-      title: Text(title,
+      title: Text(tr(title),
           textAlign: TextAlign.center, style: DT.text(size: 17, weight: FontWeight.w800, color: _SC.ink)),
-      content: Text(body,
+      content: Text(tr(body),
           textAlign: TextAlign.center, style: DT.text(size: 13, color: _SC.body, height: 1.5)),
       actions: [
         SizedBox(
@@ -233,7 +233,7 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
+            child: Text(tr('OK')),
           ),
         ),
       ],
@@ -257,11 +257,11 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
           flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)),
           foregroundColor: Colors.white,
           elevation: 0,
-          title: Text('Nearby Search Plans',
+          title: Text(tr('Nearby Search Plans'),
               style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
           actions: [
             IconButton(
-              tooltip: 'Refresh',
+              tooltip: tr('Refresh'),
               onPressed: _loading ? null : _load,
               icon: const Icon(Icons.refresh_rounded),
             ),
@@ -286,8 +286,8 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
       );
     }
     if (_needsLogin) {
-      return _message(Icons.lock_outline_rounded, 'Login required',
-          _error ?? 'Please log in again.', 'Login', _openLogin);
+      return _message(Icons.lock_outline_rounded, tr('Login required'),
+          _error ?? tr('Please log in again.'), tr('Login'), _openLogin);
     }
 
     return ListView(
@@ -299,11 +299,11 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
           _activeCard(_saved!),
           const SizedBox(height: 12),
           _condition(Icons.info_outline_rounded,
-              'You can buy a new plan after the current plan ends on ${nearbyDate(_saved!.expiresAt)}.'),
+              tr('You can buy a new plan after the current plan ends on {0}.', [nearbyDate(_saved!.expiresAt)])),
         ] else ...[
           if (_saved != null) ...[
             _condition(Icons.history_rounded,
-                'Your ${_saved!.planName} plan ended on ${nearbyDate(_saved!.expiresAt)}. Choose a plan to continue searching.'),
+                tr('Your {0} plan ended on {1}. Choose a plan to continue searching.', [_saved!.planName, nearbyDate(_saved!.expiresAt)])),
             const SizedBox(height: 12),
           ],
           if (_error != null)
@@ -311,7 +311,7 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
           else if (_plans.isEmpty)
             _emptyBox()
           else ...[
-              Text('Choose a plan', style: DT.text(size: 15, weight: FontWeight.w800, color: _SC.ink)),
+              Text(tr('Choose a plan'), style: DT.text(size: 15, weight: FontWeight.w800, color: _SC.ink)),
               const SizedBox(height: 10),
               for (final p in _plans) ...[
                 _planCard(p),
@@ -342,10 +342,10 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Find businesses near you',
+              Text(tr('Find businesses near you'),
                   style: DT.text(size: 16, weight: FontWeight.w800, color: Colors.white)),
               const SizedBox(height: 4),
-              Text('Transport, warehouses, shops and more – with map, directions and WhatsApp contact.',
+              Text(tr('Transport, warehouses, shops and more – with map, directions and WhatsApp contact.'),
                   style: DT.text(size: 12.5, color: Colors.white.withValues(alpha: 0.85), height: 1.4)),
             ],
           ),
@@ -374,7 +374,7 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
                 children: [
                   const Icon(Icons.verified_rounded, size: 14, color: _SC.green),
                   const SizedBox(width: 4),
-                  Text('ACTIVE PLAN', style: DT.text(size: 10.5, weight: FontWeight.w800, color: _SC.green)),
+                  Text(tr('ACTIVE PLAN'), style: DT.text(size: 10.5, weight: FontWeight.w800, color: _SC.green)),
                 ],
               ),
             ),
@@ -384,9 +384,9 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        Text(s.planName, style: DT.text(size: 20, weight: FontWeight.w800, color: _SC.ink)),
+        Text(trData(s.planName), style: DT.text(size: 20, weight: FontWeight.w800, color: _SC.ink)),
         const SizedBox(height: 4),
-        Text('Valid till ${nearbyDate(s.expiresAt)}',
+        Text(tr('Valid till {0}', [nearbyDate(s.expiresAt)]),
             style: DT.text(size: 13, weight: FontWeight.w600, color: _SC.body)),
         const SizedBox(height: 12),
         ClipRRect(
@@ -401,10 +401,10 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
         const SizedBox(height: 8),
         Row(
           children: [
-            Text('Started ${nearbyDate(s.startedAt)}', style: DT.text(size: 11.5, color: _SC.muted)),
+            Text(tr('Started {0}', [nearbyDate(s.startedAt)]), style: DT.text(size: 11.5, color: _SC.muted)),
             const Spacer(),
             if (s.enquiryLimit > 0)
-              Text('Up to ${s.enquiryLimit} enquiries', style: DT.text(size: 11.5, color: _SC.muted)),
+              Text(tr('Up to {0} enquiries', [s.enquiryLimit]), style: DT.text(size: 11.5, color: _SC.muted)),
           ],
         ),
         const SizedBox(height: 14),
@@ -418,7 +418,7 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
             ),
             onPressed: () => Navigator.of(context).pop(true),
             icon: const Icon(Icons.search_rounded, size: 20),
-            label: Text('Start searching',
+            label: Text(tr('Start searching'),
                 style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
           ),
         ),
@@ -453,22 +453,22 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(p.name, style: DT.text(size: 16, weight: FontWeight.w800, color: _SC.ink)),
+                    Text(trData(p.name), style: DT.text(size: 16, weight: FontWeight.w800, color: _SC.ink)),
                     if (p.durationLabel.isNotEmpty)
-                      Text(p.durationLabel, style: DT.text(size: 12, color: _SC.muted)),
+                      Text(tr(p.durationLabel), style: DT.text(size: 12, color: _SC.muted)),
                   ],
                 ),
               ),
-              Text(p.priceLabel, style: DT.text(size: 18, weight: FontWeight.w800, color: _kBrand)),
+              Text(tr(p.priceLabel), style: DT.text(size: 18, weight: FontWeight.w800, color: _kBrand)),
             ],
           ),
           const SizedBox(height: 12),
           const Divider(height: 1, color: _SC.line),
           const SizedBox(height: 10),
-          _feature(Icons.event_available_rounded, 'Valid for ${p.durationDays} days'),
-          if (p.enquiryLimit > 0) _feature(Icons.forum_outlined, 'Up to ${p.enquiryLimit} enquiries'),
-          _feature(Icons.calendar_month_rounded, 'Valid until ${nearbyDate(p.validUntilIfBoughtNow)} if bought today'),
-          _feature(Icons.map_outlined, 'Map, directions & WhatsApp contact'),
+          _feature(Icons.event_available_rounded, tr('Valid for {0} days', [p.durationDays])),
+          if (p.enquiryLimit > 0) _feature(Icons.forum_outlined, tr('Up to {0} enquiries', [p.enquiryLimit])),
+          _feature(Icons.calendar_month_rounded, tr('Valid until {0} if bought today', [nearbyDate(p.validUntilIfBoughtNow)])),
+          _feature(Icons.map_outlined, tr('Map, directions & WhatsApp contact')),
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
@@ -483,7 +483,7 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
               child: busy
                   ? const SizedBox(
                   width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white))
-                  : Text('Buy Now · ${p.priceLabel}',
+                  : Text(tr('Buy Now · {0}', [p.priceLabel]),
                   style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
             ),
           ),
@@ -498,7 +498,7 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
       children: [
         Icon(icon, size: 16, color: _kBrandLight),
         const SizedBox(width: 8),
-        Expanded(child: Text(text, style: DT.text(size: 12.5, color: _SC.body))),
+        Expanded(child: Text(tr(text), style: DT.text(size: 12.5, color: _SC.body))),
       ],
     ),
   );
@@ -516,7 +516,7 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
         Icon(icon, size: 18, color: _SC.orange),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(text,
+          child: Text(tr(text),
               style: DT.text(size: 12.5, weight: FontWeight.w600, color: _SC.orangeText, height: 1.4)),
         ),
       ],
@@ -534,12 +534,12 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
       children: [
         const Icon(Icons.cloud_off_rounded, size: 34, color: _SC.red),
         const SizedBox(height: 8),
-        Text(msg, textAlign: TextAlign.center, style: DT.text(size: 13, color: _SC.body, height: 1.45)),
+        Text(tr(msg), textAlign: TextAlign.center, style: DT.text(size: 13, color: _SC.body, height: 1.45)),
         const SizedBox(height: 12),
         FilledButton(
           style: FilledButton.styleFrom(backgroundColor: _kBrand),
           onPressed: _load,
-          child: const Text('Try again'),
+          child: Text(tr('Try again')),
         ),
       ],
     ),
@@ -556,10 +556,10 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
       children: [
         const Icon(Icons.inventory_2_outlined, size: 34, color: _kBrand),
         const SizedBox(height: 8),
-        Text('No plans available right now',
+        Text(tr('No plans available right now'),
             style: DT.text(size: 14, weight: FontWeight.w800, color: _SC.ink)),
         const SizedBox(height: 4),
-        Text('Please check again later.', style: DT.text(size: 12.5, color: _SC.muted)),
+        Text(tr('Please check again later.'), style: DT.text(size: 12.5, color: _SC.muted)),
       ],
     ),
   );
@@ -576,15 +576,15 @@ class _NearbySubscriptionScreenState extends State<NearbySubscriptionScreen> {
         ),
       ),
       const SizedBox(height: 12),
-      Text(title, textAlign: TextAlign.center, style: DT.text(size: 16, weight: FontWeight.w800, color: _SC.ink)),
+      Text(tr(title), textAlign: TextAlign.center, style: DT.text(size: 16, weight: FontWeight.w800, color: _SC.ink)),
       const SizedBox(height: 4),
-      Text(body, textAlign: TextAlign.center, style: DT.text(size: 13, color: _SC.muted, height: 1.45)),
+      Text(tr(body), textAlign: TextAlign.center, style: DT.text(size: 13, color: _SC.muted, height: 1.45)),
       const SizedBox(height: 14),
       Center(
         child: FilledButton(
           style: FilledButton.styleFrom(backgroundColor: _kBrand),
           onPressed: onTap,
-          child: Text(button),
+          child: Text(tr(button)),
         ),
       ),
     ],

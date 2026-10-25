@@ -151,6 +151,12 @@ class DT {
       height: height,
       letterSpacing: letterSpacing,
       decoration: decoration,
-    );
+    ).copyWith(fontFamilyFallback: devanagariFallback); // मराठी / हिंदी letters
   }
+
+  /// Plus Jakarta Sans has no Devanagari letters → Noto Sans Devanagari is
+  /// used for मराठी / हिंदी text (same look on Android, iOS and web).
+  static final List<String> devanagariFallback = [
+    GoogleFonts.notoSansDevanagari().fontFamily ?? 'Noto Sans Devanagari',
+  ];
 }

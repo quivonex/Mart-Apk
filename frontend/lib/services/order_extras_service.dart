@@ -21,6 +21,7 @@ import 'api_urls.dart';
 import 'checkout_service.dart';
 import 'order_service.dart';
 import 'qnx_api.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class OrderExtrasResult<T> {
   final bool ok;
@@ -155,11 +156,11 @@ class OrderExtrasService {
   static Future<OrderExtrasResult<String>> invoiceUrl(int orderId) async {
     final r = await QnxApi.post(ApiUrls.orderInvoiceUrl, {'order_id': orderId});
     if (!r.ok) {
-      return OrderExtrasResult(false, null, r.error('Could not get the invoice.'), needsLogin: r.authFailed);
+      return OrderExtrasResult(false, null, r.error(tr('Could not get the invoice.')), needsLogin: r.authFailed);
     }
     final url = _findUrl(r.body);
     if (url == null) {
-      return const OrderExtrasResult(false, null, 'Invoice is not ready yet. Please try again later.');
+      return OrderExtrasResult(false, null, tr('Invoice is not ready yet. Please try again later.'));
     }
     return OrderExtrasResult(true, url, '');
   }
@@ -188,7 +189,7 @@ class OrderExtrasService {
   static Future<OrderExtrasResult<List<ReturnOrderItem>>> myReturns() async {
     final r = await QnxApi.post(ApiUrls.returnOrdersUrl, const {});
     if (!r.ok) {
-      return OrderExtrasResult(false, null, r.error('Could not load your returns.'), needsLogin: r.authFailed);
+      return OrderExtrasResult(false, null, r.error(tr('Could not load your returns.')), needsLogin: r.authFailed);
     }
     final all = r.list.map(ReturnOrderItem.fromJson).toList();
 
@@ -198,7 +199,7 @@ class OrderExtrasService {
       final orders = await OrderService.getMyOrders({});
       mine = {for (final OrderData o in orders.data) o.orderId};
     } catch (_) {
-      return const OrderExtrasResult(false, null, 'Could not load your orders. Please try again.');
+      return OrderExtrasResult(false, null, tr('Could not load your orders. Please try again.'));
     }
     final list = all.where((e) => mine.contains(e.orderId)).toList()
       ..sort((a, b) => (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)));
@@ -208,7 +209,7 @@ class OrderExtrasService {
   static Future<OrderExtrasResult<ReturnTrackInfo>> trackReturn(int returnId) async {
     final r = await QnxApi.post(ApiUrls.returnOrderTrackUrl, {'return_id': returnId});
     if (!r.ok) {
-      return OrderExtrasResult(false, null, r.error('Tracking is not available yet.'), needsLogin: r.authFailed);
+      return OrderExtrasResult(false, null, r.error(tr('Tracking is not available yet.')), needsLogin: r.authFailed);
     }
     return OrderExtrasResult(true, ReturnTrackInfo.fromJson(r.dataMap), '');
   }
@@ -217,10 +218,10 @@ class OrderExtrasService {
   static Future<OrderExtrasResult<DeliveryAddress>> updateAddress(int id, Map<String, String> fields) async {
     final r = await QnxApi.post(ApiUrls.addressUpdateUrl, {...fields, 'id': id, 'country': 'India'});
     if (!r.ok) {
-      return OrderExtrasResult(false, null, r.error('Could not update the address.'), needsLogin: r.authFailed);
+      return OrderExtrasResult(false, null, r.error(tr('Could not update the address.')), needsLogin: r.authFailed);
     }
     final d = r.map['data'];
     final addr = d is Map ? DeliveryAddress.fromJson(Map<String, dynamic>.from(d)) : null;
-    return OrderExtrasResult(true, addr, 'Address updated');
+    return OrderExtrasResult(true, addr, tr('Address updated'));
   }
 }

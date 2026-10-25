@@ -8,6 +8,7 @@ import '../models/supplier_model.dart';
 import '../services/supplier_service.dart';
 import '../widgets/company_ui.dart';
 import 'supplier_create_edit_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -53,7 +54,7 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
       if (res.isSuccess) {
         _items = res.data;
       } else {
-        _error = res.message ?? 'Could not load suppliers';
+        _error = res.message ?? tr('Could not load suppliers');
       }
     });
   }
@@ -80,9 +81,9 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
   Future<void> _delete(Supplier s) async {
     final ok = await confirmAction(
       context,
-      title: 'Delete ${s.name}?',
-      message: 'This supplier will be removed permanently.',
-      confirmLabel: 'Delete',
+      title: tr('Delete {0}?', [s.name]),
+      message: tr('This supplier will be removed permanently.'),
+      confirmLabel: tr('Delete'),
       destructive: true,
     );
     if (!ok || !mounted) return;
@@ -104,10 +105,10 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
     return Scaffold(
       backgroundColor: DT.background,
       appBar: CompanyTopBar(
-        title: 'Suppliers',
+        title: tr('Suppliers'),
         subtitle: _loading
-            ? 'Loading…'
-            : '${widget.company.name} · ${_items.length} supplier${_items.length == 1 ? '' : 's'}',
+            ? tr('Loading…')
+            : tr('{0} · {1} supplier{2}', [widget.company.name, _items.length, _items.length == 1 ? '' : 's']),
       ),
       floatingActionButton: _items.isEmpty
           ? null
@@ -118,7 +119,7 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
         elevation: 3,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rLg)),
         icon: const Icon(Icons.add_rounded),
-        label: Text('Add supplier',
+        label: Text(tr('Add supplier'),
             style: DT.text(size: 13.5, weight: FontWeight.w700, color: Colors.white)),
       ),
       body: _body(),
@@ -132,9 +133,9 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
     if (_error != null && _items.isEmpty) {
       return StateView(
         icon: Icons.cloud_off_rounded,
-        title: 'Could not load suppliers',
-        message: _error!,
-        actionLabel: 'Try again',
+        title: tr('Could not load suppliers'),
+        message: tr(_error!),
+        actionLabel: tr('Try again'),
         onAction: _load,
         isError: true,
       );
@@ -142,9 +143,9 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
     if (_items.isEmpty) {
       return StateView(
         icon: Icons.local_shipping_outlined,
-        title: 'No suppliers yet',
-        message: 'Add the businesses you buy stock from to keep their contacts in one place.',
-        actionLabel: 'Add supplier',
+        title: tr('No suppliers yet'),
+        message: tr('Add the businesses you buy stock from to keep their contacts in one place.'),
+        actionLabel: tr('Add supplier'),
         onAction: () => _openForm(),
       );
     }
@@ -162,7 +163,7 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
             onChanged: (v) => setState(() => _query = v),
             style: DT.text(size: 13.5),
             decoration: InputDecoration(
-              hintText: 'Search by name, phone or place',
+              hintText: tr('Search by name, phone or place'),
               hintStyle: DT.text(size: 13.5, color: DT.slate400),
               prefixIcon: const Icon(Icons.search_rounded, color: DT.slate400),
               suffixIcon: _query.isEmpty
@@ -191,7 +192,7 @@ class _SupplierListScreenState extends State<SupplierListScreen> {
           if (visible.isEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 40),
-              child: Text('No suppliers match "$_query".',
+              child: Text(tr('No suppliers match "{0}".', [_query]),
                   textAlign: TextAlign.center,
                   style: DT.text(size: 13, color: DT.slate500)),
             )
@@ -247,7 +248,7 @@ class _SupplierCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(s.name,
+                    Text(trData(s.name),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: 14.5, weight: FontWeight.w700)),
@@ -262,23 +263,23 @@ class _SupplierCard extends StatelessWidget {
               Column(
                 children: [
                   IconButton(
-                    tooltip: 'Call',
+                    tooltip: tr('Call'),
                     onPressed: s.phone.isEmpty ? null : onCall,
                     icon: const Icon(Icons.call_rounded, color: DT.emerald700, size: 20),
                   ),
                   PopupMenuButton<String>(
-                    tooltip: 'More',
+                    tooltip: tr('More'),
                     icon: const Icon(Icons.more_vert_rounded, color: DT.slate500, size: 20),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
                     onSelected: (v) => v == 'edit' ? onEdit() : onDelete(),
                     itemBuilder: (_) => [
                       PopupMenuItem(
                         value: 'edit',
-                        child: Text('Edit', style: DT.text(size: 13.5, weight: FontWeight.w600)),
+                        child: Text(tr('Edit'), style: DT.text(size: 13.5, weight: FontWeight.w600)),
                       ),
                       PopupMenuItem(
                         value: 'delete',
-                        child: Text('Delete',
+                        child: Text(tr('Delete'),
                             style: DT.text(
                                 size: 13.5, weight: FontWeight.w600, color: _kRed)),
                       ),
@@ -300,7 +301,7 @@ class _SupplierCard extends StatelessWidget {
         Icon(icon, size: 13, color: DT.slate400),
         const SizedBox(width: 5),
         Expanded(
-          child: Text(text,
+          child: Text(tr(text),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: DT.text(size: 12, color: DT.onyx600)),

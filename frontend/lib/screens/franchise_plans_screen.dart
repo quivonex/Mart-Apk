@@ -4,6 +4,7 @@ import '../constants/app_constants.dart';
 import '../models/franchise_plan_model.dart';
 import '../services/franchise_plan_service.dart';
 import 'franchise_apply_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -78,7 +79,7 @@ class _FranchisePlansScreenState extends State<FranchisePlansScreen> {
         // ❌ Case 3: Actual API error
         _isApiSuccess = false; // red error state
         _plans = [];
-        _errorMessage = response.message ?? 'Failed to load franchise plans.';
+        _errorMessage = response.message ?? tr('Failed to load franchise plans.');
       }
     });
   }
@@ -109,7 +110,7 @@ class _FranchisePlansScreenState extends State<FranchisePlansScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Franchise Plans',
+              tr('Franchise Plans'),
               style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -117,7 +118,7 @@ class _FranchisePlansScreenState extends State<FranchisePlansScreen> {
               ),
             ),
             Text(
-              widget.productName,
+              trData(widget.productName),
               style: GoogleFonts.inter(
                 fontSize: 12,
                 color: Colors.white70,
@@ -211,7 +212,7 @@ class _FranchisePlansScreenState extends State<FranchisePlansScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        plan.planName,
+                        trData(plan.planName),
                         style: GoogleFonts.inter(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -239,7 +240,7 @@ class _FranchisePlansScreenState extends State<FranchisePlansScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
               child: Text(
-                plan.description,
+                trData(plan.description),
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   color: AppConstants.textSecondary,
@@ -261,7 +262,7 @@ class _FranchisePlansScreenState extends State<FranchisePlansScreen> {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'Includes ${plan.planProducts.length} items',
+                    tr('Includes {0} items', [plan.planProducts.length]),
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -295,7 +296,7 @@ class _FranchisePlansScreenState extends State<FranchisePlansScreen> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            product.itemName,
+                            tr(product.itemName),
                             style: GoogleFonts.inter(
                               fontSize: 13,
                               color: AppConstants.textPrimary,
@@ -338,7 +339,7 @@ class _FranchisePlansScreenState extends State<FranchisePlansScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Apply for This Plan',
+                      tr('Apply for This Plan'),
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -391,7 +392,7 @@ class _FranchisePlansScreenState extends State<FranchisePlansScreen> {
             ),
             const SizedBox(height: 20),
             Text(
-              isNoPlansCase ? 'No Franchise Plans' : 'Failed to Load',
+              isNoPlansCase ? tr('No Franchise Plans') : tr('Failed to Load'),
               style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -402,8 +403,8 @@ class _FranchisePlansScreenState extends State<FranchisePlansScreen> {
             Text(
               _errorMessage ??
                   (isNoPlansCase
-                      ? 'No franchise plans available for this product.'
-                      : 'Something went wrong. Please try again.'),
+                      ? tr('No franchise plans available for this product.')
+                      : tr('Something went wrong. Please try again.')),
               style: GoogleFonts.inter(
                 fontSize: 14,
                 color: AppConstants.textSecondary,
@@ -425,7 +426,7 @@ class _FranchisePlansScreenState extends State<FranchisePlansScreen> {
               ),
               icon: const Icon(Icons.refresh, color: Colors.white, size: 18),
               label: Text(
-                isNoPlansCase ? 'Refresh' : 'Retry',
+                isNoPlansCase ? tr('Refresh') : tr('Retry'),
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,

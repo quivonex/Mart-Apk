@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/design_tokens.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -60,7 +61,7 @@ class LogoWidget extends StatelessWidget {
             TextSpan(
               children: [
                 TextSpan(
-                  text: 'Q',
+                  text: tr('Q'),
                   style: DT.text(
                     size: size * 0.46,
                     weight: FontWeight.w800,
@@ -69,7 +70,7 @@ class LogoWidget extends StatelessWidget {
                   ),
                 ),
                 TextSpan(
-                  text: 'N',
+                  text: tr('N'),
                   style: DT.text(
                     size: size * 0.46,
                     weight: FontWeight.w800,
@@ -91,7 +92,7 @@ class LogoWidget extends StatelessWidget {
               TextSpan(
                 children: [
                   TextSpan(
-                    text: 'QN',
+                    text: tr('QN'),
                     style: DT.text(
                       size: size * 0.44,
                       weight: FontWeight.w800,
@@ -101,7 +102,7 @@ class LogoWidget extends StatelessWidget {
                     ),
                   ),
                   TextSpan(
-                    text: 'MART',
+                    text: tr('MART'),
                     style: DT.text(
                       size: size * 0.44,
                       weight: FontWeight.w800,
@@ -116,7 +117,7 @@ class LogoWidget extends StatelessWidget {
             if (showSubtitle) ...[
               const SizedBox(height: 2),
               Text(
-                'B2B Wholesale Hub',
+                tr('B2B Wholesale Hub'),
                 style: DT.text(
                   size: 9,
                   weight: FontWeight.w600,

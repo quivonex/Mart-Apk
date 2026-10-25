@@ -1,3 +1,4 @@
+import 'package:qnx_mart/l10n/app_language.dart';
 // lib/models/franchise_plan_model.dart
 //
 // Matches POST /franchicies/product-franchise-plans/
@@ -285,7 +286,7 @@ class FranchiseApplyResponse {
 
   String get displayMessage {
     if (isSuccess) {
-      return message ?? 'Franchise application submitted successfully!';
+      return message ?? tr('Franchise application submitted successfully!');
     }
     if (errors != null && errors!.isNotEmpty) {
       final firstKey = errors!.keys.first;
@@ -295,7 +296,7 @@ class FranchiseApplyResponse {
       }
       return firstError.toString();
     }
-    return message ?? error ?? 'Something went wrong.';
+    return message ?? error ?? tr('Something went wrong.');
   }
 
   List<String> get allErrors {

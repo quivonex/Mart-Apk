@@ -7,6 +7,7 @@ import '../services/real_estate_service.dart';
 import 'property_detail_screen.dart';
 import 'property_schedule_visit_sheet.dart';
 import 'property_video_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -129,7 +130,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
       } else {
         _allProperties = [];
         _displayProperties = [];
-        _error = propertyRes.message ?? 'No properties found';
+        _error = propertyRes.message ?? tr('No properties found');
       }
       _allAmenities = amenityRes.data;
     });
@@ -256,7 +257,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
         children: [
           if (Navigator.of(context).canPop())
             IconButton(
-              tooltip: 'Go Back',
+              tooltip: tr('Go Back'),
               icon: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
               onPressed: () => Navigator.maybePop(context),
             )
@@ -267,10 +268,10 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Properties',
+                Text(tr('Properties'),
                     style: _t(16, FontWeight.w700, Colors.white,
                         height: 1.2, letterSpacing: -0.2)),
-                Text('MIDC Plots, Warehouses & Land',
+                Text(tr('MIDC Plots, Warehouses & Land'),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: _t(11, FontWeight.w500, const Color(0xFFC9DBEE))),
@@ -281,7 +282,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
       ),
       actions: [
         IconButton(
-          tooltip: 'Shortlisted',
+          tooltip: tr('Shortlisted'),
           onPressed: () {},
           icon: Stack(
             clipBehavior: Clip.none,
@@ -305,7 +306,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
           ),
         ),
         IconButton(
-          tooltip: 'More Options',
+          tooltip: tr('More Options'),
           onPressed: () {},
           icon: const Icon(Icons.more_vert, color: Colors.white, size: 22),
         ),
@@ -345,7 +346,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                     textInputAction: TextInputAction.search,
                     style: _t(13, FontWeight.w500, _C.slate900),
                     decoration: InputDecoration(
-                      hintText: 'Search by city, area, address...',
+                      hintText: tr('Search by city, area, address...'),
                       hintStyle: _t(13, FontWeight.w500, _C.slate400),
                       filled: true,
                       fillColor: _C.slate50,
@@ -387,7 +388,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                 scrollDirection: Axis.horizontal,
                 children: [
                   _CategoryChip(
-                    label: 'All Properties',
+                    label: tr('All Properties'),
                     selected: _selectedPropertyType == 'All',
                     onTap: () => setState(() {
                       _selectedPropertyType = 'All';
@@ -396,7 +397,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                   ),
                   ...typeLabels.entries.map(
                         (e) => _CategoryChip(
-                      label: e.value,
+                      label: tr(e.value),
                       selected: _selectedPropertyType == e.key,
                       onTap: () => setState(() {
                         _selectedPropertyType = e.key;
@@ -456,7 +457,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
             text: '$n verified ${n == 1 ? 'listing' : 'listings'}',
             style: _t(12, FontWeight.w700, _C.slate900),
           ),
-          TextSpan(text: where),
+          TextSpan(text: tr(where)),
         ],
       ),
       maxLines: 1,
@@ -466,7 +467,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
 
   Widget _buildSortMenu() {
     return PopupMenuButton<String>(
-      tooltip: 'Sort',
+      tooltip: tr('Sort'),
       onSelected: (v) => setState(() {
         _sort = v;
         _applyFilters();
@@ -475,18 +476,18 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
       itemBuilder: (_) => [
         PopupMenuItem(
           value: 'relevant',
-          child: Text('Relevant', style: _t(13, FontWeight.w600, _C.slate900)),
+          child: Text(tr('Relevant'), style: _t(13, FontWeight.w600, _C.slate900)),
         ),
         PopupMenuItem(
           value: 'az',
           child:
-          Text('Location (A–Z)', style: _t(13, FontWeight.w600, _C.slate900)),
+          Text(tr('Location (A–Z)'), style: _t(13, FontWeight.w600, _C.slate900)),
         ),
       ],
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('Sort: ${_sort == 'az' ? 'A–Z' : 'Relevant'}',
+          Text(tr('Sort: {0}', [_sort == 'az' ? 'A–Z' : 'Relevant']),
               style: _t(12, FontWeight.w700, _C.blue700)),
           const SizedBox(width: 2),
           const Icon(Icons.expand_more, size: 16, color: _C.blue700),
@@ -648,7 +649,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                               size: 13, color: Colors.white),
                           const SizedBox(width: 5),
                           Text(
-                            property.formattedPropertyType,
+                            tr(property.formattedPropertyType),
                             style: _t(11, FontWeight.w700, Colors.white,
                                 letterSpacing: 0.2),
                           ),
@@ -675,7 +676,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                         ],
                       ),
                       child: Text(
-                        property.formattedTransactionType,
+                        tr(property.formattedTransactionType),
                         style: _t(11, FontWeight.w700, _C.navy),
                       ),
                     ),
@@ -809,7 +810,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          displayTitle,
+                          tr(displayTitle),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: _t(15.5, FontWeight.w800, _C.navy,
@@ -821,7 +822,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            property.formattedMinPrice,
+                            tr(property.formattedMinPrice),
                             maxLines: 1,
                             style: _t(16.5, FontWeight.w800, _C.blue700,
                                 letterSpacing: -0.3),
@@ -842,9 +843,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                       const SizedBox(width: 3),
                       Expanded(
                         child: Text(
-                          [property.area, property.city]
-                              .where((s) => s.isNotEmpty)
-                              .join(', '),
+                          tr([property.area, property.city].where((s) => s.isNotEmpty).join(', ')),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: _t(12, FontWeight.w600, _C.slate500),
@@ -859,7 +858,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                     children: [
                       _cardAction(
                         icon: Icons.visibility_outlined,
-                        label: 'Details',
+                        label: tr('Details'),
                         fg: _C.navy,
                         bg: _C.slate50,
                         border: _C.slate200,
@@ -868,7 +867,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                       const SizedBox(width: 6),
                       _cardAction(
                         icon: Icons.play_circle_fill,
-                        label: 'Video',
+                        label: tr('Video'),
                         fg: _C.blue600,
                         bg: const Color(0xFFEAF1F9),
                         border: _C.blue200,
@@ -877,7 +876,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                       const SizedBox(width: 6),
                       _cardAction(
                         icon: Icons.event_available_rounded,
-                        label: 'Visit',
+                        label: tr('Visit'),
                         fg: _C.blue600,
                         bg: _C.blue50,
                         border: _C.blue200,
@@ -886,7 +885,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                       const SizedBox(width: 6),
                       _cardAction(
                         icon: Icons.chat_bubble_outline,
-                        label: 'Enquire',
+                        label: tr('Enquire'),
                         fg: Colors.white,
                         bg: _kBrand,
                         onTap: () => _openEnquiry(property),
@@ -931,7 +930,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
               children: [
                 Icon(icon, size: 17, color: fg),
                 const SizedBox(height: 2),
-                Text(label,
+                Text(tr(label),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: _t(11, FontWeight.w700, fg)),
@@ -980,7 +979,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(r.message ?? 'Could not open enquiry')),
+        SnackBar(content: Text(r.message ?? tr('Could not open enquiry'))),
       );
     }
   }
@@ -1005,8 +1004,8 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
     );
     if (!sent || !mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Site visit requested. Our team will confirm shortly.'),
+      SnackBar(
+        content: Text(tr('Site visit requested. Our team will confirm shortly.')),
         behavior: SnackBarBehavior.floating,
         backgroundColor: _C.emerald600,
       ),
@@ -1063,11 +1062,11 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Looking for custom MIDC Land?',
+                Text(tr('Looking for custom MIDC Land?'),
                     style: _t(12, FontWeight.w700, _C.amber950)),
                 const SizedBox(height: 2),
                 Text(
-                  'Get assistance with land allocation, NOCs & factory setup.',
+                  tr('Get assistance with land allocation, NOCs & factory setup.'),
                   style: _t(11, FontWeight.w400, _C.amber800, height: 1.25),
                 ),
               ],
@@ -1085,7 +1084,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                   borderRadius: BorderRadius.circular(12)),
             ),
             child:
-            Text('Request Call', style: _t(11, FontWeight.w700, Colors.white)),
+            Text(tr('Request Call'), style: _t(11, FontWeight.w700, Colors.white)),
           ),
         ],
       ),
@@ -1118,11 +1117,11 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            Text(isError ? 'Failed to Load' : 'No Properties Found',
+            Text(isError ? tr('Failed to Load') : tr('No Properties Found'),
                 style: _t(18, FontWeight.w700, _C.slate900)),
             const SizedBox(height: 8),
             Text(
-              _error ?? 'Try changing your filters or search query.',
+              _error ?? tr('Try changing your filters or search query.'),
               textAlign: TextAlign.center,
               style: _t(13, FontWeight.w500, _C.slate500, height: 1.4),
             ),
@@ -1139,7 +1138,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
               ),
               icon: Icon(isError ? Icons.refresh : Icons.filter_alt_off,
                   size: 18),
-              label: Text(isError ? 'Retry' : 'Clear Filters',
+              label: Text(isError ? tr('Retry') : tr('Clear Filters'),
                   style: _t(14, FontWeight.w600, Colors.white)),
             ),
           ],
@@ -1187,20 +1186,20 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Filters', style: _t(18, FontWeight.w700, _C.slate900)),
+                    Text(tr('Filters'), style: _t(18, FontWeight.w700, _C.slate900)),
                     TextButton(
                       onPressed: () {
                         setModalState(() {});
                         _clearAllFilters();
                       },
-                      child: Text('Clear All',
+                      child: Text(tr('Clear All'),
                           style: _t(13, FontWeight.w700, _C.blue700)),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
 
-                Text('Transaction Type',
+                Text(tr('Transaction Type'),
                     style: _t(13, FontWeight.w700, _C.slate900)),
                 const SizedBox(height: 8),
                 Wrap(
@@ -1211,8 +1210,8 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                     return ChoiceChip(
                       label: Text(
                         type == 'All'
-                            ? 'All'
-                            : (type == 'pg' ? 'PG' : _cap(type)),
+                            ? tr('All')
+                            : (type == 'pg' ? tr('PG') : _cap(type)),
                         style: _t(12, FontWeight.w600,
                             selected ? Colors.white : _C.slate700),
                       ),
@@ -1238,7 +1237,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
 
                 if (_allAmenities.isNotEmpty) ...[
                   const SizedBox(height: 20),
-                  Text('Amenities',
+                  Text(tr('Amenities'),
                       style: _t(13, FontWeight.w700, _C.slate900)),
                   const SizedBox(height: 8),
                   ConstrainedBox(
@@ -1254,7 +1253,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                           _selectedAmenityIds.contains(amenity.id);
                           return FilterChip(
                             label: Text(
-                              amenity.name,
+                              trData(amenity.name),
                               style: _t(12, FontWeight.w600,
                                   selected ? Colors.white : _C.slate700),
                             ),
@@ -1292,7 +1291,7 @@ class _PropertiesScreenState extends State<PropertiesScreen> {
                           borderRadius: BorderRadius.circular(12)),
                     ),
                     child: Text(
-                      'Show ${_displayProperties.length} Results',
+                      tr('Show {0} Results', [_displayProperties.length]),
                       style: _t(14, FontWeight.w700, Colors.white),
                     ),
                   ),
@@ -1397,7 +1396,7 @@ class _CategoryChip extends StatelessWidget {
                 : null,
           ),
           child: Text(
-            label,
+            tr(label),
             style: GoogleFonts.plusJakartaSans(
               fontSize: 11,
               fontWeight: FontWeight.w600,

@@ -18,6 +18,7 @@ import '../utils/order_payment_helper.dart';
 import '../utils/shared_preferences_helper.dart';
 import '../widgets/product_ui.dart';
 import 'order_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -89,7 +90,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void _snack(String msg, {bool error = false}) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(msg), backgroundColor: error ? _kRed : null));
+      ..showSnackBar(SnackBar(content: Text(tr(msg)), backgroundColor: error ? _kRed : null));
   }
 
   // ── Address pickers ─────────────────────────────────────
@@ -115,7 +116,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 18, 12, 8),
                 child: Row(children: [
-                  Expanded(child: Text('Deliver to', style: DT.text(size: 17, weight: FontWeight.w800))),
+                  Expanded(child: Text(tr('Deliver to'), style: DT.text(size: 17, weight: FontWeight.w800))),
                   IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close_rounded)),
                 ]),
               ),
@@ -133,7 +134,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       onPressed: () => Navigator.pop(ctx, 'add'),
                       style: OutlinedButton.styleFrom(foregroundColor: _kBrand, side: const BorderSide(color: _kBrand)),
                       icon: const Icon(Icons.add_location_alt_outlined),
-                      label: const Text('Add a new address'),
+                      label: Text(tr('Add a new address')),
                     ),
                   ],
                 ),
@@ -155,12 +156,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Future<void> _placeOrder() async {
     final address = _address;
     if (address == null) {
-      _snack('Add a delivery address first', error: true);
+      _snack(tr('Add a delivery address first'), error: true);
       return;
     }
     setState(() => _placing = true);
 
-    final progress = ValueNotifier<String>('Placing your order…');
+    final progress = ValueNotifier<String>(tr('Placing your order…'));
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -173,7 +174,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             Expanded(
               child: ValueListenableBuilder<String>(
                 valueListenable: progress,
-                builder: (_, v, __) => Text(v, style: DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx800)),
+                builder: (_, v, __) => Text(tr(v), style: DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx800)),
               ),
             ),
           ]),
@@ -186,8 +187,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     for (var i = 0; i < widget.items.length; i++) {
       final item = widget.items[i];
       progress.value = widget.items.length == 1
-          ? 'Placing your order…'
-          : 'Placing order ${i + 1} of ${widget.items.length}…';
+          ? tr('Placing your order…')
+          : tr('Placing order {0} of {1}…', [i + 1, widget.items.length]);
       final r = await CheckoutService.placeOrder(
         productId: item.productId,
         addressId: address.id,
@@ -213,9 +214,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       await showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Order not placed'),
-          content: Text(failed.map((f) => '• ${f.$1}: ${f.$2}').join('\n')),
-          actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
+          title: Text(tr('Order not placed')),
+          content: Text(tr(failed.map((f) => '• ${f.$1}: ${f.$2}').join('\n'))),
+          actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('OK')))],
         ),
       );
       return;
@@ -230,8 +231,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           context,
           shipOrderId: o.orderId,
           description: placed.length == 1
-              ? 'Order ${o.orderNumber}'
-              : 'Order ${o.orderNumber} (${i + 1} of ${placed.length})',
+              ? tr('Order {0}', [o.orderNumber])
+              : tr('Order {0} ({1} of {2})', [o.orderNumber, i + 1, placed.length]),
           phone: address.mobile,
         );
         if (outcome == OrderPayOutcome.paid) o.paid = true;
@@ -253,7 +254,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: DT.background,
-      appBar: AppBar(flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)), foregroundColor: Colors.white, title: const Text('Checkout')),
+      appBar: AppBar(flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)), foregroundColor: Colors.white, title: Text(tr('Checkout'))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
@@ -299,11 +300,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   );
 
   Widget _addressSection() => PxSection(
-    title: 'Delivery address',
+    title: tr('Delivery address'),
     icon: Icons.location_on_outlined,
     compact: true,
     trailing: _addresses.isNotEmpty
-        ? PxLinkButton(label: 'Change', onTap: _chooseAddress)
+        ? PxLinkButton(label: tr('Change'), onTap: _chooseAddress)
         : null,
     child: Padding(
       padding: const EdgeInsets.only(top: 8),
@@ -315,13 +316,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         if (_addressError != null)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: Text(_addressError!, style: DT.text(size: 12, color: _kRed)),
+            child: Text(tr(_addressError!), style: DT.text(size: 12, color: _kRed)),
           ),
         ElevatedButton.icon(
           onPressed: _addAddress,
           style: ElevatedButton.styleFrom(backgroundColor: _kBrand, foregroundColor: Colors.white), // buttons: only #093C71
           icon: const Icon(Icons.add_location_alt_outlined),
-          label: const Text('Add delivery address'),
+          label: Text(tr('Add delivery address')),
         ),
       ]),
     ),
@@ -352,12 +353,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(i.productName, maxLines: 2, overflow: TextOverflow.ellipsis,
+                Text(trData(i.productName), maxLines: 2, overflow: TextOverflow.ellipsis,
                     style: DT.text(size: 13.5, weight: FontWeight.w700)),
                 Text('${i.quantity} × ${_inr(i.unitPrice)}', style: DT.text(size: 12, color: DT.slate500)),
               ]),
             ),
-            Text(_inr(i.unitPrice * i.quantity), style: DT.text(size: 13.5, weight: FontWeight.w800)),
+            Text(tr(_inr(i.unitPrice * i.quantity)), style: DT.text(size: 13.5, weight: FontWeight.w800)),
           ]),
         ),
     ]),
@@ -390,8 +391,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(title, style: DT.text(size: 14, weight: FontWeight.w800)),
-                    Text(subtitle, style: DT.text(size: 12, color: DT.slate500)),
+                    Text(tr(title), style: DT.text(size: 14, weight: FontWeight.w800)),
+                    Text(tr(subtitle), style: DT.text(size: 12, color: DT.slate500)),
                   ]),
                 ),
                 Icon(selected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
@@ -403,7 +404,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       );
 
   Widget _paymentSection() => PxSection(
-    title: 'Payment',
+    title: tr('Payment'),
     icon: Icons.payments_outlined,
     compact: true,
     child: Column(children: [
@@ -412,8 +413,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         selected: !_cod,
         enabled: true,
         icon: Icons.account_balance_wallet_outlined,
-        title: 'Pay online',
-        subtitle: 'UPI, cards, net banking – secured by Razorpay',
+        title: tr('Pay online'),
+        subtitle: tr('UPI, cards, net banking – secured by Razorpay'),
         onTap: () => setState(() => _cod = false),
       ),
       const SizedBox(height: 8),
@@ -421,32 +422,32 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         selected: _cod,
         enabled: _codAllowed,
         icon: Icons.local_atm_rounded,
-        title: 'Cash on delivery',
-        subtitle: _codAllowed ? 'Pay when your order arrives' : 'Not available for some items in your cart',
+        title: tr('Cash on delivery'),
+        subtitle: _codAllowed ? tr('Pay when your order arrives') : tr('Not available for some items in your cart'),
         onTap: () => setState(() => _cod = true),
       ),
       const SizedBox(height: 12),
       TextField(
         controller: _notes,
         maxLines: 2,
-        decoration: pxInputDecoration(hint: 'Note for the seller (optional)', icon: Icons.sticky_note_2_outlined),
+        decoration: pxInputDecoration(hint: tr('Note for the seller (optional)'), icon: Icons.sticky_note_2_outlined),
       ),
     ]),
   );
 
   Widget _summarySection() => PxSection(
-    title: 'Summary',
+    title: tr('Summary'),
     icon: Icons.receipt_long_outlined,
     compact: true,
     child: Column(children: [
       const SizedBox(height: 8),
-      _row('Items', _inr(_subtotal)),
-      _row('Shipping', 'Added by courier per order'),
+      _row(tr('Items'), _inr(_subtotal)),
+      _row(tr('Shipping'), tr('Added by courier per order')),
       const Divider(height: 20),
-      _row('To pay now', _cod ? 'On delivery' : '${_inr(_subtotal)} + shipping', bold: true),
+      _row(tr('To pay now'), _cod ? tr('On delivery') : tr('{0} + shipping', [_inr(_subtotal)]), bold: true),
       const SizedBox(height: 8),
       if (widget.items.length > 1)
-        Text('Each product ships as a separate order from its seller.',
+        Text(tr('Each product ships as a separate order from its seller.'),
             style: DT.text(size: 11.5, color: DT.slate500)),
     ]),
   );
@@ -454,8 +455,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _row(String a, String b, {bool bold = false}) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 3),
     child: Row(children: [
-      Expanded(child: Text(a, style: DT.text(size: 13, color: bold ? DT.onyx900 : DT.onyx600, weight: bold ? FontWeight.w800 : FontWeight.w500))),
-      Text(b, style: DT.text(size: bold ? 14.5 : 13, weight: bold ? FontWeight.w900 : FontWeight.w600)),
+      Expanded(child: Text(tr(a), style: DT.text(size: 13, color: bold ? DT.onyx900 : DT.onyx600, weight: bold ? FontWeight.w800 : FontWeight.w500))),
+      Text(tr(b), style: DT.text(size: bold ? 14.5 : 13, weight: bold ? FontWeight.w900 : FontWeight.w600)),
     ]),
   );
 
@@ -471,8 +472,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
         child: Row(children: [
           Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Items total', style: DT.text(size: 11, color: DT.slate500)),
-            Text(_inr(_subtotal), style: DT.text(size: 18, weight: FontWeight.w900)),
+            Text(tr('Items total'), style: DT.text(size: 11, color: DT.slate500)),
+            Text(tr(_inr(_subtotal)), style: DT.text(size: 18, weight: FontWeight.w900)),
           ]),
           const SizedBox(width: 14),
           Expanded(
@@ -481,7 +482,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               child: ElevatedButton(
                 onPressed: _placing || _address == null ? null : _placeOrder,
                 style: ElevatedButton.styleFrom(backgroundColor: _kBrand, foregroundColor: Colors.white), // buttons: only #093C71
-                child: Text(_cod ? 'Place order (COD)' : 'Place order & pay',
+                child: Text(_cod ? tr('Place order (COD)') : tr('Place order & pay'),
                     style: DT.text(size: 14.5, weight: FontWeight.w800, color: Colors.white)),
               ),
             ),
@@ -535,7 +536,7 @@ class _AddressSheetState extends State<_AddressSheet> {
     if (r.ok) {
       Navigator.pop(context, r.data);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(r.message), backgroundColor: _kRed));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr(r.message)), backgroundColor: _kRed));
     }
   }
 
@@ -549,7 +550,7 @@ class _AddressSheetState extends State<_AddressSheet> {
             keyboardType: kb,
             inputFormatters: fm,
             capitalization: TextCapitalization.words,
-            validator: v ?? (required ? (x) => (x ?? '').trim().isEmpty ? 'Required' : null : null),
+            validator: v ?? (required ? (x) => (x ?? '').trim().isEmpty ? tr('Required') : null : null),
           ),
         ]),
       );
@@ -567,33 +568,33 @@ class _AddressSheetState extends State<_AddressSheet> {
               shrinkWrap: true,
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
               children: [
-                Text('New delivery address', style: DT.text(size: 17, weight: FontWeight.w800)),
+                Text(tr('New delivery address'), style: DT.text(size: 17, weight: FontWeight.w800)),
                 const SizedBox(height: 12),
-                _f('full_name', 'Full name'),
-                _f('mobile_no', 'Mobile number',
+                _f('full_name', tr('Full name')),
+                _f('mobile_no', tr('Mobile number'),
                     kb: TextInputType.phone,
                     fm: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
-                    v: (x) => RegExp(r'^[6-9]\d{9}$').hasMatch((x ?? '').trim()) ? null : 'Enter a valid 10-digit number'),
-                _f('address_line1', 'House / building, street'),
-                _f('address_line2', 'Area, landmark', required: false),
+                    v: (x) => RegExp(r'^[6-9]\d{9}$').hasMatch((x ?? '').trim()) ? null : tr('Enter a valid 10-digit number')),
+                _f('address_line1', tr('House / building, street')),
+                _f('address_line2', tr('Area, landmark'), required: false),
                 Row(children: [
-                  Expanded(child: _f('village', 'Village / locality')),
+                  Expanded(child: _f('village', tr('Village / locality'))),
                   const SizedBox(width: 10),
-                  Expanded(child: _f('taluka', 'Taluka')),
+                  Expanded(child: _f('taluka', tr('Taluka'))),
                 ]),
                 Row(children: [
-                  Expanded(child: _f('district', 'District')),
+                  Expanded(child: _f('district', tr('District'))),
                   const SizedBox(width: 10),
-                  Expanded(child: _f('city', 'City')),
+                  Expanded(child: _f('city', tr('City'))),
                 ]),
                 Row(children: [
-                  Expanded(child: _f('state', 'State')),
+                  Expanded(child: _f('state', tr('State'))),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: _f('pincode', 'Pincode',
+                    child: _f('pincode', tr('Pincode'),
                         kb: TextInputType.number,
                         fm: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)],
-                        v: (x) => (x ?? '').trim().length == 6 ? null : '6 digits'),
+                        v: (x) => (x ?? '').trim().length == 6 ? null : tr('6 digits')),
                   ),
                 ]),
                 const SizedBox(height: 8),
@@ -604,7 +605,7 @@ class _AddressSheetState extends State<_AddressSheet> {
                     style: ElevatedButton.styleFrom(backgroundColor: _kBrand, foregroundColor: Colors.white), // buttons: only #093C71
                     child: _saving
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white))
-                        : const Text('Save address'),
+                        : Text(tr('Save address')),
                   ),
                 ),
               ],
@@ -632,7 +633,7 @@ class _OrderResultScreen extends StatefulWidget {
 class _OrderResultScreenState extends State<_OrderResultScreen> {
   Future<void> _pay(PlacedOrder o) async {
     final r = await OrderPaymentHelper.pay(context,
-        shipOrderId: o.orderId, description: 'Order ${o.orderNumber}', phone: widget.phone);
+        shipOrderId: o.orderId, description: tr('Order {0}', [o.orderNumber]), phone: widget.phone);
     if (r == OrderPayOutcome.paid && mounted) setState(() => o.paid = true);
   }
 
@@ -642,7 +643,7 @@ class _OrderResultScreenState extends State<_OrderResultScreen> {
     final total = widget.orders.fold<double>(0, (s, o) => s + o.total);
     return Scaffold(
       backgroundColor: DT.background,
-      appBar: AppBar(flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)), foregroundColor: Colors.white, title: const Text('Order placed'), automaticallyImplyLeading: false),
+      appBar: AppBar(flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)), foregroundColor: Colors.white, title: Text(tr('Order placed')), automaticallyImplyLeading: false),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -659,13 +660,13 @@ class _OrderResultScreenState extends State<_OrderResultScreen> {
             ),
           ),
           const SizedBox(height: 14),
-          Text(unpaid == 0 ? 'Thank you! Your order is placed' : 'Order placed – payment pending',
+          Text(unpaid == 0 ? tr('Thank you! Your order is placed') : tr('Order placed – payment pending'),
               textAlign: TextAlign.center, style: DT.text(size: 19, weight: FontWeight.w800)),
           const SizedBox(height: 4),
           Text(
             unpaid == 0
-                ? 'The seller will confirm and ship it soon.'
-                : 'Pay now to confirm ${unpaid == 1 ? 'it' : 'them'}. You can also pay later from My Orders.',
+                ? tr('The seller will confirm and ship it soon.')
+                : tr('Pay now to confirm {0}. You can also pay later from My Orders.', [unpaid == 1 ? 'it' : 'them']),
             textAlign: TextAlign.center,
             style: DT.text(size: 13, color: DT.slate500),
           ),
@@ -681,23 +682,23 @@ class _OrderResultScreenState extends State<_OrderResultScreen> {
               ),
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                 Row(children: [
-                  Expanded(child: Text(o.productName, style: DT.text(size: 14, weight: FontWeight.w800))),
+                  Expanded(child: Text(trData(o.productName), style: DT.text(size: 14, weight: FontWeight.w800))),
                   o.paymentMethod == 'COD'
-                      ? const PxPill(text: 'Cash on delivery', bg: DT.slate100, fg: DT.onyx700)
+                      ? PxPill(text: tr('Cash on delivery'), bg: DT.slate100, fg: DT.onyx700)
                       : o.paid
-                      ? const PxPill(text: 'Paid', bg: DT.emerald50, fg: DT.emerald700, icon: Icons.check_rounded)
-                      : const PxPill(text: 'Payment pending', bg: _kOrangeBg, fg: _kOrangeDark),
+                      ? PxPill(text: tr('Paid'), bg: DT.emerald50, fg: DT.emerald700, icon: Icons.check_rounded)
+                      : PxPill(text: tr('Payment pending'), bg: _kOrangeBg, fg: _kOrangeDark),
                 ]),
                 const SizedBox(height: 4),
-                Text('Order ${o.orderNumber} · Qty ${o.quantity}', style: DT.text(size: 12, color: DT.slate500)),
+                Text(tr('Order {0} · Qty {1}', [o.orderNumber, o.quantity]), style: DT.text(size: 12, color: DT.slate500)),
                 const SizedBox(height: 8),
                 Text(
-                  '${formatRupees(o.subtotal)} + ${o.shipping > 0 ? formatRupees(o.shipping) : 'free'} shipping = ${formatRupees(o.total)}',
+                  tr('{0} + {1} shipping = {2}', [formatRupees(o.subtotal), o.shipping > 0 ? formatRupees(o.shipping) : 'free', formatRupees(o.total)]),
                   style: DT.text(size: 12.5, weight: FontWeight.w700, color: DT.onyx800),
                 ),
                 if (o.paymentMethod == 'PREPAID' && !o.paid) ...[
                   const SizedBox(height: 10),
-                  ElevatedButton(onPressed: () => _pay(o), style: ElevatedButton.styleFrom(backgroundColor: _kBrand, foregroundColor: Colors.white), child: Text('Pay ${formatRupees(o.total)} now')),
+                  ElevatedButton(onPressed: () => _pay(o), style: ElevatedButton.styleFrom(backgroundColor: _kBrand, foregroundColor: Colors.white), child: Text(tr('Pay {0} now', [formatRupees(o.total)]))),
                 ],
               ]),
             ),
@@ -710,12 +711,12 @@ class _OrderResultScreenState extends State<_OrderResultScreen> {
                 border: Border.all(color: _kRedLine),
               ),
               child: Text(
-                'Not ordered (still in your cart):\n${widget.failed.map((f) => '• ${f.$1}: ${f.$2}').join('\n')}',
+                tr('Not ordered (still in your cart):\n{0}', [widget.failed.map((f) => '• ${f.$1}: ${f.$2}').join('\n')]),
                 style: DT.text(size: 12.5, color: _kRed, height: 1.5),
               ),
             ),
           const SizedBox(height: 8),
-          Text('Order total incl. shipping: ${formatRupees(total)}',
+          Text(tr('Order total incl. shipping: {0}', [formatRupees(total)]),
               textAlign: TextAlign.center, style: DT.text(size: 13, weight: FontWeight.w700)),
         ],
       ),
@@ -727,7 +728,7 @@ class _OrderResultScreenState extends State<_OrderResultScreen> {
               child: OutlinedButton(
                 onPressed: () => Navigator.pop(context),
                 style: OutlinedButton.styleFrom(foregroundColor: _kBrand, side: const BorderSide(color: _kBrand)),
-                child: const Text('Done'),
+                child: Text(tr('Done')),
               ),
             ),
             const SizedBox(width: 10),
@@ -738,12 +739,12 @@ class _OrderResultScreenState extends State<_OrderResultScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (_) => Scaffold(
-                      appBar: AppBar(flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)), foregroundColor: Colors.white, title: const Text('My orders')),
+                      appBar: AppBar(flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)), foregroundColor: Colors.white, title: Text(tr('My orders'))),
                       body: const OrdersScreen(),
                     ),
                   ),
                 ),
-                child: const Text('View my orders'),
+                child: Text(tr('View my orders')),
               ),
             ),
           ]),

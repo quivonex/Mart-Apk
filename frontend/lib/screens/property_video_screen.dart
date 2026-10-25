@@ -19,6 +19,7 @@ import 'package:video_player/video_player.dart';
 import '../constants/design_tokens.dart';
 import '../models/property_model.dart';
 import '../services/real_estate_service.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -82,15 +83,15 @@ class PropertyVideoScreen extends StatefulWidget {
         const <PropertyVideo>[];
     if (!r.isSuccess || r.data == null) {
       messenger.showSnackBar(SnackBar(
-        content: Text(r.message ?? 'Could not load the video'),
+        content: Text(r.message ?? tr('Could not load the video')),
         backgroundColor: _kRed,
         behavior: SnackBarBehavior.floating,
       ));
       return;
     }
     if (videos.isEmpty) {
-      messenger.showSnackBar(const SnackBar(
-        content: Text('No video tour has been uploaded for this property yet.'),
+      messenger.showSnackBar(SnackBar(
+        content: Text(tr('No video tour has been uploaded for this property yet.')),
         behavior: SnackBarBehavior.floating,
       ));
       return;
@@ -98,8 +99,8 @@ class PropertyVideoScreen extends StatefulWidget {
     nav.push(MaterialPageRoute(
       builder: (_) => PropertyVideoScreen(
         videos: videos,
-        title: title,
-        subtitle: subtitle,
+        title: tr(title),
+        subtitle: trN(subtitle),
       ),
     ));
   }
@@ -151,7 +152,7 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
     if (widget.videos.isEmpty) {
       setState(() {
         _loading = false;
-        _error = 'No video available.';
+        _error = tr('No video available.');
       });
       return;
     }
@@ -159,7 +160,7 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
     if (uri == null || !uri.hasScheme) {
       setState(() {
         _loading = false;
-        _error = 'This video link is not valid.';
+        _error = tr('This video link is not valid.');
       });
       return;
     }
@@ -182,7 +183,7 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
       if (!mounted || _index != i) return;
       setState(() {
         _loading = false;
-        _error = 'This video could not be played here.';
+        _error = tr('This video could not be played here.');
       });
     }
   }
@@ -233,7 +234,7 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open the video link')),
+        SnackBar(content: Text(tr('Could not open the video link'))),
       );
     }
   }
@@ -247,7 +248,7 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
 
   String _videoName(int i) {
     final t = widget.videos[i].title.trim();
-    return t.isNotEmpty ? t : 'Video tour ${i + 1}';
+    return t.isNotEmpty ? t : tr('Video tour {0}', [i + 1]);
   }
 
   // ---------------------------------------------------------------- build
@@ -265,7 +266,7 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.title,
+            Text(trData(widget.title),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: DT.text(
@@ -273,7 +274,7 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
             Text(
                 widget.subtitle?.isNotEmpty == true
                     ? widget.subtitle!
-                    : 'Video tour',
+                    : tr('Video tour'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: DT.text(size: 11.5, color: const Color(0xCCFFFFFF))),
@@ -282,7 +283,7 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
         actions: [
           if (_url.isNotEmpty)
             IconButton(
-              tooltip: 'Open in browser',
+              tooltip: tr('Open in browser'),
               onPressed: _openExternally,
               icon: const Icon(Icons.open_in_new_rounded),
             ),
@@ -400,7 +401,7 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
             padding: const EdgeInsets.fromLTRB(12, 0, 8, 4),
             child: Row(
               children: [
-                Text(_fmt(v.position),
+                Text(tr(_fmt(v.position)),
                     style: DT.text(
                         size: 11, weight: FontWeight.w600, color: Colors.white)),
                 Expanded(
@@ -428,12 +429,12 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
                     ),
                   ),
                 ),
-                Text(_fmt(v.duration),
+                Text(tr(_fmt(v.duration)),
                     style: DT.text(
                         size: 11, weight: FontWeight.w600, color: Colors.white)),
                 IconButton(
                   visualDensity: VisualDensity.compact,
-                  tooltip: v.volume == 0 ? 'Unmute' : 'Mute',
+                  tooltip: v.volume == 0 ? tr('Unmute') : tr('Mute'),
                   onPressed: () => c.setVolume(v.volume == 0 ? 1 : 0),
                   icon: Icon(
                     v.volume == 0
@@ -490,7 +491,7 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
                   color: Color(0xFFFCA5A5), size: 28),
             ),
             const SizedBox(height: 12),
-            Text(_error ?? 'Something went wrong',
+            Text(_error ?? tr('Something went wrong'),
                 textAlign: TextAlign.center,
                 style: DT.text(
                     size: 13.5, weight: FontWeight.w600, color: Colors.white)),
@@ -503,7 +504,7 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
                 OutlinedButton.icon(
                   onPressed: () => _load(_index),
                   icon: const Icon(Icons.refresh_rounded, size: 16),
-                  label: const Text('Retry'),
+                  label: Text(tr('Retry')),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white,
                     side: const BorderSide(color: Color(0x66FFFFFF)),
@@ -515,7 +516,7 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
                   ElevatedButton.icon(
                     onPressed: _openExternally,
                     icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                    label: const Text('Open in browser'),
+                    label: Text(tr('Open in browser')),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _kBrand, // buttons: only #093C71
                       foregroundColor: Colors.white,
@@ -551,7 +552,7 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
                   const Icon(Icons.play_circle_fill_rounded,
                       size: 13, color: Colors.white),
                   const SizedBox(width: 4),
-                  Text('VIDEO TOUR',
+                  Text(tr('VIDEO TOUR'),
                       style: DT.text(
                           size: 9.5,
                           weight: FontWeight.w800,
@@ -569,15 +570,15 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
         ),
         const SizedBox(height: 10),
         if (widget.videos.isNotEmpty)
-          Text(_videoName(_index),
+          Text(tr(_videoName(_index)),
               style: DT.text(
                   size: 17, weight: FontWeight.w800, color: Colors.white)),
         const SizedBox(height: 4),
-        Text('Tap the video to show or hide controls.',
+        Text(tr('Tap the video to show or hide controls.'),
             style: DT.text(size: 12, color: _V.muted)),
         if (many) ...[
           const SizedBox(height: 20),
-          Text('All videos',
+          Text(tr('All videos'),
               style: DT.text(
                   size: 13, weight: FontWeight.w700, color: Colors.white)),
           const SizedBox(height: 10),
@@ -626,7 +627,7 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(_videoName(i),
+                child: Text(tr(_videoName(i)),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: DT.text(
@@ -635,7 +636,7 @@ class _PropertyVideoScreenState extends State<PropertyVideoScreen> {
                         color: active ? Colors.white : const Color(0xFFC9DBEE))),
               ),
               if (active)
-                Text('Playing',
+                Text(tr('Playing'),
                     style: DT.text(
                         size: 11, weight: FontWeight.w700, color: _V.orange)),
             ],

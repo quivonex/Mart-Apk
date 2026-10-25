@@ -12,6 +12,7 @@ import '../constants/design_tokens.dart';
 import '../models/catalog_models.dart';
 import 'company_ui.dart';
 import 'product_ui.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -63,11 +64,11 @@ class CatalogPickerField<T extends CatalogOption> extends StatelessWidget {
 
     String hint;
     if (!enabled) {
-      hint = disabledHint ?? 'Select $label';
+      hint = disabledHint ?? tr('Select {0}', [label]);
     } else if (loading) {
-      hint = 'Loading…';
+      hint = tr('Loading…');
     } else if (items.isEmpty) {
-      hint = onAddNew != null ? 'None yet – tap to add' : 'None available';
+      hint = onAddNew != null ? tr('None yet – tap to add') : tr('None available');
     } else {
       hint = 'Select ${label.toLowerCase()}';
     }
@@ -83,7 +84,7 @@ class CatalogPickerField<T extends CatalogOption> extends StatelessWidget {
           optional: !required,
           trailing: (onManage != null && enabled)
               ? PxLinkButton(
-            label: 'Manage',
+            label: tr('Manage'),
             icon: Icons.open_in_new_rounded,
             iconAfter: true,
             onTap: onManage,
@@ -114,7 +115,7 @@ class CatalogPickerField<T extends CatalogOption> extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      selected?.label ?? hint,
+                      tr(selected?.label ?? hint),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(
@@ -153,11 +154,11 @@ class CatalogPickerField<T extends CatalogOption> extends StatelessWidget {
                 const Icon(Icons.error_outline_rounded, size: 14, color: _kRed),
                 const SizedBox(width: 4),
                 Expanded(
-                    child: Text(error!, style: DT.text(size: 11.5, color: _kRed))),
+                    child: Text(tr(error!), style: DT.text(size: 11.5, color: _kRed))),
                 if (onRetry != null)
                   GestureDetector(
                     onTap: onRetry,
-                    child: Text('Retry',
+                    child: Text(tr('Retry'),
                         style: DT.text(size: 11.5, weight: FontWeight.w700, color: _kBrand)),
                   ),
               ],
@@ -166,7 +167,7 @@ class CatalogPickerField<T extends CatalogOption> extends StatelessWidget {
         else if (missing)
           Padding(
             padding: const EdgeInsets.only(top: 5, left: 2),
-            child: Text('$label is required', style: DT.text(size: 11.5, color: _kRed)),
+            child: Text(tr('{0} is required', [label]), style: DT.text(size: 11.5, color: _kRed)),
           ),
       ],
     );
@@ -182,7 +183,7 @@ class CatalogPickerField<T extends CatalogOption> extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(DT.rXl)),
       ),
       builder: (ctx) => _PickerSheet<T>(
-        title: label,
+        title: tr(label),
         items: items,
         selectedId: selected?.id,
         canAdd: onAddNew != null,
@@ -252,7 +253,7 @@ class _PickerSheetState<T extends CatalogOption> extends State<_PickerSheet<T>> 
               child: Row(
                 children: [
                   Expanded(
-                    child: Text('Select ${widget.title.toLowerCase()}',
+                    child: Text(tr('Select {0}', [widget.title.toLowerCase()]),
                         // ✅ Reverted back to dark
                         style: DT.text(size: 16.5, weight: FontWeight.w800)),
                   ),
@@ -271,7 +272,7 @@ class _PickerSheetState<T extends CatalogOption> extends State<_PickerSheet<T>> 
                   // ✅ Reverted back to dark
                   style: DT.text(size: 13.5),
                   decoration: InputDecoration(
-                    hintText: 'Search',
+                    hintText: tr('Search'),
                     hintStyle: DT.text(size: 13.5, color: DT.slate400),
                     prefixIcon: const Icon(Icons.search_rounded, color: DT.slate400),
                     filled: true,
@@ -293,7 +294,7 @@ class _PickerSheetState<T extends CatalogOption> extends State<_PickerSheet<T>> 
                       color: _kTint, borderRadius: BorderRadius.circular(DT.rSm)),
                   child: const Icon(Icons.add_rounded, color: _kBrand, size: 20),
                 ),
-                title: Text('Add new ${widget.title.toLowerCase()}',
+                title: Text(tr('Add new {0}', [widget.title.toLowerCase()]),
                     style: DT.text(size: 14, weight: FontWeight.w700, color: _kBrand)),
                 onTap: () => Navigator.pop(context, _PickerResult<T>.add()),
               ),
@@ -302,7 +303,7 @@ class _PickerSheetState<T extends CatalogOption> extends State<_PickerSheet<T>> 
               child: filtered.isEmpty
                   ? Center(
                 child: Text(
-                  widget.items.isEmpty ? 'Nothing here yet' : 'No match for "$_q"',
+                  widget.items.isEmpty ? tr('Nothing here yet') : tr('No match for "{0}"', [_q]),
                   style: DT.text(size: 13, color: DT.slate500),
                 ),
               )
@@ -313,7 +314,7 @@ class _PickerSheetState<T extends CatalogOption> extends State<_PickerSheet<T>> 
                   final item = filtered[i];
                   final sel = item.id == widget.selectedId;
                   return ListTile(
-                    title: Text(item.label,
+                    title: Text(tr(item.label),
                         style: DT.text(
                             size: 14,
                             weight: sel ? FontWeight.w700 : FontWeight.w500,
@@ -321,7 +322,7 @@ class _PickerSheetState<T extends CatalogOption> extends State<_PickerSheet<T>> 
                             color: sel ? _kBrand : DT.onyx900)),
                     subtitle: item.sublabel.isEmpty
                         ? null
-                        : Text(item.sublabel,
+                        : Text(tr(item.sublabel),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: 12, color: DT.slate500)),
@@ -387,9 +388,9 @@ class _CatalogManageListState<T extends CatalogOption> extends State<CatalogMana
     if (widget.error != null && widget.items.isEmpty) {
       return StateView(
         icon: Icons.cloud_off_rounded,
-        title: 'Could not load',
-        message: widget.error!,
-        actionLabel: 'Try again',
+        title: tr('Could not load'),
+        message: tr(widget.error!),
+        actionLabel: tr('Try again'),
         onAction: widget.onRefresh,
         isError: true,
       );
@@ -397,9 +398,9 @@ class _CatalogManageListState<T extends CatalogOption> extends State<CatalogMana
     if (widget.items.isEmpty) {
       return StateView(
         icon: widget.emptyIcon,
-        title: widget.emptyTitle,
-        message: widget.emptyMessage,
-        actionLabel: 'Add new',
+        title: tr(widget.emptyTitle),
+        message: tr(widget.emptyMessage),
+        actionLabel: tr('Add new'),
         onAction: widget.onAdd,
       );
     }
@@ -426,7 +427,7 @@ class _CatalogManageListState<T extends CatalogOption> extends State<CatalogMana
               // ✅ Reverted back to dark
               style: DT.text(size: 13.5),
               decoration: InputDecoration(
-                hintText: 'Search',
+                hintText: tr('Search'),
                 hintStyle: DT.text(size: 13.5, color: DT.slate400),
                 prefixIcon: const Icon(Icons.search_rounded, color: DT.slate400),
                 filled: true,
@@ -446,9 +447,9 @@ class _CatalogManageListState<T extends CatalogOption> extends State<CatalogMana
           ],
           Row(
             children: [
-              _chip('Active', active, !_showInactive, () => setState(() => _showInactive = false)),
+              _chip(tr('Active'), active, !_showInactive, () => setState(() => _showInactive = false)),
               const SizedBox(width: 8),
-              _chip('Inactive', inactive, _showInactive,
+              _chip(tr('Inactive'), inactive, _showInactive,
                       () => setState(() => _showInactive = true)),
             ],
           ),
@@ -457,7 +458,7 @@ class _CatalogManageListState<T extends CatalogOption> extends State<CatalogMana
             Padding(
               padding: const EdgeInsets.only(top: 40),
               child: Text(
-                _showInactive ? 'Nothing deactivated.' : 'No matches.',
+                _showInactive ? tr('Nothing deactivated.') : tr('No matches.'),
                 textAlign: TextAlign.center,
                 style: DT.text(size: 13, color: DT.slate500),
               ),
@@ -509,14 +510,14 @@ class _CatalogManageListState<T extends CatalogOption> extends State<CatalogMana
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(item.label,
+                    Text(tr(item.label),
                         style: DT.text(
                             size: 14,
                             weight: FontWeight.w700,
                             color: item.isActive ? _kBrand : DT.slate500)),
                     if (item.sublabel.isNotEmpty) ...[
                       const SizedBox(height: 2),
-                      Text(item.sublabel,
+                      Text(tr(item.sublabel),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(size: 12, color: DT.slate500)),
@@ -532,10 +533,10 @@ class _CatalogManageListState<T extends CatalogOption> extends State<CatalogMana
                 itemBuilder: (_) => [
                   PopupMenuItem(
                       value: 'edit',
-                      child: Text('Edit', style: DT.text(size: 13.5, weight: FontWeight.w600, color: _kBrand))),
+                      child: Text(tr('Edit'), style: DT.text(size: 13.5, weight: FontWeight.w600, color: _kBrand))),
                   PopupMenuItem(
                     value: 'toggle',
-                    child: Text(item.isActive ? 'Deactivate' : 'Restore',
+                    child: Text(item.isActive ? tr('Deactivate') : tr('Restore'),
                         style: DT.text(
                             size: 13.5,
                             weight: FontWeight.w600,
@@ -560,11 +561,11 @@ Future<bool> catalogToggleActive(
     }) async {
   final ok = await confirmAction(
     context,
-    title: currentlyActive ? 'Deactivate $name?' : 'Restore $name?',
+    title: currentlyActive ? tr('Deactivate {0}?', [name]) : tr('Restore {0}?', [name]),
     message: currentlyActive
-        ? 'It will no longer appear when adding products. You can restore it later.'
-        : 'It will be available again when adding products.',
-    confirmLabel: currentlyActive ? 'Deactivate' : 'Restore',
+        ? tr('It will no longer appear when adding products. You can restore it later.')
+        : tr('It will be available again when adding products.'),
+    confirmLabel: currentlyActive ? tr('Deactivate') : tr('Restore'),
     destructive: currentlyActive,
   );
   if (!ok || !context.mounted) return false;
@@ -603,7 +604,7 @@ class CatalogFormScaffold extends StatelessWidget {
       // ✅ FIX: Wrapped in PreferredSize with height 65 to prevent 1px overflow
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(65),
-        child: CompanyTopBar(title: title, subtitle: subtitle),
+        child: CompanyTopBar(title: tr(title), subtitle: trN(subtitle)),
       ),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
@@ -646,7 +647,7 @@ class CatalogFormScaffold extends StatelessWidget {
                     width: 22,
                     height: 22,
                     child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                    : Text(saveLabel,
+                    : Text(tr(saveLabel),
                     style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
               ),
             ),
@@ -701,13 +702,13 @@ class CatalogTextField extends StatelessWidget {
       // ✅ Reverted back to dark
       style: DT.text(size: 13.5),
       decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
+        labelText: tr(label),
+        hintText: trN(hint),
         labelStyle: DT.text(size: 13, color: DT.slate500),
         hintStyle: DT.text(size: 13, color: DT.slate400),
         // ✅ Reverted back to dark
         prefixIcon: icon == null ? null : Icon(icon, size: 19, color: DT.slate400),
-        suffixText: suffixText,
+        suffixText: trN(suffixText),
         filled: true,
         fillColor: Colors.white,
         isDense: true,

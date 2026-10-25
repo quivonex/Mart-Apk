@@ -10,6 +10,7 @@ import 'package:http/http.dart' as http;
 import '../constants/design_tokens.dart';
 import '../services/api_urls.dart';
 import '../utils/shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -44,7 +45,7 @@ String _date(String iso) {
   if (d == null) return '';
   const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   final l = d.toLocal();
-  return '${l.day} ${m[l.month - 1]} ${l.year}';
+  return '${l.day} ${tr(m[l.month - 1])} ${l.year}';
 }
 
 String _inr(Object? raw) {
@@ -81,7 +82,7 @@ class _MyEnquiriesScreenState extends State<MyEnquiriesScreen> {
     });
     try {
       final token = await SharedPreferencesHelper.getAccessToken();
-      if (token == null || token.isEmpty) throw Exception('Please log in to see your enquiries.');
+      if (token == null || token.isEmpty) throw Exception(tr('Please log in to see your enquiries.'));
       final res = await http
           .post(
         Uri.parse('${ApiUrls.baseUrl}/enquiry/my_product-enquiries/'),
@@ -89,9 +90,9 @@ class _MyEnquiriesScreenState extends State<MyEnquiriesScreen> {
         body: '{}',
       )
           .timeout(const Duration(seconds: 25));
-      if (res.statusCode == 401) throw Exception('Your session has expired. Please log in again.');
+      if (res.statusCode == 401) throw Exception(tr('Your session has expired. Please log in again.'));
       final j = jsonDecode(res.body);
-      if (res.statusCode != 200 || j is! Map) throw Exception('Could not load enquiries (${res.statusCode}).');
+      if (res.statusCode != 200 || j is! Map) throw Exception(tr('Could not load enquiries ({0}).', [res.statusCode]));
       final list = [for (final e in (j['data'] as List? ?? []).whereType<Map>()) Map<String, dynamic>.from(e)];
       if (!mounted) return;
       setState(() {
@@ -103,7 +104,7 @@ class _MyEnquiriesScreenState extends State<MyEnquiriesScreen> {
       final s = e.toString().replaceFirst('Exception: ', '');
       setState(() {
         _loading = false;
-        _error = s.contains('SocketException') || s.contains('ClientException') ? 'Could not reach the server.' : s;
+        _error = s.contains('SocketException') || s.contains('ClientException') ? tr('Could not reach the server.') : s;
       });
     }
   }
@@ -120,8 +121,8 @@ class _MyEnquiriesScreenState extends State<MyEnquiriesScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('My Enquiries', style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
-            Text(_loading ? 'Loading…' : '${_items.length} product enquiries',
+            Text(tr('My Enquiries'), style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
+            Text(_loading ? tr('Loading…') : tr('{0} product enquiries', [_items.length]),
                 style: DT.text(size: 11.5, color: const Color(0xCCFFFFFF))),
           ],
         ),
@@ -129,10 +130,10 @@ class _MyEnquiriesScreenState extends State<MyEnquiriesScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: _ME.brand))
           : _error != null
-          ? _state(Icons.cloud_off_rounded, 'Could not load enquiries', _error!, retry: true)
+          ? _state(Icons.cloud_off_rounded, tr('Could not load enquiries'), _error!, retry: true)
           : _items.isEmpty
-          ? _state(Icons.forum_outlined, 'No enquiries yet',
-          'Enquiries you send from a product page will show here with their progress.')
+          ? _state(Icons.forum_outlined, tr('No enquiries yet'),
+          tr('Enquiries you send from a product page will show here with their progress.'))
           : RefreshIndicator(
         color: _ME.brand,
         onRefresh: _load,
@@ -158,16 +159,16 @@ class _MyEnquiriesScreenState extends State<MyEnquiriesScreen> {
         ),
       ),
       const SizedBox(height: 16),
-      Text(title, textAlign: TextAlign.center, style: DT.text(size: 16, weight: FontWeight.w800, color: _ME.ink)),
+      Text(tr(title), textAlign: TextAlign.center, style: DT.text(size: 16, weight: FontWeight.w800, color: _ME.ink)),
       const SizedBox(height: 6),
-      Text(body, textAlign: TextAlign.center, style: DT.text(size: 13, color: _ME.muted, height: 1.45)),
+      Text(tr(body), textAlign: TextAlign.center, style: DT.text(size: 13, color: _ME.muted, height: 1.45)),
       if (retry) ...[
         const SizedBox(height: 18),
         Center(
           child: FilledButton(
             style: FilledButton.styleFrom(backgroundColor: _kBrand), // buttons: only #093C71
             onPressed: _load,
-            child: const Text('Try again'),
+            child: Text(tr('Try again')),
           ),
         ),
       ],
@@ -177,10 +178,10 @@ class _MyEnquiriesScreenState extends State<MyEnquiriesScreen> {
   Widget _card(Map<String, dynamic> e) {
     final image = _img(e['product_image']);
     final steps = <(String, bool)>[
-      ('Sent', true),
-      ('Supplier', e['is_sent_to_company'] == true),
-      ('Dispatched', e['is_dispatched'] == true),
-      ('Delivered', e['is_delivered'] == true || e['is_complete'] == true),
+      (tr('Sent'), true),
+      (tr('Supplier'), e['is_sent_to_company'] == true),
+      (tr('Dispatched'), e['is_dispatched'] == true),
+      (tr('Delivered'), e['is_delivered'] == true || e['is_complete'] == true),
     ];
     final reached = steps.lastIndexWhere((s) => s.$2);
     final variant = [e['selected_variant'], e['selected_color'], e['selected_size']]
@@ -227,7 +228,7 @@ class _MyEnquiriesScreenState extends State<MyEnquiriesScreen> {
                     const SizedBox(height: 4),
                     Text(
                       [
-                        'Qty ${e['quantity'] ?? 1}',
+                        tr('Qty {0}', [e['quantity'] ?? 1]),
                         if (variant.isNotEmpty) variant,
                         if (total != null && '$total' != 'null') _inr(total),
                       ].join(' · '),
@@ -264,7 +265,7 @@ class _MyEnquiriesScreenState extends State<MyEnquiriesScreen> {
                       child: i <= reached ? const Icon(Icons.check_rounded, size: 13, color: Colors.white) : null,
                     ),
                     const SizedBox(height: 4),
-                    Text(steps[i].$1,
+                    Text(tr(steps[i].$1),
                         style: DT.text(
                             size: 10,
                             weight: FontWeight.w700,
@@ -283,7 +284,7 @@ class _MyEnquiriesScreenState extends State<MyEnquiriesScreen> {
             ],
           ),
           const SizedBox(height: 6),
-          Text('Sent on ${_date('${e['created_at'] ?? ''}')}', style: DT.text(size: 11, color: _ME.hint)),
+          Text(tr('Sent on {0}', [_date('${e['created_at'] ?? ''}')]), style: DT.text(size: 11, color: _ME.hint)),
         ],
       ),
     );

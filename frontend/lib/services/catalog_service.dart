@@ -36,6 +36,7 @@ import '../models/catalog_models.dart';
 import '../models/my_product_model.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'api_urls.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class CatalogService {
   static const _timeout = Duration(seconds: 30);
@@ -76,10 +77,10 @@ class CatalogService {
   }
 
   static String _netError(Object e) {
-    if (e is SocketException) return 'No internet connection.';
-    if (e is TimeoutException) return 'The server took too long to respond.';
-    if (e is http.ClientException) return 'Could not reach the server.';
-    return 'Something went wrong: $e';
+    if (e is SocketException) return tr('No internet connection.');
+    if (e is TimeoutException) return tr('The server took too long to respond.');
+    if (e is http.ClientException) return tr('Could not reach the server.');
+    return tr('Something went wrong: {0}', [e]);
   }
 
   /// Backend success flags vary: true, "success", or only an HTTP 2xx (branch create).
@@ -168,7 +169,7 @@ class CatalogService {
           if (email.isNotEmpty) 'email': email,
           'address': address,
         },
-        'Branch created',
+        tr('Branch created'),
         parse: CatalogBranch.fromJson,
       );
 
@@ -188,14 +189,14 @@ class CatalogService {
           'email': email.isEmpty ? null : email,
           'address': address,
         },
-        'Branch updated',
+        tr('Branch updated'),
         parse: CatalogBranch.fromJson,
       );
 
   static Future<CatalogResult<void>> setBranchActive(int id, bool active) => _action(
       active ? '/branch/branch/restore/' : '/branch/branch/soft-delete/',
       {'id': id},
-      active ? 'Branch restored' : 'Branch deactivated');
+      active ? tr('Branch restored') : tr('Branch deactivated'));
 
   // ────────────────────────────── CATEGORY ───────────────────────────────
   /// Active categories of a company (for the product form).
@@ -228,7 +229,7 @@ class CatalogService {
           'description': description,
           if (branchId != null) 'branch': branchId,
         },
-        'Category created',
+        tr('Category created'),
         parse: CatalogCategory.fromJson,
       );
 
@@ -241,14 +242,14 @@ class CatalogService {
       _action(
         '/product/category/update/',
         {'id': id, 'name': name, 'description': description, 'branch': branchId},
-        'Category updated',
+        tr('Category updated'),
         parse: CatalogCategory.fromJson,
       );
 
   static Future<CatalogResult<void>> setCategoryActive(int id, bool active) => _action(
       active ? '/product/category/restore/' : '/product/category/soft-delete/',
       {'id': id},
-      active ? 'Category restored' : 'Category deactivated');
+      active ? tr('Category restored') : tr('Category deactivated'));
 
   // ──────────────────────────── SUBCATEGORY ──────────────────────────────
   static Future<CatalogListResult<CatalogSubCategory>> getSubCategories(int categoryId) async {
@@ -274,7 +275,7 @@ class CatalogService {
       _action(
         '/product/subcategory/create/',
         {'category': categoryId, 'name': name, 'description': description},
-        'Subcategory created',
+        tr('Subcategory created'),
         parse: CatalogSubCategory.fromJson,
       );
 
@@ -287,14 +288,14 @@ class CatalogService {
       _action(
         '/product/subcategory/update/',
         {'id': id, 'category': categoryId, 'name': name, 'description': description},
-        'Subcategory updated',
+        tr('Subcategory updated'),
         parse: CatalogSubCategory.fromJson,
       );
 
   static Future<CatalogResult<void>> setSubCategoryActive(int id, bool active) => _action(
       active ? '/product/subcategory/restore/' : '/product/subcategory/soft-delete/',
       {'id': id},
-      active ? 'Subcategory restored' : 'Subcategory deactivated');
+      active ? tr('Subcategory restored') : tr('Subcategory deactivated'));
 
   // ──────────────────────────────── UNIT ─────────────────────────────────
   /// My units + global (admin) units. activeOnly for the product form.
@@ -324,7 +325,7 @@ class CatalogService {
     required String shortName,
   }) =>
       _action('/product/unit/create/', {'name': name, 'short_name': shortName},
-          'Unit created',
+          tr('Unit created'),
           parse: CatalogUnit.fromJson);
 
   static Future<CatalogResult<CatalogUnit>> updateUnit(
@@ -333,13 +334,13 @@ class CatalogService {
         required String shortName,
       }) =>
       _action('/product/unit/update/', {'id': id, 'name': name, 'short_name': shortName},
-          'Unit updated',
+          tr('Unit updated'),
           parse: CatalogUnit.fromJson);
 
   static Future<CatalogResult<void>> setUnitActive(int id, bool active) => _action(
       active ? '/product/unit/restore/' : '/product/unit/soft-delete/',
       {'id': id},
-      active ? 'Unit restored' : 'Unit deactivated');
+      active ? tr('Unit restored') : tr('Unit deactivated'));
 
   // ──────────────────────────────── BRAND ────────────────────────────────
   static Future<CatalogListResult<CatalogBrand>> getBrands(int subcategoryId) async {

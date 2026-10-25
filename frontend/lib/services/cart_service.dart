@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/cart_model.dart';
 import 'api_urls.dart';
 import '../utils/shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 /// Result of [CartService.shippingEstimate].
 class CartShippingEstimate {
@@ -58,7 +59,7 @@ class CartService {
     try {
       final token = await SharedPreferencesHelper.getAccessToken();
       if (token == null || token.isEmpty) {
-        return const CartShippingEstimate(note: 'Log in to see shipping');
+        return CartShippingEstimate(note: tr('Log in to see shipping'));
       }
 
       // 1. Saved delivery address (first one) – cached once found.
@@ -75,7 +76,7 @@ class CartService {
         }
       }
       if (_addressId == null) {
-        return const CartShippingEstimate(note: 'Add a delivery address at checkout to see shipping');
+        return CartShippingEstimate(note: tr('Add a delivery address at checkout to see shipping'));
       }
 
       // 2. Live courier rate for the selected products.
@@ -97,13 +98,13 @@ class CartService {
       final total = double.tryParse('${r['total_shipping_charge'] ?? ''}') ?? 0;
       return total > 0
           ? CartShippingEstimate(amount: total, pincode: _addressPincode)
-          : CartShippingEstimate(pincode: _addressPincode, note: 'Calculated by courier at checkout');
+          : CartShippingEstimate(pincode: _addressPincode, note: tr('Calculated by courier at checkout'));
     } catch (e) {
       final s = e.toString();
       return CartShippingEstimate(
         note: s.contains('SocketException') || s.contains('ClientException')
-            ? 'Could not reach the server'
-            : 'Shipping will be calculated at checkout',
+            ? tr('Could not reach the server')
+            : tr('Shipping will be calculated at checkout'),
       );
     }
   }
@@ -120,7 +121,7 @@ class CartService {
       final accessToken = await SharedPreferencesHelper.getAccessToken();
 
       if (accessToken == null) {
-        throw Exception('Please login to add items to cart');
+        throw Exception(tr('Please login to add items to cart'));
       }
 
       final response = await http.post(
@@ -137,9 +138,9 @@ class CartService {
       if (response.statusCode == 200) {
         return AddToCartResponse.fromJson(responseData);
       } else if (response.statusCode == 401) {
-        throw Exception('Session expired. Please login again.');
+        throw Exception(tr('Session expired. Please login again.'));
       } else {
-        String errorMessage = 'Failed to add to cart';
+        String errorMessage = tr('Failed to add to cart');
         if (responseData is Map) {
           if (responseData.containsKey('message')) {
             errorMessage = responseData['message'];
@@ -165,7 +166,7 @@ class CartService {
       final accessToken = await SharedPreferencesHelper.getAccessToken();
 
       if (accessToken == null) {
-        throw Exception('Please login to view cart');
+        throw Exception(tr('Please login to view cart'));
       }
 
       final response = await http.post(
@@ -182,9 +183,9 @@ class CartService {
       if (response.statusCode == 200) {
         return GetCartListResponse.fromJson(responseData);
       } else if (response.statusCode == 401) {
-        throw Exception('Session expired. Please login again.');
+        throw Exception(tr('Session expired. Please login again.'));
       } else {
-        String errorMessage = 'Failed to fetch cart';
+        String errorMessage = tr('Failed to fetch cart');
         if (responseData is Map) {
           if (responseData.containsKey('message')) {
             errorMessage = responseData['message'];
@@ -213,7 +214,7 @@ class CartService {
   }) async {
     final userId = await SharedPreferencesHelper.getUserId();
     if (userId == null) {
-      throw Exception('Please login to update cart');
+      throw Exception(tr('Please login to update cart'));
     }
     final response = await addToCart(
       AddToCartRequest(productId: productId, userId: userId, quantity: delta),
@@ -231,7 +232,7 @@ class CartService {
       final accessToken = await SharedPreferencesHelper.getAccessToken();
 
       if (accessToken == null) {
-        throw Exception('Please login to remove items from cart');
+        throw Exception(tr('Please login to remove items from cart'));
       }
 
       final response = await http.post(
@@ -248,9 +249,9 @@ class CartService {
       if (response.statusCode == 200) {
         return RemoveFromCartResponse.fromJson(responseData);
       } else if (response.statusCode == 401) {
-        throw Exception('Session expired. Please login again.');
+        throw Exception(tr('Session expired. Please login again.'));
       } else {
-        String errorMessage = 'Failed to remove item';
+        String errorMessage = tr('Failed to remove item');
         if (responseData is Map) {
           if (responseData.containsKey('message')) {
             errorMessage = responseData['message'];

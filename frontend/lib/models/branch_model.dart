@@ -1,3 +1,4 @@
+import 'package:qnx_mart/l10n/app_language.dart';
 // ============ Company Name (for dropdown) ============
 
 class CompanyName {
@@ -157,7 +158,7 @@ class BranchActionResponse {
   }
 
   String get displayMessage {
-    if (isSuccess) return message ?? 'Success';
+    if (isSuccess) return message ?? tr('Success');
 
     if (errors != null && errors!.isNotEmpty) {
       final firstKey = errors!.keys.first;
@@ -168,6 +169,6 @@ class BranchActionResponse {
       return firstError.toString();
     }
 
-    return message ?? 'Something went wrong';
+    return message ?? tr('Something went wrong');
   }
 }

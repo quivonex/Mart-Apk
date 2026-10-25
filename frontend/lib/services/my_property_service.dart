@@ -13,6 +13,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../utils/shared_preferences_helper.dart';
 import 'api_urls.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 String _url(Object? raw) {
   final v = '${raw ?? ''}'.trim();
@@ -164,19 +165,19 @@ class MyPropertyService {
 
   static String _err(Object e) {
     final s = e.toString();
-    if (s.contains('SocketException') || s.contains('ClientException')) return 'Could not reach the server.';
-    if (e is TimeoutException) return 'The server took too long to respond.';
+    if (s.contains('SocketException') || s.contains('ClientException')) return tr('Could not reach the server.');
+    if (e is TimeoutException) return tr('The server took too long to respond.');
     return s.replaceFirst('Exception: ', '');
   }
 
   static String _msg(int code, Map<String, dynamic> j, String fb) =>
-      code == 401 ? 'Your session has expired. Please log in again.' : '${j['message'] ?? j['detail'] ?? j['error'] ?? fb}';
+      code == 401 ? tr('Your session has expired. Please log in again.') : '${j['message'] ?? j['detail'] ?? j['error'] ?? fb}';
 
   static Future<MyPropertyResult<List<MyProperty>>> myProperties() async {
     try {
       final (code, j) = await _post('/real_estate/my/properties/', {});
       if (code >= 300 || j['status'] == false || j['success'] == false) {
-        return MyPropertyResult(false, _msg(code, j, 'Could not load your properties'), const []);
+        return MyPropertyResult(false, _msg(code, j, tr('Could not load your properties')), const []);
       }
       final list = (j['data'] as List? ?? [])
           .whereType<Map>()
@@ -191,7 +192,7 @@ class MyPropertyService {
   static Future<MyPropertyResult<List<PropertyPlan>>> plans() async {
     try {
       final (code, j) = await _post('/payment/property-subscription-plan/list/', {}, auth: false);
-      if (code >= 300 || j['success'] == false) return MyPropertyResult(false, _msg(code, j, 'Could not load plans'), const []);
+      if (code >= 300 || j['success'] == false) return MyPropertyResult(false, _msg(code, j, tr('Could not load plans')), const []);
       final list = (j['data'] as List? ?? [])
           .whereType<Map>()
           .map((e) => PropertyPlan.fromJson(Map<String, dynamic>.from(e)))
@@ -212,7 +213,7 @@ class MyPropertyService {
         'plan_id': planId,
       });
       if (code >= 300 || j['success'] != true || j['data'] is! Map) {
-        return MyPropertyResult(false, _msg(code, j, 'Could not start the payment'));
+        return MyPropertyResult(false, _msg(code, j, tr('Could not start the payment')));
       }
       final d = Map<String, dynamic>.from(j['data']);
       return MyPropertyResult(true, '', {
@@ -237,7 +238,7 @@ class MyPropertyService {
         'razorpay_payment_id': paymentId,
         'razorpay_signature': signature,
       });
-      if (code >= 300 || j['success'] != true) return MyPropertyResult(false, _msg(code, j, 'Payment could not be verified'));
+      if (code >= 300 || j['success'] != true) return MyPropertyResult(false, _msg(code, j, tr('Payment could not be verified')));
       return MyPropertyResult(true, '${j['message'] ?? 'Subscription activated'}');
     } catch (e) {
       return MyPropertyResult(false, _err(e));

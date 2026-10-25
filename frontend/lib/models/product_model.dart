@@ -1,4 +1,5 @@
 import 'dart:convert' show jsonDecode;
+import 'package:qnx_mart/l10n/app_language.dart';
 
 dynamic _jsonDecode(String s) => jsonDecode(s);
 
@@ -79,7 +80,7 @@ class ProductVariantInfo {
   String get label {
     final vals = attributes.values.where((v) => v.isNotEmpty).toList();
     if (vals.isNotEmpty) return vals.join(' · ');
-    return sku.isNotEmpty ? sku : 'Option $id';
+    return sku.isNotEmpty ? sku : tr('Option {0}', [id]);
   }
 
   Map<String, dynamic> toJson() => {

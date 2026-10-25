@@ -10,6 +10,7 @@ import '../constants/design_tokens.dart';
 import '../models/product_model.dart';
 import '../utils/cart_helper.dart';
 import 'product_enquiry_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -68,7 +69,7 @@ class _ProductReelsScreenState extends State<ProductReelsScreen> {
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
                   ),
-                  Text('Live Reels & Demos',
+                  Text(tr('Live Reels & Demos'),
                       style: DT.text(size: 16, weight: FontWeight.w700, color: Colors.white)),
                   const Spacer(),
                   Container(
@@ -185,7 +186,7 @@ class _ReelPageState extends State<_ReelPage> {
                     children: [
                       const Icon(Icons.videocam_off_outlined, color: Colors.white70, size: 40),
                       const SizedBox(height: 8),
-                      Text('Video could not be played',
+                      Text(tr('Video could not be played'),
                           style: DT.text(size: 13, color: Colors.white70)),
                     ],
                   )
@@ -232,11 +233,11 @@ class _ReelPageState extends State<_ReelPage> {
                         ),
                       ),
                     ),
-                  Text(p.categoryName.toUpperCase(),
+                  Text(tr(p.categoryName.toUpperCase()),
                       style: DT.text(
                           size: 11, weight: FontWeight.w700, color: Colors.white70, letterSpacing: 0.6)),
                   const SizedBox(height: 4),
-                  Text(p.name,
+                  Text(trData(p.name),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(size: 18, weight: FontWeight.w800, color: Colors.white)),
@@ -253,7 +254,7 @@ class _ReelPageState extends State<_ReelPage> {
                             MaterialPageRoute(builder: (_) => ProductEnquiryScreen(product: p)),
                           ),
                           icon: const Icon(Icons.mail_outline_rounded, size: 18),
-                          label: Text('Enquiry',
+                          label: Text(tr('Enquiry'),
                               style: DT.text(size: 13.5, weight: FontWeight.w700, color: Colors.white)),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.white,
@@ -268,7 +269,7 @@ class _ReelPageState extends State<_ReelPage> {
                         child: ElevatedButton.icon(
                           onPressed: () => CartHelper.addToCart(context: context, product: p),
                           icon: const Icon(Icons.shopping_cart_outlined, size: 18),
-                          label: Text('Cart',
+                          label: Text(tr('Cart'),
                               style: DT.text(size: 13.5, weight: FontWeight.w700, color: Colors.white)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _kBrand,

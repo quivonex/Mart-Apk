@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_constants.dart';
 import '../models/unit_model.dart';
 import '../services/unit_service.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -82,7 +83,7 @@ class _UnitCreateEditScreenState extends State<UnitCreateEditScreen> {
   void _snack(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg),
+        content: Text(tr(msg)),
         backgroundColor:
         isError ? const Color(0xFFC62828) : Color(0xFF10B981),
         behavior: SnackBarBehavior.floating,
@@ -105,7 +106,7 @@ class _UnitCreateEditScreenState extends State<UnitCreateEditScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          _isEdit ? 'Edit Unit' : 'Add Unit',
+          _isEdit ? tr('Edit Unit') : tr('Add Unit'),
           style: GoogleFonts.inter(
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -120,20 +121,20 @@ class _UnitCreateEditScreenState extends State<UnitCreateEditScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _sectionTitle('Unit Information'),
+              _sectionTitle(tr('Unit Information')),
               const SizedBox(height: 12),
 
               _field(
                 _nameCtrl,
-                'Unit Name *',
-                'e.g. Kilogram',
+                tr('Unit Name *'),
+                tr('e.g. Kilogram'),
                 Icons.straighten_outlined,
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) {
-                    return 'Unit name is required';
+                    return tr('Unit name is required');
                   }
                   if (v.trim().length < 2) {
-                    return 'Minimum 2 characters';
+                    return tr('Minimum 2 characters');
                   }
                   return null;
                 },
@@ -142,15 +143,15 @@ class _UnitCreateEditScreenState extends State<UnitCreateEditScreen> {
 
               _field(
                 _shortNameCtrl,
-                'Short Name *',
-                'e.g. kg',
+                tr('Short Name *'),
+                tr('e.g. kg'),
                 Icons.short_text_outlined,
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) {
-                    return 'Short name is required';
+                    return tr('Short name is required');
                   }
                   if (v.trim().length > 10) {
-                    return 'Maximum 10 characters';
+                    return tr('Maximum 10 characters');
                   }
                   return null;
                 },
@@ -179,7 +180,7 @@ class _UnitCreateEditScreenState extends State<UnitCreateEditScreen> {
                     ),
                   )
                       : Text(
-                    _isEdit ? 'Update Unit' : 'Create Unit',
+                    _isEdit ? tr('Update Unit') : tr('Create Unit'),
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -198,7 +199,7 @@ class _UnitCreateEditScreenState extends State<UnitCreateEditScreen> {
 
   Widget _sectionTitle(String title) {
     return Text(
-      title,
+      tr(title),
       style: GoogleFonts.inter(
         fontSize: 15,
         fontWeight: FontWeight.w700,
@@ -212,7 +213,7 @@ class _UnitCreateEditScreenState extends State<UnitCreateEditScreen> {
     required IconData icon,
   }) {
     return InputDecoration(
-      labelText: label,
+      labelText: tr(label),
       prefixIcon: Icon(icon, color: _kBrand),
       filled: true,
       fillColor: Colors.white,
@@ -254,8 +255,8 @@ class _UnitCreateEditScreenState extends State<UnitCreateEditScreen> {
       controller: ctrl,
       validator: validator,
       maxLines: maxLines,
-      decoration: _inputDecoration(label: label, icon: icon)
-          .copyWith(hintText: hint),
+      decoration: _inputDecoration(label: tr(label), icon: icon)
+          .copyWith(hintText: tr(hint)),
     );
   }
 }

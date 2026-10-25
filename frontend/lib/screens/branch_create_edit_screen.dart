@@ -4,6 +4,7 @@ import '../constants/design_tokens.dart';
 import '../models/branch_model.dart';
 import '../services/branch_service.dart';
 import '../widgets/product_ui.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -83,7 +84,7 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCompanyId == null) {
-      _snack('Please select a company', isError: true);
+      _snack(tr('Please select a company'), isError: true);
       return;
     }
 
@@ -122,7 +123,7 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(msg,
+          content: Text(tr(msg),
               style: DT.text(
                   size: 13, weight: FontWeight.w600, color: Colors.white)),
           backgroundColor: isError ? _kRed : const Color(0xFF10B981),
@@ -149,38 +150,38 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
             children: [
               _infoCard(
                 icon: Icons.storefront_outlined,
-                title: _isEdit ? 'Edit branch' : 'New branch',
+                title: _isEdit ? tr('Edit branch') : tr('New branch'),
                 subtitle:
-                'Branches let you sell from more than one location',
+                tr('Branches let you sell from more than one location'),
               ),
               const SizedBox(height: 16),
               _sectionCard(
                 icon: Icons.business_outlined,
-                title: 'Company',
-                subtitle: 'Branch will belong to this company',
+                title: tr('Company'),
+                subtitle: tr('Branch will belong to this company'),
                 children: [_companyDropdown()],
               ),
               const SizedBox(height: 16),
               _sectionCard(
                 icon: Icons.info_outline,
-                title: 'Branch information',
-                subtitle: 'Contact details for this location',
+                title: tr('Branch information'),
+                subtitle: tr('Contact details for this location'),
                 children: [
                   _field(
                     _nameCtrl,
-                    'Branch name',
-                    'e.g. Mumbai HQ',
+                    tr('Branch name'),
+                    tr('e.g. Mumbai HQ'),
                     Icons.store_outlined,
                     required: true,
                     validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'Branch name is required'
+                        ? tr('Branch name is required')
                         : null,
                   ),
                   const SizedBox(height: 14),
                   _field(
                     _phoneCtrl,
-                    'Phone number',
-                    '10-digit mobile number',
+                    tr('Phone number'),
+                    tr('10-digit mobile number'),
                     Icons.phone_outlined,
                     required: true,
                     keyboardType: TextInputType.phone,
@@ -190,10 +191,10 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
                     ],
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) {
-                        return 'Phone is required';
+                        return tr('Phone is required');
                       }
                       if (v.trim().length != 10) {
-                        return 'Enter valid 10-digit number';
+                        return tr('Enter valid 10-digit number');
                       }
                       return null;
                     },
@@ -201,31 +202,31 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
                   const SizedBox(height: 14),
                   _field(
                     _emailCtrl,
-                    'Email',
+                    tr('Email'),
                     'branch@example.com',
                     Icons.email_outlined,
                     required: true,
                     keyboardType: TextInputType.emailAddress,
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) {
-                        return 'Email is required';
+                        return tr('Email is required');
                       }
                       final re =
                       RegExp(r'^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$');
-                      if (!re.hasMatch(v.trim())) return 'Invalid email';
+                      if (!re.hasMatch(v.trim())) return tr('Invalid email');
                       return null;
                     },
                   ),
                   const SizedBox(height: 14),
                   _field(
                     _addressCtrl,
-                    'Address',
-                    'Street, area, city',
+                    tr('Address'),
+                    tr('Street, area, city'),
                     Icons.home_outlined,
                     required: true,
                     maxLines: 2,
                     validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'Address is required'
+                        ? tr('Address is required')
                         : null,
                   ),
                 ],
@@ -259,7 +260,7 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    tooltip: 'Back',
+                    tooltip: tr('Back'),
                     onPressed: () => Navigator.maybePop(context),
                     icon: const Icon(Icons.arrow_back_rounded,
                         color: Colors.white, size: 24),
@@ -271,7 +272,7 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _isEdit ? 'Edit branch' : 'Add branch',
+                          _isEdit ? tr('Edit branch') : tr('Add branch'),
                           style: DT.text(
                               size: 18,
                               weight: FontWeight.w700,
@@ -279,7 +280,7 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
                               letterSpacing: -0.3),
                         ),
                         Text(
-                          'Manage branch details',
+                          tr('Manage branch details'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(
@@ -310,7 +311,7 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
           border: Border.all(color: DT.slate200),
         ),
         child: Row(
-          children: const [
+          children: [
             SizedBox(
               height: 18,
               width: 18,
@@ -318,7 +319,7 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
               CircularProgressIndicator(strokeWidth: 2, color: _brand),
             ),
             SizedBox(width: 10),
-            Text('Loading companies…'),
+            Text(tr('Loading companies…')),
           ],
         ),
       );
@@ -338,7 +339,7 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'No companies found. Please create a company first.',
+                tr('No companies found. Please create a company first.'),
                 style: DT.text(size: 12, weight: FontWeight.w600, color: _kOrangeDark),
               ),
             ),
@@ -353,23 +354,23 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
       icon: const Icon(Icons.expand_more, color: DT.slate500),
       style: DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
       decoration: pxInputDecoration(
-        hint: 'Select company',
+        hint: tr('Select company'),
         icon: Icons.business_outlined,
         iconColor: _brand,
       ),
-      hint: Text('Select company',
+      hint: Text(tr('Select company'),
           style: DT.text(size: 13.5, color: DT.slate400)),
       items: _companies.map((c) {
         return DropdownMenuItem<int>(
           value: c.id,
-          child: Text(c.name,
+          child: Text(trData(c.name),
               overflow: TextOverflow.ellipsis,
               style: DT.text(
                   size: 14, weight: FontWeight.w600, color: DT.onyx900)),
         );
       }).toList(),
       onChanged: (v) => setState(() => _selectedCompanyId = v),
-      validator: (v) => v == null ? 'Company is required' : null,
+      validator: (v) => v == null ? tr('Company is required') : null,
     );
   }
 
@@ -400,13 +401,13 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
+                Text(tr(title),
                     style: DT.text(
                         size: 14,
                         weight: FontWeight.w800,
                         color: DT.onyx900)),
                 const SizedBox(height: 2),
-                Text(subtitle,
+                Text(tr(subtitle),
                     style:
                     DT.text(size: 11.5, color: DT.slate500, height: 1.4)),
               ],
@@ -456,14 +457,14 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title,
+                      Text(tr(title),
                           style: DT.text(
                               size: 14,
                               weight: FontWeight.w700,
                               color: DT.onyx900,
                               height: 1.2)),
                       const SizedBox(height: 2),
-                      Text(subtitle,
+                      Text(tr(subtitle),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(size: 11.5, color: DT.slate500)),
@@ -506,7 +507,7 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
           maxLines: maxLines,
           style: DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
           decoration: pxInputDecoration(
-            hint: hint,
+            hint: tr(hint),
             icon: icon,
             iconColor: _brand,
             tinted: maxLines > 1,
@@ -563,7 +564,7 @@ class _BranchCreateEditScreenState extends State<BranchCreateEditScreen> {
                     const Icon(Icons.check_rounded, size: 20),
                     const SizedBox(width: 8),
                     Text(
-                      _isEdit ? 'Update branch' : 'Create branch',
+                      _isEdit ? tr('Update branch') : tr('Create branch'),
                       style: DT.text(
                           size: 15,
                           weight: FontWeight.w700,

@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import '../screens/login_screen.dart';
 import 'shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 /// True when the user has a token. Otherwise asks to log in (opens
 /// [LoginScreen]) and returns false – the caller should stop.
@@ -26,14 +27,14 @@ Future<bool> ensureLoggedIn(BuildContext context, {String reason = 'continue'}) 
         decoration: const BoxDecoration(color: Color(0xFFEEF2FF), shape: BoxShape.circle),
         child: const Icon(Icons.lock_outline_rounded, color: Color(0xFF6366F1), size: 28),
       ),
-      title: const Text('Login required', textAlign: TextAlign.center),
-      content: Text('Please log in to $reason.', textAlign: TextAlign.center),
+      title: Text(tr('Login required'), textAlign: TextAlign.center),
+      content: Text(tr('Please log in to {0}.', [reason]), textAlign: TextAlign.center),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('Cancel'))),
         FilledButton(
           style: FilledButton.styleFrom(backgroundColor: const Color(0xFF6366F1)),
           onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Login'),
+          child: Text(tr('Login')),
         ),
       ],
     ),

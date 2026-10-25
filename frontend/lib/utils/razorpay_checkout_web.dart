@@ -10,12 +10,13 @@ import 'dart:async';
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 import 'razorpay_result.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 const _scriptUrl = 'https://checkout.razorpay.com/v1/checkout.js';
 
 /// Adds <script src=checkout.js> to <head> once and waits for it.
 Future<bool> _ensureScript() async {
-  if (globalContext.has('Razorpay')) return true;
+  if (globalContext.has(tr('Razorpay'))) return true;
   try {
     final doc = globalContext['document'] as JSObject;
     final script = doc.callMethod<JSObject>('createElement'.toJS, 'script'.toJS);
@@ -31,7 +32,7 @@ Future<bool> _ensureScript() async {
     final head = doc['head'] as JSObject;
     head.callMethod<JSAny?>('appendChild'.toJS, script);
     final ok = await loaded.future.timeout(const Duration(seconds: 20), onTimeout: () => false);
-    return ok && globalContext.has('Razorpay');
+    return ok && globalContext.has(tr('Razorpay'));
   } catch (_) {
     return false;
   }
@@ -39,8 +40,8 @@ Future<bool> _ensureScript() async {
 
 Future<RzpResult> openCheckout(Map<String, dynamic> options) async {
   if (!await _ensureScript()) {
-    return const RzpResult.failure(
-        'Payment window could not load. Check your internet connection (checkout.razorpay.com) and try again.');
+    return RzpResult.failure(
+        tr('Payment window could not load. Check your internet connection (checkout.razorpay.com) and try again.'));
   }
   return _open(options);
 }
@@ -60,7 +61,7 @@ Future<RzpResult> _open(Map<String, dynamic> options) {
       final map = m is Map ? m : const {};
       final pid = '${map['razorpay_payment_id'] ?? ''}';
       finish(pid.isEmpty
-          ? const RzpResult.failure('No payment id returned by Razorpay.')
+          ? RzpResult.failure(tr('No payment id returned by Razorpay.'))
           : RzpResult.success(
               paymentId: pid,
               orderId: '${map['razorpay_order_id'] ?? ''}',
@@ -84,12 +85,12 @@ Future<RzpResult> _open(Map<String, dynamic> options) {
         final err = (m is Map && m['error'] is Map) ? m['error'] as Map : const {};
         final d = '${err['description'] ?? ''}'.trim();
         final r = '${err['reason'] ?? ''}'.trim();
-        lastError = d.isNotEmpty ? d : (r.isNotEmpty ? r : 'Payment failed.');
+        lastError = d.isNotEmpty ? d : (r.isNotEmpty ? r : tr('Payment failed.'));
       }).toJS,
     );
     rzp.callMethod<JSAny?>('open'.toJS);
   } catch (e) {
-    finish(RzpResult.failure('Could not open payment: $e'));
+    finish(RzpResult.failure(tr('Could not open payment: {0}', [e])));
   }
   return done.future;
 }

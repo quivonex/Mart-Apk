@@ -16,6 +16,7 @@ import '../utils/shared_preferences_helper.dart';
 import 'property_create_screen.dart';
 import 'property_detail_screen.dart';
 import 'property_edit_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -55,7 +56,7 @@ String _date(DateTime? d) {
   if (d == null) return '—';
   const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   final l = d.toLocal();
-  return '${l.day} ${m[l.month - 1]} ${l.year}';
+  return '${l.day} ${tr(m[l.month - 1])} ${l.year}';
 }
 
 String _label(String key) => key
@@ -102,7 +103,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
-        content: Text(msg, style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
+        content: Text(tr(msg), style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
         backgroundColor: error ? _kRed : _MP.ink,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
@@ -126,7 +127,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
   // ---------------------------------------------------------------- pay
   Future<void> _activate(MyProperty p) async {
     if (kIsWeb) {
-      _snack('Online payment works in the QNX Mart Android app.', error: true);
+      _snack(tr('Online payment works in the QNX Mart Android app.'), error: true);
       return;
     }
     final plan = await showModalBottomSheet<PropertyPlan>(
@@ -147,7 +148,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
     final amount = (d?['amount_paise'] as int?) ?? 0;
     if (!created.ok || orderId.isEmpty || key.isEmpty || amount <= 0) {
       setState(() => _payingId = null);
-      _snack(created.ok ? 'Payment could not be started.' : created.message, error: true);
+      _snack(created.ok ? tr('Payment could not be started.') : created.message, error: true);
       return;
     }
 
@@ -177,7 +178,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
     } catch (e) {
       razorpay.clear();
       if (mounted) setState(() => _payingId = null);
-      if (mounted) _snack('Could not open payment: $e', error: true);
+      if (mounted) _snack(tr('Could not open payment: {0}', [e]), error: true);
       return;
     }
     final (success, failure) = await done.future;
@@ -186,7 +187,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
     if (success == null) {
       setState(() => _payingId = null);
       final cancelled = failure != null && failure.code == Razorpay.PAYMENT_CANCELLED;
-      _snack(cancelled ? 'Payment was cancelled.' : 'Payment failed.', error: true);
+      _snack(cancelled ? tr('Payment was cancelled.') : tr('Payment failed.'), error: true);
       return;
     }
     final v = await MyPropertyService.verify(
@@ -197,10 +198,10 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
     if (!mounted) return;
     setState(() => _payingId = null);
     if (!v.ok) {
-      _snack('${v.message}. If money was deducted, contact support with ${success.paymentId}.', error: true);
+      _snack(tr('{0}. If money was deducted, contact support with {1}.', [v.message, success.paymentId]), error: true);
       return;
     }
-    _snack('${p.title} is active for ${plan.days} days.');
+    _snack(tr('{0} is active for {1} days.', [p.title, plan.days]));
     _load();
   }
 
@@ -218,8 +219,8 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('My Properties', style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
-            Text(_loading ? 'Loading…' : '${_items.length} listed · $live live',
+            Text(tr('My Properties'), style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
+            Text(_loading ? tr('Loading…') : tr('{0} listed · {1} live', [_items.length, live]),
                 style: DT.text(size: 11.5, color: const Color(0xCCFFFFFF))),
           ],
         ),
@@ -229,15 +230,15 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
         backgroundColor: _kBrand, // buttons: only #093C71
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_home_work_outlined),
-        label: Text('Add property', style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
+        label: Text(tr('Add property'), style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: _MP.brand))
           : _error != null
-          ? _state(Icons.cloud_off_rounded, 'Could not load your properties', _error!, retry: true)
+          ? _state(Icons.cloud_off_rounded, tr('Could not load your properties'), _error!, retry: true)
           : _items.isEmpty
-          ? _state(Icons.home_work_outlined, 'No properties yet',
-          'List your flat, plot or shop – the first days are free.')
+          ? _state(Icons.home_work_outlined, tr('No properties yet'),
+          tr('List your flat, plot or shop – the first days are free.'))
           : RefreshIndicator(
         color: _MP.brand,
         onRefresh: _load,
@@ -263,15 +264,15 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
         ),
       ),
       const SizedBox(height: 16),
-      Text(title, textAlign: TextAlign.center, style: DT.text(size: 16, weight: FontWeight.w800, color: _MP.ink)),
+      Text(tr(title), textAlign: TextAlign.center, style: DT.text(size: 16, weight: FontWeight.w800, color: _MP.ink)),
       const SizedBox(height: 6),
-      Text(body, textAlign: TextAlign.center, style: DT.text(size: 13, color: _MP.muted, height: 1.45)),
+      Text(tr(body), textAlign: TextAlign.center, style: DT.text(size: 13, color: _MP.muted, height: 1.45)),
       const SizedBox(height: 18),
       Center(
         child: FilledButton(
           style: FilledButton.styleFrom(backgroundColor: _kBrand), // buttons: only #093C71
           onPressed: retry ? _load : _add,
-          child: Text(retry ? 'Try again' : 'Add property'),
+          child: Text(retry ? tr('Try again') : tr('Add property')),
         ),
       ),
     ],
@@ -281,17 +282,17 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
     final days = p.daysLeft;
     final running = p.isRunning;
     final (approvalFg, approvalBg, approvalText) = p.approved
-        ? (const Color(0xFF047857), const Color(0xFFECFDF5), 'Approved')
-        : (const Color(0xFFB45309), const Color(0xFFFFFBEB), 'Under review');
+        ? (const Color(0xFF047857), const Color(0xFFECFDF5), tr('Approved'))
+        : (const Color(0xFFB45309), const Color(0xFFFFFBEB), tr('Under review'));
     final String period;
     if (p.source == 'admin') {
-      period = 'Managed by QNX Mart';
+      period = tr('Managed by QNX Mart');
     } else if (p.subscriptionActive && running) {
-      period = 'Paid plan · ${days ?? '—'} days left (till ${_date(p.subscriptionExpiry)})';
+      period = tr('Paid plan · {0} days left (till {1})', [days ?? '—', _date(p.subscriptionExpiry)]);
     } else if (running && p.freeExpiry != null) {
-      period = 'Free period · ${days ?? '—'} days left';
+      period = tr('Free period · {0} days left', [days ?? '—']);
     } else {
-      period = 'Not live – activate a plan to show buyers';
+      period = tr('Not live – activate a plan to show buyers');
     }
     final paying = _payingId == p.id;
 
@@ -337,14 +338,14 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                                 runSpacing: 4,
                                 children: [
                                   _pill(approvalText, approvalFg, approvalBg),
-                                  _pill(running ? 'Live' : 'Not live', running ? const Color(0xFF047857) : _kRed,
+                                  _pill(running ? tr('Live') : tr('Not live'), running ? const Color(0xFF047857) : _kRed,
                                       running ? const Color(0xFFECFDF5) : _kRedBg),
                                 ],
                               ),
                             ),
                             if (p.slug.isNotEmpty)
                               Tooltip(
-                                message: 'Edit property',
+                                message: tr('Edit property'),
                                 child: Material(
                                   color: _kBrand, // buttons: only #093C71
                                   shape: const CircleBorder(),
@@ -361,17 +362,13 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                           ],
                         ),
                         const SizedBox(height: 6),
-                        Text(p.title.isEmpty ? 'Untitled property' : p.title,
+                        Text(p.title.isEmpty ? tr('Untitled property') : p.title,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: DT.text(size: 14.5, weight: FontWeight.w800, color: _MP.ink, height: 1.3)),
                         const SizedBox(height: 2),
                         Text(
-                          [
-                            if (p.propertyType.isNotEmpty) _label(p.propertyType),
-                            if (p.transactionType.isNotEmpty) _label(p.transactionType),
-                            if (p.location.isNotEmpty) p.location,
-                          ].join(' · '),
+                          tr([if (p.propertyType.isNotEmpty) _label(p.propertyType), if (p.transactionType.isNotEmpty) _label(p.transactionType), if (p.location.isNotEmpty) p.location].join(' · ')),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(size: 11.5, color: _MP.muted),
@@ -407,7 +404,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                     size: 18, color: running ? _MP.brand : _MP.orange),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(period,
+                  child: Text(tr(period),
                       style: DT.text(
                           size: 12,
                           weight: FontWeight.w600,
@@ -425,7 +422,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                       ),
                       child: paying
                           ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : Text(running ? 'Extend' : 'Activate',
+                          : Text(running ? tr('Extend') : tr('Activate'),
                           style: DT.text(size: 12.5, weight: FontWeight.w800, color: Colors.white)),
                     ),
                   ),
@@ -440,7 +437,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
     Future<void> _edit(MyProperty p) async {
     final saved = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(builder: (_) => PropertyEditScreen(propertyId: p.id, slug: p.slug, title: p.title)),
+      MaterialPageRoute(builder: (_) => PropertyEditScreen(propertyId: p.id, slug: p.slug, title: tr(p.title))),
     );
     if (saved == true) _load();
   }
@@ -448,7 +445,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
   Widget _pill(String text, Color fg, Color bg) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
     decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-    child: Text(text, style: DT.text(size: 10.5, weight: FontWeight.w800, color: fg)),
+    child: Text(tr(text), style: DT.text(size: 10.5, weight: FontWeight.w800, color: fg)),
   );
 }
 
@@ -516,9 +513,9 @@ class _PlanSheetState extends State<_PlanSheet> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Choose a listing plan',
+                            Text(tr('Choose a listing plan'),
                                 style: DT.text(size: 16.5, weight: FontWeight.w800, color: Colors.white)),
-                            Text(widget.propertyTitle,
+                            Text(trData(widget.propertyTitle),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: DT.text(size: 12, color: const Color(0xD9FFFFFF))),
@@ -543,7 +540,7 @@ class _PlanSheetState extends State<_PlanSheet> {
                   : _error != null || _plans.isEmpty
                   ? Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text(_error ?? 'No plans are available right now.',
+                child: Text(_error ?? tr('No plans are available right now.'),
                     textAlign: TextAlign.center, style: DT.text(size: 13, color: _MP.muted)),
               )
                   : ListView(
@@ -579,7 +576,7 @@ class _PlanSheetState extends State<_PlanSheet> {
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
-                      child: Text(sel == null ? 'Select a plan' : 'Pay ${_inr(sel.price)}',
+                      child: Text(sel == null ? tr('Select a plan') : tr('Pay {0}', [_inr(sel.price)]),
                           style: DT.text(size: 14.5, weight: FontWeight.w800, color: sel == null ? _MP.muted : Colors.white)),
                     ),
                   ),
@@ -613,12 +610,12 @@ class _PlanSheetState extends State<_PlanSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(p.name, style: DT.text(size: 14.5, weight: FontWeight.w800, color: _MP.ink)),
-                  Text('${p.days} days on QNX Mart', style: DT.text(size: 12, color: _MP.muted)),
+                  Text(trData(p.name), style: DT.text(size: 14.5, weight: FontWeight.w800, color: _MP.ink)),
+                  Text(tr('{0} days on QNX Mart', [p.days]), style: DT.text(size: 12, color: _MP.muted)),
                 ],
               ),
             ),
-            Text(_inr(p.price), style: DT.text(size: 17, weight: FontWeight.w900, color: s ? _MP.brandDark : _MP.ink)),
+            Text(tr(_inr(p.price)), style: DT.text(size: 17, weight: FontWeight.w900, color: s ? _MP.brandDark : _MP.ink)),
           ],
         ),
       ),

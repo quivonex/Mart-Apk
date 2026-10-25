@@ -12,6 +12,7 @@ import 'package:http/http.dart' as http;
 import '../models/company_locations_models.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'api_urls.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class CompanyLocationService {
   static const _timeout = Duration(seconds: 30);
@@ -46,7 +47,7 @@ class CompanyLocationService {
         // Django returned an HTML error page (e.g. 500 when Redis is not running).
         return LocationResponse(
           status: false,
-          message: 'Could not load $what (server error ${res.statusCode}).',
+          message: tr('Could not load {0} (server error {1}).', [what, res.statusCode]),
           data: [],
         );
       }
@@ -55,19 +56,19 @@ class CompanyLocationService {
       if (!parsed.status && parsed.data.isEmpty) {
         return LocationResponse(
           status: false,
-          message: parsed.message ?? 'Could not load $what.',
+          message: parsed.message ?? tr('Could not load {0}.', [what]),
           data: [],
         );
       }
       return parsed;
     } on SocketException {
       return LocationResponse(
-          status: false, message: 'No connection to the server.', data: []);
+          status: false, message: tr('No connection to the server.'), data: []);
     } on TimeoutException {
       return LocationResponse(
-          status: false, message: 'Loading $what timed out.', data: []);
+          status: false, message: tr('Loading {0} timed out.', [what]), data: []);
     } catch (e) {
-      return LocationResponse(status: false, message: 'Could not load $what: $e', data: []);
+      return LocationResponse(status: false, message: tr('Could not load {0}: {1}', [what, e]), data: []);
     }
   }
 

@@ -13,6 +13,7 @@ import 'package:http/http.dart' as http;
 import 'api_urls.dart';
 import '../models/supplier_model.dart';
 import '../utils/shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class SupplierService {
   static const _timeout = Duration(seconds: 30);
@@ -38,11 +39,11 @@ class SupplierService {
   }
 
   static String _err(Object e) {
-    if (e is SocketException) return 'No internet connection.';
+    if (e is SocketException) return tr('No internet connection.');
     if (e.toString().contains('TimeoutException')) {
-      return 'The server took too long to respond. Try again.';
+      return tr('The server took too long to respond. Try again.');
     }
-    return 'Something went wrong: $e';
+    return tr('Something went wrong: {0}', [e]);
   }
 
   static Future<SupplierListResponse> getSuppliers(int companyId) async {

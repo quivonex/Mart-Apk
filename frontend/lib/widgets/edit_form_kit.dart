@@ -8,6 +8,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../constants/design_tokens.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class EK {
   static const brand = Color(0xFF093C71);
@@ -33,7 +34,7 @@ void ekSnack(BuildContext context, String msg, {bool error = false, bool success
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(
-      content: Text(msg, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
+      content: Text(tr(msg), style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
       backgroundColor: error ? EK.red : (success ? EK.green : EK.ink),
       behavior: SnackBarBehavior.floating,
       margin: const EdgeInsets.all(16),
@@ -49,9 +50,9 @@ PreferredSizeWidget ekAppBar(String title, {String? subtitle}) => AppBar(
   title: Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(title, style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
+      Text(tr(title), style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
       if (subtitle != null && subtitle.isNotEmpty)
-        Text(subtitle,
+        Text(tr(subtitle),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: DT.text(size: 11.5, color: const Color(0xCCFFFFFF))),
@@ -92,9 +93,9 @@ class EkSection extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: DT.text(size: 14.5, weight: FontWeight.w800, color: EK.ink)),
+                    Text(tr(title), style: DT.text(size: 14.5, weight: FontWeight.w800, color: EK.ink)),
                     if (subtitle != null)
-                      Text(subtitle!, style: DT.text(size: 11.5, color: EK.muted)),
+                      Text(tr(subtitle!), style: DT.text(size: 11.5, color: EK.muted)),
                   ],
                 ),
               ),
@@ -147,9 +148,9 @@ class EkField extends StatelessWidget {
         validator: validator,
         style: DT.text(size: 14, color: EK.ink),
         decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          prefixText: prefix,
+          labelText: tr(label),
+          hintText: trN(hint),
+          prefixText: trN(prefix),
           counterText: '',
           isDense: true,
           filled: true,
@@ -185,7 +186,7 @@ class EkChoice<T> extends StatelessWidget {
       children: [
         for (final (v, label) in options)
           ChoiceChip(
-            label: Text(label),
+            label: Text(tr(label)),
             selected: v == value,
             showCheckmark: false,
             selectedColor: EK.brand,
@@ -214,8 +215,8 @@ class EkSwitch extends StatelessWidget {
     contentPadding: EdgeInsets.zero,
     activeThumbColor: Colors.white,
     activeTrackColor: EK.brand,
-    title: Text(label, style: DT.text(size: 13.5, weight: FontWeight.w600, color: EK.ink)),
-    subtitle: subtitle == null ? null : Text(subtitle!, style: DT.text(size: 11.5, color: EK.muted)),
+    title: Text(tr(label), style: DT.text(size: 13.5, weight: FontWeight.w600, color: EK.ink)),
+    subtitle: subtitle == null ? null : Text(tr(subtitle!), style: DT.text(size: 11.5, color: EK.muted)),
     onChanged: onChanged,
   );
 }
@@ -299,7 +300,7 @@ class EkPhotoGrid extends StatelessWidget {
                         border: Border.all(color: EK.red),
                       ),
                       alignment: Alignment.center,
-                      child: Text('Will be removed',
+                      child: Text(tr('Will be removed'),
                           textAlign: TextAlign.center,
                           style: DT.text(size: 11, weight: FontWeight.w700, color: EK.red)),
                     ),
@@ -326,7 +327,7 @@ class EkPhotoGrid extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(color: EK.green, borderRadius: BorderRadius.circular(6)),
-                      child: Text('NEW', style: DT.text(size: 9.5, weight: FontWeight.w800, color: Colors.white)),
+                      child: Text(tr('NEW'), style: DT.text(size: 9.5, weight: FontWeight.w800, color: Colors.white)),
                     ),
                   ),
                   badge(Icons.close_rounded, EK.red, () => onRemoveNew(i)),
@@ -350,7 +351,7 @@ class EkPhotoGrid extends StatelessWidget {
                   children: [
                     const Icon(Icons.add_a_photo_outlined, color: EK.brand),
                     const SizedBox(height: 4),
-                    Text('Add photo', style: DT.text(size: 11.5, weight: FontWeight.w700, color: EK.brand)),
+                    Text(tr('Add photo'), style: DT.text(size: 11.5, weight: FontWeight.w700, color: EK.brand)),
                   ],
                 ),
               ),
@@ -377,12 +378,12 @@ Future<List<EkNewPhoto>> ekPickPhotos(BuildContext context, {required int left})
           children: [
             ListTile(
               leading: const Icon(Icons.photo_library_outlined, color: EK.brand),
-              title: Text('Choose from gallery', style: DT.text(size: 14, weight: FontWeight.w600)),
+              title: Text(tr('Choose from gallery'), style: DT.text(size: 14, weight: FontWeight.w600)),
               onTap: () => Navigator.pop(ctx, ImageSource.gallery),
             ),
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined, color: EK.brand),
-              title: Text('Take a photo', style: DT.text(size: 14, weight: FontWeight.w600)),
+              title: Text(tr('Take a photo'), style: DT.text(size: 14, weight: FontWeight.w600)),
               onTap: () => Navigator.pop(ctx, ImageSource.camera),
             ),
           ],
@@ -440,7 +441,7 @@ class EkButton extends StatelessWidget {
           else if (icon != null)
             Icon(icon, size: 19),
           const SizedBox(width: 8),
-          Text(label, style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
+          Text(tr(label), style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
         ],
       ),
     ),
@@ -470,14 +471,14 @@ class EkState extends StatelessWidget {
               child: const Icon(Icons.cloud_off_rounded, size: 34, color: EK.brand),
             ),
             const SizedBox(height: 14),
-            Text(error ?? 'Something went wrong',
+            Text(error ?? tr('Something went wrong'),
                 textAlign: TextAlign.center, style: DT.text(size: 14, color: EK.muted, height: 1.4)),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
               FilledButton(
                 style: FilledButton.styleFrom(backgroundColor: EK.brand),
                 onPressed: onRetry,
-                child: const Text('Try again'),
+                child: Text(tr('Try again')),
               ),
             ],
           ],

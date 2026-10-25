@@ -6,6 +6,7 @@ import '../widgets/product_card.dart';
 import '../utils/cart_helper.dart';
 import 'franchise_plans_screen.dart';
 import 'product_enquiry_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 import 'product_detail_screen.dart'; // 🆕 IMPORT ADD KELA
 
 // ── QNX MART logo colours (private to this screen) ──────────────
@@ -28,11 +29,11 @@ enum _Sort { recommended, priceLow, priceHigh, nameAz, discount }
 
 extension on _Sort {
   String get label => switch (this) {
-    _Sort.recommended => 'Recommended',
-    _Sort.priceLow => 'Price: low to high',
-    _Sort.priceHigh => 'Price: high to low',
-    _Sort.nameAz => 'Name: A to Z',
-    _Sort.discount => 'Biggest discount',
+    _Sort.recommended => tr('Recommended'),
+    _Sort.priceLow => tr('Price: low to high'),
+    _Sort.priceHigh => tr('Price: high to low'),
+    _Sort.nameAz => tr('Name: A to Z'),
+    _Sort.discount => tr('Biggest discount'),
   };
 
   IconData get icon => switch (this) {
@@ -302,7 +303,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      [p.categoryName, p.brandName].where((s) => s.isNotEmpty).join(' · ').toUpperCase(),
+                      tr([p.categoryName, p.brandName].where((s) => s.isNotEmpty).join(' · ').toUpperCase()),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(size: 10.5, weight: FontWeight.w800, color: DT.slate500, letterSpacing: 0.6),
@@ -312,12 +313,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(color: _kTint, borderRadius: BorderRadius.circular(999)),
-                      child: Text('🏪 Franchise', style: DT.text(size: 10.5, weight: FontWeight.w800, color: _kBrand)),
+                      child: Text(tr('🏪 Franchise'), style: DT.text(size: 10.5, weight: FontWeight.w800, color: _kBrand)),
                     ),
                 ],
               ),
               const SizedBox(height: 4),
-              Text(p.name, style: DT.text(size: 18, weight: FontWeight.w800, color: DT.onyx900, height: 1.25)),
+              Text(trData(p.name), style: DT.text(size: 18, weight: FontWeight.w800, color: DT.onyx900, height: 1.25)),
               const SizedBox(height: 8),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -334,7 +335,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       margin: const EdgeInsets.only(bottom: 3),
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(color: DT.emerald50, borderRadius: BorderRadius.circular(4)),
-                      child: Text('$off% off', style: DT.text(size: 11, weight: FontWeight.w800, color: DT.emerald700)),
+                      child: Text(tr('{0}% off', [off]), style: DT.text(size: 11, weight: FontWeight.w800, color: DT.emerald700)),
                     ),
                   ],
                 ],
@@ -342,7 +343,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
               if (stock != null) ...[
                 const SizedBox(height: 6),
                 Text(
-                  stock <= 0 ? 'Out of stock' : 'In stock: $stock${p.unitName.isEmpty ? '' : ' ${p.unitName.toUpperCase()}'}',
+                  stock <= 0 ? tr('Out of stock') : tr('In stock: {0}{1}', [stock, p.unitName.isEmpty ? '' : ' ${p.unitName.toUpperCase()}']),
                   style: DT.text(size: 12.5, weight: FontWeight.w700, color: stock <= 0 ? _kRed : DT.emerald700),
                 ),
               ],
@@ -352,7 +353,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   const Icon(Icons.storefront_outlined, size: 15, color: DT.slate400),
                   const SizedBox(width: 5),
                   Expanded(
-                    child: Text('Sold by ${p.companyName}', maxLines: 1, overflow: TextOverflow.ellipsis, style: DT.text(size: 12.5, color: DT.onyx600)),
+                    child: Text(tr('Sold by {0}', [p.companyName]), maxLines: 1, overflow: TextOverflow.ellipsis, style: DT.text(size: 12.5, color: DT.onyx600)),
                   ),
                 ]),
               ],
@@ -399,7 +400,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    Text('Sort & filter',
+                    Text(tr('Sort & filter'),
                         style: DT.text(size: 17, weight: FontWeight.w700)),
                     const Spacer(),
                     TextButton(
@@ -407,7 +408,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         sort = _Sort.recommended;
                         franchiseOnly = false;
                       }),
-                      child: Text('Reset',
+                      child: Text(tr('Reset'),
                           style: DT.text(
                               size: 13,
                               weight: FontWeight.w700,
@@ -416,7 +417,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text('Sort by',
+                Text(tr('Sort by'),
                     style: DT.text(
                         size: 12, weight: FontWeight.w600, color: DT.slate500)),
                 const SizedBox(height: 8),
@@ -443,10 +444,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Franchise available only',
+                            Text(tr('Franchise available only'),
                                 style: DT.text(
                                     size: 13, weight: FontWeight.w600)),
-                            Text('Show products you can take a franchise of',
+                            Text(tr('Show products you can take a franchise of'),
                                 style: DT.text(size: 11, color: DT.slate500)),
                           ],
                         ),
@@ -473,7 +474,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         borderRadius: BorderRadius.circular(DT.rMd),
                       ),
                     ),
-                    child: Text('Show results',
+                    child: Text(tr('Show results'),
                         style: DT.text(
                             size: 14,
                             weight: FontWeight.w700,
@@ -542,9 +543,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
               itemCount: _categories.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (context, i) {
-                final category = _categories[i];
+                final category = tr(_categories[i]);
                 return _CategoryChip(
-                  label: category,
+                  label: tr(category),
                   selected: category == _selectedCategory,
                   onTap: () => _selectCategory(category),
                 );
@@ -565,14 +566,14 @@ class _ProductsScreenState extends State<ProductsScreen> {
         style: DT.text(size: 13.5, weight: FontWeight.w500),
         cursorColor: _C.blue600,
         decoration: InputDecoration(
-          hintText: 'Search products, brands, suppliers',
+          hintText: tr('Search products, brands, suppliers'),
           hintStyle: DT.text(size: 13, color: DT.slate400),
           prefixIcon:
           const Icon(Icons.search_rounded, color: DT.onyx600, size: 20),
           suffixIcon: _searchQuery.isEmpty
               ? null
               : IconButton(
-            tooltip: 'Clear search',
+            tooltip: tr('Clear search'),
             onPressed: _searchController.clear,
             icon: const Icon(Icons.close_rounded,
                 color: DT.slate400, size: 18),
@@ -597,7 +598,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   Widget _buildFilterButton() {
     final active = _hasActiveFilters;
     return Tooltip(
-      message: 'Sort & filter',
+      message: tr('Sort & filter'),
       child: Material(
         color: active ? _kBrand : DT.slate100,
         shape: RoundedRectangleBorder(
@@ -701,7 +702,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
     final sub = [
       if (p.brandName.isNotEmpty) p.brandName,
       if (stock != null)
-        stock <= 0 ? 'Out of stock' : '$stock${p.unitName.isEmpty ? '' : ' ${p.unitName.toUpperCase()}'}'
+        stock <= 0 ? tr('Out of stock') : '$stock${p.unitName.isEmpty ? '' : ' ${p.unitName.toUpperCase()}'}'
       else if (p.categoryName.isNotEmpty)
         p.categoryName,
     ].join(' · ');
@@ -711,7 +712,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
       alignment: Alignment.center,
       padding: const EdgeInsets.all(8),
       child: Text(
-        p.brandName.isNotEmpty ? p.brandName : p.name,
+        tr(p.brandName.isNotEmpty ? p.brandName : p.name),
         textAlign: TextAlign.center,
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
@@ -767,7 +768,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 children: [
                                   const Text('🏪', style: TextStyle(fontSize: 9)),
                                   const SizedBox(width: 4),
-                                  Text('Franchise',
+                                  Text(tr('Franchise'),
                                       style: DT.text(size: 9.5, weight: FontWeight.w800, color: Colors.white)),
                                 ],
                               ),
@@ -779,12 +780,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(p.name,
+              Text(trData(p.name),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: DT.text(size: 12.5, weight: FontWeight.w800, color: DT.onyx800)),
               const SizedBox(height: 1),
-              Text(sub.isEmpty ? ' ' : sub,
+              Text(tr(sub.isEmpty ? ' ' : sub),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: DT.text(size: 10.5, color: stock != null && stock <= 0 ? _kRed : DT.slate400)),
@@ -825,7 +826,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                           borderRadius: BorderRadius.circular(DT.rMd),
                         ),
                       ),
-                      child: Text('Enquiry',
+                      child: Text(tr('Enquiry'),
                           style: DT.text(size: 10, weight: FontWeight.w700, color: DT.onyx800)),
                     ),
                   ),
@@ -844,7 +845,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                           borderRadius: BorderRadius.circular(DT.rMd),
                         ),
                       ),
-                      child: Text('Add',
+                      child: Text(tr('Add'),
                           style: DT.text(size: 10, weight: FontWeight.w700, color: Colors.white)),
                     ),
                   ),
@@ -894,7 +895,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
           Padding(
             padding: const EdgeInsets.only(left: 8),
             child: _ActivePill(
-              label: 'Franchise',
+              label: tr('Franchise'),
               onRemove: () => setState(() {
                 _franchiseOnly = false;
                 _applyFilters();
@@ -909,7 +910,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
               minimumSize: const Size(0, 30),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: Text('Clear all',
+            child: Text(tr('Clear all'),
                 style: DT.text(
                     size: 12, weight: FontWeight.w700, color: _C.blue600)),
           ),
@@ -930,7 +931,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
         )
             : Text(
           _filtered.length > _pageSize
-              ? "You've seen all ${_filtered.length} products"
+              ? tr('You\'ve seen all {0} products', [_filtered.length])
               : '',
           style: DT.text(size: 11.5, color: DT.slate400),
         ),
@@ -1023,15 +1024,15 @@ class _ProductsScreenState extends State<ProductsScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            searching ? 'No products match' : 'No products yet',
+            searching ? tr('No products match') : tr('No products yet'),
             textAlign: TextAlign.center,
             style: DT.text(size: 16, weight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           Text(
             searching
-                ? 'Try another search term, or clear the filters.'
-                : 'Approved products from suppliers will appear here.',
+                ? tr('Try another search term, or clear the filters.')
+                : tr('Approved products from suppliers will appear here.'),
             textAlign: TextAlign.center,
             style: DT.text(size: 12.5, color: DT.onyx600, height: 1.5),
           ),
@@ -1048,7 +1049,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   borderRadius: BorderRadius.circular(DT.rMd),
                 ),
               ),
-              child: Text('Clear search & filters',
+              child: Text(tr('Clear search & filters'),
                   style: DT.text(
                       size: 12.5, weight: FontWeight.w700, color: _kBrand)),
             ),
@@ -1082,11 +1083,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
                           size: 38, color: _kRed),
                     ),
                     const SizedBox(height: 16),
-                    Text("Couldn't load products",
+                    Text(tr("Couldn't load products"),
                         style: DT.text(size: 16, weight: FontWeight.w700)),
                     const SizedBox(height: 6),
                     Text(
-                      _error ?? '',
+                      tr(_error ?? ''),
                       textAlign: TextAlign.center,
                       style:
                       DT.text(size: 12.5, color: DT.onyx600, height: 1.5),
@@ -1095,7 +1096,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     ElevatedButton.icon(
                       onPressed: _loadProducts,
                       icon: const Icon(Icons.refresh_rounded, size: 18),
-                      label: Text('Try again',
+                      label: Text(tr('Try again'),
                           style: DT.text(
                               size: 13,
                               weight: FontWeight.w700,
@@ -1135,13 +1136,13 @@ class _ProductsScreenState extends State<ProductsScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              "Couldn't refresh. Showing the last loaded products.",
+              tr("Couldn't refresh. Showing the last loaded products."),
               style: DT.text(size: 12, weight: FontWeight.w500, color: _kRed),
             ),
           ),
           TextButton(
             onPressed: _loadProducts,
-            child: Text('Retry',
+            child: Text(tr('Retry'),
                 style: DT.text(
                     size: 12, weight: FontWeight.w700, color: _kRed)),
           ),
@@ -1181,7 +1182,7 @@ class _CategoryChip extends StatelessWidget {
           boxShadow: DT.shadowXs,
         ),
         child: Text(
-          label,
+          tr(label),
           style: DT.text(
             size: 12,
             weight: selected ? FontWeight.w600 : FontWeight.w500,
@@ -1214,7 +1215,7 @@ class _ActivePill extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(label,
+            Text(tr(label),
                 style: DT.text(
                     size: 11, weight: FontWeight.w600, color: _kBrand)),
             const SizedBox(width: 2),
@@ -1262,7 +1263,7 @@ class _SortOption extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    sort.label,
+                    tr(sort.label),
                     style: DT.text(
                       size: 13,
                       weight: selected ? FontWeight.w700 : FontWeight.w500,

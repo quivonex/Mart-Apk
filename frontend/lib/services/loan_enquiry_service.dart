@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../services/api_urls.dart';
 import '../models/loan_enquiry_model.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class LoanEnquiryService {
   /// Creates a new loan enquiry by sending a POST request
@@ -47,7 +48,7 @@ class LoanEnquiryService {
       } catch (_) {
         return LoanEnquiryResponse(
           status: false,
-          error: 'Invalid response from server',
+          error: tr('Invalid response from server'),
         );
       }
 
@@ -61,27 +62,27 @@ class LoanEnquiryService {
         status: false,
         message: jsonData['message']?.toString(),
         error: jsonData['error']?.toString() ??
-            'Request failed with status ${response.statusCode}',
+            tr('Request failed with status {0}', [response.statusCode]),
       );
     } on SocketException {
       return LoanEnquiryResponse(
         status: false,
-        error: 'No internet connection. Please check your network.',
+        error: tr('No internet connection. Please check your network.'),
       );
     } on HttpException {
       return LoanEnquiryResponse(
         status: false,
-        error: 'Server error. Please try again later.',
+        error: tr('Server error. Please try again later.'),
       );
     } on FormatException {
       return LoanEnquiryResponse(
         status: false,
-        error: 'Bad response format from server.',
+        error: tr('Bad response format from server.'),
       );
     } catch (e) {
       return LoanEnquiryResponse(
         status: false,
-        error: 'Something went wrong: ${e.toString()}',
+        error: tr('Something went wrong: {0}', [e.toString()]),
       );
     }
   }

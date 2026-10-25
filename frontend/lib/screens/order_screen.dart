@@ -6,6 +6,7 @@ import 'order_detail_screen.dart';
 import 'return_orders_screen.dart';
 import 'reorder_screen.dart';
 import '../utils/order_payment_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -79,12 +80,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
     final r = await OrderPaymentHelper.pay(
       context,
       shipOrderId: order.orderId,
-      description: 'Order ${order.orderNumber}',
+      description: tr('Order {0}', [order.orderNumber]),
     );
     if (!mounted) return;
     if (r == OrderPayOutcome.paid) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Payment received for ${order.orderNumber}. Your order is confirmed.')),
+        SnackBar(content: Text(tr('Payment received for {0}. Your order is confirmed.', [order.orderNumber]))),
       );
       _loadOrders();
     }
@@ -138,11 +139,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'My returns · $n order${n == 1 ? '' : 's'}',
+                    tr('My returns · {0} order{1}', [n, n == 1 ? '' : 's']),
                     style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: _kBrand),
                   ),
                 ),
-                const Text('Track',
+                Text(tr('Track'),
                     style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: _kBrand)),
                 const Icon(Icons.chevron_right_rounded, color: _kBrand),
               ],
@@ -189,7 +190,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               ),
               child: Center(
                 child: Text(
-                  _tabs[index],
+                  tr(_tabs[index]),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight:
@@ -250,8 +251,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
           const SizedBox(height: 12),
           Text(
             _selectedTab == 0
-                ? 'No orders found'
-                : 'No ${_tabs[_selectedTab].toLowerCase()} orders',
+                ? tr('No orders found')
+                : tr('No {0} orders', [tr(_tabs[_selectedTab])]),
             style: const TextStyle(
               fontSize: 16,
               color: AppConstants.textSecondary,
@@ -261,7 +262,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           ElevatedButton.icon(
             onPressed: _loadOrders,
             icon: const Icon(Icons.refresh, size: 18),
-            label: const Text('Refresh'),
+            label: Text(tr('Refresh')),
             style: ElevatedButton.styleFrom(
               backgroundColor: _kBrand,
               foregroundColor: Colors.white,
@@ -288,8 +289,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
               size: 56,
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Failed to load orders',
+            Text(
+              tr('Failed to load orders'),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -298,7 +299,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              _error!,
+              tr(_error!),
               style: const TextStyle(
                 fontSize: 13,
                 color: AppConstants.textSecondary,
@@ -316,8 +317,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 padding:
                 const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
-              child: const Text(
-                'Retry',
+              child: Text(
+                tr('Retry'),
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -360,7 +361,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      order.orderNumber,
+                      tr(order.orderNumber),
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -369,7 +370,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      order.formattedDate,
+                      tr(order.formattedDate),
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppConstants.textSecondary,
@@ -386,7 +387,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  order.statusLabel,
+                  tr(order.statusLabel),
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -427,7 +428,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      order.product.name,
+                      trData(order.product.name),
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -438,7 +439,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Qty: ${order.product.quantity}',
+                      tr('Qty: {0}', [order.product.quantity]),
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppConstants.textSecondary,
@@ -455,15 +456,15 @@ class _OrdersScreenState extends State<OrdersScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Total Amount',
+              Text(
+                tr('Total Amount'),
                 style: TextStyle(
                   fontSize: 13,
                   color: AppConstants.textSecondary,
                 ),
               ),
               Text(
-                order.formattedAmount,
+                tr(order.formattedAmount),
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -485,9 +486,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 children: [
                   const Icon(Icons.schedule_rounded, color: Color(0xFFC2410C), size: 20),
                   const SizedBox(width: 8),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Online payment not completed. Pay to confirm this order.',
+                      tr('Online payment not completed. Pay to confirm this order.'),
                       style: TextStyle(fontSize: 12, color: Color(0xFFC2410C), height: 1.35),
                     ),
                   ),
@@ -499,7 +500,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       minimumSize: const Size(0, 38),
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                     ),
-                    child: const Text('Pay now'),
+                    child: Text(tr('Pay now')),
                   ),
                 ],
               ),
@@ -530,8 +531,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                   ),
-                  child: const Text(
-                    'View Details',
+                  child: Text(
+                    tr('View Details'),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -557,8 +558,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                   ),
-                  child: const Text(
-                    'Re-order',
+                  child: Text(
+                    tr('Re-order'),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,

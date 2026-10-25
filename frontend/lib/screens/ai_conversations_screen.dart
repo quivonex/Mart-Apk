@@ -16,6 +16,7 @@ import '../models/ai_chat_models.dart';
 import '../services/ai_chat_service.dart';
 import '../utils/login_gate.dart';
 import 'ai_chat_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 /// Pop value when the conversation open in the chat screen was deleted here.
 const aiDeletedCurrent = '__deleted__';
@@ -57,7 +58,7 @@ class _AiConversationsScreenState extends State<AiConversationsScreen> {
     });
     final r = await AiChatService.conversations();
     if (!mounted) return;
-    if (r.needsLogin && await ensureLoggedIn(context, reason: 'see your chats')) return _load();
+    if (r.needsLogin && await ensureLoggedIn(context, reason: tr('see your chats'))) return _load();
     setState(() {
       _loading = false;
       if (r.ok) {
@@ -88,9 +89,9 @@ class _AiConversationsScreenState extends State<AiConversationsScreen> {
     if (!mounted) return;
     if (r.ok) {
       _replace(c.mergedWith(r.data!));
-      _snack('Conversation renamed');
+      _snack(tr('Conversation renamed'));
     } else {
-      _snack(r.error ?? 'Could not rename', error: true);
+      _snack(r.error ?? tr('Could not rename'), error: true);
     }
   }
 
@@ -104,17 +105,17 @@ class _AiConversationsScreenState extends State<AiConversationsScreen> {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(
-          content: Text(archive ? 'Conversation archived' : 'Moved back to chats'),
+          content: Text(archive ? tr('Conversation archived') : tr('Moved back to chats')),
           behavior: SnackBarBehavior.floating,
           action: SnackBarAction(
-            label: 'Undo',
+            label: tr('Undo'),
             textColor: const Color(0xFFC9DBEE),
             onPressed: () => _toggleArchive(c.mergedWith({'is_archived': archive})),
           ),
         ));
     } else {
       _replace(c);
-      _snack(r.error ?? 'Could not update', error: true);
+      _snack(r.error ?? tr('Could not update'), error: true);
     }
   }
 
@@ -122,7 +123,7 @@ class _AiConversationsScreenState extends State<AiConversationsScreen> {
   Future<bool> _deleteOnServer(AiConversation c) async {
     final r = await AiChatService.delete(c.id);
     if (!mounted) return false;
-    if (!r.ok) _snack(r.error ?? 'Could not delete', error: true);
+    if (!r.ok) _snack(r.error ?? tr('Could not delete'), error: true);
     return r.ok;
   }
 
@@ -131,7 +132,7 @@ class _AiConversationsScreenState extends State<AiConversationsScreen> {
       _all = _all.where((x) => x.id != c.id).toList();
       if (c.id == widget.currentId) _currentDeleted = true;
     });
-    _snack('Conversation deleted');
+    _snack(tr('Conversation deleted'));
   }
 
   /// From the ⋮ menu: confirm, delete, remove from the list.
@@ -144,7 +145,7 @@ class _AiConversationsScreenState extends State<AiConversationsScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
-        content: Text(msg),
+        content: Text(tr(msg)),
         backgroundColor: error ? AiColors.red : null,
         behavior: SnackBarBehavior.floating,
       ));
@@ -176,11 +177,11 @@ class _AiConversationsScreenState extends State<AiConversationsScreen> {
             foregroundColor: Colors.white,
             elevation: 0,
             leading: IconButton(
-              tooltip: 'Back',
+              tooltip: tr('Back'),
               icon: const Icon(Icons.arrow_back_rounded),
               onPressed: _close,
             ),
-            title: Text('Chat history', style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
+            title: Text(tr('Chat history'), style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(112),
               child: Column(
@@ -194,7 +195,7 @@ class _AiConversationsScreenState extends State<AiConversationsScreen> {
                         onChanged: (v) => setState(() => _q = v),
                         style: DT.text(size: 14, color: AiColors.ink),
                         decoration: InputDecoration(
-                          hintText: 'Search chats',
+                          hintText: tr('Search chats'),
                           hintStyle: DT.text(size: 14, color: AiColors.hint),
                           prefixIcon: const Icon(Icons.search_rounded, color: AiColors.muted),
                           suffixIcon: _q.isEmpty
@@ -225,8 +226,8 @@ class _AiConversationsScreenState extends State<AiConversationsScreen> {
                     labelStyle: DT.text(size: 13.5, weight: FontWeight.w700),
                     dividerColor: Colors.transparent,
                     tabs: [
-                      Tab(text: 'Chats ($active)'),
-                      Tab(text: 'Archived ($archived)'),
+                      Tab(text: tr('Chats ({0})', [active])),
+                      Tab(text: tr('Archived ({0})', [archived])),
                     ],
                   ),
                 ],
@@ -238,7 +239,7 @@ class _AiConversationsScreenState extends State<AiConversationsScreen> {
             backgroundColor: AiColors.brand,
             foregroundColor: Colors.white,
             icon: const Icon(Icons.add_comment_outlined),
-            label: Text('New chat', style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
+            label: Text(tr('New chat'), style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
           ),
           body: _loading
               ? const Center(child: CircularProgressIndicator(color: AiColors.brand))
@@ -247,14 +248,14 @@ class _AiConversationsScreenState extends State<AiConversationsScreen> {
             icon: Icons.cloud_off_rounded,
             iconColor: AiColors.red,
             iconBg: AiColors.redBg,
-            title: 'Could not load chats',
-            text: _error!,
+            title: tr('Could not load chats'),
+            text: tr(_error!),
             action: FilledButton.icon(
               onPressed: _load,
               style: FilledButton.styleFrom(
                   backgroundColor: AiColors.brand, foregroundColor: Colors.white),
               icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: const Text('Try again'),
+              label: Text(tr('Try again')),
             ),
           )
               : TabBarView(children: [_list(false), _list(true)]),
@@ -279,13 +280,13 @@ class _AiConversationsScreenState extends State<AiConversationsScreen> {
                 iconColor: AiColors.brand,
                 iconBg: AiColors.tint,
                 title: _q.isNotEmpty
-                    ? 'No chats match "$_q"'
+                    ? tr('No chats match "{0}"', [_q])
                     : archived
-                    ? 'No archived chats'
-                    : 'No chats yet',
+                    ? tr('No archived chats')
+                    : tr('No chats yet'),
                 text: archived
-                    ? 'Archive a chat from its ⋮ menu to keep it here.'
-                    : 'Start a new chat and ask QNX Assistant anything.',
+                    ? tr('Archive a chat from its ⋮ menu to keep it here.')
+                    : tr('Start a new chat and ask QNX Assistant anything.'),
               ),
             ),
           ],
@@ -337,7 +338,7 @@ class _AiConversationsScreenState extends State<AiConversationsScreen> {
             backgroundColor: AiColors.tint,
             child: Icon(aiServiceIcon(c.activeService), color: AiColors.brand, size: 21),
           ),
-          title: Text(c.title,
+          title: Text(trData(c.title),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: DT.text(size: 14.5, weight: FontWeight.w700, color: AiColors.ink)),
@@ -347,7 +348,7 @@ class _AiConversationsScreenState extends State<AiConversationsScreen> {
               [
                 c.activeService.label,
                 '${c.messageCount} message${c.messageCount == 1 ? '' : 's'}',
-                if (current) 'Open now',
+                if (current) tr('Open now'),
               ].join(' · '),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -357,9 +358,9 @@ class _AiConversationsScreenState extends State<AiConversationsScreen> {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(aiTimeLabel(c.activityAt), style: DT.text(size: 11, color: AiColors.hint)),
+              Text(tr(aiTimeLabel(c.activityAt)), style: DT.text(size: 11, color: AiColors.hint)),
               PopupMenuButton<String>(
-                tooltip: 'More',
+                tooltip: tr('More'),
                 icon: const Icon(Icons.more_vert_rounded, color: AiColors.muted),
                 onSelected: (v) => switch (v) {
                   'rename' => _rename(c),
@@ -368,24 +369,24 @@ class _AiConversationsScreenState extends State<AiConversationsScreen> {
                   _ => null,
                 },
                 itemBuilder: (_) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'rename',
                     child: ListTile(
-                        leading: Icon(Icons.edit_outlined), title: Text('Rename'), contentPadding: EdgeInsets.zero),
+                        leading: Icon(Icons.edit_outlined), title: Text(tr('Rename')), contentPadding: EdgeInsets.zero),
                   ),
                   PopupMenuItem(
                     value: 'archive',
                     child: ListTile(
                       leading: Icon(c.isArchived ? Icons.unarchive_outlined : Icons.archive_outlined),
-                      title: Text(c.isArchived ? 'Unarchive' : 'Archive'),
+                      title: Text(c.isArchived ? tr('Unarchive') : tr('Archive')),
                       contentPadding: EdgeInsets.zero,
                     ),
                   ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'delete',
                     child: ListTile(
                       leading: Icon(Icons.delete_outline_rounded, color: AiColors.red),
-                      title: Text('Delete', style: TextStyle(color: AiColors.red)),
+                      title: Text(tr('Delete'), style: TextStyle(color: AiColors.red)),
                       contentPadding: EdgeInsets.zero,
                     ),
                   ),
@@ -414,11 +415,11 @@ class _AiConversationsScreenState extends State<AiConversationsScreen> {
           children: [
             CircleAvatar(radius: 32, backgroundColor: iconBg, child: Icon(icon, size: 30, color: iconColor)),
             const SizedBox(height: 14),
-            Text(title,
+            Text(tr(title),
                 textAlign: TextAlign.center,
                 style: DT.text(size: 16, weight: FontWeight.w800, color: AiColors.ink)),
             const SizedBox(height: 6),
-            Text(text,
+            Text(tr(text),
                 textAlign: TextAlign.center, style: DT.text(size: 13, color: AiColors.muted, height: 1.45)),
             if (action != null) ...[const SizedBox(height: 18), action],
           ],

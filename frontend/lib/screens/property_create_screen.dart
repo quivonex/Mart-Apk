@@ -33,6 +33,7 @@ import '../services/property_create_service.dart';
 import '../services/real_estate_service.dart';
 import '../widgets/catalog_widgets.dart' show DecimalInputFormatter;
 import '../widgets/product_ui.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -273,7 +274,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
-        content: Text(msg),
+        content: Text(tr(msg)),
         backgroundColor: error ? _kRed : null,
       ));
   }
@@ -292,7 +293,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
     setState(() => _locating = true);
     try {
       if (!await Geolocator.isLocationServiceEnabled()) {
-        _snack('Turn on location services and try again.', error: true);
+        _snack(tr('Turn on location services and try again.'), error: true);
         return;
       }
       var perm = await Geolocator.checkPermission();
@@ -301,7 +302,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
       }
       if (perm == LocationPermission.denied ||
           perm == LocationPermission.deniedForever) {
-        _snack('Location permission is needed to capture coordinates.',
+        _snack(tr('Location permission is needed to capture coordinates.'),
             error: true);
         return;
       }
@@ -318,9 +319,9 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           'https://www.google.com/maps/search/?api=1&query=${pos.latitude},${pos.longitude}';
         }
       });
-      _snack('Location captured');
+      _snack(tr('Location captured'));
     } catch (e) {
-      _snack('Could not get location: $e', error: true);
+      _snack(tr('Could not get location: {0}', [e]), error: true);
     } finally {
       if (mounted) setState(() => _locating = false);
     }
@@ -330,10 +331,10 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
     try {
       final uri = Uri.parse(url);
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-        _snack('Could not open link', error: true);
+        _snack(tr('Could not open link'), error: true);
       }
     } catch (e) {
-      _snack('Could not open link: $e', error: true);
+      _snack(tr('Could not open link: {0}', [e]), error: true);
     }
   }
 
@@ -360,7 +361,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
         _photoBytes.addAll(bytes);
       });
     } catch (e) {
-      _snack('Could not pick photos: $e', error: true);
+      _snack(tr('Could not pick photos: {0}', [e]), error: true);
     }
   }
 
@@ -390,22 +391,22 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-              Text('Add property video',
+              Text(tr('Add property video'),
                   style: DT.text(size: 16, weight: FontWeight.w800)),
               const SizedBox(height: 2),
-              Text('Walkthrough, drone shot or sample flat tour',
+              Text(tr('Walkthrough, drone shot or sample flat tour'),
                   style: DT.text(size: 12, color: _PC.slate500)),
               const SizedBox(height: 14),
               Row(
                 children: [
                   Expanded(
                     child: _videoSourceTile(ctx, Icons.videocam_rounded,
-                        'Record video', ImageSource.camera),
+                        tr('Record video'), ImageSource.camera),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: _videoSourceTile(ctx, Icons.video_library_rounded,
-                        'From gallery', ImageSource.gallery),
+                        tr('From gallery'), ImageSource.gallery),
                   ),
                 ],
               ),
@@ -440,7 +441,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                 child: Icon(icon, color: Colors.white, size: 22),
               ),
               const SizedBox(height: 8),
-              Text(label,
+              Text(tr(label),
                   style: DT.text(
                       size: 12.5,
                       weight: FontWeight.w700,
@@ -454,7 +455,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
 
   Future<void> _pickVideo() async {
     if (_videos.length >= _maxVideos) {
-      _snack('You can add up to $_maxVideos videos.', error: true);
+      _snack(tr('You can add up to {0} videos.', [_maxVideos]), error: true);
       return;
     }
     final src = await _askVideoSource();
@@ -465,7 +466,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
       if (v == null) return;
       final size = await v.length();
       if (size > _maxVideoBytes) {
-        _snack('Video is ${_fileSize(size)}. Max allowed is 100 MB.',
+        _snack(tr('Video is {0}. Max allowed is 100 MB.', [_fileSize(size)]),
             error: true);
         return;
       }
@@ -475,7 +476,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
         _videoSizes.add(size);
       });
     } catch (e) {
-      _snack('Could not pick video: $e', error: true);
+      _snack(tr('Could not pick video: {0}', [e]), error: true);
     }
   }
 
@@ -499,13 +500,13 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
       }
       _selectedAmenities.add(created.id);
     });
-    _snack('"${created.name}" added and selected');
+    _snack(tr('"{0}" added and selected', [created.name]));
   }
 
   Future<void> _pickDocuments() async {
     final room = _maxDocs - _docs.length;
     if (room <= 0) {
-      _snack('You can attach up to $_maxDocs PDFs.', error: true);
+      _snack(tr('You can attach up to {0} PDFs.', [_maxDocs]), error: true);
       return;
     }
     try {
@@ -537,11 +538,11 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
       if (!mounted) return;
       setState(() => _docs.addAll(added));
       if (skipped > 0) {
-        _snack('$skipped file(s) skipped – PDF only, up to 10 MB each.',
+        _snack(tr('{0} file(s) skipped – PDF only, up to 10 MB each.', [skipped]),
             error: true);
       }
     } catch (e) {
-      _snack('Could not open files: $e', error: true);
+      _snack(tr('Could not open files: {0}', [e]), error: true);
     }
   }
 
@@ -741,11 +742,11 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
     FocusScope.of(context).unfocus();
     setState(() => _submitAttempted = true);
     if (!_formKey.currentState!.validate()) {
-      _snack('Please fix the highlighted fields', error: true);
+      _snack(tr('Please fix the highlighted fields'), error: true);
       return;
     }
     if (_photos.isEmpty) {
-      _snack('Add at least one photo of the property', error: true);
+      _snack(tr('Add at least one photo of the property'), error: true);
       return;
     }
     setState(() => _saving = true);
@@ -773,11 +774,9 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
               color: DT.emerald700, size: 32),
         ),
         title:
-        const Text('Property submitted', textAlign: TextAlign.center),
+        Text(tr('Property submitted'), textAlign: TextAlign.center),
         content: Text(
-          '${_title.text.trim()} was sent for admin approval'
-              '${_docs.isNotEmpty ? ' with ${_docs.length} document${_docs.length == 1 ? '' : 's'}' : ''}.\n\n'
-              '${r.subscriptionRequired ? 'A listing subscription is needed to make it live.' : (r.freeDays != null && r.freeDays! > 0 ? 'Your listing is free for ${r.freeDays} days.' : '')}',
+          tr('{0} was sent for admin approval{1}.\n\n{2}', [_title.text.trim(), _docs.isNotEmpty ? ' with ${_docs.length} document${_docs.length == 1 ? '' : 's'}' : '', r.subscriptionRequired ? 'A listing subscription is needed to make it live.' : (r.freeDays != null && r.freeDays! > 0 ? 'Your listing is free for ${r.freeDays} days.' : '')]),
           textAlign: TextAlign.center,
         ),
         actions: [
@@ -786,7 +785,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
             child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: _kBrand, foregroundColor: Colors.white),
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Done')),
+                child: Text(tr('Done'))),
           ),
         ],
       ),
@@ -798,12 +797,12 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Reset form?'),
-        content: const Text('All entered details will be cleared.'),
+        title: Text(tr('Reset form?')),
+        content: Text(tr('All entered details will be cleared.')),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+              child: Text(tr('Cancel'))),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
@@ -848,7 +847,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                 _submitAttempted = false;
               });
             },
-            child: const Text('Reset'),
+            child: Text(tr('Reset')),
           ),
         ],
       ),
@@ -867,16 +866,16 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
         final leave = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('Discard this listing?'),
-            content: const Text('The details you entered will be lost.'),
+            title: Text(tr('Discard this listing?')),
+            content: Text(tr('The details you entered will be lost.')),
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('Keep editing')),
+                  child: Text(tr('Keep editing'))),
               ElevatedButton(
                 onPressed: () => Navigator.pop(ctx, true),
                 style: ElevatedButton.styleFrom(backgroundColor: _kBrand), // buttons: only #093C71
-                child: const Text('Discard'),
+                child: Text(tr('Discard')),
               ),
             ],
           ),
@@ -943,7 +942,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           child: Row(
             children: [
               IconButton(
-                tooltip: 'Back',
+                tooltip: tr('Back'),
                 onPressed: () => Navigator.maybePop(context),
                 icon: const Icon(Icons.arrow_back_rounded,
                     color: _PC.slate900, size: 22),
@@ -957,7 +956,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                   text: TextSpan(
                     children: [
                       TextSpan(
-                        text: 'QNX',
+                        text: tr('QNX'),
                         style: DT.text(
                             size: 18,
                             weight: FontWeight.w900,
@@ -965,7 +964,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                             letterSpacing: -0.6),
                       ),
                       TextSpan(
-                        text: 'MART',
+                        text: tr('MART'),
                         style: DT.text(
                             size: 18,
                             weight: FontWeight.w800,
@@ -985,7 +984,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                     clipBehavior: Clip.none,
                     children: [
                       IconButton(
-                        tooltip: 'Cart',
+                        tooltip: tr('Cart'),
                         onPressed: () {
                           Navigator.maybePop(context);
                         },
@@ -1012,7 +1011,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                               Border.all(color: Colors.white, width: 2),
                             ),
                             child: Text(
-                              count > 99 ? '99+' : '$count',
+                              tr(count > 99 ? '99+' : '$count'),
                               style: DT.text(
                                   size: 9,
                                   weight: FontWeight.w800,
@@ -1026,7 +1025,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                 },
               ),
               PopupMenuButton<String>(
-                tooltip: 'Account',
+                tooltip: tr('Account'),
                 offset: const Offset(0, 42),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14)),
@@ -1038,7 +1037,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                 itemBuilder: (_) => [
                   PopupMenuItem(
                     enabled: false,
-                    child: Text('Signed in',
+                    child: Text(tr('Signed in'),
                         style: DT.text(
                             size: 12,
                             weight: FontWeight.w700,
@@ -1051,7 +1050,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                         const Icon(Icons.arrow_back_rounded,
                             size: 18, color: _PC.slate700),
                         const SizedBox(width: 10),
-                        Text('Back to home',
+                        Text(tr('Back to home'),
                             style: DT.text(
                                 size: 13,
                                 weight: FontWeight.w600,
@@ -1151,7 +1150,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                         color: _PC.blue200, size: 18),
                   ),
                   const SizedBox(width: 10),
-                  Text('Add Property',
+                  Text(tr('Add Property'),
                       style: DT.text(
                           size: 20,
                           weight: FontWeight.w800,
@@ -1161,7 +1160,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Fill in the comprehensive details below to list your property on QNXMart Real Estate.',
+                tr('Fill in the comprehensive details below to list your property on QNXMart Real Estate.'),
                 style:
                 DT.text(size: 12, color: _PC.slate300, height: 1.5),
               ),
@@ -1170,7 +1169,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                 onPressed: () => Navigator.maybePop(context),
                 icon: const Icon(Icons.list_alt_rounded,
                     size: 14, color: Colors.white),
-                label: Text('My Properties',
+                label: Text(tr('My Properties'),
                     style: DT.text(
                         size: 12,
                         weight: FontWeight.w600,
@@ -1198,7 +1197,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
   // ─────────────────────────────────────────────────────────────────────
   Widget _subcategorySection() {
     return _card(
-      title: 'SELECT PROPERTY SUBCATEGORY',
+      title: tr('SELECT PROPERTY SUBCATEGORY'),
       accentColor: _PC.indigo600,
       children: [
         Container(
@@ -1215,7 +1214,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Active Configuration: ${_typeLabel(_type)} Form (Custom Attributes Enabled)',
+                  tr('Active Configuration: {0} Form (Custom Attributes Enabled)', [_typeLabel(_type)]),
                   style: DT.text(
                       size: 11,
                       weight: FontWeight.w600,
@@ -1246,21 +1245,21 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
         const SizedBox(height: 14),
         const Divider(height: 1, color: _PC.slate100),
         const SizedBox(height: 14),
-        _label('Transaction Type', required: true),
+        _label(tr('Transaction Type'), required: true),
         const SizedBox(height: 8),
         Row(
           children: [
-            for (final (v, label) in const [
-              ('sale', 'Sale'),
-              ('rent', 'Rent'),
-              ('lease', 'Lease'),
-              ('pg', 'PG/Hostel'),
+            for (final (v, label) in [
+              ('sale', tr('Sale')),
+              ('rent', tr('Rent')),
+              ('lease', tr('Lease')),
+              ('pg', tr('PG/Hostel')),
             ])
               Expanded(
                 child: Padding(
                   padding: EdgeInsets.only(right: v == 'pg' ? 0 : 6),
                   child: _pillButton(
-                    label: label,
+                    label: tr(label),
                     selected: _transaction == v,
                     onTap: () => setState(() => _transaction = v),
                   ),
@@ -1269,13 +1268,13 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           ],
         ),
         const SizedBox(height: 14),
-        _label('Construction Stage', required: true),
+        _label(tr('Construction Stage'), required: true),
         const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
               child: _pillButton(
-                label: 'Under Construction',
+                label: tr('Under Construction'),
                 selected: _underConstruction,
                 onTap: () => setState(() => _underConstruction = true),
               ),
@@ -1283,7 +1282,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: _pillButton(
-                label: 'Ready to Move',
+                label: tr('Ready to Move'),
                 selected: !_underConstruction,
                 onTap: () => setState(() => _underConstruction = false),
               ),
@@ -1292,7 +1291,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
         ),
         if (_underConstruction) ...[
           const SizedBox(height: 14),
-          _label('Possession date'),
+          _label(tr('Possession date')),
           const SizedBox(height: 6),
           OutlinedButton.icon(
             onPressed: () async {
@@ -1308,7 +1307,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
             icon: const Icon(Icons.event_outlined, size: 16),
             label: Text(
               _possession == null
-                  ? 'Select date'
+                  ? tr('Select date')
                   : '${_possession!.day}/${_possession!.month}/${_possession!.year}',
               style: DT.text(size: 13),
             ),
@@ -1323,7 +1322,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Text('Construction progress',
+              Text(tr('Construction progress'),
                   style: DT.text(
                       size: 12,
                       weight: FontWeight.w600,
@@ -1370,9 +1369,9 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           children: [
             Column(
               children: [
-                Text(emoji, style: const TextStyle(fontSize: 24)),
+                Text(tr(emoji), style: const TextStyle(fontSize: 24)),
                 const SizedBox(height: 6),
-                Text(label,
+                Text(tr(label),
                     textAlign: TextAlign.center,
                     style: DT.text(
                         size: 11.5,
@@ -1416,7 +1415,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           ]
               : null,
         ),
-        child: Text(label,
+        child: Text(tr(label),
             style: DT.text(
                 size: 11.5,
                 weight: FontWeight.w700,
@@ -1430,17 +1429,17 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
   // ─────────────────────────────────────────────────────────────────────
   Widget _basicInfoSection() {
     return _card(
-      title: 'Basic Information',
+      title: tr('Basic Information'),
       icon: Icons.info_outline_rounded,
       children: [
-        _label('Title', required: true),
+        _label(tr('Title'), required: true),
         const SizedBox(height: 6),
         _input(_title,
-            hint: 'Enter property title',
+            hint: tr('Enter property title'),
             validator: (v) =>
-            (v ?? '').trim().isEmpty ? 'Title is required' : null),
+            (v ?? '').trim().isEmpty ? tr('Title is required') : null),
         const SizedBox(height: 12),
-        _label('Property Type', required: true),
+        _label(tr('Property Type'), required: true),
         const SizedBox(height: 6),
         _dropdown(
           value: _type,
@@ -1448,7 +1447,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           onChanged: (v) => setState(() => _type = v),
         ),
         const SizedBox(height: 12),
-        _label('Property Condition', required: true),
+        _label(tr('Property Condition'), required: true),
         const SizedBox(height: 6),
         _dropdown(
           value: _condition,
@@ -1458,12 +1457,12 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
         const SizedBox(height: 12),
         RichText(
           text: TextSpan(
-            text: 'Detailed Description ',
+            text: tr('Detailed Description '),
             style: DT.text(
                 size: 12, weight: FontWeight.w600, color: _PC.slate700),
             children: [
               TextSpan(
-                  text: '(Optional)',
+                  text: tr('(Optional)'),
                   style: DT.text(
                       size: 12,
                       weight: FontWeight.w400,
@@ -1474,7 +1473,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
         const SizedBox(height: 6),
         _input(_description,
             hint:
-            'Highlight view, corner position, sunlight, furnishings, and proximity to hubs...',
+            tr('Highlight view, corner position, sunlight, furnishings, and proximity to hubs...'),
             maxLines: 3),
       ],
     );
@@ -1494,9 +1493,9 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           ),
         _addTile(
           icon: Icons.add_rounded,
-          label: 'Add Configuration',
+          label: tr('Add Configuration'),
           subtitle:
-          'Add another flat type (2 BHK, 3 BHK, etc.) with its own price',
+          tr('Add another flat type (2 BHK, 3 BHK, etc.) with its own price'),
           onTap: () => _editUnit(),
         ),
       ],
@@ -1521,7 +1520,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           Row(
             children: [
               Expanded(
-                child: Text('CONFIGURATION #${index + 1}',
+                child: Text(tr('CONFIGURATION #{0}', [index + 1]),
                     style: DT.text(
                         size: 11,
                         weight: FontWeight.w800,
@@ -1544,7 +1543,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                       const Icon(Icons.delete_outline_rounded,
                           size: 12, color: _PC.rose600),
                       const SizedBox(width: 4),
-                      Text('Remove',
+                      Text(tr('Remove'),
                           style: DT.text(
                               size: 11,
                               weight: FontWeight.w600,
@@ -1558,7 +1557,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           const SizedBox(height: 10),
           const Divider(height: 1, color: _PC.slate100),
           const SizedBox(height: 12),
-          _label('Flat Type', required: true),
+          _label(tr('Flat Type'), required: true),
           const SizedBox(height: 6),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -1570,13 +1569,13 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(u.name,
+                  child: Text(trData(u.name),
                       style:
                       DT.text(size: 13.5, weight: FontWeight.w600)),
                 ),
                 TextButton(
                   onPressed: () => _editUnit(index),
-                  child: Text('Edit',
+                  child: Text(tr('Edit'),
                       style: DT.text(
                           size: 12,
                           weight: FontWeight.w700,
@@ -1588,23 +1587,23 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _readOnlyField('Area (sqft)', u.areaSqft)),
+              Expanded(child: _readOnlyField(tr('Area (sqft)'), u.areaSqft)),
               const SizedBox(width: 10),
               Expanded(
                   child:
-                  _readOnlyField('Carpet Area (sqft)', u.carpetArea)),
+                  _readOnlyField(tr('Carpet Area (sqft)'), u.carpetArea)),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
-                child: _counterBox('Bedrooms', u.bedrooms,
+                child: _counterBox(tr('Bedrooms'), u.bedrooms,
                         (v) => setState(() => u.bedrooms = v)),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: _counterBox('Bathrooms', u.bathrooms,
+                child: _counterBox(tr('Bathrooms'), u.bathrooms,
                         (v) => setState(() => u.bathrooms = v)),
               ),
             ],
@@ -1631,7 +1630,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Unit currently available for immediate booking',
+                    tr('Unit currently available for immediate booking'),
                     style: DT.text(size: 12, color: _PC.slate700),
                   ),
                 ),
@@ -1658,7 +1657,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: _PC.slate200),
           ),
-          child: Text(value.isEmpty ? '—' : value,
+          child: Text(tr(value.isEmpty ? '—' : value),
               style: DT.text(size: 13, weight: FontWeight.w600)),
         ),
       ],
@@ -1676,7 +1675,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
+          Text(tr(label),
               style: DT.text(
                   size: 11, weight: FontWeight.w600, color: _PC.slate600)),
           const SizedBox(height: 6),
@@ -1722,7 +1721,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
   // ─────────────────────────────────────────────────────────────────────
   Widget _locationSection() {
     return _card(
-      title: 'Location Details',
+      title: tr('Location Details'),
       icon: Icons.location_on_rounded,
       trailing: OutlinedButton.icon(
         onPressed: _locating ? null : _useLocation,
@@ -1734,7 +1733,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                 strokeWidth: 2, color: _PC.blue600))
             : const Icon(Icons.my_location_rounded,
             size: 14, color: _PC.blue600),
-        label: Text(_locating ? 'Getting…' : 'Get Live Location',
+        label: Text(_locating ? tr('Getting…') : tr('Get Live Location'),
             style: DT.text(
                 size: 11,
                 weight: FontWeight.w700,
@@ -1749,13 +1748,13 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
         ),
       ),
       children: [
-        _label('Full Address', required: true),
+        _label(tr('Full Address'), required: true),
         const SizedBox(height: 6),
         _input(_address,
-            hint: 'Building name, Street, Block, City, State',
+            hint: tr('Building name, Street, Block, City, State'),
             maxLines: 2,
             validator: (v) =>
-            (v ?? '').trim().isEmpty ? 'Address is required' : null),
+            (v ?? '').trim().isEmpty ? tr('Address is required') : null),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -1763,12 +1762,12 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _label('City', required: true),
+                  _label(tr('City'), required: true),
                   const SizedBox(height: 6),
                   _input(_city,
-                      hint: 'Pune',
+                      hint: tr('Pune'),
                       validator: (v) => (v ?? '').trim().isEmpty
-                          ? 'City is required'
+                          ? tr('City is required')
                           : null),
                 ],
               ),
@@ -1778,12 +1777,12 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _label('Area / Locality', required: true),
+                  _label(tr('Area / Locality'), required: true),
                   const SizedBox(height: 6),
                   _input(_area,
-                      hint: 'Wakad',
+                      hint: tr('Wakad'),
                       validator: (v) => (v ?? '').trim().isEmpty
-                          ? 'Area is required'
+                          ? tr('Area is required')
                           : null),
                 ],
               ),
@@ -1797,9 +1796,9 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _label('Landmark'),
+                  _label(tr('Landmark')),
                   const SizedBox(height: 6),
-                  _input(_landmark, hint: 'Near Metro Station'),
+                  _input(_landmark, hint: tr('Near Metro Station')),
                 ],
               ),
             ),
@@ -1808,7 +1807,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _label('Pin Code'),
+                  _label(tr('Pin Code')),
                   const SizedBox(height: 6),
                   _input(_pincode,
                       hint: '411045',
@@ -1820,7 +1819,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                       validator: (v) {
                         final t = (v ?? '').trim();
                         if (t.isEmpty) return null;
-                        return t.length != 6 ? '6-digit pincode' : null;
+                        return t.length != 6 ? tr('6-digit pincode') : null;
                       }),
                 ],
               ),
@@ -1828,7 +1827,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        _label('Google Maps Link'),
+        _label(tr('Google Maps Link')),
         const SizedBox(height: 6),
         _input(_mapLink,
             hint: 'https://maps.google.com/?q=...',
@@ -1842,7 +1841,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                   size: 12, color: _PC.emerald600),
               const SizedBox(width: 4),
               Text(
-                'Location set · ${_lat!.toStringAsFixed(5)}, ${_lng!.toStringAsFixed(5)}',
+                tr('Location set · {0}, {1}', [_lat!.toStringAsFixed(5), _lng!.toStringAsFixed(5)]),
                 style: DT.text(
                     size: 11,
                     weight: FontWeight.w600,
@@ -1882,7 +1881,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'Tap on the map to move the pin',
+                    tr('Tap on the map to move the pin'),
                     style: DT.text(size: 11.5, color: _PC.slate700),
                   ),
                 ),
@@ -1930,7 +1929,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                   },
                   icon: const Icon(Icons.open_in_new_rounded,
                       size: 14, color: _PC.blue600),
-                  label: Text('Open in Maps',
+                  label: Text(tr('Open in Maps'),
                       style: DT.text(
                           size: 12,
                           weight: FontWeight.w700,
@@ -1954,12 +1953,12 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
   // ─────────────────────────────────────────────────────────────────────
   Widget _floorsSection() {
     return _card(
-      title: 'Floors',
+      title: tr('Floors'),
       icon: Icons.layers_outlined,
-      trailing: _addSmallButton('Add Floor', () => _editFloor()),
+      trailing: _addSmallButton(tr('Add Floor'), () => _editFloor()),
       children: [
         if (_floorDrafts.isEmpty)
-          _emptyPlaceholder('No floors added yet.')
+          _emptyPlaceholder(tr('No floors added yet.'))
         else
           for (var i = 0; i < _floorDrafts.length; i++) ...[
             _floorTile(_floorDrafts[i], i),
@@ -1998,7 +1997,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(f.floorName,
+                Text(tr(f.floorName),
                     style:
                     DT.text(size: 13.5, weight: FontWeight.w700)),
                 Text('${f.availableUnits} / ${f.totalUnits} available',
@@ -2026,25 +2025,25 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
   // ─────────────────────────────────────────────────────────────────────
   Widget _pricingSection() {
     return _card(
-      title: 'Pricing Slabs',
+      title: tr('Pricing Slabs'),
       icon: Icons.currency_rupee_rounded,
-      trailing: _addSmallButton('Add Slab', () => _editSlab()),
+      trailing: _addSmallButton(tr('Add Slab'), () => _editSlab()),
       children: [
         if (_slabDrafts.isEmpty && _units.isEmpty)
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _label('Expected price (₹)'),
+              _label(tr('Expected price (₹)')),
               const SizedBox(height: 6),
               _input(_price,
-                  hint: 'Leave empty for "Price on request"',
+                  hint: tr('Leave empty for "Price on request"'),
                   keyboard: TextInputType.number,
                   formatters: [
                     FilteringTextInputFormatter.digitsOnly,
                     LengthLimitingTextInputFormatter(12),
                   ]),
               const SizedBox(height: 10),
-              _emptyPlaceholder('No pricing slabs configured yet.'),
+              _emptyPlaceholder(tr('No pricing slabs configured yet.')),
             ],
           )
         else
@@ -2059,7 +2058,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           contentPadding: EdgeInsets.zero,
           activeThumbColor: Colors.white,
           activeTrackColor: _PC.blue600,
-          title: Text('Price is negotiable',
+          title: Text(tr('Price is negotiable'),
               style: DT.text(size: 13, weight: FontWeight.w600)),
         ),
         SwitchListTile(
@@ -2068,7 +2067,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           contentPadding: EdgeInsets.zero,
           activeThumbColor: Colors.white,
           activeTrackColor: _PC.blue600,
-          title: Text('Mark as featured',
+          title: Text(tr('Mark as featured'),
               style: DT.text(size: 13, weight: FontWeight.w600)),
         ),
       ],
@@ -2101,13 +2100,13 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(s.flatType.isEmpty ? 'All units' : s.flatType,
+                Text(s.flatType.isEmpty ? tr('All units') : s.flatType,
                     style:
                     DT.text(size: 13.5, weight: FontWeight.w700)),
                 Text(
                   [
                     if (s.basePrice.isNotEmpty) '₹${_num(s.basePrice)}',
-                    'Floor ${s.floor}',
+                    tr('Floor {0}', [s.floor]),
                   ].join(' · '),
                   style: DT.text(size: 11.5, color: _PC.slate500),
                 ),
@@ -2134,15 +2133,15 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
   // ─────────────────────────────────────────────────────────────────────
   Widget _amenitiesSection() {
     return _card(
-      title: 'Amenities & Features',
+      title: tr('Amenities & Features'),
       icon: Icons.auto_awesome_rounded,
-      trailing: _addSmallButton('Add Amenity', _openAddAmenity),
+      trailing: _addSmallButton(tr('Add Amenity'), _openAddAmenity),
       children: [
         Row(
           children: [
             Expanded(
               child: Text(
-                'Select available conveniences to boost listing visibility',
+                tr('Select available conveniences to boost listing visibility'),
                 style: DT.text(size: 11.5, color: _PC.slate500),
               ),
             ),
@@ -2176,7 +2175,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           GestureDetector(
             onTap: _openAddAmenity,
             child: _emptyPlaceholder(
-                'No amenities yet — tap "Add Amenity" to create one'),
+                tr('No amenities yet — tap "Add Amenity" to create one')),
           )
         else
           LayoutBuilder(
@@ -2237,7 +2236,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(a.name,
+              child: Text(trData(a.name),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: DT.text(size: 12, color: _PC.slate700)),
@@ -2253,7 +2252,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
   // ─────────────────────────────────────────────────────────────────────
   Widget _mediaSection() {
     return _card(
-      title: 'Media & Documents',
+      title: tr('Media & Documents'),
       icon: Icons.cloud_upload_outlined,
       children: [
         GestureDetector(
@@ -2271,11 +2270,11 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                 const Icon(Icons.collections_rounded,
                     size: 30, color: _PC.blue600),
                 const SizedBox(height: 6),
-                Text('Upload Property Photos',
+                Text(tr('Upload Property Photos'),
                     style:
                     DT.text(size: 13, weight: FontWeight.w700)),
                 const SizedBox(height: 2),
-                Text('JPEG, PNG, WebP up to 5MB each (Min 3 photos)',
+                Text(tr('JPEG, PNG, WebP up to 5MB each (Min 3 photos)'),
                     style: DT.text(size: 10.5, color: _PC.slate400)),
                 const SizedBox(height: 4),
                 Text('${_photos.length}/$_maxPhotos added',
@@ -2313,7 +2312,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                           color: _PC.blue600,
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Text('Cover',
+                        child: Text(tr('Cover'),
                             style: DT.text(
                                 size: 9,
                                 weight: FontWeight.w700,
@@ -2367,12 +2366,12 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('RERA & Ownership Document',
+                      Text(tr('RERA & Ownership Document'),
                           style: DT.text(
                               size: 12.5,
                               weight: FontWeight.w600,
                               color: _PC.slate700)),
-                      Text('PDF up to 10MB each',
+                      Text(tr('PDF up to 10MB each'),
                           style: DT.text(
                               size: 10.5, color: _PC.slate400)),
                     ],
@@ -2386,7 +2385,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: _PC.slate200),
                   ),
-                  child: Text('Choose File',
+                  child: Text(tr('Choose File'),
                       style: DT.text(
                           size: 11,
                           weight: FontWeight.w600,
@@ -2438,13 +2437,13 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Property Videos',
+                      Text(tr('Property Videos'),
                           style: DT.text(
                               size: 12.5,
                               weight: FontWeight.w700,
                               color: _PC.slate700)),
                       Text(
-                          'MP4 / MOV up to 100MB · ${_videos.length}/$_maxVideos added',
+                          tr('MP4 / MOV up to 100MB · {0}/{1} added', [_videos.length, _maxVideos]),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(size: 10.5, color: _PC.slate400)),
@@ -2467,7 +2466,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                           size: 14,
                           color: full ? _PC.slate400 : _kBrandLight),
                       const SizedBox(width: 2),
-                      Text(full ? 'Max' : 'Add Video',
+                      Text(full ? tr('Max') : tr('Add Video'),
                           style: DT.text(
                               size: 11,
                               weight: FontWeight.w700,
@@ -2514,17 +2513,17 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name,
+                Text(tr(name),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: DT.text(size: 12.5, weight: FontWeight.w700)),
-                Text(_fileSize(_videoSizes[i]),
+                Text(tr(_fileSize(_videoSizes[i])),
                     style: DT.text(size: 10.5, color: _PC.slate500)),
               ],
             ),
           ),
           IconButton(
-            tooltip: 'Remove',
+            tooltip: tr('Remove'),
             onPressed: () => setState(() {
               _videos.removeAt(i);
               _videoSizes.removeAt(i);
@@ -2563,18 +2562,18 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(d.fileName,
+                Text(tr(d.fileName),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style:
                     DT.text(size: 12.5, weight: FontWeight.w700)),
-                Text(_fileSize(d.sizeBytes),
+                Text(tr(_fileSize(d.sizeBytes)),
                     style: DT.text(size: 10.5, color: _PC.slate500)),
               ],
             ),
           ),
           IconButton(
-            tooltip: 'Remove',
+            tooltip: tr('Remove'),
             onPressed: () => setState(() => _docs.removeAt(i)),
             icon: const Icon(Icons.delete_outline_rounded,
                 size: 18, color: _PC.rose600),
@@ -2617,7 +2616,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: Text('Reset Form',
+                    child: Text(tr('Reset Form'),
                         style: DT.text(
                             size: 12.5,
                             weight: FontWeight.w700,
@@ -2650,7 +2649,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                             child: CircularProgressIndicator(
                                 strokeWidth: 2, color: Colors.white)),
                         const SizedBox(width: 8),
-                        Text('Uploading…',
+                        Text(tr('Uploading…'),
                             style: DT.text(
                                 size: 12.5,
                                 weight: FontWeight.w700,
@@ -2660,7 +2659,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                         : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Publish Listing',
+                        Text(tr('Publish Listing'),
                             style: DT.text(
                                 size: 13,
                                 weight: FontWeight.w700,
@@ -2731,7 +2730,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
               ],
               Expanded(
                 child: Text(
-                  accentColor != null ? title.toUpperCase() : title,
+                  tr(accentColor != null ? title.toUpperCase() : title),
                   style: DT.text(
                     size: accentColor != null ? 11 : 14,
                     weight: FontWeight.w800,
@@ -2753,7 +2752,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
   Widget _label(String text, {bool required = false}) {
     return RichText(
       text: TextSpan(
-        text: text,
+        text: tr(text),
         style: DT.text(
             size: 12, weight: FontWeight.w600, color: _PC.slate700),
         children: [
@@ -2783,7 +2782,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
       maxLines: maxLines,
       style: DT.text(size: 13, weight: FontWeight.w500),
       decoration: InputDecoration(
-        hintText: hint,
+        hintText: trN(hint),
         hintStyle: DT.text(size: 12.5, color: _PC.slate400),
         prefixIcon: prefixIcon == null
             ? null
@@ -2838,7 +2837,7 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           items: items
               .map((e) => DropdownMenuItem<String>(
             value: e.$1,
-            child: Text(e.$2, overflow: TextOverflow.ellipsis),
+            child: Text(tr(e.$2), overflow: TextOverflow.ellipsis),
           ))
               .toList(),
           onChanged: (v) => onChanged(v ?? value),
@@ -2857,14 +2856,14 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
           color: _PC.slate200, style: BorderStyle.solid),
     ),
     child:
-    Text(text, style: DT.text(size: 12, color: _PC.slate400)),
+    Text(tr(text), style: DT.text(size: 12, color: _PC.slate400)),
   );
 
   Widget _addSmallButton(String label, VoidCallback onTap) {
     return ElevatedButton.icon(
       onPressed: onTap,
       icon: const Icon(Icons.add_rounded, size: 14, color: Colors.white),
-      label: Text(label,
+      label: Text(tr(label),
           style: DT.text(
               size: 12, weight: FontWeight.w700, color: Colors.white)),
       style: ElevatedButton.styleFrom(
@@ -2912,12 +2911,12 @@ class _PropertyCreateScreenState extends State<PropertyCreateScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(label,
+                    Text(tr(label),
                         style: DT.text(
                             size: 13.5,
                             weight: FontWeight.w700,
                             color: _PC.slate900)),
-                    Text(subtitle,
+                    Text(tr(subtitle),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(
@@ -2996,7 +2995,7 @@ class _UnitSheetState extends State<_UnitSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label,
+            Text(tr(label),
                 style: DT.text(
                     size: 11,
                     weight: FontWeight.w600,
@@ -3067,8 +3066,8 @@ class _UnitSheetState extends State<_UnitSheet> {
             children: [
               Text(
                   widget.existing == null
-                      ? 'Add configuration'
-                      : 'Edit configuration',
+                      ? tr('Add configuration')
+                      : tr('Edit configuration'),
                   style: DT.text(size: 17, weight: FontWeight.w800)),
               const SizedBox(height: 4),
               Wrap(spacing: 6, runSpacing: 6, children: [
@@ -3082,50 +3081,50 @@ class _UnitSheetState extends State<_UnitSheet> {
                   'Office'
                 ])
                   ActionChip(
-                    label: Text(s),
+                    label: Text(tr(s)),
                     onPressed: () => setState(() => _name.text = s),
                   ),
               ]),
               const SizedBox(height: 12),
-              _lbl('Flat type', required: true),
-              _tf(_name, hint: 'e.g. 2 BHK', validator: (v) {
+              _lbl(tr('Flat type'), required: true),
+              _tf(_name, hint: tr('e.g. 2 BHK'), validator: (v) {
                 final t = (v ?? '').trim();
-                if (t.isEmpty) return 'Enter a name';
+                if (t.isEmpty) return tr('Enter a name');
                 if (widget.taken.contains(t.toLowerCase())) {
-                  return 'This configuration already exists';
+                  return tr('This configuration already exists');
                 }
                 return null;
               }),
               const SizedBox(height: 12),
               Row(children: [
-                Expanded(child: _lblCol('Area (sqft)', _area)),
+                Expanded(child: _lblCol(tr('Area (sqft)'), _area)),
                 const SizedBox(width: 10),
-                Expanded(child: _lblCol('Carpet (sqft)', _carpet)),
+                Expanded(child: _lblCol(tr('Carpet (sqft)'), _carpet)),
               ]),
               const SizedBox(height: 12),
               Row(children: [
-                Expanded(child: _lblCol('Built-up (sqft)', _built)),
+                Expanded(child: _lblCol(tr('Built-up (sqft)'), _built)),
                 const SizedBox(width: 10),
-                Expanded(child: _lblCol('Balcony (sqft)', _balcony)),
+                Expanded(child: _lblCol(tr('Balcony (sqft)'), _balcony)),
               ]),
               const SizedBox(height: 12),
               Row(children: [
-                _counter('Bedrooms', _bed, (v) => setState(() => _bed = v)),
+                _counter(tr('Bedrooms'), _bed, (v) => setState(() => _bed = v)),
                 const SizedBox(width: 10),
-                _counter('Bathrooms', _bath, (v) => setState(() => _bath = v)),
+                _counter(tr('Bathrooms'), _bath, (v) => setState(() => _bath = v)),
               ]),
               const SizedBox(height: 12),
               Row(children: [
-                _counter('Balconies', _balc, (v) => setState(() => _balc = v)),
+                _counter(tr('Balconies'), _balc, (v) => setState(() => _balc = v)),
                 const SizedBox(width: 10),
-                _counter('Parking', _park, (v) => setState(() => _park = v)),
+                _counter(tr('Parking'), _park, (v) => setState(() => _park = v)),
               ]),
               const SizedBox(height: 12),
-              _lbl('Description (optional)'),
+              _lbl(tr('Description (optional)')),
               _tf(_desc,
-                  hint: 'e.g. Corner unit with park view', maxLines: 2),
+                  hint: tr('e.g. Corner unit with park view'), maxLines: 2),
               const SizedBox(height: 12),
-              _lbl('Price (₹)'),
+              _lbl(tr('Price (₹)')),
               _tf(_price,
                   hint: '5500000',
                   keyboard: TextInputType.number,
@@ -3134,7 +3133,7 @@ class _UnitSheetState extends State<_UnitSheet> {
                     LengthLimitingTextInputFormatter(12),
                   ]),
               const SizedBox(height: 12),
-              _lbl('Booking amount (₹)'),
+              _lbl(tr('Booking amount (₹)')),
               _tf(_booking,
                   hint: '100000',
                   keyboard: TextInputType.number,
@@ -3149,7 +3148,7 @@ class _UnitSheetState extends State<_UnitSheet> {
                 contentPadding: EdgeInsets.zero,
                 activeThumbColor: Colors.white,
                 activeTrackColor: _PC.blue600,
-                title: Text('Available now',
+                title: Text(tr('Available now'),
                     style: DT.text(size: 13, weight: FontWeight.w600)),
               ),
               const SizedBox(height: 10),
@@ -3183,7 +3182,7 @@ class _UnitSheetState extends State<_UnitSheet> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text('Save configuration',
+                  child: Text(tr('Save configuration'),
                       style: DT.text(
                           size: 13.5,
                           weight: FontWeight.w700,
@@ -3201,7 +3200,7 @@ class _UnitSheetState extends State<_UnitSheet> {
     padding: const EdgeInsets.only(bottom: 6),
     child: RichText(
       text: TextSpan(
-        text: t,
+        text: tr(t),
         style: DT.text(
             size: 12, weight: FontWeight.w600, color: _PC.slate700),
         children: [
@@ -3220,7 +3219,7 @@ class _UnitSheetState extends State<_UnitSheet> {
   Widget _lblCol(String label, TextEditingController c) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label,
+      Text(tr(label),
           style: DT.text(
               size: 11.5,
               weight: FontWeight.w600,
@@ -3244,7 +3243,7 @@ class _UnitSheetState extends State<_UnitSheet> {
       validator: validator,
       style: DT.text(size: 13.5),
       decoration: InputDecoration(
-        hintText: hint,
+        hintText: trN(hint),
         hintStyle: DT.text(size: 12.5, color: _PC.slate400),
         isDense: true,
         filled: true,
@@ -3314,10 +3313,10 @@ class _FloorSheetState extends State<_FloorSheet> {
             shrinkWrap: true,
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
             children: [
-              Text(widget.existing == null ? 'Add floor' : 'Edit floor',
+              Text(widget.existing == null ? tr('Add floor') : tr('Edit floor'),
                   style: DT.text(size: 17, weight: FontWeight.w800)),
               const SizedBox(height: 14),
-              _lbl('Floor number', required: true),
+              _lbl(tr('Floor number'), required: true),
               _tf(_number,
                   hint: '1',
                   keyboard: TextInputType.number,
@@ -3326,18 +3325,18 @@ class _FloorSheetState extends State<_FloorSheet> {
                     LengthLimitingTextInputFormatter(3),
                   ],
                   validator: (v) =>
-                  (v ?? '').trim().isEmpty ? 'Required' : null),
+                  (v ?? '').trim().isEmpty ? tr('Required') : null),
               const SizedBox(height: 12),
-              _lbl('Floor name', required: true),
+              _lbl(tr('Floor name'), required: true),
               _tf(_name,
-                  hint: 'e.g. First Floor',
+                  hint: tr('e.g. First Floor'),
                   validator: (v) =>
-                  (v ?? '').trim().isEmpty ? 'Required' : null),
+                  (v ?? '').trim().isEmpty ? tr('Required') : null),
               const SizedBox(height: 12),
               Row(children: [
-                Expanded(child: _lblCol('Total units', _total)),
+                Expanded(child: _lblCol(tr('Total units'), _total)),
                 const SizedBox(width: 10),
-                Expanded(child: _lblCol('Available units', _avail)),
+                Expanded(child: _lblCol(tr('Available units'), _avail)),
               ]),
               const SizedBox(height: 18),
               SizedBox(
@@ -3361,7 +3360,7 @@ class _FloorSheetState extends State<_FloorSheet> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text('Save floor',
+                  child: Text(tr('Save floor'),
                       style: DT.text(
                           size: 13.5,
                           weight: FontWeight.w700,
@@ -3379,7 +3378,7 @@ class _FloorSheetState extends State<_FloorSheet> {
     padding: const EdgeInsets.only(bottom: 6),
     child: RichText(
       text: TextSpan(
-        text: t,
+        text: tr(t),
         style: DT.text(
             size: 12, weight: FontWeight.w600, color: _PC.slate700),
         children: [
@@ -3398,7 +3397,7 @@ class _FloorSheetState extends State<_FloorSheet> {
   Widget _lblCol(String label, TextEditingController c) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label,
+      Text(tr(label),
           style: DT.text(
               size: 11.5,
               weight: FontWeight.w600,
@@ -3423,7 +3422,7 @@ class _FloorSheetState extends State<_FloorSheet> {
       validator: validator,
       style: DT.text(size: 13.5),
       decoration: InputDecoration(
-        hintText: hint,
+        hintText: trN(hint),
         hintStyle: DT.text(size: 12.5, color: _PC.slate400),
         isDense: true,
         filled: true,
@@ -3502,11 +3501,11 @@ class _SlabSheetState extends State<_SlabSheet> {
             children: [
               Text(
                   widget.existing == null
-                      ? 'Add pricing slab'
-                      : 'Edit pricing slab',
+                      ? tr('Add pricing slab')
+                      : tr('Edit pricing slab'),
                   style: DT.text(size: 17, weight: FontWeight.w800)),
               const SizedBox(height: 14),
-              _lbl('Flat type', required: true),
+              _lbl(tr('Flat type'), required: true),
               if (widget.unitNames.isNotEmpty)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -3526,7 +3525,7 @@ class _SlabSheetState extends State<_SlabSheet> {
                       style: DT.text(size: 13.5),
                       items: widget.unitNames
                           .map((s) => DropdownMenuItem<String>(
-                          value: s, child: Text(s)))
+                          value: s, child: Text(tr(s))))
                           .toList(),
                       onChanged: (v) => setState(() => _flat.text = v ?? ''),
                     ),
@@ -3534,26 +3533,26 @@ class _SlabSheetState extends State<_SlabSheet> {
                 )
               else
                 _tf(_flat,
-                    hint: 'e.g. 2 BHK',
+                    hint: tr('e.g. 2 BHK'),
                     validator: (v) =>
-                    (v ?? '').trim().isEmpty ? 'Required' : null),
+                    (v ?? '').trim().isEmpty ? tr('Required') : null),
               const SizedBox(height: 12),
               Row(children: [
-                Expanded(child: _lblCol('Floor number', _floor)),
+                Expanded(child: _lblCol(tr('Floor number'), _floor)),
                 const SizedBox(width: 10),
-                Expanded(child: _lblCol('Base price (₹)', _base)),
+                Expanded(child: _lblCol(tr('Base price (₹)'), _base)),
               ]),
               const SizedBox(height: 12),
               Row(children: [
-                Expanded(child: _lblCol('Price/sqft (₹)', _pps)),
+                Expanded(child: _lblCol(tr('Price/sqft (₹)'), _pps)),
                 const SizedBox(width: 10),
-                Expanded(child: _lblCol('Booking (₹)', _booking)),
+                Expanded(child: _lblCol(tr('Booking (₹)'), _booking)),
               ]),
               const SizedBox(height: 12),
               Row(children: [
-                Expanded(child: _lblCol('Discount %', _disc)),
+                Expanded(child: _lblCol(tr('Discount %'), _disc)),
                 const SizedBox(width: 10),
-                Expanded(child: _lblCol('GST %', _gst)),
+                Expanded(child: _lblCol(tr('GST %'), _gst)),
               ]),
               const SizedBox(height: 18),
               SizedBox(
@@ -3580,7 +3579,7 @@ class _SlabSheetState extends State<_SlabSheet> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text('Save slab',
+                  child: Text(tr('Save slab'),
                       style: DT.text(
                           size: 13.5,
                           weight: FontWeight.w700,
@@ -3598,7 +3597,7 @@ class _SlabSheetState extends State<_SlabSheet> {
     padding: const EdgeInsets.only(bottom: 6),
     child: RichText(
       text: TextSpan(
-        text: t,
+        text: tr(t),
         style: DT.text(
             size: 12, weight: FontWeight.w600, color: _PC.slate700),
         children: [
@@ -3617,7 +3616,7 @@ class _SlabSheetState extends State<_SlabSheet> {
   Widget _lblCol(String label, TextEditingController c) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label,
+      Text(tr(label),
           style: DT.text(
               size: 11.5,
               weight: FontWeight.w600,
@@ -3642,7 +3641,7 @@ class _SlabSheetState extends State<_SlabSheet> {
       validator: validator,
       style: DT.text(size: 13.5),
       decoration: InputDecoration(
-        hintText: hint,
+        hintText: trN(hint),
         hintStyle: DT.text(size: 12.5, color: _PC.slate400),
         isDense: true,
         filled: true,
@@ -3768,10 +3767,10 @@ class _InteractiveMapViewState extends State<_InteractiveMapView> {
                 ),
               ],
             ),
-            const RichAttributionWidget(
+            RichAttributionWidget(
               attributions: [
-                TextSourceAttribution('Esri World Imagery'),
-                TextSourceAttribution('OpenStreetMap contributors'),
+                TextSourceAttribution(tr('Esri World Imagery')),
+                TextSourceAttribution(tr('OpenStreetMap contributors')),
               ],
             ),
           ],
@@ -3936,9 +3935,9 @@ class _AmenitySheetState extends State<_AmenitySheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Add amenity',
+                        Text(tr('Add amenity'),
                             style: DT.text(size: 17, weight: FontWeight.w800)),
-                        Text('It will be added to the list and selected',
+                        Text(tr('It will be added to the list and selected'),
                             style: DT.text(size: 11.5, color: _PC.slate500)),
                       ],
                     ),
@@ -3953,7 +3952,7 @@ class _AmenitySheetState extends State<_AmenitySheet> {
               const SizedBox(height: 18),
               RichText(
                 text: TextSpan(
-                  text: 'Amenity name',
+                  text: tr('Amenity name'),
                   style: DT.text(
                       size: 12, weight: FontWeight.w600, color: _PC.slate700),
                   children: [
@@ -3976,12 +3975,12 @@ class _AmenitySheetState extends State<_AmenitySheet> {
                 onFieldSubmitted: (_) => _save(),
                 validator: (v) {
                   final t = (v ?? '').trim();
-                  if (t.isEmpty) return 'Enter the amenity name';
-                  if (t.length < 2) return 'Too short';
+                  if (t.isEmpty) return tr('Enter the amenity name');
+                  if (t.length < 2) return tr('Too short');
                   return null;
                 },
                 decoration: InputDecoration(
-                  hintText: 'e.g. Rooftop Garden',
+                  hintText: tr('e.g. Rooftop Garden'),
                   hintStyle: DT.text(size: 12.5, color: _PC.slate400),
                   prefixIcon: const Icon(Icons.edit_outlined,
                       size: 16, color: _PC.slate400),
@@ -4010,7 +4009,7 @@ class _AmenitySheetState extends State<_AmenitySheet> {
                 ),
               ),
               const SizedBox(height: 16),
-              Text('Icon',
+              Text(tr('Icon'),
                   style: DT.text(
                       size: 12, weight: FontWeight.w600, color: _PC.slate700)),
               const SizedBox(height: 8),
@@ -4041,7 +4040,7 @@ class _AmenitySheetState extends State<_AmenitySheet> {
                           size: 16, color: _kRed),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(_error!,
+                        child: Text(tr(_error!),
                             style: DT.text(
                                 size: 12,
                                 weight: FontWeight.w600,
@@ -4077,7 +4076,7 @@ class _AmenitySheetState extends State<_AmenitySheet> {
                             strokeWidth: 2, color: Colors.white))
                         : const Icon(Icons.check_rounded,
                         size: 18, color: Colors.white),
-                    label: Text(_saving ? 'Saving…' : 'Save amenity',
+                    label: Text(_saving ? tr('Saving…') : tr('Save amenity'),
                         style: DT.text(
                             size: 14,
                             weight: FontWeight.w700,
@@ -4110,7 +4109,7 @@ class _AmenitySheetState extends State<_AmenitySheet> {
           children: [
             Icon(icon, size: 20, color: sel ? _PC.blue600 : _PC.slate500),
             const SizedBox(height: 4),
-            Text(label,
+            Text(tr(label),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: DT.text(

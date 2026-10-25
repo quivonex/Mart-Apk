@@ -1,3 +1,4 @@
+import 'package:qnx_mart/l10n/app_language.dart';
 // lib/models/chat_models.dart
 //
 // Buyer ↔ seller / agent chat (olx/chats/…), used by Product, Property and
@@ -34,9 +35,9 @@ extension ChatItemKindX on ChatItemKind {
   String get partyLabel => this == ChatItemKind.property ? 'agent' : 'seller';
 
   String get ownLabel => switch (this) {
-        ChatItemKind.product => 'This is your own product.',
-        ChatItemKind.property => 'This is your own property.',
-        ChatItemKind.listing => 'This is your own listing.',
+        ChatItemKind.product => tr('This is your own product.'),
+        ChatItemKind.property => tr('This is your own property.'),
+        ChatItemKind.listing => tr('This is your own listing.'),
       };
 }
 
@@ -146,12 +147,12 @@ class ChatThread {
 
   DateTime? get activityAt => lastMessage?.createdAt;
 
-  String get displayName => otherUsername.isEmpty ? 'User' : otherUsername;
+  String get displayName => otherUsername.isEmpty ? tr('User') : otherUsername;
 
   String get itemLabel => switch (itemType.toLowerCase()) {
-        'product' => 'Product',
-        'property' => 'Property',
-        'listing' || 'olx' || 'remart' => 'ReMart',
+        'product' => tr('Product'),
+        'property' => tr('Property'),
+        'listing' || 'olx' || 'remart' => tr('ReMart'),
         _ => itemType.isEmpty ? '' : itemType[0].toUpperCase() + itemType.substring(1),
       };
 

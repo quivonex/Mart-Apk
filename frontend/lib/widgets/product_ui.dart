@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../constants/design_tokens.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -115,14 +116,14 @@ class PxSection extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title,
+                      Text(tr(title),
                           style: DT.text(
                               size: compact ? 14 : 16,
                               weight: FontWeight.w700,
                               color: DT.onyx900)),
                       if (subtitle != null) ...[
                         const SizedBox(height: 2),
-                        Text(subtitle!,
+                        Text(tr(subtitle!),
                             style: DT.text(size: 12, color: DT.slate500, height: 1.4)),
                       ],
                     ],
@@ -158,14 +159,14 @@ class PxLabel extends StatelessWidget {
           Expanded(
             child: Text.rich(
               TextSpan(
-                text: text,
+                text: tr(text),
                 style: DT.text(size: 12, weight: FontWeight.w600, color: DT.onyx700),
                 children: [
                   if (required)
                     TextSpan(text: ' *', style: DT.text(size: 12, color: PX.rose500)),
                   if (optional)
                     TextSpan(
-                        text: ' (optional)',
+                        text: tr(' (optional)'),
                         style: DT.text(size: 12, weight: FontWeight.w400, color: DT.slate400)),
                 ],
               ),
@@ -199,7 +200,7 @@ class PxLinkButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (i != null && !iconAfter) ...[i, const SizedBox(width: 3)],
-            Text(label, style: DT.text(size: 12, weight: FontWeight.w700, color: _kBrand)),
+            Text(tr(label), style: DT.text(size: 12, weight: FontWeight.w700, color: _kBrand)),
             if (i != null && iconAfter) ...[const SizedBox(width: 3), i],
           ],
         ),
@@ -226,12 +227,12 @@ InputDecoration pxInputDecoration({
     borderSide: BorderSide(color: c, width: w),
   );
   return InputDecoration(
-    hintText: hint,
+    hintText: trN(hint),
     hintStyle: DT.text(size: dense ? 12 : 13.5, color: DT.slate400),
     prefixIcon: prefix ??
         (icon == null ? null : Icon(icon, size: dense ? 17 : 19, color: iconColor ?? DT.slate400)),
     prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 20),
-    suffixText: suffixText,
+    suffixText: trN(suffixText),
     suffixStyle: DT.text(size: 12, weight: FontWeight.w600, color: DT.slate500),
     suffixIcon: suffix,
     filled: true,
@@ -304,11 +305,11 @@ class PxTextField extends StatelessWidget {
         color: DT.onyx900,
       ),
       decoration: pxInputDecoration(
-        hint: hint,
+        hint: trN(hint),
         icon: icon,
         iconColor: iconColor,
         prefix: prefix,
-        suffixText: suffixText,
+        suffixText: trN(suffixText),
         suffix: suffix,
         dense: dense,
         tinted: tinted,
@@ -365,7 +366,7 @@ class PxSegmented<T> extends StatelessWidget {
                         ? const [BoxShadow(color: Color(0x140F172A), blurRadius: 2)]
                         : null,
                   ),
-                  child: Text(label,
+                  child: Text(tr(label),
                       style: DT.text(
                           size: 12,
                           weight: v == value ? FontWeight.w700 : FontWeight.w600,
@@ -415,7 +416,7 @@ class PxPill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[Icon(icon, size: 11, color: fg), const SizedBox(width: 3)],
-          Text(text, style: DT.text(size: 11, weight: FontWeight.w700, color: fg)),
+          Text(tr(text), style: DT.text(size: 11, weight: FontWeight.w700, color: fg)),
           if (trailing != null) trailing!,
         ],
       ),

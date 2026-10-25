@@ -17,6 +17,7 @@ import 'package:http/http.dart' as http;
 import '../models/ai_chat_models.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'api_urls.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class AiChatService {
   AiChatService._();
@@ -56,14 +57,14 @@ class AiChatService {
       case 503:
         return detail ?? 'The assistant is temporarily unavailable. Please try later.';
       default:
-        return detail ?? 'Something went wrong (${r.statusCode}). Please try again.';
+        return detail ?? tr('Something went wrong ({0}). Please try again.', [r.statusCode]);
     }
   }
 
   static String _networkError(Object e) {
-    if (e is TimeoutException) return 'The assistant is taking too long. Please try again.';
-    if (e is FormatException || e is TypeError) return 'Unexpected reply from the server. Please try again.';
-    return 'Could not reach the server. Check your internet connection.';
+    if (e is TimeoutException) return tr('The assistant is taking too long. Please try again.');
+    if (e is FormatException || e is TypeError) return tr('Unexpected reply from the server. Please try again.');
+    return tr('Could not reach the server. Check your internet connection.');
   }
 
   static Map<String, dynamic> _json(http.Response r) {
@@ -76,7 +77,7 @@ class AiChatService {
   // =================================================================
   static Future<AiResult<AiChatReply>> sendMessage(String message, {String? conversationId}) async {
     final h = await _headers();
-    if (h == null) return const AiResult.fail('Please log in to chat with the assistant.', 401);
+    if (h == null) return AiResult.fail(tr('Please log in to chat with the assistant.'), 401);
     try {
       final r = await http
           .post(
@@ -101,7 +102,7 @@ class AiChatService {
   // =================================================================
   static Future<AiResult<List<AiConversation>>> conversations() async {
     final h = await _headers();
-    if (h == null) return const AiResult.fail('Please log in to chat with the assistant.', 401);
+    if (h == null) return AiResult.fail(tr('Please log in to chat with the assistant.'), 401);
     try {
       final r = await http.get(Uri.parse(ApiUrls.aiConversationsUrl), headers: h).timeout(_timeout);
       if (r.statusCode != 200) return AiResult.fail(_errorText(r), r.statusCode);
@@ -122,7 +123,7 @@ class AiChatService {
   // =================================================================
   static Future<AiResult<AiConversationDetail>> conversation(String id) async {
     final h = await _headers();
-    if (h == null) return const AiResult.fail('Please log in to chat with the assistant.', 401);
+    if (h == null) return AiResult.fail(tr('Please log in to chat with the assistant.'), 401);
     try {
       final r = await http.get(Uri.parse(ApiUrls.aiConversationUrl(id)), headers: h).timeout(_timeout);
       if (r.statusCode != 200) return AiResult.fail(_errorText(r), r.statusCode);
@@ -138,7 +139,7 @@ class AiChatService {
   // =================================================================
   static Future<AiResult<Map<String, dynamic>>> _patch(String id, Map<String, dynamic> body) async {
     final h = await _headers();
-    if (h == null) return const AiResult.fail('Please log in to chat with the assistant.', 401);
+    if (h == null) return AiResult.fail(tr('Please log in to chat with the assistant.'), 401);
     try {
       final r = await http
           .patch(Uri.parse(ApiUrls.aiConversationUrl(id)), headers: h, body: jsonEncode(body))
@@ -163,7 +164,7 @@ class AiChatService {
   // =================================================================
   static Future<AiResult<bool>> delete(String id) async {
     final h = await _headers();
-    if (h == null) return const AiResult.fail('Please log in to chat with the assistant.', 401);
+    if (h == null) return AiResult.fail(tr('Please log in to chat with the assistant.'), 401);
     try {
       final r = await http.delete(Uri.parse(ApiUrls.aiConversationUrl(id)), headers: h).timeout(_timeout);
       if (r.statusCode != 204 && r.statusCode != 200) return AiResult.fail(_errorText(r), r.statusCode);
@@ -179,7 +180,7 @@ class AiChatService {
   // =================================================================
   static Future<AiResult<int?>> feedback(String messageId, int? value) async {
     final h = await _headers();
-    if (h == null) return const AiResult.fail('Please log in to chat with the assistant.', 401);
+    if (h == null) return AiResult.fail(tr('Please log in to chat with the assistant.'), 401);
     try {
       final r = await http
           .post(Uri.parse(ApiUrls.aiMessageFeedbackUrl(messageId)),

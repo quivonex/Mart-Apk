@@ -4,6 +4,7 @@ import '../models/product_model.dart';
 import '../models/cart_model.dart';
 import '../services/cart_service.dart';
 import '../utils/shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class CartHelper {
   // Add to Cart
@@ -16,8 +17,8 @@ class CartHelper {
     if (userId == null) {
       _showErrorDialog(
         context,
-        'Login Required',
-        'Please login to add items to cart',
+        tr('Login Required'),
+        tr('Please login to add items to cart'),
       );
       return;
     }
@@ -36,7 +37,7 @@ class CartHelper {
               ),
             ),
             const SizedBox(width: 12),
-            const Text('Adding to cart...'),
+            Text(tr('Adding to cart...')),
           ],
         ),
         backgroundColor: AppConstants.primary,
@@ -63,7 +64,7 @@ class CartHelper {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    response.message,
+                    tr(response.message),
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -83,7 +84,7 @@ class CartHelper {
         ScaffoldMessenger.of(context).clearSnackBars();
         _showErrorDialog(
           context,
-          'Error',
+          tr('Error'),
           e.toString().replaceFirst('Exception: ', ''),
         );
       }
@@ -110,7 +111,7 @@ class CartHelper {
             ),
             const SizedBox(width: 10),
             Text(
-              'Product Enquiry',
+              tr('Product Enquiry'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -125,7 +126,7 @@ class CartHelper {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              product.name,
+              trData(product.name),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -135,7 +136,7 @@ class CartHelper {
             ),
             const SizedBox(height: 4),
             Text(
-              'Company: ${product.companyName}',
+              tr('Company: {0}', [product.companyName]),
               style: TextStyle(
                 fontSize: 14,
                 color: AppConstants.textSecondary,
@@ -144,7 +145,7 @@ class CartHelper {
             ),
             const SizedBox(height: 4),
             Text(
-              'Price: ₹${product.finalPrice}',
+              tr('Price: ₹{0}', [product.finalPrice]),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -156,7 +157,7 @@ class CartHelper {
             TextField(
               maxLines: 3,
               decoration: InputDecoration(
-                hintText: 'Write your enquiry here...',
+                hintText: tr('Write your enquiry here...'),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(color: Colors.grey.shade300),
@@ -174,7 +175,7 @@ class CartHelper {
               foregroundColor: AppConstants.textSecondary,
             ),
             child: Text(
-              'Cancel',
+              tr('Cancel'),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -187,7 +188,7 @@ class CartHelper {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Enquiry sent for ${product.name}'),
+                  content: Text(tr('Enquiry sent for {0}', [product.name])),
                   backgroundColor: AppConstants.success,
                 ),
               );
@@ -199,7 +200,7 @@ class CartHelper {
               ),
             ),
             child: Text(
-              'Send',
+              tr('Send'),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -231,7 +232,7 @@ class CartHelper {
             ),
             const SizedBox(width: 10),
             Text(
-              title,
+              tr(title),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -242,7 +243,7 @@ class CartHelper {
           ],
         ),
         content: Text(
-          message,
+          tr(message),
           style: TextStyle(
             fontSize: 14,
             color: AppConstants.textSecondary,
@@ -259,7 +260,7 @@ class CartHelper {
               ),
             ),
             child: Text(
-              'OK',
+              tr('OK'),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,

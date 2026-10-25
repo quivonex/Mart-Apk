@@ -21,6 +21,7 @@ import '../models/company_locations_models.dart';
 import '../models/property_model.dart';
 import '../services/company_locations_service.dart';
 import '../services/real_estate_service.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -125,7 +126,7 @@ Future<PropertyFilters?> showPropertyFilterPanel(
   return showGeneralDialog<PropertyFilters>(
     context: context,
     barrierDismissible: true,
-    barrierLabel: 'Filters',
+    barrierLabel: tr('Filters'),
     barrierColor: Colors.black.withValues(alpha: 0.35),
     transitionDuration: const Duration(milliseconds: 260),
     pageBuilder: (_, __, ___) => Align(
@@ -262,7 +263,7 @@ class _PropertyFilterPanelState extends State<PropertyFilterPanel> {
       _loadingAmenities = false;
       _amenities = list;
       if (r.status && list.isNotEmpty) _amenitiesCache = list;
-      if (!r.status) _amenitiesError = r.message ?? 'Could not load amenities';
+      if (!r.status) _amenitiesError = r.message ?? tr('Could not load amenities');
     });
   }
 
@@ -323,24 +324,24 @@ class _PropertyFilterPanelState extends State<PropertyFilterPanel> {
                 children: [
                   _section(
                     icon: Icons.currency_rupee_rounded,
-                    title: 'Price range',
+                    title: tr('Price range'),
                     child: Row(
                       children: [
-                        Expanded(child: _priceBox(_min, 'Min ₹')),
+                        Expanded(child: _priceBox(_min, tr('Min ₹'))),
                         const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 8),
                           child: Text('—', style: TextStyle(color: Color(0xFF94A3B8))),
                         ),
-                        Expanded(child: _priceBox(_max, 'Max ₹')),
+                        Expanded(child: _priceBox(_max, tr('Max ₹'))),
                       ],
                     ),
                   ),
                   _section(
                     icon: Icons.location_on_outlined,
-                    title: 'State',
+                    title: tr('State'),
                     child: _select<int>(
                       value: _stateId,
-                      allLabel: _loadingStates ? 'Loading states…' : 'All States',
+                      allLabel: _loadingStates ? tr('Loading states…') : tr('All States'),
                       items: [for (final s in _states) (s.id, s.name)],
                       onChanged: (id) {
                         setState(() {
@@ -355,46 +356,46 @@ class _PropertyFilterPanelState extends State<PropertyFilterPanel> {
                   ),
                   _section(
                     icon: Icons.person_pin_circle_outlined,
-                    title: 'District / City',
+                    title: tr('District / City'),
                     child: _select<String>(
                       value: _district,
                       allLabel: _stateId == null
-                          ? 'All Districts'
-                          : (_loadingDistricts ? 'Loading districts…' : 'All Districts'),
+                          ? tr('All Districts')
+                          : (_loadingDistricts ? tr('Loading districts…') : tr('All Districts')),
                       items: [for (final d in _districts) (d.name, d.name)],
                       enabled: _stateId != null,
-                      disabledHint: 'Select a state first',
+                      disabledHint: tr('Select a state first'),
                       onChanged: (d) => setState(() => _district = d),
                     ),
                   ),
                   _section(
                     icon: Icons.apartment_rounded,
-                    title: 'Property type',
+                    title: tr('Property type'),
                     child: _select<String>(
                       value: _type,
-                      allLabel: 'All Types',
+                      allLabel: tr('All Types'),
                       items: _types,
                       onChanged: (t) => setState(() => _type = t),
                     ),
                   ),
                   _section(
                     icon: Icons.swap_horiz_rounded,
-                    title: 'Transaction type',
+                    title: tr('Transaction type'),
                     child: _select<String>(
                       value: _transaction,
-                      allLabel: 'All',
+                      allLabel: tr('All'),
                       items: _transactions,
                       onChanged: (t) => setState(() => _transaction = t),
                     ),
                   ),
                   _section(
                     icon: Icons.star_border_rounded,
-                    title: 'Amenities',
+                    title: tr('Amenities'),
                     trailing: _amenityIds.isEmpty
                         ? null
                         : GestureDetector(
                       onTap: () => setState(_amenityIds.clear),
-                      child: Text('Clear (${_amenityIds.length})',
+                      child: Text(tr('Clear ({0})', [_amenityIds.length]),
                           style: DT.text(size: 12, weight: FontWeight.w700, color: _blue)),
                     ),
                     divider: false,
@@ -426,10 +427,10 @@ class _PropertyFilterPanelState extends State<PropertyFilterPanel> {
             const SizedBox(width: 18),
             const Icon(Icons.filter_alt_rounded, color: Colors.white, size: 20),
             const SizedBox(width: 8),
-            Text('Filters', style: DT.text(size: 16, weight: FontWeight.w700, color: Colors.white)),
+            Text(tr('Filters'), style: DT.text(size: 16, weight: FontWeight.w700, color: Colors.white)),
             const Spacer(),
             IconButton(
-              tooltip: 'Close',
+              tooltip: tr('Close'),
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.close_rounded, color: Colors.white, size: 26),
             ),
@@ -460,7 +461,7 @@ class _PropertyFilterPanelState extends State<PropertyFilterPanel> {
               Icon(icon, size: 18, color: _label),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(title.toUpperCase(),
+                child: Text(tr(title.toUpperCase()),
                     style: DT.text(size: 13.5, weight: FontWeight.w800, color: _label, letterSpacing: 1.1)),
               ),
               if (trailing != null) trailing,
@@ -479,7 +480,7 @@ class _PropertyFilterPanelState extends State<PropertyFilterPanel> {
     inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
     style: DT.text(size: 14.5),
     decoration: InputDecoration(
-      hintText: hint,
+      hintText: tr(hint),
       hintStyle: DT.text(size: 14.5, color: const Color(0xFF94A3B8)),
       isDense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
@@ -517,14 +518,14 @@ class _PropertyFilterPanelState extends State<PropertyFilterPanel> {
           icon: const Icon(Icons.keyboard_arrow_down_rounded, color: DT.onyx700),
           borderRadius: BorderRadius.circular(12),
           style: DT.text(size: 14.5, color: DT.onyx900),
-          hint: Text(enabled ? allLabel : (disabledHint ?? allLabel),
+          hint: Text(tr(enabled ? allLabel : (disabledHint ?? allLabel)),
               style: DT.text(size: 14.5, color: enabled ? DT.onyx800 : const Color(0xFF94A3B8))),
           items: [
-            DropdownMenuItem<T?>(value: null, child: Text(allLabel, style: DT.text(size: 14.5))),
+            DropdownMenuItem<T?>(value: null, child: Text(tr(allLabel), style: DT.text(size: 14.5))),
             for (final (v, label) in items)
               DropdownMenuItem<T?>(
                 value: v,
-                child: Text(label, overflow: TextOverflow.ellipsis, style: DT.text(size: 14.5)),
+                child: Text(tr(label), overflow: TextOverflow.ellipsis, style: DT.text(size: 14.5)),
               ),
           ],
           onChanged: enabled ? onChanged : null,
@@ -545,14 +546,14 @@ class _PropertyFilterPanelState extends State<PropertyFilterPanel> {
       return Row(
         children: [
           Expanded(
-            child: Text(_amenitiesError ?? 'No amenities available',
+            child: Text(_amenitiesError ?? tr('No amenities available'),
                 style: DT.text(size: 13, color: _amenitiesError != null ? _kRed : DT.slate500)),
           ),
           if (_amenitiesError != null)
             TextButton(
               onPressed: _loadAmenities,
               style: TextButton.styleFrom(foregroundColor: _kBrand),
-              child: const Text('Retry'),
+              child: Text(tr('Retry')),
             ),
         ],
       );
@@ -586,7 +587,7 @@ class _PropertyFilterPanelState extends State<PropertyFilterPanel> {
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: Text(a.name.trim(),
+                    child: Text(tr(a.name.trim()),
                         style: DT.text(size: 15, color: const Color(0xFF334155), height: 1.35)),
                   ),
                 ],
@@ -611,7 +612,7 @@ class _PropertyFilterPanelState extends State<PropertyFilterPanel> {
           children: [
             TextButton(
               onPressed: _clearAll,
-              child: Text('Clear all', style: DT.text(size: 13.5, weight: FontWeight.w700, color: _label)),
+              child: Text(tr('Clear all'), style: DT.text(size: 13.5, weight: FontWeight.w700, color: _label)),
             ),
             const SizedBox(width: 6),
             Expanded(
@@ -625,7 +626,7 @@ class _PropertyFilterPanelState extends State<PropertyFilterPanel> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 child: FittedBox(
-                  child: Text('Show $count ${count == 1 ? 'property' : 'properties'}',
+                  child: Text(tr('Show {0} {1}', [count, count == 1 ? 'property' : 'properties']),
                       style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
                 ),
               ),

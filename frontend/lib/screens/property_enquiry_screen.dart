@@ -7,6 +7,7 @@ import '../models/property_enquiry_model.dart';
 import '../services/property_enquiry_service.dart';
 import '../utils/login_gate.dart';
 import 'customer_subscription_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -67,7 +68,7 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
     FocusScope.of(context).unfocus();
     setState(() => _error = null);
     if (!_formKey.currentState!.validate()) return;
-    if (!await ensureLoggedIn(context, reason: 'send an enquiry')) return;
+    if (!await ensureLoggedIn(context, reason: tr('send an enquiry'))) return;
     if (!mounted) return;
 
     // Validate budget range
@@ -80,7 +81,7 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
 
     if (budgetMin != null && budgetMax != null && budgetMax < budgetMin) {
       _showSnackbar(
-        'Maximum budget must be greater than minimum budget',
+        tr('Maximum budget must be greater than minimum budget'),
         isError: true,
       );
       return;
@@ -131,7 +132,7 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                response.displayMessage,
+                tr(response.displayMessage),
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
@@ -161,7 +162,7 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
   void _showSnackbar(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg),
+        content: Text(tr(msg)),
         backgroundColor: isError ? _kRed : Color(0xFF10B981),
         behavior: SnackBarBehavior.floating,
       ),
@@ -178,7 +179,7 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          'Property Enquiry',
+          tr('Property Enquiry'),
           style: GoogleFonts.inter(
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -198,42 +199,42 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
               const SizedBox(height: 20),
 
               // Contact details
-              _sectionTitle('Your Details'),
+              _sectionTitle(tr('Your Details')),
               const SizedBox(height: 12),
               _buildField(
                 controller: _nameCtrl,
-                label: 'Full Name',
-                hint: 'John Doe',
+                label: tr('Full Name'),
+                hint: tr('John Doe'),
                 icon: Icons.person_outline,
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) {
-                    return 'Name is required';
+                    return tr('Name is required');
                   }
-                  if (v.trim().length < 2) return 'Minimum 2 characters';
+                  if (v.trim().length < 2) return tr('Minimum 2 characters');
                   return null;
                 },
               ),
               const SizedBox(height: 14),
               _buildField(
                 controller: _emailCtrl,
-                label: 'Email',
+                label: tr('Email'),
                 hint: 'john@example.com',
                 icon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) {
-                    return 'Email is required';
+                    return tr('Email is required');
                   }
                   final re = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]{2,}$');
-                  if (!re.hasMatch(v.trim())) return 'Enter a valid email';
+                  if (!re.hasMatch(v.trim())) return tr('Enter a valid email');
                   return null;
                 },
               ),
               const SizedBox(height: 14),
               _buildField(
                 controller: _mobileCtrl,
-                label: 'Mobile Number',
-                hint: '10-digit mobile number',
+                label: tr('Mobile Number'),
+                hint: tr('10-digit mobile number'),
                 icon: Icons.phone_outlined,
                 keyboardType: TextInputType.phone,
                 inputFormatters: [
@@ -242,13 +243,13 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
                 ],
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) {
-                    return 'Mobile number is required';
+                    return tr('Mobile number is required');
                   }
                   if (v.trim().length != 10) {
-                    return 'Enter valid 10-digit number';
+                    return tr('Enter valid 10-digit number');
                   }
                   if (!RegExp(r'^[6-9]').hasMatch(v.trim())) {
-                    return 'Enter a valid Indian mobile number';
+                    return tr('Enter a valid Indian mobile number');
                   }
                   return null;
                 },
@@ -256,16 +257,16 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
               const SizedBox(height: 20),
 
               // Requirement details
-              _sectionTitle('Your Requirement'),
+              _sectionTitle(tr('Your Requirement')),
               const SizedBox(height: 12),
 
               // Flat type dropdown
               DropdownButtonFormField<String>(
                 value: _selectedFlatType,
                 decoration: _inputDecoration(
-                  label: 'Flat Type (Optional)',
+                  label: tr('Flat Type (Optional)'),
                   icon: Icons.apartment_outlined,
-                ).copyWith(hintText: 'Select flat type'),
+                ).copyWith(hintText: tr('Select flat type')),
                 items: PropertyEnquiryRequest.flatTypeOptions.map((opt) {
                   return DropdownMenuItem<String>(
                     value: opt['value'],
@@ -284,8 +285,8 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
                   Expanded(
                     child: _buildField(
                       controller: _budgetMinCtrl,
-                      label: 'Min Budget (₹)',
-                      hint: 'e.g. 4000000',
+                      label: tr('Min Budget (₹)'),
+                      hint: tr('e.g. 4000000'),
                       icon: Icons.currency_rupee,
                       keyboardType: TextInputType.number,
                       inputFormatters: [
@@ -298,8 +299,8 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
                   Expanded(
                     child: _buildField(
                       controller: _budgetMaxCtrl,
-                      label: 'Max Budget (₹)',
-                      hint: 'e.g. 6000000',
+                      label: tr('Max Budget (₹)'),
+                      hint: tr('e.g. 6000000'),
                       icon: Icons.currency_rupee,
                       keyboardType: TextInputType.number,
                       inputFormatters: [
@@ -315,15 +316,15 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
               // Message
               _buildField(
                 controller: _messageCtrl,
-                label: 'Message',
-                hint: 'Tell us about your interest (min 10 chars)',
+                label: tr('Message'),
+                hint: tr('Tell us about your interest (min 10 chars)'),
                 icon: Icons.message_outlined,
                 maxLines: 3,
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) {
-                    return 'Message is required';
+                    return tr('Message is required');
                   }
-                  if (v.trim().length < 10) return 'Minimum 10 characters';
+                  if (v.trim().length < 10) return tr('Minimum 10 characters');
                   return null;
                 },
               ),
@@ -332,8 +333,8 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
               // Referral code
               _buildField(
                 controller: _referralCtrl,
-                label: 'Referral Code (Optional)',
-                hint: 'Enter referral code if any',
+                label: tr('Referral Code (Optional)'),
+                hint: tr('Enter referral code if any'),
                 icon: Icons.card_giftcard_outlined,
                 validator: (_) => null,
               ),
@@ -356,7 +357,7 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          _error!,
+                          tr(_error!),
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -395,7 +396,7 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
                     ),
                   )
                       : Text(
-                    'Submit Enquiry',
+                    tr('Submit Enquiry'),
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -456,7 +457,7 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  widget.property.formattedMinPrice,
+                  tr(widget.property.formattedMinPrice),
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -475,7 +476,7 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
 
   Widget _sectionTitle(String title) {
     return Text(
-      title,
+      tr(title),
       style: GoogleFonts.inter(
         fontSize: 15,
         fontWeight: FontWeight.w700,
@@ -489,7 +490,7 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
     required IconData icon,
   }) {
     return InputDecoration(
-      labelText: label,
+      labelText: tr(label),
       prefixIcon: Icon(icon, color: _kBrand),
       filled: true,
       fillColor: Colors.white,
@@ -537,8 +538,8 @@ class _PropertyEnquiryScreenState extends State<PropertyEnquiryScreen> {
       inputFormatters: inputFormatters,
       validator: validator,
       maxLines: maxLines,
-      decoration: _inputDecoration(label: label, icon: icon)
-          .copyWith(hintText: hint),
+      decoration: _inputDecoration(label: tr(label), icon: icon)
+          .copyWith(hintText: tr(hint)),
     );
   }
 }

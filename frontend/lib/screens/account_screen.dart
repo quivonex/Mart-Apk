@@ -20,6 +20,7 @@ import '../utils/shared_preferences_helper.dart';
 import 'customer_subscription_screen.dart';
 import 'forgot_password_screen.dart';
 import 'help_screens.dart';
+import 'language_screen.dart';
 import 'login_screen.dart';
 import 'my_enquiries_screen.dart';
 import 'my_properties_screen.dart';
@@ -27,6 +28,7 @@ import 'my_remart_screen.dart';
 import 'saved_addresses_screen.dart';
 import 'seller_profile_screen.dart';
 import 'terms_conditions_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -146,14 +148,14 @@ class _AccountScreenState extends State<AccountScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Log out?'),
-        content: const Text('You will need to log in again to use your cart, orders and enquiries.'),
+        title: Text(tr('Log out?')),
+        content: Text(tr('You will need to log in again to use your cart, orders and enquiries.')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('Cancel'))),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: _AC.brand), // buttons: only #093C71
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Log out'),
+            child: Text(tr('Log out')),
           ),
         ],
       ),
@@ -188,19 +190,19 @@ class _AccountScreenState extends State<AccountScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-              Text('Profile details', style: DT.text(size: 17, weight: FontWeight.w800, color: _AC.ink)),
+              Text(tr('Profile details'), style: DT.text(size: 17, weight: FontWeight.w800, color: _AC.ink)),
               const SizedBox(height: 12),
-              _detail(Icons.person_outline_rounded, 'Name', _name),
-              _detail(Icons.alternate_email_rounded, 'Email', _email),
-              _detail(Icons.phone_iphone_rounded, 'Mobile', _phone),
-              if (_username.isNotEmpty) _detail(Icons.badge_outlined, 'Username', _username),
-              if (_company.isNotEmpty) _detail(Icons.business_outlined, 'Company', _company),
+              _detail(Icons.person_outline_rounded, tr('Name'), _name),
+              _detail(Icons.alternate_email_rounded, tr('Email'), _email),
+              _detail(Icons.phone_iphone_rounded, tr('Mobile'), _phone),
+              if (_username.isNotEmpty) _detail(Icons.badge_outlined, tr('Username'), _username),
+              if (_company.isNotEmpty) _detail(Icons.business_outlined, tr('Company'), _company),
               if (_gst.isNotEmpty) _detail(Icons.receipt_long_outlined, 'GSTIN', _gst),
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(color: _AC.tint, borderRadius: BorderRadius.circular(10)),
-                child: Text('To change these details, contact QNX Mart support.',
+                child: Text(tr('To change these details, contact QNX Mart support.'),
                     style: DT.text(size: 12, color: _AC.brandDark)),
               ),
             ],
@@ -216,9 +218,9 @@ class _AccountScreenState extends State<AccountScreen> {
       children: [
         Icon(icon, size: 18, color: _AC.hint),
         const SizedBox(width: 10),
-        SizedBox(width: 80, child: Text(label, style: DT.text(size: 12.5, color: _AC.muted))),
+        SizedBox(width: 80, child: Text(tr(label), style: DT.text(size: 12.5, color: _AC.muted))),
         Expanded(
-          child: Text(value.isEmpty ? '—' : value,
+          child: Text(tr(value.isEmpty ? '—' : value),
               style: DT.text(size: 13.5, weight: FontWeight.w700, color: _AC.ink)),
         ),
       ],
@@ -244,40 +246,42 @@ class _AccountScreenState extends State<AccountScreen> {
               const SizedBox(height: 14),
               _statsRow(),
               const SizedBox(height: 20),
-              _section('My activity', [
-                _item(Icons.receipt_long_outlined, 'My orders', 'Track, cancel or return',
+              _section(tr('My activity'), [
+                _item(Icons.receipt_long_outlined, tr('My orders'), tr('Track, cancel or return'),
                     widget.onNavigate == null ? null : () => widget.onNavigate!('orders')),
-                _item(Icons.forum_outlined, 'My enquiries', 'Product enquiries and their status',
+                _item(Icons.forum_outlined, tr('My enquiries'), tr('Product enquiries and their status'),
                         () => _push(const MyEnquiriesScreen())),
-                _item(Icons.home_work_outlined, 'My properties', 'Listings, status and plans',
+                _item(Icons.home_work_outlined, tr('My properties'), tr('Listings, status and plans'),
                         () => _push(const MyPropertiesScreen())),
-                _item(Icons.recycling_rounded, 'My ReMart items', 'Items you sell and enquiries you sent',
+                _item(Icons.recycling_rounded, tr('My ReMart items'), tr('Items you sell and enquiries you sent'),
                         () => _push(const MyRemartScreen())),
-                _item(Icons.workspace_premium_outlined, 'My subscription',
-                    _subscription == null ? 'Buy a plan to enquire on properties' : '${_subscription!.remaining} enquiries left',
+                _item(Icons.workspace_premium_outlined, tr('My subscription'),
+                    _subscription == null ? tr('Buy a plan to enquire on properties') : tr('{0} enquiries left', [_subscription!.remaining]),
                         () async {
                       await openCustomerSubscription(context);
                       if (mounted) _load();
                     }),
               ]),
               const SizedBox(height: 16),
-              _section('Account', [
-                _item(Icons.person_outline_rounded, 'Profile details', 'Name, email and mobile', _showProfile),
-                _item(Icons.location_on_outlined, 'Saved addresses', 'Delivery addresses for checkout',
+              _section(tr('Account'), [
+                _item(Icons.person_outline_rounded, tr('Profile details'), tr('Name, email and mobile'), _showProfile),
+                _item(Icons.location_on_outlined, tr('Saved addresses'), tr('Delivery addresses for checkout'),
                         () => _push(const SavedAddressesScreen())),
-                _item(Icons.lock_reset_rounded, 'Change password', 'Reset with an OTP on your email',
+                _item(Icons.lock_reset_rounded, tr('Change password'), tr('Reset with an OTP on your email'),
                         () => _push(const ForgotPasswordScreen())),
-                _item(Icons.storefront_outlined, 'Seller profile', 'Register or update your store',
+                _item(Icons.storefront_outlined, tr('Seller profile'), tr('Register or update your store'),
                         () => _push(const SellerProfileScreen())),
               ]),
             ],
             const SizedBox(height: 16),
-            _section('Help & support', [
-              _item(Icons.help_outline_rounded, 'Help & FAQ', 'Answers to common questions',
+            _section(tr('Help & support'), [
+              _item(Icons.translate_rounded, tr('Language'), tr('App language: {0}', [AppLanguage.current.nativeName]),
+                  () => showLanguagePicker(context)),
+              _item(Icons.help_outline_rounded, tr('Help & FAQ'), tr('Answers to common questions'),
                       () => _push(const HelpInfoScreen(topic: HelpTopic.faq))),
-              _item(Icons.support_agent_rounded, 'Contact us', 'Call, email or send a message',
+              _item(Icons.support_agent_rounded, tr('Contact us'), tr('Call, email or send a message'),
                       () => _push(const ContactUsScreen())),
-              _item(Icons.privacy_tip_outlined, 'Terms & privacy', 'How we use your data',
+              _item(Icons.privacy_tip_outlined, tr('Terms & privacy'), tr('How we use your data'),
                       () => _push(const TermsConditionsScreen())),
             ]),
             if (_loggedIn) ...[
@@ -294,7 +298,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     decoration: BoxDecoration(color: _kRedBg, borderRadius: BorderRadius.circular(10)),
                     child: const Icon(Icons.logout_rounded, color: _kRed, size: 20),
                   ),
-                  title: Text('Log out', style: DT.text(size: 14, weight: FontWeight.w700, color: _kRed)),
+                  title: Text(tr('Log out'), style: DT.text(size: 14, weight: FontWeight.w700, color: _kRed)),
                   onTap: _logout,
                 ),
               ),
@@ -316,9 +320,9 @@ class _AccountScreenState extends State<AccountScreen> {
       children: [
         const Icon(Icons.account_circle_rounded, color: Colors.white, size: 44),
         const SizedBox(height: 10),
-        Text('Welcome to QNX Mart', style: DT.text(size: 18, weight: FontWeight.w800, color: Colors.white)),
+        Text(tr('Welcome to QNX Mart'), style: DT.text(size: 18, weight: FontWeight.w800, color: Colors.white)),
         const SizedBox(height: 4),
-        Text('Log in to see your orders, enquiries, properties and more.',
+        Text(tr('Log in to see your orders, enquiries, properties and more.'),
             style: DT.text(size: 12.5, color: const Color(0xD9FFFFFF), height: 1.4)),
         const SizedBox(height: 14),
         FilledButton(
@@ -329,7 +333,7 @@ class _AccountScreenState extends State<AccountScreen> {
             side: const BorderSide(color: Colors.white, width: 1.4),
           ),
           onPressed: _login,
-          child: const Text('Log in / Register'),
+          child: Text(tr('Log in / Register')),
         ),
       ],
     ),
@@ -359,19 +363,19 @@ class _AccountScreenState extends State<AccountScreen> {
               border: Border.all(color: const Color(0x66FFFFFF), width: 2),
             ),
             alignment: Alignment.center,
-            child: Text(initial, style: DT.text(size: 24, weight: FontWeight.w900, color: Colors.white)),
+            child: Text(tr(initial), style: DT.text(size: 24, weight: FontWeight.w900, color: Colors.white)),
           ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_name.isEmpty ? 'QNX Mart user' : _name,
+                Text(_name.isEmpty ? tr('QNX Mart user') : _name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: DT.text(size: 18, weight: FontWeight.w800, color: Colors.white)),
                 if (_email.isNotEmpty)
-                  Text(_email,
+                  Text(tr(_email),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(size: 12.5, color: const Color(0xD9FFFFFF))),
@@ -382,7 +386,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(color: const Color(0x26FFFFFF), borderRadius: BorderRadius.circular(20)),
-                    child: Text(_company,
+                    child: Text(tr(_company),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: 11, weight: FontWeight.w700, color: Colors.white)),
@@ -392,7 +396,7 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
           ),
           IconButton(
-            tooltip: 'Profile details',
+            tooltip: tr('Profile details'),
             onPressed: _showProfile,
             icon: const Icon(Icons.chevron_right_rounded, color: Colors.white),
           ),
@@ -403,11 +407,11 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Widget _statsRow() {
     final tiles = <(IconData, String, String, Color, VoidCallback?)>[
-      (Icons.receipt_long_outlined, _orders == null ? '…' : '$_orders', 'Orders', _AC.brand,
+      (Icons.receipt_long_outlined, _orders == null ? '…' : '$_orders', tr('Orders'), _AC.brand,
       widget.onNavigate == null ? null : () => widget.onNavigate!('orders')),
-      (Icons.forum_outlined, _subscription == null ? '0' : '${_subscription!.remaining}', 'Enquiries left',
+      (Icons.forum_outlined, _subscription == null ? '0' : '${_subscription!.remaining}', tr('Enquiries left'),
       _AC.orange, () => openCustomerSubscription(context)),
-      (Icons.verified_outlined, _subscription == null ? 'None' : 'Active', 'Subscription', _AC.green,
+      (Icons.verified_outlined, _subscription == null ? tr('None') : tr('Active'), tr('Subscription'), _AC.green,
           () => openCustomerSubscription(context)),
     ];
     return Row(
@@ -431,8 +435,8 @@ class _AccountScreenState extends State<AccountScreen> {
                     children: [
                       Icon(tiles[i].$1, size: 20, color: tiles[i].$4),
                       const SizedBox(height: 4),
-                      Text(tiles[i].$2, style: DT.text(size: 17, weight: FontWeight.w900, color: _AC.ink)),
-                      Text(tiles[i].$3,
+                      Text(tr(tiles[i].$2), style: DT.text(size: 17, weight: FontWeight.w900, color: _AC.ink)),
+                      Text(tr(tiles[i].$3),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(size: 10.5, weight: FontWeight.w600, color: _AC.muted)),
@@ -452,7 +456,7 @@ class _AccountScreenState extends State<AccountScreen> {
     children: [
       Padding(
         padding: const EdgeInsets.only(left: 4, bottom: 8),
-        child: Text(title.toUpperCase(),
+        child: Text(tr(title.toUpperCase()),
             style: DT.text(size: 11, weight: FontWeight.w800, color: _AC.muted, letterSpacing: 0.9)),
       ),
       Container(
@@ -482,8 +486,8 @@ class _AccountScreenState extends State<AccountScreen> {
       decoration: BoxDecoration(color: _AC.tint, borderRadius: BorderRadius.circular(10)),
       child: Icon(icon, color: _AC.brand, size: 20),
     ),
-    title: Text(title, style: DT.text(size: 14, weight: FontWeight.w700, color: _AC.ink)),
-    subtitle: Text(subtitle, style: DT.text(size: 11.5, color: _AC.muted)),
+    title: Text(tr(title), style: DT.text(size: 14, weight: FontWeight.w700, color: _AC.ink)),
+    subtitle: Text(tr(subtitle), style: DT.text(size: 11.5, color: _AC.muted)),
     trailing: const Icon(Icons.chevron_right_rounded, color: _AC.hint),
   );
 }

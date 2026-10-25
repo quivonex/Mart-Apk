@@ -13,6 +13,7 @@ import 'forgot_password_screen.dart';
 import 'home_screen.dart';
 import 'register_screen.dart';
 import 'terms_conditions_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 /// Logo-matched palette (private to this screen).
 class _C {
@@ -84,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      _showErrorDialog('Login failed', e.toString().replaceFirst('Exception: ', ''));
+      _showErrorDialog(tr('Login failed'), e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
@@ -104,9 +105,9 @@ class _LoginScreenState extends State<LoginScreen> {
           decoration: const BoxDecoration(color: _C.redBg, shape: BoxShape.circle),
           child: const Icon(Icons.lock_outline_rounded, color: _C.red, size: 28),
         ),
-        title: Text(title,
+        title: Text(tr(title),
             textAlign: TextAlign.center, style: DT.text(size: 17, weight: FontWeight.w800, color: _C.red)),
-        content: Text(message,
+        content: Text(tr(message),
             textAlign: TextAlign.center, style: DT.text(size: 13.5, color: DT.slate500, height: 1.5)),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
@@ -121,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 minimumSize: const Size.fromHeight(46),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: Text('Try again', style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
+              child: Text(tr('Try again'), style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
             ),
           ),
         ],
@@ -200,9 +201,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       errorBuilder: (_, __, ___) => Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('QNX', style: DT.text(size: 20, weight: FontWeight.w900, color: _C.navy, letterSpacing: -0.8)),
+                          Text(tr('QNX'), style: DT.text(size: 20, weight: FontWeight.w900, color: _C.navy, letterSpacing: -0.8)),
                           const SizedBox(width: 3),
-                          Text('MART', style: DT.text(size: 20, weight: FontWeight.w800, color: _C.red, letterSpacing: -0.4)),
+                          Text(tr('MART'), style: DT.text(size: 20, weight: FontWeight.w800, color: _C.red, letterSpacing: -0.4)),
                         ],
                       ),
                     ),
@@ -214,29 +215,29 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: _C.orange,
                       borderRadius: BorderRadius.circular(999),
                     ),
-                    child: Text('B2B',
+                    child: Text(tr('B2B'),
                         style: DT.text(size: 10, weight: FontWeight.w800, color: Colors.white, letterSpacing: 1)),
                   ),
                 ],
               ),
               const SizedBox(height: 4),
 
-              Text('Market chalega nahi, daudega',
+              Text(tr('Market chalega nahi, daudega'),
                   style: DT.text(size: 11, weight: FontWeight.w700, color: const Color(0xFFFFD8A8))),
               const SizedBox(height: 26),
-              Text('Welcome back 👋',
+              Text(tr('Welcome back 👋'),
                   style: DT.text(size: 26, weight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5)),
               const SizedBox(height: 6),
-              Text('Log in to buy, sell and manage your business on QNXMart.',
+              Text(tr('Log in to buy, sell and manage your business on QNXMart.'),
                   style: DT.text(size: 13.5, color: _C.brandLine, height: 1.45)),
               const SizedBox(height: 16),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  _heroChip(Icons.shopping_bag_outlined, 'Products'),
-                  _heroChip(Icons.apartment_rounded, 'Real Estate'),
-                  _heroChip(Icons.recycling_rounded, 'ReMart'),
+                  _heroChip(Icons.shopping_bag_outlined, tr('Products')),
+                  _heroChip(Icons.apartment_rounded, tr('Real Estate')),
+                  _heroChip(Icons.recycling_rounded, tr('ReMart')),
                 ],
               ),
             ],
@@ -258,7 +259,7 @@ class _LoginScreenState extends State<LoginScreen> {
       children: [
         Icon(icon, size: 14, color: Colors.white),
         const SizedBox(width: 5),
-        Text(label, style: DT.text(size: 11.5, weight: FontWeight.w700, color: Colors.white)),
+        Text(tr(label), style: DT.text(size: 11.5, weight: FontWeight.w700, color: Colors.white)),
       ],
     ),
   );
@@ -278,23 +279,23 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Log in', style: DT.text(size: 18, weight: FontWeight.w800, color: DT.onyx900)),
+            Text(tr('Log in'), style: DT.text(size: 18, weight: FontWeight.w800, color: DT.onyx900)),
             const SizedBox(height: 2),
-            Text('Use your QNXMart username and password', style: DT.text(size: 12, color: DT.slate500)),
+            Text(tr('Use your QNXMart username and password'), style: DT.text(size: 12, color: DT.slate500)),
             const SizedBox(height: 18),
-            _label('Username'),
+            _label(tr('Username')),
             TextFormField(
               controller: _usernameController,
               textInputAction: TextInputAction.next,
               autofillHints: const [AutofillHints.username],
               onFieldSubmitted: (_) => _passwordFocus.requestFocus(),
               style: DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
-              decoration: _input(hint: 'Enter your username', icon: Icons.person_outline_rounded),
-              validator: (v) => (v == null || v.isEmpty) ? 'Please enter your username' : null,
+              decoration: _input(hint: tr('Enter your username'), icon: Icons.person_outline_rounded),
+              validator: (v) => (v == null || v.isEmpty) ? tr('Please enter your username') : null,
             ),
             const SizedBox(height: 14),
             _label(
-              'Password',
+              tr('Password'),
               trailing: TextButton(
                 onPressed: () => Navigator.push(
                   context,
@@ -306,7 +307,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   minimumSize: const Size(0, 28),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: Text('Forgot password?',
+                child: Text(tr('Forgot password?'),
                     style: DT.text(size: 12.5, weight: FontWeight.w700, color: _C.brand)),
               ),
             ),
@@ -321,10 +322,10 @@ class _LoginScreenState extends State<LoginScreen> {
               },
               style: DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
               decoration: _input(
-                hint: 'Enter your password',
+                hint: tr('Enter your password'),
                 icon: Icons.lock_outline_rounded,
                 suffix: IconButton(
-                  tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                  tooltip: _obscurePassword ? tr('Show password') : tr('Hide password'),
                   onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                   icon: Icon(
                     _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
@@ -334,8 +335,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               validator: (v) {
-                if (v == null || v.isEmpty) return 'Please enter your password';
-                if (v.length < 6) return 'Password must be at least 6 characters';
+                if (v == null || v.isEmpty) return tr('Please enter your password');
+                if (v.length < 6) return tr('Password must be at least 6 characters');
                 return null;
               },
             ),
@@ -368,13 +369,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white),
                       ),
                       const SizedBox(width: 10),
-                      Text('Logging in…', style: DT.text(size: 15, weight: FontWeight.w700, color: Colors.white)),
+                      Text(tr('Logging in…'), style: DT.text(size: 15, weight: FontWeight.w700, color: Colors.white)),
                     ],
                   )
                       : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('Log in', style: DT.text(size: 15, weight: FontWeight.w800, color: Colors.white)),
+                      Text(tr('Log in'), style: DT.text(size: 15, weight: FontWeight.w800, color: Colors.white)),
                       const SizedBox(width: 8),
                       const Icon(Icons.arrow_forward_rounded, size: 19),
                     ],
@@ -415,8 +416,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('New to QNXMart?', style: DT.text(size: 14, weight: FontWeight.w800, color: DT.onyx900)),
-                    Text('Create a free account in a minute', style: DT.text(size: 12, color: DT.slate500)),
+                    Text(tr('New to QNXMart?'), style: DT.text(size: 14, weight: FontWeight.w800, color: DT.onyx900)),
+                    Text(tr('Create a free account in a minute'), style: DT.text(size: 12, color: DT.slate500)),
                   ],
                 ),
               ),
@@ -426,7 +427,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   color: _C.brand,
                   borderRadius: BorderRadius.circular(999),
                 ),
-                child: Text('Register', style: DT.text(size: 12.5, weight: FontWeight.w800, color: Colors.white)),
+                child: Text(tr('Register'), style: DT.text(size: 12.5, weight: FontWeight.w800, color: Colors.white)),
               ),
             ],
           ),
@@ -443,7 +444,7 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             const Icon(Icons.verified_user_outlined, size: 15, color: DT.slate400),
             const SizedBox(width: 6),
-            Text('Your login is encrypted and secure', style: DT.text(size: 11.5, color: DT.slate400)),
+            Text(tr('Your login is encrypted and secure'), style: DT.text(size: 11.5, color: DT.slate400)),
           ],
         ),
         const SizedBox(height: 6),
@@ -451,11 +452,11 @@ class _LoginScreenState extends State<LoginScreen> {
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TermsConditionsScreen())),
           child: Text.rich(
             TextSpan(
-              text: 'By continuing you agree to our ',
+              text: tr('By continuing you agree to our '),
               style: DT.text(size: 11.5, color: DT.slate400),
               children: [
                 TextSpan(
-                  text: 'Terms & Conditions',
+                  text: tr('Terms & Conditions'),
                   style: DT.text(
                       size: 11.5, weight: FontWeight.w700, color: _C.brand, decoration: TextDecoration.underline),
                 ),
@@ -477,7 +478,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Expanded(
           child: Text.rich(
             TextSpan(
-              text: text,
+              text: tr(text),
               style: DT.text(size: 12, weight: FontWeight.w600, color: DT.onyx700),
               children: [TextSpan(text: ' *', style: DT.text(size: 12, color: _C.red))],
             ),
@@ -492,7 +493,7 @@ class _LoginScreenState extends State<LoginScreen> {
     OutlineInputBorder b(Color c, [double w = 1]) =>
         OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: c, width: w));
     return InputDecoration(
-      hintText: hint,
+      hintText: tr(hint),
       hintStyle: DT.text(size: 13.5, color: DT.slate400),
       prefixIcon: Icon(icon, size: 19, color: _C.brand),
       prefixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 20),

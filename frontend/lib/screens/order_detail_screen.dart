@@ -7,6 +7,7 @@ import '../models/order_model.dart';
 import '../services/order_service.dart';
 import '../services/order_extras_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -141,7 +142,7 @@ void _snack(BuildContext context, String message, {Color? background}) {
     ..showSnackBar(
       SnackBar(
         content: Text(
-          message,
+          tr(message),
           style: _ts(13, weight: FontWeight.w600, color: Colors.white),
         ),
         backgroundColor: background ?? _C.slate900,
@@ -174,7 +175,7 @@ PreferredSizeWidget _onyxAppBar(
       bottom: BorderSide(color: _C.slate200.withOpacity(0.8)),
     ),
     leading: IconButton(
-      tooltip: 'Go back',
+      tooltip: tr('Go back'),
       icon: const Icon(Icons.arrow_back_rounded),
       onPressed: () => Navigator.maybePop(context),
     ),
@@ -183,14 +184,14 @@ PreferredSizeWidget _onyxAppBar(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          title,
+          tr(title),
           style: _ts(18,
               weight: FontWeight.w700, color: Colors.white, spacing: -0.3),
         ),
         if (subtitle != null) ...[
           const SizedBox(height: 2),
           Text(
-            subtitle,
+            tr(subtitle),
             style: _ts(11, color: const Color(0xFFC9DBEE), spacing: 0.6),
           ),
         ],
@@ -252,7 +253,7 @@ class _SectionHeader extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(
           child: Text(
-            title,
+            tr(title),
             style: _ts(14, weight: FontWeight.w700, color: _C.slate900),
           ),
         ),
@@ -289,7 +290,7 @@ class _Pill extends StatelessWidget {
         border: Border.all(color: border),
       ),
       child: Text(
-        label,
+        tr(label),
         style: _ts(fontSize, weight: FontWeight.w700, color: fg, spacing: 0.4),
       ),
     );
@@ -315,14 +316,14 @@ class _InfoRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         children: [
-          Text(label, style: _ts(12.5, color: _C.slate500)),
+          Text(tr(label), style: _ts(12.5, color: _C.slate500)),
           const SizedBox(width: 12),
           Expanded(
             child: Align(
               alignment: Alignment.centerRight,
               child: valueWidget ??
                   Text(
-                    value ?? '-',
+                    tr(value ?? '-'),
                     textAlign: TextAlign.right,
                     style: _ts(12.5,
                         weight: FontWeight.w700,
@@ -359,7 +360,7 @@ class _IconTap extends StatelessWidget {
         child: Icon(icon, size: size, color: _C.slate400),
       ),
     );
-    return tooltip == null ? child : Tooltip(message: tooltip!, child: child);
+    return tooltip == null ? child : Tooltip(message: tr(tooltip!), child: child);
   }
 }
 
@@ -459,7 +460,7 @@ class _ActionButton extends StatelessWidget {
                     Icon(icon, size: 19, color: foreground),
                   const SizedBox(width: 8),
                   Text(
-                    label,
+                    tr(label),
                     style: _ts(14, weight: FontWeight.w700, color: foreground),
                   ),
                 ],
@@ -513,11 +514,11 @@ class _ErrorView extends StatelessWidget {
                   color: _C.red600, size: 32),
             ),
             const SizedBox(height: 16),
-            Text(title,
+            Text(tr(title),
                 style: _ts(16, weight: FontWeight.w700, color: _C.slate900)),
             const SizedBox(height: 6),
             Text(
-              message,
+              tr(message),
               textAlign: TextAlign.center,
               style: _ts(13, color: _C.slate500, height: 1.5),
             ),
@@ -527,7 +528,7 @@ class _ErrorView extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: Text('Try again',
+                label: Text(tr('Try again'),
                     style: _ts(14,
                         weight: FontWeight.w700, color: Colors.white)),
                 style: ElevatedButton.styleFrom(
@@ -588,7 +589,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final opened = uri != null && await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!opened && mounted) {
       await Clipboard.setData(ClipboardData(text: r.data!));
-      if (mounted) _snack(context, 'Could not open the invoice. Link copied.');
+      if (mounted) _snack(context, tr('Could not open the invoice. Link copied.'));
     }
   }
 
@@ -629,12 +630,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           child: const Icon(Icons.cancel_outlined, color: _C.red600, size: 26),
         ),
         title: Text(
-          'Cancel this order?',
+          tr('Cancel this order?'),
           textAlign: TextAlign.center,
           style: _ts(17, weight: FontWeight.w700, color: _C.slate900),
         ),
         content: Text(
-          'This can\'t be undone. If you paid online, the refund goes back to your original payment method.',
+          tr('This can\'t be undone. If you paid online, the refund goes back to your original payment method.'),
           textAlign: TextAlign.center,
           style: _ts(13, color: _C.slate500, height: 1.5),
         ),
@@ -652,7 +653,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: Text('Keep order',
+                    child: Text(tr('Keep order'),
                         style: _ts(13.5,
                             weight: FontWeight.w700, color: _C.slate700)),
                   ),
@@ -671,7 +672,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: Text('Cancel order',
+                    child: Text(tr('Cancel order'),
                         style: _ts(13.5,
                             weight: FontWeight.w700, color: Colors.white)),
                   ),
@@ -690,7 +691,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     try {
       final response = await OrderService.cancelOrder(widget.orderId);
       if (!mounted) return;
-      _snack(context, response.message ?? 'Order cancelled.',
+      _snack(context, response.message ?? tr('Order cancelled.'),
           background: _C.emerald600);
       _loadOrderDetail();
     } catch (e) {
@@ -700,7 +701,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       _snack(
         context,
         msg.toLowerCase().contains('shipment not found')
-            ? 'This order is not with the courier yet, so it can\'t be cancelled here. Please contact support.'
+            ? tr('This order is not with the courier yet, so it can\'t be cancelled here. Please contact support.')
             : msg,
         background: _C.red600,
       );
@@ -723,7 +724,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final shipmentId = _effectiveShipmentId;
 
     if (shipmentId == 0) {
-      _snack(context, 'Tracking isn\'t available for this order yet.');
+      _snack(context, tr('Tracking isn\'t available for this order yet.'));
       return;
     }
     Navigator.push(
@@ -774,12 +775,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 ),
               ),
               const SizedBox(height: 18),
-              Text('Need help with this order?',
+              Text(tr('Need help with this order?'),
                   style:
                   _ts(16, weight: FontWeight.w700, color: _C.slate900)),
               const SizedBox(height: 6),
               Text(
-                'Share your order ID with support so they can find your order quickly.',
+                tr('Share your order ID with support so they can find your order quickly.'),
                 style: _ts(13, color: _C.slate500, height: 1.5),
               ),
               const SizedBox(height: 16),
@@ -793,18 +794,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: Text(order.orderNumber,
+                      child: Text(tr(order.orderNumber),
                           style: _mono(14,
                               weight: FontWeight.w700, color: _C.slate900)),
                     ),
                     TextButton.icon(
                       onPressed: () {
                         Navigator.pop(sheetContext);
-                        _copy(order.orderNumber, 'Order ID copied');
+                        _copy(order.orderNumber, tr('Order ID copied'));
                       },
                       icon: const Icon(Icons.content_copy_rounded,
                           size: 16, color: _C.brand600),
-                      label: Text('Copy',
+                      label: Text(tr('Copy'),
                           style: _ts(13,
                               weight: FontWeight.w700, color: _C.brand600)),
                     ),
@@ -824,12 +825,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       backgroundColor: _C.slate50,
       appBar: _onyxAppBar(
         context,
-        title: 'Order Details',
-        subtitle: 'ONYXMART STORE',
+        title: tr('Order Details'),
+        subtitle: tr('ONYXMART STORE'),
         actions: [
           if (_orderDetail != null)
             IconButton(
-              tooltip: 'Help',
+              tooltip: tr('Help'),
               icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
               onPressed: () => _showHelp(_orderDetail!),
             ),
@@ -845,15 +846,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
     if (_error != null && _orderDetail == null) {
       return _ErrorView(
-        title: 'Couldn\'t load this order',
-        message: _error!,
+        title: tr('Couldn\'t load this order'),
+        message: tr(_error!),
         onRetry: _loadOrderDetail,
       );
     }
 
     if (_orderDetail == null) {
       return Center(
-        child: Text('Order not found.',
+        child: Text(tr('Order not found.'),
             style: _ts(14, color: _C.slate500)),
       );
     }
@@ -912,7 +913,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       children: [
                         Flexible(
                           child: Text(
-                            order.orderNumber,
+                            tr(order.orderNumber),
                             overflow: TextOverflow.ellipsis,
                             style: _ts(16,
                                 weight: FontWeight.w800,
@@ -923,21 +924,21 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         const SizedBox(width: 2),
                         _IconTap(
                           icon: Icons.content_copy_rounded,
-                          tooltip: 'Copy order ID',
+                          tooltip: tr('Copy order ID'),
                           onTap: () =>
-                              _copy(order.orderNumber, 'Order ID copied'),
+                              _copy(order.orderNumber, tr('Order ID copied')),
                         ),
                       ],
                     ),
                     const SizedBox(height: 2),
-                    Text('Placed on ${order.formattedDate}',
+                    Text(tr('Placed on {0}', [order.formattedDate]),
                         style: _ts(12, color: _C.slate500)),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
               _Pill(
-                label: order.status.toUpperCase().replaceAll('_', ' '),
+                label: tr(order.status.toUpperCase().replaceAll('_', ' ')),
                 bg: visual.bg,
                 fg: visual.fg,
                 border: visual.border,
@@ -968,13 +969,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     if (_isCancelled(s)) {
       icon = Icons.cancel_rounded;
       iconColor = _C.red600;
-      spans = [const TextSpan(text: 'This order has been cancelled.')];
+      spans = [TextSpan(text: tr('This order has been cancelled.'))];
     } else if (_isReturn(s)) {
       icon = Icons.assignment_return_rounded;
       iconColor = _C.amber700;
       spans = [
-        const TextSpan(text: 'Return status: '),
-        TextSpan(text: order.status.replaceAll('_', ' '), style: bold),
+        TextSpan(text: tr('Return status: ')),
+        TextSpan(text: tr(order.status.replaceAll('_', ' ')), style: bold),
       ];
     } else {
       switch (_stepIndex(s)) {
@@ -983,7 +984,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           iconColor = _C.emerald600;
           spans = [
             const TextSpan(text: 'Package delivered at '),
-            TextSpan(text: order.address.city, style: bold),
+            TextSpan(text: tr(order.address.city), style: bold),
           ];
           break;
         case 2:
@@ -991,7 +992,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           iconColor = _C.brand600;
           spans = [
             const TextSpan(text: 'Out for delivery to '),
-            TextSpan(text: order.address.city, style: bold),
+            TextSpan(text: tr(order.address.city), style: bold),
           ];
           break;
         case 1:
@@ -1001,7 +1002,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               ? [
             const TextSpan(text: 'Shipped via '),
             TextSpan(
-                text: order.shipment.courierCompany, style: bold),
+                text: tr(order.shipment.courierCompany), style: bold),
           ]
               : [const TextSpan(text: 'Your package is on its way')];
           break;
@@ -1009,7 +1010,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           icon = Icons.inventory_2_outlined;
           iconColor = _C.slate500;
           spans = [
-            const TextSpan(text: 'We\'re preparing your order for dispatch')
+            TextSpan(text: tr('We\'re preparing your order for dispatch'))
           ];
       }
     }
@@ -1040,7 +1041,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'ITEMS IN THIS SHIPMENT (${product.quantity})',
+            tr('ITEMS IN THIS SHIPMENT ({0})', [product.quantity]),
             style: _ts(11,
                 weight: FontWeight.w700, color: _C.slate400, spacing: 1),
           ),
@@ -1059,7 +1060,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            product.name,
+                            trData(product.name),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: _ts(14,
@@ -1070,7 +1071,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          order.formattedSubtotal,
+                          tr(order.formattedSubtotal),
                           style: _ts(14,
                               weight: FontWeight.w700, color: _C.slate900),
                         ),
@@ -1081,14 +1082,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       children: [
                         Flexible(
                           child: Text(
-                            'Qty: ${product.quantity} × ${order.formattedPrice}',
+                            tr('Qty: {0} × {1}', [product.quantity, order.formattedPrice]),
                             style: _ts(12, color: _C.slate600),
                           ),
                         ),
                         const SizedBox(width: 8),
                         const Spacer(),
                         Text(
-                          'Fulfilled by Onyx',
+                          tr('Fulfilled by Onyx'),
                           style: _ts(12,
                               weight: FontWeight.w600, color: _C.brand600),
                         ),
@@ -1114,10 +1115,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         children: [
           _SectionHeader(
             icon: Icons.local_shipping_outlined,
-            title: 'Shipment',
+            title: tr('Shipment'),
             trailing: shipment.status.isNotEmpty
                 ? _Pill(
-              label: shipment.status,
+              label: tr(shipment.status),
               bg: _C.slate100,
               fg: _C.slate600,
               border: _C.slate200,
@@ -1130,14 +1131,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             padding: const EdgeInsets.only(left: 28),
             child: Column(
               children: [
-                _InfoRow(label: 'Courier', value: shipment.courierCompany),
+                _InfoRow(label: tr('Courier'), value: shipment.courierCompany),
                 _InfoRow(
-                  label: 'AWB code',
+                  label: tr('AWB code'),
                   valueWidget: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        shipment.awbCode.isEmpty ? '-' : shipment.awbCode,
+                        tr(shipment.awbCode.isEmpty ? '-' : shipment.awbCode),
                         style: _mono(12,
                             weight: FontWeight.w700, color: _C.slate800),
                       ),
@@ -1145,9 +1146,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         _IconTap(
                           icon: Icons.content_copy_rounded,
                           size: 14,
-                          tooltip: 'Copy AWB code',
+                          tooltip: tr('Copy AWB code'),
                           onTap: () =>
-                              _copy(shipment.awbCode, 'AWB code copied'),
+                              _copy(shipment.awbCode, tr('AWB code copied')),
                         ),
                     ],
                   ),
@@ -1168,9 +1169,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionHeader(
+          _SectionHeader(
             icon: Icons.location_on_outlined,
-            title: 'Delivery Address',
+            title: tr('Delivery Address'),
           ),
           const SizedBox(height: 12),
           Padding(
@@ -1178,7 +1179,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(address.city,
+                Text(tr(address.city),
                     style:
                     _ts(14, weight: FontWeight.w700, color: _C.slate800)),
                 const SizedBox(height: 2),
@@ -1188,7 +1189,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   const SizedBox(height: 8),
                   InkWell(
                     borderRadius: BorderRadius.circular(8),
-                    onTap: () => _copy(address.mobile, 'Phone number copied'),
+                    onTap: () => _copy(address.mobile, tr('Phone number copied')),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: Row(
@@ -1197,7 +1198,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                           const Icon(Icons.call_outlined,
                               size: 15, color: _C.slate500),
                           const SizedBox(width: 6),
-                          Text(address.mobile,
+                          Text(tr(address.mobile),
                               style: _ts(12,
                                   weight: FontWeight.w600,
                                   color: _C.slate700)),
@@ -1222,14 +1223,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionHeader(
-              icon: Icons.receipt_outlined, title: 'Payment Summary'),
+          _SectionHeader(
+              icon: Icons.receipt_outlined, title: tr('Payment Summary')),
           const SizedBox(height: 10),
-          _InfoRow(label: 'Method', value: order.paymentMethod),
+          _InfoRow(label: tr('Method'), value: order.paymentMethod),
           _InfoRow(
-            label: 'Status',
+            label: tr('Status'),
             valueWidget: _Pill(
-              label: paid ? 'Paid' : 'Pending',
+              label: paid ? tr('Paid') : tr('Pending'),
               bg: paid ? _C.emerald50 : _C.amber50,
               fg: paid ? _C.emerald700 : _C.amber600,
               border: paid ? _C.emerald100 : _C.amber200,
@@ -1241,15 +1242,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             padding: EdgeInsets.symmetric(vertical: 8),
             child: Divider(height: 1, thickness: 1, color: _C.slate100),
           ),
-          _InfoRow(label: 'Subtotal', value: order.formattedSubtotal),
+          _InfoRow(label: tr('Subtotal'), value: order.formattedSubtotal),
           if (order.discountAmount > 0)
             _InfoRow(
-              label: 'Discount',
+              label: tr('Discount'),
               value: '- ${order.formattedDiscount}',
               valueColor: _C.emerald600,
             ),
-          _InfoRow(label: 'Shipping', value: order.formattedShipping),
-          _InfoRow(label: 'Tax (GST)', value: order.formattedTax),
+          _InfoRow(label: tr('Shipping'), value: order.formattedShipping),
+          _InfoRow(label: tr('Tax (GST)'), value: order.formattedTax),
           Container(
             margin: const EdgeInsets.only(top: 10),
             padding: const EdgeInsets.only(top: 12),
@@ -1262,11 +1263,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Total Amount',
+                Text(tr('Total Amount'),
                     style:
                     _ts(14, weight: FontWeight.w700, color: _C.slate900)),
                 Text(
-                  order.formattedAmount,
+                  tr(order.formattedAmount),
                   style: _ts(17,
                       weight: FontWeight.w800,
                       color: _C.onyx900,
@@ -1287,11 +1288,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionHeader(icon: Icons.notes_rounded, title: 'Notes'),
+          _SectionHeader(icon: Icons.notes_rounded, title: tr('Notes')),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.only(left: 28),
-            child: Text(order.notes,
+            child: Text(tr(order.notes),
                 style: _ts(13, color: _C.slate600, height: 1.5)),
           ),
         ],
@@ -1322,12 +1323,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Want to cancel?',
+                Text(tr('Want to cancel?'),
                     style: _ts(13, weight: FontWeight.w700, color: _C.amber800)),
                 const SizedBox(height: 2),
                 Text(
-                  'This order is not with the courier yet, so it can\'t be cancelled from the app. '
-                      'Contact support with your order ID and they will cancel it.',
+                  tr('This order is not with the courier yet, so it can\'t be cancelled from the app. Contact support with your order ID and they will cancel it.'),
                   style: _ts(12, color: _C.amber800, height: 1.4),
                 ),
               ],
@@ -1341,7 +1341,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               minimumSize: const Size(0, 32),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: Text('Support', style: _ts(12.5, weight: FontWeight.w700, color: _C.amber800)),
+            child: Text(tr('Support'), style: _ts(12.5, weight: FontWeight.w700, color: _C.amber800)),
           ),
         ],
       ),
@@ -1356,7 +1356,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final buttons = <Widget>[
       if (shipmentId > 0)
         _ActionButton(
-          label: 'Track Order',
+          label: tr('Track Order'),
           icon: Icons.local_shipping_outlined,
           background: Colors.white,
           foreground: _kBrand,
@@ -1365,7 +1365,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         ),
       if (hasShipment && !_isCancelled(_norm(order.status)))
         _ActionButton(
-          label: _invoiceBusy ? 'Getting invoice...' : 'Download Invoice',
+          label: _invoiceBusy ? tr('Getting invoice...') : tr('Download Invoice'),
           icon: Icons.receipt_long_outlined,
           background: _kBrand, // buttons: only #093C71
           foreground: Colors.white,
@@ -1375,7 +1375,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         ),
       if (order.canCancel && hasShipment)
         _ActionButton(
-          label: _isCancelling ? 'Cancelling...' : 'Cancel Order',
+          label: _isCancelling ? tr('Cancelling...') : tr('Cancel Order'),
           icon: Icons.cancel_outlined,
           background: Colors.white,
           foreground: _kBrand,
@@ -1386,7 +1386,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       if (order.canCancel && !hasShipment) _cancelLaterNote(order),
       if (isDelivered)
         _ActionButton(
-          label: 'Return Order',
+          label: tr('Return Order'),
           icon: Icons.assignment_return_outlined,
           background: Colors.white,
           foreground: _kBrand,
@@ -1404,7 +1404,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           onPressed: () => _showHelp(order),
           icon: const Icon(Icons.help_outline_rounded,
               size: 16, color: _C.slate500),
-          label: Text('Need help with this order?',
+          label: Text(tr('Need help with this order?'),
               style: _ts(12, weight: FontWeight.w600, color: _C.slate500)),
         ),
       ],
@@ -1530,7 +1530,7 @@ class _DeliveryStepper extends StatelessWidget {
         circle,
         const SizedBox(height: 6),
         Text(
-          _labels[i],
+          tr(_labels[i]),
           textAlign: TextAlign.center,
           maxLines: 2,
           style: _ts(10, weight: labelWeight, color: labelColor, height: 1.2),
@@ -1592,7 +1592,7 @@ class _ShipmentTrackingScreenState extends State<ShipmentTrackingScreen> {
     return Scaffold(
       backgroundColor: _C.slate50,
       appBar: _onyxAppBar(context,
-          title: 'Track Shipment', subtitle: 'ONYXMART STORE'),
+          title: tr('Track Shipment'), subtitle: tr('ONYXMART STORE')),
       body: _buildBody(),
     );
   }
@@ -1602,8 +1602,8 @@ class _ShipmentTrackingScreenState extends State<ShipmentTrackingScreen> {
 
     if (_error != null && _trackingData == null) {
       return _ErrorView(
-        title: 'Couldn\'t load tracking',
-        message: _error!,
+        title: tr('Couldn\'t load tracking'),
+        message: tr(_error!),
         onRetry: _loadTracking,
       );
     }
@@ -1611,7 +1611,7 @@ class _ShipmentTrackingScreenState extends State<ShipmentTrackingScreen> {
     final tracking = _trackingData;
     if (tracking == null || tracking.trackingData == null) {
       return _buildEmpty(
-          'No tracking updates yet. Pull down to check again later.');
+          tr('No tracking updates yet. Pull down to check again later.'));
     }
 
     final data = tracking.trackingData!;
@@ -1632,7 +1632,7 @@ class _ShipmentTrackingScreenState extends State<ShipmentTrackingScreen> {
             Padding(
               padding: const EdgeInsets.only(left: 4, bottom: 10),
               child: Text(
-                'TRACKING HISTORY',
+                tr('TRACKING HISTORY'),
                 style: _ts(11,
                     weight: FontWeight.w700, color: _C.slate400, spacing: 1),
               ),
@@ -1659,7 +1659,7 @@ class _ShipmentTrackingScreenState extends State<ShipmentTrackingScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Tracking history will appear once the courier scans your package.',
+                      tr('Tracking history will appear once the courier scans your package.'),
                       style: _ts(12.5, color: _C.slate500, height: 1.4),
                     ),
                   ),
@@ -1684,7 +1684,7 @@ class _ShipmentTrackingScreenState extends State<ShipmentTrackingScreen> {
           const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Text(message,
+            child: Text(tr(message),
                 textAlign: TextAlign.center,
                 style: _ts(13, color: _C.slate500, height: 1.5)),
           ),
@@ -1716,17 +1716,17 @@ class _ShipmentTrackingScreenState extends State<ShipmentTrackingScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      track.courierName as String,
+                      tr(track.courierName as String),
                       style:
                       _ts(15, weight: FontWeight.w700, color: _C.slate900),
                     ),
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        Text('AWB ', style: _ts(11.5, color: _C.slate400)),
+                        Text(tr('AWB '), style: _ts(11.5, color: _C.slate400)),
                         Flexible(
                           child: Text(
-                            track.awbCode as String,
+                            tr(track.awbCode as String),
                             overflow: TextOverflow.ellipsis,
                             style: _mono(11.5,
                                 weight: FontWeight.w600, color: _C.slate600),
@@ -1735,11 +1735,11 @@ class _ShipmentTrackingScreenState extends State<ShipmentTrackingScreen> {
                         _IconTap(
                           icon: Icons.content_copy_rounded,
                           size: 13,
-                          tooltip: 'Copy AWB code',
+                          tooltip: tr('Copy AWB code'),
                           onTap: () {
                             Clipboard.setData(
                                 ClipboardData(text: track.awbCode as String));
-                            _snack(context, 'AWB code copied');
+                            _snack(context, tr('AWB code copied'));
                           },
                         ),
                       ],
@@ -1753,9 +1753,9 @@ class _ShipmentTrackingScreenState extends State<ShipmentTrackingScreen> {
           const Divider(height: 1, thickness: 1, color: _C.slate100),
           const SizedBox(height: 8),
           _InfoRow(
-            label: 'Current status',
+            label: tr('Current status'),
             valueWidget: _Pill(
-              label: track.currentStatus as String,
+              label: tr(track.currentStatus as String),
               bg: _C.brand50,
               fg: _C.brand700,
               border: _C.brand200,
@@ -1763,7 +1763,7 @@ class _ShipmentTrackingScreenState extends State<ShipmentTrackingScreen> {
             ),
           ),
           _InfoRow(
-            label: 'Expected delivery',
+            label: tr('Expected delivery'),
             value: track.formattedEdd as String,
           ),
         ],
@@ -1817,14 +1817,14 @@ class _ShipmentTrackingScreenState extends State<ShipmentTrackingScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    activity.status as String,
+                    tr(activity.status as String),
                     style: _ts(13,
                         weight: FontWeight.w700,
                         color: isFirst ? _C.slate900 : _C.slate700),
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    activity.activity as String,
+                    tr(activity.activity as String),
                     style: _ts(12, color: _C.slate600, height: 1.4),
                   ),
                   const SizedBox(height: 4),
@@ -1896,13 +1896,13 @@ class _ReturnOrderScreenState extends State<ReturnOrderScreen> {
 
   Future<void> _submitReturn() async {
     if (_selectedReason == null) {
-      _snack(context, 'Select a reason for the return.',
+      _snack(context, tr('Select a reason for the return.'),
           background: _C.red600);
       return;
     }
 
     if (_quantity < 1 || _quantity > _maxQty) {
-      _snack(context, 'Return quantity must be between 1 and $_maxQty.',
+      _snack(context, tr('Return quantity must be between 1 and {0}.', [_maxQty]),
           background: _C.red600);
       return;
     }
@@ -1920,7 +1920,7 @@ class _ReturnOrderScreenState extends State<ReturnOrderScreen> {
 
       if (!mounted) return;
 
-      _snack(context, response.message ?? 'Return request submitted.',
+      _snack(context, response.message ?? tr('Return request submitted.'),
           background: _C.emerald600);
       Navigator.pop(context, true);
     } catch (e) {
@@ -1939,7 +1939,7 @@ class _ReturnOrderScreenState extends State<ReturnOrderScreen> {
     return Scaffold(
       backgroundColor: _C.slate50,
       appBar: _onyxAppBar(context,
-          title: 'Return Order', subtitle: order.orderNumber),
+          title: tr('Return Order'), subtitle: tr(order.orderNumber)),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: ListView(
@@ -1956,7 +1956,7 @@ class _ReturnOrderScreenState extends State<ReturnOrderScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          order.product.name,
+                          trData(order.product.name),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: _ts(14,
@@ -1964,7 +1964,7 @@ class _ReturnOrderScreenState extends State<ReturnOrderScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Ordered: ${order.product.quantity} × ${order.formattedPrice}',
+                          tr('Ordered: {0} × {1}', [order.product.quantity, order.formattedPrice]),
                           style: _ts(12, color: _C.slate500),
                         ),
                       ],
@@ -1975,7 +1975,7 @@ class _ReturnOrderScreenState extends State<ReturnOrderScreen> {
             ),
 
             const SizedBox(height: 22),
-            _label('Return quantity'),
+            _label(tr('Return quantity')),
             _OnyxCard(
               padding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -1985,10 +1985,10 @@ class _ReturnOrderScreenState extends State<ReturnOrderScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Items to return',
+                        Text(tr('Items to return'),
                             style: _ts(13.5,
                                 weight: FontWeight.w600, color: _C.slate800)),
-                        Text('Up to $_maxQty',
+                        Text(tr('Up to {0}', [_maxQty]),
                             style: _ts(11.5, color: _C.slate400)),
                       ],
                     ),
@@ -2017,7 +2017,7 @@ class _ReturnOrderScreenState extends State<ReturnOrderScreen> {
             ),
 
             const SizedBox(height: 22),
-            _label('Reason for return'),
+            _label(tr('Reason for return')),
             for (final reason in _reasons)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
@@ -2025,14 +2025,14 @@ class _ReturnOrderScreenState extends State<ReturnOrderScreen> {
               ),
 
             const SizedBox(height: 14),
-            _label('Additional notes (optional)'),
+            _label(tr('Additional notes (optional)')),
             TextField(
               controller: _reasonNoteController,
               maxLines: 4,
               maxLength: 500,
               style: _ts(13.5, color: _C.slate800),
               decoration: InputDecoration(
-                hintText: 'Tell us what went wrong',
+                hintText: tr('Tell us what went wrong'),
                 hintStyle: _ts(13.5, color: _C.slate400),
                 filled: true,
                 fillColor: Colors.white,
@@ -2081,7 +2081,7 @@ class _ReturnOrderScreenState extends State<ReturnOrderScreen> {
                       strokeWidth: 2, color: Colors.white),
                 )
                     : Text(
-                  'Submit Return Request',
+                  tr('Submit Return Request'),
                   style: _ts(14.5,
                       weight: FontWeight.w700, color: Colors.white),
                 ),
@@ -2097,7 +2097,7 @@ class _ReturnOrderScreenState extends State<ReturnOrderScreen> {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 10),
       child: Text(
-        text.toUpperCase(),
+        tr(text.toUpperCase()),
         style: _ts(11, weight: FontWeight.w700, color: _C.slate400, spacing: 1),
       ),
     );
@@ -2146,7 +2146,7 @@ class _ReturnOrderScreenState extends State<ReturnOrderScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  reason.label,
+                  tr(reason.label),
                   style: _ts(13.5,
                       weight: selected ? FontWeight.w700 : FontWeight.w500,
                       color: selected ? _C.brand700 : _C.slate700),

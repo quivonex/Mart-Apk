@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../constants/design_tokens.dart';
 import '../models/seller_model.dart';
 import '../services/seller_service.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -209,7 +210,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) {
-      _showSnack('Fix the highlighted fields', success: false);
+      _showSnack(tr('Fix the highlighted fields'), success: false);
       return;
     }
 
@@ -276,7 +277,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  message,
+                  tr(message),
                   style: DT.text(
                       size: 13, weight: FontWeight.w600, color: Colors.white),
                 ),
@@ -356,7 +357,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    tooltip: 'Back',
+                    tooltip: tr('Back'),
                     onPressed: () => Navigator.maybePop(context),
                     icon: const Icon(Icons.arrow_back_rounded,
                         color: Colors.white),
@@ -371,7 +372,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                           children: [
                             Flexible(
                               child: Text(
-                                _isEdit ? 'Seller Profile' : 'Register as Seller',
+                                _isEdit ? tr('Seller Profile') : tr('Register as Seller'),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: DT.text(
@@ -384,7 +385,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                             ),
                             if (_isEdit) ...[
                               const SizedBox(width: 8),
-                              _darkPill('Registered', _C.emerald300,
+                              _darkPill(tr('Registered'), _C.emerald300,
                                   const Color(0x3310B981),
                                   const Color(0x4D34D399)),
                             ],
@@ -394,8 +395,8 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                         const SizedBox(height: 1),
                         Text(
                           _isEdit
-                              ? 'Manage your store details'
-                              : 'Set up your store to start selling',
+                              ? tr('Manage your store details')
+                              : tr('Set up your store to start selling'),
                           style: DT.text(
                               size: 11.5,
                               weight: FontWeight.w500,
@@ -405,7 +406,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                     ),
                   ),
                   PopupMenuButton<String>(
-                    tooltip: 'More',
+                    tooltip: tr('More'),
                     color: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(DT.rMd),
@@ -421,7 +422,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                             const Icon(Icons.refresh_rounded,
                                 size: 18, color: DT.onyx700),
                             const SizedBox(width: 10),
-                            Text('Reload saved details',
+                            Text(tr('Reload saved details'),
                                 style: DT.text(size: 13)),
                           ],
                         ),
@@ -456,7 +457,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: border),
       ),
-      child: Text(text,
+      child: Text(tr(text),
           style: DT.text(size: 10, weight: FontWeight.w600, color: fg)),
     );
   }
@@ -474,7 +475,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                 strokeWidth: 2.5, color: _C.headerBlue),
           ),
           const SizedBox(height: 14),
-          Text('Loading your seller details…',
+          Text(tr('Loading your seller details…'),
               style: DT.text(size: 13, color: DT.onyx600)),
         ],
       ),
@@ -497,18 +498,18 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                   color: _kRed, size: 28),
             ),
             const SizedBox(height: 14),
-            Text("Couldn't load your seller details",
+            Text(tr("Couldn't load your seller details"),
                 textAlign: TextAlign.center,
                 style: DT.text(size: 15, weight: FontWeight.w700)),
             const SizedBox(height: 6),
-            Text(_loadError ?? '',
+            Text(tr(_loadError ?? ''),
                 textAlign: TextAlign.center,
                 style: DT.text(size: 12.5, color: DT.onyx600, height: 1.5)),
             const SizedBox(height: 18),
             ElevatedButton.icon(
               onPressed: _loadSellerProfile,
               icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: Text('Try again',
+              label: Text(tr('Try again'),
                   style: DT.text(
                       size: 13, weight: FontWeight.w700, color: Colors.white)),
               style: ElevatedButton.styleFrom(
@@ -557,7 +558,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                 const SizedBox(width: 6),
                 Flexible(
                   child: Text(
-                    'Your details are used only to verify and pay your store',
+                    tr('Your details are used only to verify and pay your store'),
                     textAlign: TextAlign.center,
                     style: DT.text(
                         size: 11, weight: FontWeight.w500, color: DT.slate500),
@@ -642,7 +643,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                _isEdit ? 'Seller Profile' : 'Become a Seller',
+                                _isEdit ? tr('Seller Profile') : tr('Become a Seller'),
                                 style: DT.text(
                                     size: 15.5,
                                     weight: FontWeight.w700,
@@ -651,8 +652,8 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                               const SizedBox(height: 2),
                               Text(
                                 _isEdit
-                                    ? 'Update and manage your store details'
-                                    : 'Register to start selling on QN Mart',
+                                    ? tr('Update and manage your store details')
+                                    : tr('Register to start selling on QN Mart'),
                                 style: DT.text(
                                     size: 12,
                                     color: Colors.white70,
@@ -663,7 +664,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                         ),
                         const SizedBox(width: 8),
                         _darkPill(
-                          '${(pct * 100).round()}% done',
+                          tr('{0}% done', [(pct * 100).round()]),
                           complete ? Colors.white : _C.amber300,
                           complete
                               ? const Color(0x33FFFFFF)
@@ -685,15 +686,15 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                         children: [
                           Row(
                             children: [
-                              Text('Profile completion',
+                              Text(tr('Profile completion'),
                                   style: DT.text(
                                       size: 11, color: Colors.white70)),
                               const Spacer(),
                               Flexible(
                                 child: Text(
                                   complete
-                                      ? 'All details added'
-                                      : 'Next: ${missing.first.key}',
+                                      ? tr('All details added')
+                                      : tr('Next: {0}', [missing.first.key]),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: DT.text(
@@ -768,7 +769,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
       icon: Icons.work_outline_rounded,
       iconBg: _kTint,
       iconFg: _C.blue600,
-      title: 'Business Information',
+      title: tr('Business Information'),
       tag: _Tag.required,
       children: [
         DropdownButtonFormField<String>(
@@ -780,9 +781,9 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
               color: DT.slate400),
           style: _inputStyle(),
           decoration: _decoration(
-            label: 'Business Type',
+            label: tr('Business Type'),
             icon: Icons.inventory_2_outlined,
-            hint: 'Select business type',
+            hint: tr('Select business type'),
           ),
           items: SellerRequest.businessTypeOptions
               .map((e) => DropdownMenuItem<String>(
@@ -793,7 +794,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
               .toList(),
           onChanged: (v) => setState(() => _businessType = v),
           validator: (v) =>
-          v == null || v.isEmpty ? 'Business type is required' : null,
+          v == null || v.isEmpty ? tr('Business type is required') : null,
         ),
         _categoryDropdown(),
       ],
@@ -812,15 +813,15 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
       icon: const Icon(Icons.keyboard_arrow_down_rounded, color: DT.slate400),
       style: _inputStyle(),
       decoration: _decoration(
-        label: 'Business Category',
+        label: tr('Business Category'),
         icon: Icons.grid_view_rounded,
-        hint: 'Select business category',
+        hint: tr('Select business category'),
       ),
       selectedItemBuilder: (_) => [
         for (final c in _businessCategories)
           Align(
             alignment: Alignment.centerLeft,
-            child: Text(c.$2,
+            child: Text(tr(c.$2),
                 overflow: TextOverflow.ellipsis, style: _inputStyle()),
           ),
       ],
@@ -841,7 +842,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(c.$2,
+                  child: Text(tr(c.$2),
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(
                           size: 13.5,
@@ -854,7 +855,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
       ],
       onChanged: (v) => setState(() => _businessCategoryCtrl.text = v ?? ''),
       validator: (v) =>
-      v == null || v.isEmpty ? 'Business category is required' : null,
+      v == null || v.isEmpty ? tr('Business category is required') : null,
     );
   }
 
@@ -869,20 +870,20 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
       icon: const Icon(Icons.keyboard_arrow_down_rounded, color: DT.slate400),
       style: _inputStyle(compact: true),
       decoration: _decoration(
-        label: 'State',
+        label: tr('State'),
         icon: Icons.map_outlined,
-        hint: 'Select',
+        hint: tr('Select'),
         compact: true,
       ),
       items: [
         for (final st in _states)
           DropdownMenuItem<String>(
             value: st.$1,
-            child: Text(st.$2, overflow: TextOverflow.ellipsis),
+            child: Text(tr(st.$2), overflow: TextOverflow.ellipsis),
           ),
       ],
       onChanged: (v) => setState(() => _stateCtrl.text = v ?? ''),
-      validator: (v) => v == null || v.isEmpty ? 'State is required' : null,
+      validator: (v) => v == null || v.isEmpty ? tr('State is required') : null,
     );
   }
 
@@ -892,43 +893,43 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
       icon: Icons.person_outline_rounded,
       iconBg: _kTint,
       iconFg: _C.indigo600,
-      title: 'Contact Person Details',
+      title: tr('Contact Person Details'),
       tag: _Tag.required,
       children: [
         _field(
           controller: _contactNameCtrl,
-          label: 'Contact Person Name',
-          hint: 'e.g. Rajesh Kumar',
+          label: tr('Contact Person Name'),
+          hint: tr('e.g. Rajesh Kumar'),
           icon: Icons.account_circle_outlined,
           textCapitalization: TextCapitalization.words,
           emphasize: true,
-          validator: (v) => _required(v, 'Contact person name'),
+          validator: (v) => _required(v, tr('Contact person name')),
         ),
         _field(
           controller: _designationCtrl,
-          label: 'Designation',
-          hint: 'Owner / Managing Director',
+          label: tr('Designation'),
+          hint: tr('Owner / Managing Director'),
           icon: Icons.badge_outlined,
           textCapitalization: TextCapitalization.words,
-          validator: (v) => _required(v, 'Designation'),
+          validator: (v) => _required(v, tr('Designation')),
         ),
         _field(
           controller: _emailCtrl,
-          label: 'Official Email',
+          label: tr('Official Email'),
           hint: 'name@company.com',
           icon: Icons.mail_outline_rounded,
           keyboardType: TextInputType.emailAddress,
           validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'Email is required';
+            if (v == null || v.trim().isEmpty) return tr('Email is required');
             return _emailRegex.hasMatch(v.trim())
                 ? null
-                : 'Enter a valid email';
+                : tr('Enter a valid email');
           },
         ),
         _field(
           controller: _mobileCtrl,
-          label: 'Primary Mobile',
-          hint: '10-digit mobile number',
+          label: tr('Primary Mobile'),
+          hint: tr('10-digit mobile number'),
           icon: Icons.phone_outlined,
           keyboardType: TextInputType.phone,
           emphasize: true,
@@ -940,15 +941,15 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
           ],
           validator: (v) {
             final t = v?.trim() ?? '';
-            if (t.isEmpty) return 'Mobile is required';
-            if (t.length != 10) return 'Enter a valid 10-digit number';
+            if (t.isEmpty) return tr('Mobile is required');
+            if (t.length != 10) return tr('Enter a valid 10-digit number');
             return null;
           },
         ),
         _field(
           controller: _altMobileCtrl,
-          label: 'Alternate Mobile (Optional)',
-          hint: 'Add 10-digit number',
+          label: tr('Alternate Mobile (Optional)'),
+          hint: tr('Add 10-digit number'),
           icon: Icons.smartphone_outlined,
           keyboardType: TextInputType.phone,
           compact: true,
@@ -959,13 +960,13 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
           validator: (v) {
             final t = v?.trim() ?? '';
             if (t.isEmpty) return null;
-            return t.length != 10 ? 'Enter a valid 10-digit number' : null;
+            return t.length != 10 ? tr('Enter a valid 10-digit number') : null;
           },
         ),
         _field(
           controller: _landlineCtrl,
-          label: 'Landline (Optional)',
-          hint: 'STD code + number',
+          label: tr('Landline (Optional)'),
+          hint: tr('STD code + number'),
           icon: Icons.call_outlined,
           keyboardType: TextInputType.phone,
           compact: true,
@@ -981,17 +982,17 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
       icon: Icons.location_on_outlined,
       iconBg: DT.teal50,
       iconFg: _C.teal600,
-      title: 'Registered Business Address',
+      title: tr('Registered Business Address'),
       tag: _Tag.required,
       children: [
         _field(
           controller: _addressCtrl,
-          label: 'Address (Premise / Street)',
-          hint: 'e.g. Plot 42, MIDC Industrial Area',
+          label: tr('Address (Premise / Street)'),
+          hint: tr('e.g. Plot 42, MIDC Industrial Area'),
           icon: Icons.home_outlined,
           textCapitalization: TextCapitalization.sentences,
           maxLines: 2,
-          validator: (v) => _required(v, 'Address'),
+          validator: (v) => _required(v, tr('Address')),
         ),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -999,12 +1000,12 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
             Expanded(
               child: _field(
                 controller: _cityCtrl,
-                label: 'City',
-                hint: 'e.g. Satara',
+                label: tr('City'),
+                hint: tr('e.g. Satara'),
                 icon: Icons.location_city_outlined,
                 compact: true,
                 textCapitalization: TextCapitalization.words,
-                validator: (v) => _required(v, 'City'),
+                validator: (v) => _required(v, tr('City')),
               ),
             ),
             const SizedBox(width: 12),
@@ -1013,8 +1014,8 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
         ),
         _field(
           controller: _pincodeCtrl,
-          label: 'Postal Pincode',
-          hint: '6-digit pincode',
+          label: tr('Postal Pincode'),
+          hint: tr('6-digit pincode'),
           icon: Icons.pin_drop_outlined,
           keyboardType: TextInputType.number,
           emphasize: true,
@@ -1025,8 +1026,8 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
           ],
           validator: (v) {
             final t = v?.trim() ?? '';
-            if (t.isEmpty) return 'Pincode is required';
-            return t.length != 6 ? 'Enter a valid 6-digit pincode' : null;
+            if (t.isEmpty) return tr('Pincode is required');
+            return t.length != 6 ? tr('Enter a valid 6-digit pincode') : null;
           },
         ),
       ],
@@ -1039,14 +1040,14 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
       icon: Icons.credit_card_rounded,
       iconBg: DT.emerald50,
       iconFg: _C.emerald600,
-      title: 'Bank & PAN (Payouts)',
-      subtitle: 'Where your order payments are settled',
+      title: tr('Bank & PAN (Payouts)'),
+      subtitle: tr('Where your order payments are settled'),
       tag: _Tag.optional,
       children: [
         _field(
           controller: _panCtrl,
-          label: 'Permanent Account Number (PAN)',
-          hint: 'e.g. ABCDE1234F',
+          label: tr('Permanent Account Number (PAN)'),
+          hint: tr('e.g. ABCDE1234F'),
           icon: Icons.badge_outlined,
           emphasize: true,
           letterSpacing: 1.2,
@@ -1062,13 +1063,13 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
             if (t.isEmpty) return null;
             return _panRegex.hasMatch(t)
                 ? null
-                : 'PAN format: 5 letters, 4 digits, 1 letter';
+                : tr('PAN format: 5 letters, 4 digits, 1 letter');
           },
         ),
         _field(
           controller: _accountCtrl,
-          label: 'Bank Account Number',
-          hint: 'Account number',
+          label: tr('Bank Account Number'),
+          hint: tr('Account number'),
           icon: Icons.account_balance_wallet_outlined,
           keyboardType: TextInputType.number,
           emphasize: true,
@@ -1080,8 +1081,8 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
         ),
         _field(
           controller: _ifscCtrl,
-          label: 'IFSC Code',
-          hint: 'e.g. SBIN0001234',
+          label: tr('IFSC Code'),
+          hint: tr('e.g. SBIN0001234'),
           icon: Icons.segment_rounded,
           emphasize: true,
           letterSpacing: 1.2,
@@ -1097,7 +1098,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
             if (t.isEmpty) return null;
             return _ifscRegex.hasMatch(t)
                 ? null
-                : 'IFSC format: 4 letters, 0, then 6 characters';
+                : tr('IFSC format: 4 letters, 0, then 6 characters');
           },
         ),
         Row(
@@ -1106,8 +1107,8 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
             Expanded(
               child: _field(
                 controller: _bankNameCtrl,
-                label: 'Bank Name',
-                hint: 'e.g. State Bank of India',
+                label: tr('Bank Name'),
+                hint: tr('e.g. State Bank of India'),
                 icon: Icons.account_balance_outlined,
                 compact: true,
                 textCapitalization: TextCapitalization.words,
@@ -1117,8 +1118,8 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
             Expanded(
               child: _field(
                 controller: _branchCtrl,
-                label: 'Branch',
-                hint: 'e.g. Andheri',
+                label: tr('Branch'),
+                hint: tr('e.g. Andheri'),
                 icon: Icons.location_on_outlined,
                 compact: true,
                 textCapitalization: TextCapitalization.words,
@@ -1138,7 +1139,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Add these to receive payouts. You can leave them blank and add them later.',
+                tr('Add these to receive payouts. You can leave them blank and add them later.'),
                 style: DT.text(size: 11, color: DT.slate500, height: 1.5),
               ),
             ),
@@ -1150,7 +1151,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
 
   // ---------- Submit ----------
   Widget _buildSubmitButton() {
-    final label = _isEdit ? 'Update Seller Profile' : 'Register as Seller';
+    final label = _isEdit ? tr('Update Seller Profile') : tr('Register as Seller');
     return Opacity(
       opacity: _isSubmitting ? 0.8 : 1,
       child: DecoratedBox(
@@ -1186,7 +1187,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                         color: Colors.white, size: 20),
                     const SizedBox(width: 10),
                     Text(
-                      label,
+                      tr(label),
                       style: DT.text(
                         size: 14.5,
                         weight: FontWeight.w700,
@@ -1209,7 +1210,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
   // =================================================================
   String? _required(String? value, String fieldName) {
     return (value == null || value.trim().isEmpty)
-        ? '$fieldName is required'
+        ? tr('{0} is required', [fieldName])
         : null;
   }
 
@@ -1240,8 +1241,8 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
     );
 
     return InputDecoration(
-      labelText: label,
-      hintText: hint,
+      labelText: tr(label),
+      hintText: trN(hint),
       floatingLabelBehavior: FloatingLabelBehavior.always,
       labelStyle: DT.text(size: 13, weight: FontWeight.w600, color: DT.onyx600),
       floatingLabelStyle: WidgetStateTextStyle.resolveWith((states) {
@@ -1259,7 +1260,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
       prefixIcon: Icon(icon, size: compact ? 18 : 20, color: DT.slate500),
       prefixIconConstraints:
       BoxConstraints(minWidth: compact ? 40 : 46, minHeight: 44),
-      prefixText: prefixText,
+      prefixText: trN(prefixText),
       prefixStyle:
       DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx600),
       suffixIcon: suffix,
@@ -1307,12 +1308,12 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
       style: _inputStyle(
           emphasize: emphasize, compact: compact, letterSpacing: letterSpacing),
       decoration: _decoration(
-        label: label,
+        label: tr(label),
         icon: icon,
-        hint: hint,
+        hint: tr(hint),
         compact: compact,
         suffix: suffix,
-        prefixText: prefixText,
+        prefixText: trN(prefixText),
       ),
     );
   }
@@ -1378,7 +1379,7 @@ class _SectionCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title,
+                      Text(tr(title),
                           style: DT.text(
                               size: 14,
                               weight: FontWeight.w700,
@@ -1386,7 +1387,7 @@ class _SectionCard extends StatelessWidget {
                               letterSpacing: -0.1)),
                       if (subtitle != null) ...[
                         const SizedBox(height: 2),
-                        Text(subtitle!,
+                        Text(tr(subtitle!),
                             style: DT.text(size: 11, color: DT.slate500)),
                       ],
                     ],
@@ -1401,7 +1402,7 @@ class _SectionCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    isRequired ? 'Required' : 'Optional',
+                    isRequired ? tr('Required') : tr('Optional'),
                     style: DT.text(
                       size: 10,
                       weight: FontWeight.w600,
@@ -1438,9 +1439,9 @@ class _FormatCheck extends StatelessWidget {
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 180),
           child: valid
-              ? const Tooltip(
+              ? Tooltip(
             key: ValueKey('ok'),
-            message: 'Format looks correct',
+            message: tr('Format looks correct'),
             child: Icon(Icons.verified_rounded,
                 color: _C.emerald600, size: 20),
           )
@@ -1497,7 +1498,7 @@ class _BankSummary extends StatelessWidget {
                   borderRadius: BorderRadius.circular(DT.rSm),
                 ),
                 child: Text(
-                  _initials(name),
+                  tr(_initials(name)),
                   style: DT.text(
                       size: 11, weight: FontWeight.w800, color: _kBrand),
                 ),
@@ -1507,7 +1508,7 @@ class _BankSummary extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name,
+                    Text(tr(name),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(
@@ -1516,7 +1517,7 @@ class _BankSummary extends StatelessWidget {
                             color: DT.onyx800)),
                     const SizedBox(height: 1),
                     Text(
-                      br.isEmpty ? 'Add branch name' : 'Branch: $br',
+                      br.isEmpty ? tr('Add branch name') : tr('Branch: {0}', [br]),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(size: 11, color: DT.slate500),

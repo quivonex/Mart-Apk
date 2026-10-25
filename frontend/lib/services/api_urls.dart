@@ -1,7 +1,7 @@
 class ApiUrls {
   // Base URL - Change this to your actual server IP
 
-      static const String baseUrl = 'http://192.168.31.5:16000';
+      static const String baseUrl = 'http://192.168.31.7:16000';
   //  static const String baseUrl = "https://api.qnxmartb2b.com";
 
   // Auth Endpoints
@@ -184,6 +184,10 @@ class ApiUrls {
   // ✅ Instagram reels: list = my reels (login), list-all = all active reels (home)
   static const String instagramReels = '/accounts/instagram-reel/list/';
   static const String instagramReelsAll = '/accounts/instagram-reel/list-all/';
+
+  // ✅ Language: backend text translation (product / property / ReMart names)
+  //   POST {texts:[...], target:'mr'|'hi'} -> {translations:[...]}
+  static const String translateTexts = '/accounts/translate/';
 
   // Full URL getters
   static String get loginUrl => '$baseUrl$login';

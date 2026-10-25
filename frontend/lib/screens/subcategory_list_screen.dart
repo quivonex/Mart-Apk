@@ -4,6 +4,7 @@ import '../constants/app_constants.dart';
 import '../models/subcategory_model.dart';
 import '../services/subcategory_service.dart';
 import 'subcategory_create_edit_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -43,7 +44,7 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
       if (res.isSuccess) {
         _items = res.data;
       } else {
-        _error = res.message ?? 'Failed to load sub categories';
+        _error = res.message ?? tr('Failed to load sub categories');
       }
     });
   }
@@ -73,26 +74,26 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(
-          sc.isActive ? 'Deactivate Sub Category?' : 'Reactivate Sub Category?',
+          sc.isActive ? tr('Deactivate Sub Category?') : tr('Reactivate Sub Category?'),
           style: GoogleFonts.inter(fontWeight: FontWeight.w700),
         ),
         content: Text(
           sc.isActive
-              ? 'This sub category will be marked as inactive.'
-              : 'This sub category will be activated again.',
+              ? tr('This sub category will be marked as inactive.')
+              : tr('This sub category will be activated again.'),
           style: GoogleFonts.inter(fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(tr('Cancel')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: _kBrand, // buttons: only #093C71
             ),
-            child: Text(sc.isActive ? 'Deactivate' : 'Reactivate'),
+            child: Text(sc.isActive ? tr('Deactivate') : tr('Reactivate')),
           ),
         ],
       ),
@@ -108,7 +109,7 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(res.displayMessage),
+        content: Text(tr(res.displayMessage)),
         backgroundColor:
         res.isSuccess ? Colors.green : const Color(0xFFC62828),
         behavior: SnackBarBehavior.floating,
@@ -127,7 +128,7 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          'Sub Categories',
+          tr('Sub Categories'),
           style: GoogleFonts.inter(
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -141,7 +142,7 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
         backgroundColor: _kBrand,
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text(
-          'Add Sub Category',
+          tr('Add Sub Category'),
           style: GoogleFonts.inter(
             fontSize: 13,
             fontWeight: FontWeight.w600,
@@ -207,7 +208,7 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      sc.name,
+                      trData(sc.name),
                       style: GoogleFonts.inter(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
@@ -216,7 +217,7 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
                     ),
                     if (sc.categoryName.isNotEmpty)
                       Text(
-                        sc.categoryName,
+                        trData(sc.categoryName),
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           color: AppConstants.textSecondary,
@@ -234,7 +235,7 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  sc.isActive ? 'Active' : 'Inactive',
+                  sc.isActive ? tr('Active') : tr('Inactive'),
                   style: GoogleFonts.inter(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -247,7 +248,7 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
           if (sc.description.isNotEmpty) ...[
             const SizedBox(height: 10),
             Text(
-              sc.description,
+              trData(sc.description),
               style: GoogleFonts.inter(
                 fontSize: 12,
                 color: AppConstants.textSecondary,
@@ -265,7 +266,7 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
                   onPressed: () => _openEdit(sc),
                   icon: const Icon(Icons.edit_outlined, size: 16),
                   label: Text(
-                    'Edit',
+                    tr('Edit'),
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -292,7 +293,7 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
                     size: 16,
                   ),
                   label: Text(
-                    sc.isActive ? 'Deactivate' : 'Reactivate',
+                    sc.isActive ? tr('Deactivate') : tr('Reactivate'),
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -338,7 +339,7 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
             ),
             const SizedBox(height: 20),
             Text(
-              isErr ? 'Failed to Load' : 'No Sub Categories Yet',
+              isErr ? tr('Failed to Load') : tr('No Sub Categories Yet'),
               style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -347,7 +348,7 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              _error ?? 'Start by adding your first sub category.',
+              _error ?? tr('Start by adding your first sub category.'),
               style: GoogleFonts.inter(
                 fontSize: 14,
                 color: AppConstants.textSecondary,
@@ -368,7 +369,7 @@ class _SubCategoryListScreenState extends State<SubCategoryListScreen> {
               icon: Icon(isErr ? Icons.refresh : Icons.add,
                   color: Colors.white, size: 18),
               label: Text(
-                isErr ? 'Retry' : 'Add Sub Category',
+                isErr ? tr('Retry') : tr('Add Sub Category'),
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,

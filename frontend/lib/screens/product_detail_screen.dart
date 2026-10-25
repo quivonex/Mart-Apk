@@ -26,6 +26,7 @@ import '../utils/chat_launcher.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'product_enquiry_screen.dart';
 import 'franchise_plans_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -86,7 +87,7 @@ String _date(String raw) {
   final d = DateTime.tryParse(raw);
   if (d == null) return raw;
   const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return '${d.day} ${m[d.month - 1]} ${d.year}';
+  return '${d.day} ${tr(m[d.month - 1])} ${d.year}';
 }
 
 /// "fuel_type" -> "Fuel Type"
@@ -272,12 +273,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(p.name,
+                    Text(trData(p.name),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: 12.5, weight: FontWeight.w700, color: _PD.ink, height: 1.25)),
                     const Spacer(),
-                    Text(_inr(p.finalPrice), style: DT.text(size: 14, weight: FontWeight.w900, color: _PD.brandDark)),
+                    Text(tr(_inr(p.finalPrice)), style: DT.text(size: 14, weight: FontWeight.w900, color: _PD.brandDark)),
                   ],
                 ),
               ),
@@ -303,11 +304,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   String? get _discountBadge {
     final v = _num(_p.discountValue);
     if (v > 0) {
-      return _p.discountType == 'flat' ? '${_inr(v)} OFF' : '${v % 1 == 0 ? v.toInt() : v}% OFF';
+      return _p.discountType == 'flat' ? '${_inr(v)} OFF' : tr('{0}% OFF', [v % 1 == 0 ? v.toInt() : v]);
     }
     if (_hasOldPrice) {
       final pct = ((_num(_shownMrp) - _num(_shownFinal)) / _num(_shownMrp) * 100).round();
-      if (pct > 0) return '$pct% OFF';
+      if (pct > 0) return tr('{0}% OFF', [pct]);
     }
     return null;
   }
@@ -316,7 +317,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final o = _p.appliedOffer;
     if (o is Map) {
       final t = '${o['title'] ?? ''}'.trim();
-      return t.isEmpty ? 'Special offer applied' : t;
+      return t.isEmpty ? tr('Special offer applied') : t;
     }
     return null;
   }
@@ -328,7 +329,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
-        content: Text(msg, style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
+        content: Text(tr(msg), style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
         backgroundColor: _PD.ink,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
@@ -345,11 +346,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final lines = [
       _p.name,
       '${_inr(_shownFinal)}${_hasOldPrice ? '  (MRP ${_inr(_shownMrp)})' : ''}',
-      if (_p.brandName.isNotEmpty) 'Brand: ${_p.brandName}',
-      if (_p.companyName.isNotEmpty) 'Sold by: ${_p.companyName}',
+      if (_p.brandName.isNotEmpty) tr('Brand: {0}', [_p.brandName]),
+      if (_p.companyName.isNotEmpty) tr('Sold by: {0}', [_p.companyName]),
       'QNX Mart',
     ];
-    _copy(lines.join('\n'), 'Product details');
+    _copy(lines.join('\n'), tr('Product details'));
   }
 
   void _openViewer(int index) {
@@ -385,7 +386,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   void _openVideo(int i) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => _VideoPage(urls: _p.videos, initialIndex: i, title: _p.name)),
+      MaterialPageRoute(builder: (_) => _VideoPage(urls: _p.videos, initialIndex: i, title: tr(_p.name))),
     );
   }
 
@@ -438,43 +439,43 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     ],
                     if (_p.variants.isNotEmpty) ...[
                       const SizedBox(height: 22),
-                      _title('Available options', Icons.style_outlined,
+                      _title(tr('Available options'), Icons.style_outlined,
                           trailing: '${_p.variants.length} variant${_p.variants.length == 1 ? '' : 's'}'),
                       const SizedBox(height: 10),
                       _variantsCard(),
                     ],
                     if (_p.description.trim().isNotEmpty) ...[
                       const SizedBox(height: 22),
-                      _title('Description', Icons.notes_rounded),
+                      _title(tr('Description'), Icons.notes_rounded),
                       const SizedBox(height: 10),
                       _descriptionCard(),
                     ],
                     if (_p.specifications.isNotEmpty) ...[
                       const SizedBox(height: 22),
-                      _title('Specifications', Icons.tune_rounded),
+                      _title(tr('Specifications'), Icons.tune_rounded),
                       const SizedBox(height: 10),
                       _table(_p.specifications.entries.map((e) => (_label(e.key), e.value)).toList()),
                     ],
                     if (dims.isNotEmpty) ...[
                       const SizedBox(height: 22),
-                      _title('Size & weight', Icons.straighten_rounded),
+                      _title(tr('Size & weight'), Icons.straighten_rounded),
                       const SizedBox(height: 10),
                       _dimensions(dims),
                     ],
                     if (details.isNotEmpty) ...[
                       const SizedBox(height: 22),
-                      _title('Product details', Icons.info_outline_rounded),
+                      _title(tr('Product details'), Icons.info_outline_rounded),
                       const SizedBox(height: 10),
                       _table(details),
                     ],
                     if (_p.videos.isNotEmpty) ...[
                       const SizedBox(height: 22),
-                      _title('Product videos', Icons.play_circle_outline_rounded),
+                      _title(tr('Product videos'), Icons.play_circle_outline_rounded),
                       const SizedBox(height: 10),
                       _videosCard(),
                     ],
                     const SizedBox(height: 22),
-                    _title('Sold by', Icons.storefront_outlined),
+                    _title(tr('Sold by'), Icons.storefront_outlined),
                     const SizedBox(height: 10),
                     _supplierCard(),
                     if (_p.isFranchiseAvailable) ...[
@@ -483,13 +484,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     ],
                     if (_related.isNotEmpty) ...[
                       const SizedBox(height: 22),
-                      _title('Similar products', Icons.auto_awesome_outlined),
+                      _title(tr('Similar products'), Icons.auto_awesome_outlined),
                       const SizedBox(height: 10),
                       _productStrip(_related),
                     ],
                     if (_recent.isNotEmpty) ...[
                       const SizedBox(height: 22),
-                      _title('Recently viewed', Icons.history_rounded),
+                      _title(tr('Recently viewed'), Icons.history_rounded),
                       const SizedBox(height: 10),
                       _productStrip(_recent),
                     ],
@@ -535,7 +536,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       title: AnimatedOpacity(
         opacity: _collapsed ? 1 : 0,
         duration: const Duration(milliseconds: 180),
-        child: Text(_p.name,
+        child: Text(trData(_p.name),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: DT.text(size: 16, weight: FontWeight.w700, color: Colors.white)),
@@ -602,7 +603,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               children: [
                 if (_discountBadge != null) _pill(Icons.local_offer_rounded, _discountBadge!, _PD.orange, Colors.white),
                 if (_discountBadge != null && _p.isFeatured) const SizedBox(width: 6),
-                if (_p.isFeatured) _pill(Icons.star_rounded, 'Featured', _PD.amber, Colors.white),
+                if (_p.isFeatured) _pill(Icons.star_rounded, tr('Featured'), _PD.amber, Colors.white),
               ],
             ),
           ),
@@ -615,7 +616,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   GestureDetector(
                     onTap: () => _openVideo(0),
                     child: _pill(Icons.play_circle_fill_rounded,
-                        _p.videos.length == 1 ? 'Video' : '${_p.videos.length} videos', _PD.brand, Colors.white),
+                        _p.videos.length == 1 ? tr('Video') : '${_p.videos.length} videos', _PD.brand, Colors.white),
                   ),
                   const SizedBox(width: 6),
                 ],
@@ -640,7 +641,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       children: [
         Icon(icon, size: 13, color: fg),
         const SizedBox(width: 4),
-        Text(text, style: DT.text(size: 11, weight: FontWeight.w800, color: fg)),
+        Text(tr(text), style: DT.text(size: 11, weight: FontWeight.w800, color: fg)),
       ],
     ),
   );
@@ -695,7 +696,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 const Icon(Icons.category_outlined, size: 12, color: _PD.brand),
                 const SizedBox(width: 4),
                 Flexible(
-                  child: Text(crumbs.join(' › '),
+                  child: Text(tr(crumbs.join(' › ')),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(size: 11, weight: FontWeight.w700, color: _PD.brandDark)),
@@ -704,7 +705,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
           ),
         const SizedBox(height: 10),
-        Text(_p.name,
+        Text(trData(_p.name),
             style: DT.text(size: 20, weight: FontWeight.w800, color: _PD.ink, height: 1.3, letterSpacing: -0.3)),
         if (_p.brandName.isNotEmpty || _p.productCode.isNotEmpty) ...[
           const SizedBox(height: 6),
@@ -725,11 +726,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               if (_p.productCode.isNotEmpty)
                 InkWell(
                   borderRadius: BorderRadius.circular(6),
-                  onTap: () => _copy(_p.productCode, 'Product code'),
+                  onTap: () => _copy(_p.productCode, tr('Product code')),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('Code: ${_p.productCode}', style: DT.text(size: 12, color: _PD.muted)),
+                      Text(tr('Code: {0}', [_p.productCode]), style: DT.text(size: 12, color: _PD.muted)),
                       const SizedBox(width: 3),
                       const Icon(Icons.copy_rounded, size: 12, color: _PD.hint),
                     ],
@@ -761,14 +762,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         children: [
           Row(
             children: [
-              Text(_selVariant == null ? 'PRICE' : 'PRICE · ${_selVariant!.label.toUpperCase()}',
+              Text(_selVariant == null ? tr('PRICE') : tr('PRICE · {0}', [_selVariant!.label.toUpperCase()]),
                   style: DT.text(size: 10, weight: FontWeight.w700, color: const Color(0xB3FFFFFF), letterSpacing: 1.1)),
               const Spacer(),
               if (badge != null)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(color: _PD.orange, borderRadius: BorderRadius.circular(20)),
-                  child: Text(badge, style: DT.text(size: 10.5, weight: FontWeight.w800, color: Colors.white)),
+                  child: Text(tr(badge), style: DT.text(size: 10.5, weight: FontWeight.w800, color: Colors.white)),
                 ),
             ],
           ),
@@ -777,12 +778,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             crossAxisAlignment: WrapCrossAlignment.end,
             spacing: 10,
             children: [
-              Text(_inr(_shownFinal),
+              Text(tr(_inr(_shownFinal)),
                   style: DT.text(size: 28, weight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
               if (_hasOldPrice)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 5),
-                  child: Text('MRP ${_inr(_shownMrp)}',
+                  child: Text(tr('MRP {0}', [_inr(_shownMrp)]),
                       style: DT.text(
                           size: 13,
                           weight: FontWeight.w600,
@@ -792,11 +793,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ],
           ),
           if (_hasOldPrice)
-            Text('You save ${_inr(_num(_shownMrp) - _num(_shownFinal))}',
+            Text(tr('You save {0}', [_inr(_num(_shownMrp) - _num(_shownFinal))]),
                 style: DT.text(size: 12, weight: FontWeight.w700, color: const Color(0xFF6EE7B7))),
           const SizedBox(height: 2),
           Text(
-              'Inclusive of all taxes${_p.unitName.isNotEmpty ? ' · per ${_p.unitName}' : ''}',
+              tr('Inclusive of all taxes{0}', [_p.unitName.isNotEmpty ? ' · per ${_p.unitName}' : '']),
               style: DT.text(size: 11, color: const Color(0xB3FFFFFF))),
           if (offer != null) ...[
             const SizedBox(height: 12),
@@ -812,7 +813,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   const Icon(Icons.celebration_rounded, size: 16, color: Color(0xFFFCD34D)),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(offer,
+                    child: Text(tr(offer),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: 12, weight: FontWeight.w700, color: Colors.white)),
@@ -831,12 +832,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final tiles = <(IconData, String, String, Color)>[
       (
       _outOfStock ? Icons.remove_shopping_cart_outlined : Icons.inventory_2_outlined,
-      'Stock',
-      stock == null ? '—' : (_outOfStock ? 'Out of stock' : '$stock available'),
+      tr('Stock'),
+      stock == null ? '—' : (_outOfStock ? tr('Out of stock') : '$stock available'),
       _outOfStock ? _PD.red : _PD.green,
       ),
-      (Icons.straighten_rounded, 'Unit', _p.unitName.isEmpty ? '—' : _p.unitName, _PD.brand),
-      (Icons.sell_outlined, 'Brand', _p.brandName.isEmpty ? '—' : _p.brandName, _PD.violet),
+      (Icons.straighten_rounded, tr('Unit'), _p.unitName.isEmpty ? '—' : _p.unitName, _PD.brand),
+      (Icons.sell_outlined, tr('Brand'), _p.brandName.isEmpty ? '—' : _p.brandName, _PD.violet),
     ];
     return Row(
       children: [
@@ -862,9 +863,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     child: Icon(tiles[i].$1, size: 18, color: tiles[i].$4),
                   ),
                   const SizedBox(height: 6),
-                  Text(tiles[i].$2, style: DT.text(size: 10.5, weight: FontWeight.w600, color: _PD.muted)),
+                  Text(tr(tiles[i].$2), style: DT.text(size: 10.5, weight: FontWeight.w600, color: _PD.muted)),
                   const SizedBox(height: 1),
-                  Text(tiles[i].$3,
+                  Text(tr(tiles[i].$3),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
@@ -890,9 +891,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       ),
       const SizedBox(width: 8),
       Expanded(
-        child: Text(text, style: DT.text(size: 16, weight: FontWeight.w800, color: _PD.ink, letterSpacing: -0.2)),
+        child: Text(tr(text), style: DT.text(size: 16, weight: FontWeight.w800, color: _PD.ink, letterSpacing: -0.2)),
       ),
-      if (trailing != null) Text(trailing, style: DT.text(size: 11.5, weight: FontWeight.w600, color: _PD.muted)),
+      if (trailing != null) Text(tr(trailing), style: DT.text(size: 11.5, weight: FontWeight.w600, color: _PD.muted)),
     ],
   );
 
@@ -933,15 +934,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   for (final e in v.attributes.entries)
                     if (e.value.isNotEmpty) _miniRow(_label(e.key), e.value),
                   if (v.sku.isNotEmpty) _miniRow('SKU', v.sku),
-                  _miniRow('Price', _inr(v.finalPrice)),
-                  _miniRow('Stock', v.stockQuantity > 0 ? '${v.stockQuantity} available' : 'Out of stock',
+                  _miniRow(tr('Price'), _inr(v.finalPrice)),
+                  _miniRow(tr('Stock'), v.stockQuantity > 0 ? '${v.stockQuantity} available' : tr('Out of stock'),
                       color: v.stockQuantity > 0 ? _PD.greenDark : _PD.red),
                 ],
               ),
             ),
           ] else ...[
             const SizedBox(height: 8),
-            Text('Tap an option to see its price, stock and photo.',
+            Text(tr('Tap an option to see its price, stock and photo.'),
                 style: DT.text(size: 11.5, color: _PD.muted)),
           ],
         ],
@@ -984,7 +985,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               children: [
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 150),
-                  child: Text(v.label,
+                  child: Text(tr(v.label),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(
@@ -993,7 +994,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           color: out ? _PD.hint : (sel ? _PD.brandDark : _PD.ink),
                           decoration: out ? TextDecoration.lineThrough : null)),
                 ),
-                Text(out ? 'Out of stock' : _inr(v.finalPrice),
+                Text(out ? tr('Out of stock') : _inr(v.finalPrice),
                     style: DT.text(size: 11, weight: FontWeight.w600, color: out ? _PD.red : _PD.muted)),
               ],
             ),
@@ -1008,10 +1009,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(flex: 4, child: Text(k, style: DT.text(size: 12, color: _PD.muted))),
+        Expanded(flex: 4, child: Text(tr(k), style: DT.text(size: 12, color: _PD.muted))),
         Expanded(
           flex: 6,
-          child: Text(v,
+          child: Text(tr(v),
               textAlign: TextAlign.right,
               style: DT.text(size: 12.5, weight: FontWeight.w700, color: color ?? _PD.ink)),
         ),
@@ -1032,7 +1033,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             duration: const Duration(milliseconds: 200),
             alignment: Alignment.topCenter,
             child: Text(
-              text,
+              tr(text),
               maxLines: long && !_descOpen ? 6 : null,
               overflow: long && !_descOpen ? TextOverflow.ellipsis : TextOverflow.visible,
               style: DT.text(size: 13.5, color: _PD.body, height: 1.6),
@@ -1046,7 +1047,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(_descOpen ? 'Show less' : 'Read more',
+                    Text(_descOpen ? tr('Show less') : tr('Read more'),
                         style: DT.text(size: 12.5, weight: FontWeight.w800, color: _PD.brand)),
                     Icon(_descOpen ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
                         size: 18, color: _PD.brand),
@@ -1075,12 +1076,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 children: [
                   Expanded(
                     flex: 5,
-                    child: Text(rows[i].$1, style: DT.text(size: 12.5, weight: FontWeight.w500, color: _PD.muted)),
+                    child: Text(tr(rows[i].$1), style: DT.text(size: 12.5, weight: FontWeight.w500, color: _PD.muted)),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     flex: 6,
-                    child: Text(rows[i].$2,
+                    child: Text(tr(rows[i].$2),
                         textAlign: TextAlign.right,
                         style: DT.text(size: 13, weight: FontWeight.w700, color: _PD.ink)),
                   ),
@@ -1093,23 +1094,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   List<(String, String)> _detailRows() => [
-    if (_p.productCode.isNotEmpty) ('Product code', _p.productCode),
-    if (_p.hsnCode.isNotEmpty) ('HSN code', _p.hsnCode),
-    if (_p.categoryName.isNotEmpty) ('Category', _p.categoryName),
-    if (_p.subcategoryName.isNotEmpty) ('Subcategory', _p.subcategoryName),
-    if (_p.brandName.isNotEmpty) ('Brand', _p.brandName),
-    if (_p.unitName.isNotEmpty) ('Unit', _p.unitName),
-    if (_p.manufacturingDate.isNotEmpty) ('Manufactured on', _date(_p.manufacturingDate)),
-    if (_p.expiryDate.isNotEmpty) ('Expiry date', _date(_p.expiryDate)),
-    if (_p.bestBeforeDuration.isNotEmpty) ('Best before', _p.bestBeforeDuration),
-    if (_p.createdAt.isNotEmpty) ('Listed on', _date(_p.createdAt)),
+    if (_p.productCode.isNotEmpty) (tr('Product code'), _p.productCode),
+    if (_p.hsnCode.isNotEmpty) (tr('HSN code'), _p.hsnCode),
+    if (_p.categoryName.isNotEmpty) (tr('Category'), _p.categoryName),
+    if (_p.subcategoryName.isNotEmpty) (tr('Subcategory'), _p.subcategoryName),
+    if (_p.brandName.isNotEmpty) (tr('Brand'), _p.brandName),
+    if (_p.unitName.isNotEmpty) (tr('Unit'), _p.unitName),
+    if (_p.manufacturingDate.isNotEmpty) (tr('Manufactured on'), _date(_p.manufacturingDate)),
+    if (_p.expiryDate.isNotEmpty) (tr('Expiry date'), _date(_p.expiryDate)),
+    if (_p.bestBeforeDuration.isNotEmpty) (tr('Best before'), _p.bestBeforeDuration),
+    if (_p.createdAt.isNotEmpty) (tr('Listed on'), _date(_p.createdAt)),
   ];
 
   List<(IconData, String, String)> _dimensionTiles() => [
-    if (_p.length.isNotEmpty && _num(_p.length) > 0) (Icons.swap_horiz_rounded, 'Length', _p.length),
-    if (_p.width.isNotEmpty && _num(_p.width) > 0) (Icons.width_normal_outlined, 'Width', _p.width),
-    if (_p.height.isNotEmpty && _num(_p.height) > 0) (Icons.height_rounded, 'Height', _p.height),
-    if (_p.weight.isNotEmpty && _num(_p.weight) > 0) (Icons.scale_outlined, 'Weight', _p.weight),
+    if (_p.length.isNotEmpty && _num(_p.length) > 0) (Icons.swap_horiz_rounded, tr('Length'), _p.length),
+    if (_p.width.isNotEmpty && _num(_p.width) > 0) (Icons.width_normal_outlined, tr('Width'), _p.width),
+    if (_p.height.isNotEmpty && _num(_p.height) > 0) (Icons.height_rounded, tr('Height'), _p.height),
+    if (_p.weight.isNotEmpty && _num(_p.weight) > 0) (Icons.scale_outlined, tr('Weight'), _p.weight),
   ];
 
   Widget _dimensions(List<(IconData, String, String)> tiles) {
@@ -1130,9 +1131,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 children: [
                   Icon(t.$1, size: 20, color: _PD.brand),
                   const SizedBox(height: 6),
-                  Text(t.$2, style: DT.text(size: 10.5, weight: FontWeight.w600, color: _PD.muted)),
+                  Text(tr(t.$2), style: DT.text(size: 10.5, weight: FontWeight.w600, color: _PD.muted)),
                   const SizedBox(height: 2),
-                  Text(t.$3,
+                  Text(tr(t.$3),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(size: 13, weight: FontWeight.w800, color: _PD.ink)),
@@ -1181,9 +1182,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Product video ${i + 1}',
+                          Text(tr('Product video {0}', [i + 1]),
                               style: DT.text(size: 13.5, weight: FontWeight.w700, color: _PD.ink)),
-                          Text('Tap to play', style: DT.text(size: 11.5, color: _PD.muted)),
+                          Text(tr('Tap to play'), style: DT.text(size: 11.5, color: _PD.muted)),
                         ],
                       ),
                     ),
@@ -1213,7 +1214,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               borderRadius: BorderRadius.circular(14),
             ),
             child: Center(
-              child: Text(name[0].toUpperCase(),
+              child: Text(tr(name[0].toUpperCase()),
                   style: DT.text(size: 21, weight: FontWeight.w800, color: Colors.white)),
             ),
           ),
@@ -1222,7 +1223,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name,
+                Text(tr(name),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: DT.text(size: 14.5, weight: FontWeight.w800, color: _PD.ink)),
@@ -1233,7 +1234,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       const Icon(Icons.location_on_outlined, size: 13, color: _PD.muted),
                       const SizedBox(width: 3),
                       Expanded(
-                        child: Text('Branch: ${_p.branchName}',
+                        child: Text(tr('Branch: {0}', [_p.branchName]),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: DT.text(size: 12, color: _PD.muted)),
@@ -1250,7 +1251,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     children: [
                       const Icon(Icons.verified_rounded, size: 12, color: _PD.greenDark),
                       const SizedBox(width: 3),
-                      Text('Verified supplier',
+                      Text(tr('Verified supplier'),
                           style: DT.text(size: 10.5, weight: FontWeight.w700, color: _PD.greenDark)),
                     ],
                   ),
@@ -1289,10 +1290,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Franchise available',
+                    Text(tr('Franchise available'),
                         style: DT.text(size: 14, weight: FontWeight.w800, color: const Color(0xFF7C2D12))),
                     const SizedBox(height: 2),
-                    Text('Start your own business with this product',
+                    Text(tr('Start your own business with this product'),
                         style: DT.text(size: 11.5, color: const Color(0xFF9A3412))),
                   ],
                 ),
@@ -1311,7 +1312,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     if (_p.companyUserId == null && _refreshing) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text('Loading seller details… please try again in a moment.')));
+        ..showSnackBar(SnackBar(content: Text(tr('Loading seller details… please try again in a moment.'))));
       return;
     }
     ChatLauncher.start(
@@ -1339,7 +1340,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           children: [
             // Chat with seller
             Tooltip(
-              message: 'Chat with seller',
+              message: tr('Chat with seller'),
               child: Material(
                 color: _PD.tint,
                 borderRadius: BorderRadius.circular(14),
@@ -1357,7 +1358,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(Icons.chat_bubble_outline_rounded, size: 19, color: _kBrand),
-                        Text('Chat', style: DT.text(size: 10, weight: FontWeight.w800, color: _kBrand)),
+                        Text(tr('Chat'), style: DT.text(size: 10, weight: FontWeight.w800, color: _kBrand)),
                       ],
                     ),
                   ),
@@ -1375,7 +1376,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     MaterialPageRoute(builder: (_) => ProductEnquiryScreen(product: _p)),
                   ),
                   icon: const Icon(Icons.mail_outline_rounded, size: 18),
-                  label: Text('Enquiry',
+                  label: Text(tr('Enquiry'),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(size: 14, weight: FontWeight.w800, color: _kBrand)),
@@ -1403,7 +1404,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     onPressed: _outOfStock ? null : () => CartHelper.addToCart(context: context, product: _p),
                     icon: Icon(_outOfStock ? Icons.block_rounded : Icons.shopping_cart_outlined,
                         size: 18, color: _outOfStock ? _PD.muted : Colors.white),
-                    label: Text(_outOfStock ? 'Out of stock' : 'Add to cart',
+                    label: Text(_outOfStock ? tr('Out of stock') : tr('Add to cart'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(
@@ -1590,12 +1591,12 @@ class _VideoPageState extends State<_VideoPage> {
         flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)),
         foregroundColor: Colors.white,
         elevation: 0,
-        title: Text(widget.title,
+        title: Text(trData(widget.title),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: DT.text(size: 15.5, weight: FontWeight.w700, color: Colors.white)),
         actions: [
-          IconButton(tooltip: 'Open in browser', onPressed: _external, icon: const Icon(Icons.open_in_new_rounded)),
+          IconButton(tooltip: tr('Open in browser'), onPressed: _external, icon: const Icon(Icons.open_in_new_rounded)),
         ],
       ),
       body: Column(
@@ -1610,13 +1611,13 @@ class _VideoPageState extends State<_VideoPage> {
                 children: [
                   const Icon(Icons.videocam_off_rounded, color: Colors.white54, size: 44),
                   const SizedBox(height: 10),
-                  Text('This video could not be played here.',
+                  Text(tr('This video could not be played here.'),
                       style: DT.text(size: 13.5, weight: FontWeight.w600, color: Colors.white)),
                   const SizedBox(height: 12),
                   ElevatedButton.icon(
                     onPressed: _external,
                     icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                    label: const Text('Open in browser'),
+                    label: Text(tr('Open in browser')),
                     style: ElevatedButton.styleFrom(
                         backgroundColor: _kBrand, foregroundColor: Colors.white, elevation: 0),
                   ),
@@ -1670,7 +1671,7 @@ class _VideoPageState extends State<_VideoPage> {
                   itemCount: widget.urls.length,
                   separatorBuilder: (_, __) => const SizedBox(width: 8),
                   itemBuilder: (_, i) => ChoiceChip(
-                    label: Text('Video ${i + 1}'),
+                    label: Text(tr('Video {0}', [i + 1])),
                     selected: i == _i,
                     onSelected: (_) => i == _i ? null : _load(i),
                     selectedColor: _PD.brand,

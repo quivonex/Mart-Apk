@@ -11,6 +11,7 @@ import '../services/catalog_service.dart';
 import '../widgets/catalog_widgets.dart';
 import '../widgets/company_ui.dart';
 import '../widgets/product_ui.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -103,8 +104,7 @@ class _UnitManageScreenState extends State<UnitManageScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Standard units available to everyone: '
-                  '${_standard.map((u) => u.shortName.isEmpty ? u.name : u.shortName).join(', ')}',
+              tr('Standard units available to everyone: {0}', [_standard.map((u) => u.shortName.isEmpty ? u.name : u.shortName).join(', ')]),
               style: DT.text(size: 12, color: _kBrandDark, height: 1.45),
             ),
           ),
@@ -125,8 +125,8 @@ class _UnitManageScreenState extends State<UnitManageScreen> {
         // ✅ FIX: Wrapped in PreferredSize with height 65 to prevent 1px overflow
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(65),
-          child: const CompanyTopBar(
-              title: 'Units', subtitle: 'Kg, piece, box, litre…'),
+          child: CompanyTopBar(
+              title: tr('Units'), subtitle: tr('Kg, piece, box, litre…')),
         ),
         floatingActionButton: _mine.isEmpty
             ? null
@@ -135,7 +135,7 @@ class _UnitManageScreenState extends State<UnitManageScreen> {
           backgroundColor: _kBrand,
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add_rounded),
-          label: Text('Add unit',
+          label: Text(tr('Add unit'),
               style: DT.text(
                   size: 13.5,
                   weight: FontWeight.w700,
@@ -147,11 +147,10 @@ class _UnitManageScreenState extends State<UnitManageScreen> {
           items: _mine,
           header: _standardNote(),
           emptyIcon: Icons.straighten_rounded,
-          emptyTitle: 'No units of your own',
+          emptyTitle: tr('No units of your own'),
           emptyMessage: _standard.isEmpty
-              ? 'Add the units you sell in, e.g. Piece (pc), Kilogram (kg), Box (box).'
-              : 'Standard units (${_standard.map((u) => u.shortName).join(', ')}) are already '
-              'available. Add your own if you need another one.',
+              ? tr('Add the units you sell in, e.g. Piece (pc), Kilogram (kg), Box (box).')
+              : tr('Standard units ({0}) are already available. Add your own if you need another one.', [_standard.map((u) => u.shortName).join(', ')]),
           onRefresh: _load,
           onAdd: () => _openForm(),
           onEdit: _openForm,
@@ -240,9 +239,9 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
             children: [
               _infoCard(
                 icon: Icons.straighten_rounded,
-                title: _isEdit ? 'Edit unit' : 'New unit',
+                title: _isEdit ? tr('Edit unit') : tr('New unit'),
                 subtitle:
-                'Units tell buyers how your product is measured and sold',
+                tr('Units tell buyers how your product is measured and sold'),
               ),
               const SizedBox(height: 16),
               if (!_isEdit) ...[
@@ -251,39 +250,39 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
               ],
               _sectionCard(
                 icon: Icons.info_outline,
-                title: 'Unit information',
-                subtitle: 'Full name and short form',
+                title: tr('Unit information'),
+                subtitle: tr('Full name and short form'),
                 children: [
-                  PxLabel('Unit name', required: true),
+                  PxLabel(tr('Unit name'), required: true),
                   TextFormField(
                     controller: _name,
                     textCapitalization: TextCapitalization.words,
                     style: DT.text(
                         size: 14, weight: FontWeight.w600, color: DT.onyx900),
                     decoration: pxInputDecoration(
-                      hint: 'e.g. Kilogram',
+                      hint: tr('e.g. Kilogram'),
                       icon: Icons.straighten_rounded,
                       iconColor: _brand,
                     ),
                     validator: (v) => (v ?? '').trim().isEmpty
-                        ? 'Enter the unit name'
+                        ? tr('Enter the unit name')
                         : null,
                   ),
                   const SizedBox(height: 14),
-                  PxLabel('Short name', required: true),
+                  PxLabel(tr('Short name'), required: true),
                   TextFormField(
                     controller: _short,
                     style: DT.text(
                         size: 14, weight: FontWeight.w600, color: DT.onyx900),
                     decoration: pxInputDecoration(
-                      hint: 'e.g. kg',
+                      hint: tr('e.g. kg'),
                       icon: Icons.short_text_rounded,
                       iconColor: _brand,
                     ),
                     validator: (v) {
                       final t = (v ?? '').trim();
-                      if (t.isEmpty) return 'Enter a short name';
-                      if (t.length > 20) return 'Max 20 characters';
+                      if (t.isEmpty) return tr('Enter a short name');
+                      if (t.length > 20) return tr('Max 20 characters');
                       return null;
                     },
                   ),
@@ -317,7 +316,7 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    tooltip: 'Back',
+                    tooltip: tr('Back'),
                     onPressed: () => Navigator.maybePop(context),
                     icon: const Icon(Icons.arrow_back_rounded,
                         color: Colors.white, size: 24),
@@ -329,7 +328,7 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _isEdit ? 'Edit unit' : 'Add unit',
+                          _isEdit ? tr('Edit unit') : tr('Add unit'),
                           style: DT.text(
                               size: 18,
                               weight: FontWeight.w700,
@@ -337,7 +336,7 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
                               letterSpacing: -0.3),
                         ),
                         Text(
-                          'Manage how products are measured',
+                          tr('Manage how products are measured'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(
@@ -383,13 +382,13 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
+                Text(tr(title),
                     style: DT.text(
                         size: 14,
                         weight: FontWeight.w800,
                         color: DT.onyx900)),
                 const SizedBox(height: 2),
-                Text(subtitle,
+                Text(tr(subtitle),
                     style:
                     DT.text(size: 11.5, color: DT.slate500, height: 1.4)),
               ],
@@ -434,14 +433,14 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Quick pick',
+                      Text(tr('Quick pick'),
                           style: DT.text(
                               size: 14,
                               weight: FontWeight.w700,
                               color: DT.onyx900,
                               height: 1.2)),
                       const SizedBox(height: 2),
-                      Text('Tap a common unit to fill the form',
+                      Text(tr('Tap a common unit to fill the form'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(size: 11.5, color: DT.slate500)),
@@ -516,14 +515,14 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title,
+                      Text(tr(title),
                           style: DT.text(
                               size: 14,
                               weight: FontWeight.w700,
                               color: DT.onyx900,
                               height: 1.2)),
                       const SizedBox(height: 2),
-                      Text(subtitle,
+                      Text(tr(subtitle),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(size: 11.5, color: DT.slate500)),
@@ -586,7 +585,7 @@ class _UnitFormScreenState extends State<UnitFormScreen> {
                     const Icon(Icons.check_rounded, size: 20),
                     const SizedBox(width: 8),
                     Text(
-                      _isEdit ? 'Save changes' : 'Add unit',
+                      _isEdit ? tr('Save changes') : tr('Add unit'),
                       style: DT.text(
                           size: 15,
                           weight: FontWeight.w700,

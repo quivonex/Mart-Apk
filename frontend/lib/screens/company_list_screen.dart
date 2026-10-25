@@ -5,6 +5,7 @@ import '../services/company_service.dart';
 import '../utils/company_payment_helper.dart';
 import 'company_create_edit_screen.dart';
 import 'company_detail_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -81,7 +82,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
         if (response.isSuccess) {
           _companies = response.data;
         } else {
-          _error = response.message ?? 'Could not load companies';
+          _error = response.message ?? tr('Could not load companies');
         }
       });
     } catch (e) {
@@ -173,7 +174,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
         ),
         icon: const Icon(Icons.add_rounded),
         label: Text(
-          'Add Company',
+          tr('Add Company'),
           style: DT.text(
               size: 13.5, weight: FontWeight.w700, color: Colors.white),
         ),
@@ -199,7 +200,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    tooltip: 'Back',
+                    tooltip: tr('Back'),
                     onPressed: () => Navigator.maybePop(context),
                     icon: const Icon(Icons.arrow_back_rounded,
                         color: Colors.white),
@@ -210,7 +211,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'My Companies',
+                          tr('My Companies'),
                           style: DT.text(
                             size: 17,
                             weight: FontWeight.w700,
@@ -220,9 +221,9 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                         ),
                         Text(
                           _isLoading
-                              ? 'Loading…'
+                              ? tr('Loading…')
                               : count == 1
-                              ? '1 company'
+                              ? tr('1 company')
                               : '$count companies',
                           style: DT.text(
                               size: 11.5,
@@ -233,7 +234,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Add company',
+                    tooltip: tr('Add company'),
                     onPressed: _openCreate,
                     icon: Container(
                       width: 36,
@@ -310,11 +311,11 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
       child: IntrinsicHeight(
         child: Row(
           children: [
-            _stat('Total', _companies.length, DT.onyx900),
+            _stat(tr('Total'), _companies.length, DT.onyx900),
             _divider(),
-            _stat('Paid', _paidCount, _C.emerald600),
+            _stat(tr('Paid'), _paidCount, _C.emerald600),
             _divider(),
-            _stat('Payment pending', _pendingCount, _kOrange),
+            _stat(tr('Payment pending'), _pendingCount, _kOrange),
           ],
         ),
       ),
@@ -337,7 +338,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
           ),
           const SizedBox(height: 3),
           Text(
-            label,
+            tr(label),
             textAlign: TextAlign.center,
             style: DT.text(size: 11, weight: FontWeight.w500, color: DT.slate500),
           ),
@@ -356,13 +357,13 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
       textInputAction: TextInputAction.search,
       style: DT.text(size: 13.5, weight: FontWeight.w500),
       decoration: InputDecoration(
-        hintText: 'Search by name, owner, district or GST',
+        hintText: tr('Search by name, owner, district or GST'),
         hintStyle: DT.text(size: 13, color: DT.slate400),
         prefixIcon: const Icon(Icons.search_rounded, color: _C.blue600, size: 20),
         suffixIcon: _query.isEmpty
             ? null
             : IconButton(
-          tooltip: 'Clear',
+          tooltip: tr('Clear'),
           icon: const Icon(Icons.close_rounded,
               color: DT.slate400, size: 18),
           onPressed: () {
@@ -407,7 +408,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  label,
+                  tr(label),
                   style: DT.text(
                     size: 12,
                     weight: FontWeight.w600,
@@ -442,9 +443,9 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          chip(_Filter.all, 'All', _companies.length),
-          chip(_Filter.paid, 'Paid', _paidCount),
-          chip(_Filter.pending, 'Payment pending', _pendingCount),
+          chip(_Filter.all, tr('All'), _companies.length),
+          chip(_Filter.paid, tr('Paid'), _paidCount),
+          chip(_Filter.pending, tr('Payment pending'), _pendingCount),
         ],
       ),
     );
@@ -522,10 +523,10 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
       icon: Icons.business_outlined,
       iconBg: _kTint,
       iconFg: _C.blue600,
-      title: 'No companies yet',
+      title: tr('No companies yet'),
       message:
-      'Add your first company to list products, branches and receive enquiries.',
-      buttonLabel: 'Add Company',
+      tr('Add your first company to list products, branches and receive enquiries.'),
+      buttonLabel: tr('Add Company'),
       buttonIcon: Icons.add_rounded,
       onPressed: _openCreate,
       onRefresh: _load,
@@ -537,9 +538,9 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
       icon: Icons.cloud_off_rounded,
       iconBg: _kRedBg,
       iconFg: _kRed,
-      title: "Couldn't load your companies",
-      message: _error ?? '',
-      buttonLabel: 'Try again',
+      title: tr("Couldn't load your companies"),
+      message: tr(_error ?? ''),
+      buttonLabel: tr('Try again'),
       buttonIcon: Icons.refresh_rounded,
       onPressed: _load,
       onRefresh: _load,
@@ -560,13 +561,13 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              "Couldn't refresh. Showing your last loaded list.",
+              tr("Couldn't refresh. Showing your last loaded list."),
               style: DT.text(size: 12, weight: FontWeight.w500, color: _kRed),
             ),
           ),
           TextButton(
             onPressed: _load,
-            child: Text('Retry',
+            child: Text(tr('Retry'),
                 style: DT.text(
                     size: 12, weight: FontWeight.w700, color: _kRed)),
           ),
@@ -587,11 +588,11 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
         children: [
           const Icon(Icons.search_off_rounded, color: DT.slate400, size: 34),
           const SizedBox(height: 10),
-          Text('No companies match',
+          Text(tr('No companies match'),
               style: DT.text(size: 14, weight: FontWeight.w700)),
           const SizedBox(height: 4),
           Text(
-            'Try a different search or filter.',
+            tr('Try a different search or filter.'),
             style: DT.text(size: 12, color: DT.onyx600),
           ),
           const SizedBox(height: 12),
@@ -603,7 +604,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                 _filter = _Filter.all;
               });
             },
-            child: Text('Clear search & filters',
+            child: Text(tr('Clear search & filters'),
                 style: DT.text(
                     size: 12.5, weight: FontWeight.w700, color: _C.blue600)),
           ),
@@ -664,7 +665,7 @@ class _CompanyCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          company.name,
+                          trData(company.name),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(
@@ -677,7 +678,7 @@ class _CompanyCard extends StatelessWidget {
                         if (company.companySlogan.isNotEmpty) ...[
                           const SizedBox(height: 2),
                           Text(
-                            company.companySlogan,
+                            tr(company.companySlogan),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: DT.text(
@@ -695,7 +696,7 @@ class _CompanyCard extends StatelessWidget {
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
-                                  company.ownerName,
+                                  tr(company.ownerName),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: DT.text(
@@ -742,7 +743,7 @@ class _CompanyCard extends StatelessWidget {
                       company.email.isEmpty &&
                       company.gstNumber.isEmpty)
                     _InfoRow(Icons.info_outline_rounded,
-                        'No contact details added yet'),
+                        tr('No contact details added yet')),
                 ],
               ),
             ),
@@ -758,7 +759,7 @@ class _CompanyCard extends StatelessWidget {
                       child: OutlinedButton.icon(
                         onPressed: onEdit,
                         icon: const Icon(Icons.edit_outlined, size: 16),
-                        label: Text('Edit details',
+                        label: Text(tr('Edit details'),
                             style: DT.text(
                                 size: 12.5,
                                 weight: FontWeight.w700,
@@ -781,7 +782,7 @@ class _CompanyCard extends StatelessWidget {
                         child: ElevatedButton.icon(
                           onPressed: onPay,
                           icon: const Icon(Icons.payments_outlined, size: 16),
-                          label: Text('Pay now',
+                          label: Text(tr('Pay now'),
                               style: DT.text(
                                   size: 12.5,
                                   weight: FontWeight.w700,
@@ -834,7 +835,7 @@ class _Logo extends StatelessWidget {
       child: _initials.isEmpty
           ? const Icon(Icons.business_outlined, color: Colors.white, size: 26)
           : Text(
-        _initials,
+        tr(_initials),
         style: DT.text(
             size: 18, weight: FontWeight.w800, color: Colors.white),
       ),
@@ -893,7 +894,7 @@ class _StatusPill extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            isPaid ? 'Paid' : 'Pending',
+            isPaid ? tr('Paid') : tr('Pending'),
             style: DT.text(size: 10.5, weight: FontWeight.w700, color: fg),
           ),
         ],
@@ -919,7 +920,7 @@ class _InfoRow extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              text,
+              tr(text),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: DT.text(
@@ -984,12 +985,12 @@ class _StateView extends StatelessWidget {
                       child: Icon(icon, size: 42, color: iconFg),
                     ),
                     const SizedBox(height: 20),
-                    Text(title,
+                    Text(tr(title),
                         textAlign: TextAlign.center,
                         style: DT.text(size: 17, weight: FontWeight.w700)),
                     const SizedBox(height: 8),
                     Text(
-                      message,
+                      tr(message),
                       textAlign: TextAlign.center,
                       style: DT.text(size: 13, color: DT.onyx600, height: 1.5),
                     ),
@@ -999,7 +1000,7 @@ class _StateView extends StatelessWidget {
                       child: ElevatedButton.icon(
                         onPressed: onPressed,
                         icon: Icon(buttonIcon, size: 18),
-                        label: Text(buttonLabel,
+                        label: Text(tr(buttonLabel),
                             style: DT.text(
                                 size: 13.5,
                                 weight: FontWeight.w700,

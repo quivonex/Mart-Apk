@@ -14,6 +14,7 @@ import '../services/qnx_api.dart';
 import '../widgets/edit_form_kit.dart';
 import 'login_screen.dart';
 import 'order_detail_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 String _money(double v) {
   final n = v.round().toString();
@@ -85,8 +86,8 @@ class _ReturnOrdersScreenState extends State<ReturnOrdersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: EK.bg,
-      appBar: ekAppBar('My returns',
-          subtitle: _loading ? 'Loading…' : '${_items.length} return request${_items.length == 1 ? '' : 's'}'),
+      appBar: ekAppBar(tr('My returns'),
+          subtitle: _loading ? tr('Loading…') : tr('{0} return request{1}', [_items.length, _items.length == 1 ? '' : 's'])),
       body: _loading
           ? const EkState(loading: true)
           : _error != null && _items.isEmpty
@@ -100,11 +101,11 @@ class _ReturnOrdersScreenState extends State<ReturnOrdersScreen> {
                           children: [
                             const Icon(Icons.assignment_return_outlined, size: 48, color: EK.brand),
                             const SizedBox(height: 12),
-                            Text('No return requests',
+                            Text(tr('No return requests'),
                                 textAlign: TextAlign.center,
                                 style: DT.text(size: 16, weight: FontWeight.w800, color: EK.ink)),
                             const SizedBox(height: 6),
-                            Text('Returns you request from a delivered order show up here.',
+                            Text(tr('Returns you request from a delivered order show up here.'),
                                 textAlign: TextAlign.center,
                                 style: DT.text(size: 13, color: EK.muted, height: 1.4)),
                           ],
@@ -134,26 +135,26 @@ class _ReturnOrdersScreenState extends State<ReturnOrdersScreen> {
           Row(
             children: [
               Expanded(
-                child: Text(r.returnNumber.isEmpty ? 'Return #${r.returnId}' : r.returnNumber,
+                child: Text(r.returnNumber.isEmpty ? tr('Return #{0}', [r.returnId]) : r.returnNumber,
                     style: DT.text(size: 13.5, weight: FontWeight.w800, color: EK.ink)),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                 decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-                child: Text(_pretty(r.status), style: DT.text(size: 11, weight: FontWeight.w800, color: fg)),
+                child: Text(tr(_pretty(r.status)), style: DT.text(size: 11, weight: FontWeight.w800, color: fg)),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(r.product.isEmpty ? 'Product' : r.product,
+          Text(r.product.isEmpty ? tr('Product') : r.product,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: DT.text(size: 14, weight: FontWeight.w700, color: EK.ink, height: 1.3)),
           const SizedBox(height: 4),
           Text(
             [
-              'Order ${r.orderNumber}',
-              'Qty ${r.quantity}',
+              tr('Order {0}', [r.orderNumber]),
+              tr('Qty {0}', [r.quantity]),
               if (r.createdAt != null) qDateLabel(r.createdAt),
             ].join(' · '),
             style: DT.text(size: 11.5, color: EK.muted),
@@ -162,8 +163,8 @@ class _ReturnOrdersScreenState extends State<ReturnOrdersScreen> {
             const SizedBox(height: 8),
             Text.rich(
               TextSpan(children: [
-                const TextSpan(text: 'Reason: ', style: TextStyle(fontWeight: FontWeight.w700)),
-                TextSpan(text: r.reasonLabel),
+                TextSpan(text: tr('Reason: '), style: TextStyle(fontWeight: FontWeight.w700)),
+                TextSpan(text: tr(r.reasonLabel)),
                 if (r.reasonNote.isNotEmpty) TextSpan(text: ' – ${r.reasonNote}'),
               ]),
               maxLines: 3,
@@ -173,7 +174,7 @@ class _ReturnOrdersScreenState extends State<ReturnOrdersScreen> {
           ],
           if (r.refundAmount > 0) ...[
             const SizedBox(height: 6),
-            Text('Refund ${_money(r.refundAmount)}',
+            Text(tr('Refund {0}', [_money(r.refundAmount)]),
                 style: DT.text(size: 13, weight: FontWeight.w800, color: EK.green)),
           ],
           const SizedBox(height: 12),
@@ -189,7 +190,7 @@ class _ReturnOrdersScreenState extends State<ReturnOrdersScreen> {
                     ),
                     onPressed: () => _track(r),
                     icon: const Icon(Icons.local_shipping_outlined, size: 17),
-                    label: Text('Track return',
+                    label: Text(tr('Track return'),
                         style: DT.text(size: 12.5, weight: FontWeight.w700, color: Colors.white)),
                   ),
                 ),
@@ -210,7 +211,7 @@ class _ReturnOrdersScreenState extends State<ReturnOrdersScreen> {
                               MaterialPageRoute(builder: (_) => OrderDetailScreen(orderId: r.orderId)),
                             ),
                     icon: const Icon(Icons.receipt_outlined, size: 17),
-                    label: Text('View order',
+                    label: Text(tr('View order'),
                         style: DT.text(size: 12.5, weight: FontWeight.w700, color: Colors.white)),
                   ),
                 ),
@@ -284,9 +285,9 @@ class _TrackSheetState extends State<_TrackSheet> {
               ),
             ),
             const SizedBox(height: 14),
-            Text('Return tracking', style: DT.text(size: 18, weight: FontWeight.w800, color: EK.ink)),
+            Text(tr('Return tracking'), style: DT.text(size: 18, weight: FontWeight.w800, color: EK.ink)),
             Text(
-                widget.item.returnNumber.isEmpty ? 'Return #${widget.item.returnId}' : widget.item.returnNumber,
+                widget.item.returnNumber.isEmpty ? tr('Return #{0}', [widget.item.returnId]) : widget.item.returnNumber,
                 style: DT.text(size: 12, color: EK.muted)),
             const SizedBox(height: 16),
             if (_loading)
@@ -305,16 +306,16 @@ class _TrackSheetState extends State<_TrackSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(_error ?? 'Tracking is not available yet.',
+                    Text(_error ?? tr('Tracking is not available yet.'),
                         style: DT.text(size: 13, color: const Color(0xFFC2410C), height: 1.4)),
                     const SizedBox(height: 4),
-                    Text('Tracking starts once the pickup courier is assigned.',
+                    Text(tr('Tracking starts once the pickup courier is assigned.'),
                         style: DT.text(size: 12, color: EK.muted)),
                     const SizedBox(height: 10),
                     FilledButton(
                       style: FilledButton.styleFrom(backgroundColor: EK.brand),
                       onPressed: _load,
-                      child: const Text('Try again'),
+                      child: Text(tr('Try again')),
                     ),
                   ],
                 ),
@@ -323,16 +324,16 @@ class _TrackSheetState extends State<_TrackSheet> {
               _infoBox(i),
               const SizedBox(height: 16),
               if (i.events.isEmpty)
-                Text('No tracking updates yet.', style: DT.text(size: 13, color: EK.muted))
+                Text(tr('No tracking updates yet.'), style: DT.text(size: 13, color: EK.muted))
               else ...[
-                Text('Updates', style: DT.text(size: 13, weight: FontWeight.w800, color: EK.ink)),
+                Text(tr('Updates'), style: DT.text(size: 13, weight: FontWeight.w800, color: EK.ink)),
                 const SizedBox(height: 10),
                 for (var k = 0; k < i.events.length; k++) _event(i.events[k], first: k == 0, last: k == i.events.length - 1),
               ],
               if (i.trackUrl.startsWith('http')) ...[
                 const SizedBox(height: 14),
                 EkButton(
-                  label: 'Open courier tracking',
+                  label: tr('Open courier tracking'),
                   icon: Icons.open_in_new_rounded,
                   onPressed: () => launchUrl(Uri.parse(i.trackUrl), mode: LaunchMode.externalApplication),
                 ),
@@ -349,16 +350,16 @@ class _TrackSheetState extends State<_TrackSheet> {
           padding: const EdgeInsets.symmetric(vertical: 4),
           child: Row(
             children: [
-              SizedBox(width: 110, child: Text(k, style: DT.text(size: 12.5, color: EK.muted))),
+              SizedBox(width: 110, child: Text(tr(k), style: DT.text(size: 12.5, color: EK.muted))),
               Expanded(
-                child: Text(v.isEmpty ? '—' : v,
+                child: Text(tr(v.isEmpty ? '—' : v),
                     style: DT.text(size: 13, weight: FontWeight.w700, color: EK.ink)),
               ),
               if (copy && v.isNotEmpty)
                 InkWell(
                   onTap: () {
                     Clipboard.setData(ClipboardData(text: v));
-                    ekSnack(context, 'Copied');
+                    ekSnack(context, tr('Copied'));
                   },
                   child: const Padding(
                     padding: EdgeInsets.all(4),
@@ -377,10 +378,10 @@ class _TrackSheetState extends State<_TrackSheet> {
       ),
       child: Column(
         children: [
-          row('Status', _pretty(i.trackingStatus.isNotEmpty ? i.trackingStatus : i.status)),
-          row('Courier', i.courier),
+          row(tr('Status'), _pretty(i.trackingStatus.isNotEmpty ? i.trackingStatus : i.status)),
+          row(tr('Courier'), i.courier),
           row('AWB', i.awbCode, copy: true),
-          if (i.etd.isNotEmpty) row('Expected', i.etd),
+          if (i.etd.isNotEmpty) row(tr('Expected'), i.etd),
         ],
       ),
     );
@@ -416,10 +417,10 @@ class _TrackSheetState extends State<_TrackSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(e.status.isEmpty ? 'Update' : e.status,
+                  Text(e.status.isEmpty ? tr('Update') : e.status,
                       style: DT.text(size: 13, weight: FontWeight.w700, color: EK.ink)),
                   if (e.location.isNotEmpty || e.date.isNotEmpty)
-                    Text([e.location, e.date].where((s) => s.isNotEmpty).join(' · '),
+                    Text(tr([e.location, e.date].where((s) => s.isNotEmpty).join(' · ')),
                         style: DT.text(size: 11.5, color: EK.muted)),
                 ],
               ),

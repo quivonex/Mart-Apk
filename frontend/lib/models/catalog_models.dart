@@ -1,3 +1,4 @@
+import 'package:qnx_mart/l10n/app_language.dart';
 // lib/models/catalog_models.dart
 //
 // Models for the product catalog masters used by the product create form:
@@ -101,7 +102,7 @@ class CatalogCategory implements CatalogOption {
   @override
   String get label => name;
   @override
-  String get sublabel => branchName.isNotEmpty ? 'Branch: $branchName' : description;
+  String get sublabel => branchName.isNotEmpty ? tr('Branch: {0}', [branchName]) : description;
 }
 
 // ---------------------------------------------------------------------------
@@ -170,7 +171,7 @@ class CatalogUnit implements CatalogOption {
   @override
   String get label => shortName.isEmpty ? name : '$name ($shortName)';
   @override
-  String get sublabel => isGlobal ? 'Standard unit' : '';
+  String get sublabel => isGlobal ? tr('Standard unit') : '';
 }
 
 // ---------------------------------------------------------------------------

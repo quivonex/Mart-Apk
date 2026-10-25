@@ -1,0 +1,434 @@
+{
+  "@@locale": "en",
+  "appTitle": "QNX MART",
+  "@appTitle": {
+    "description": "App name"
+  },
+  "language": "Language",
+  "@language": {
+    "description": "Language menu title"
+  },
+  "chooseLanguage": "Choose your language",
+  "@chooseLanguage": {
+    "description": "Language screen title"
+  },
+  "chooseLanguageHint": "You can change it any time from Account → Language.",
+  "@chooseLanguageHint": {
+    "description": "Language screen subtitle"
+  },
+  "continueLabel": "Continue",
+  "@continueLabel": {
+    "description": "Continue button"
+  },
+  "languageChanged": "Language changed",
+  "@languageChanged": {
+    "description": "Snackbar after change"
+  },
+  "currentLanguage": "English",
+  "@currentLanguage": {
+    "description": "Name of the current language"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Common"
+  },
+  "save": "Save",
+  "@save": {
+    "description": "Common"
+  },
+  "retry": "Try again",
+  "@retry": {
+    "description": "Common"
+  },
+  "loading": "Loading…",
+  "@loading": {
+    "description": "Common"
+  },
+  "close": "Close",
+  "@close": {
+    "description": "Common"
+  },
+  "newBadge": "NEW",
+  "@newBadge": {
+    "description": "Small badge"
+  },
+  "navHome": "Home",
+  "@navHome": {
+    "description": "Bottom nav"
+  },
+  "navProducts": "Products",
+  "@navProducts": {
+    "description": "Bottom nav"
+  },
+  "navCart": "Cart",
+  "@navCart": {
+    "description": "Bottom nav"
+  },
+  "navOrders": "Orders",
+  "@navOrders": {
+    "description": "Bottom nav"
+  },
+  "navAccount": "Account",
+  "@navAccount": {
+    "description": "Bottom nav"
+  },
+  "navItemsBadge": "{label}, {count} items",
+  "@navItemsBadge": {
+    "description": "Screen reader label",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "drawerHome": "Home",
+  "@drawerHome": {
+    "description": "Drawer"
+  },
+  "drawerNearby": "Nearby Search",
+  "@drawerNearby": {
+    "description": "Drawer"
+  },
+  "drawerMyProfile": "My Profile",
+  "@drawerMyProfile": {
+    "description": "Drawer"
+  },
+  "drawerSellerProfile": "Seller Profile",
+  "@drawerSellerProfile": {
+    "description": "Drawer"
+  },
+  "drawerMyChats": "My Chats",
+  "@drawerMyChats": {
+    "description": "Drawer"
+  },
+  "drawerMyEnquiries": "My Enquiries",
+  "@drawerMyEnquiries": {
+    "description": "Drawer"
+  },
+  "drawerMySubscription": "My Subscription",
+  "@drawerMySubscription": {
+    "description": "Drawer"
+  },
+  "drawerTrending": "Trending & Quick Links",
+  "@drawerTrending": {
+    "description": "Drawer section"
+  },
+  "drawerAllProducts": "All Products",
+  "@drawerAllProducts": {
+    "description": "Drawer"
+  },
+  "drawerCart": "Cart ({count})",
+  "@drawerCart": {
+    "description": "Drawer cart with count",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "drawerSell": "Sell & Management",
+  "@drawerSell": {
+    "description": "Drawer section"
+  },
+  "drawerAddCompany": "Add Company",
+  "@drawerAddCompany": {
+    "description": "Drawer"
+  },
+  "drawerAddProduct": "Add Product",
+  "@drawerAddProduct": {
+    "description": "Drawer"
+  },
+  "drawerAddBranch": "Add Branch",
+  "@drawerAddBranch": {
+    "description": "Drawer"
+  },
+  "drawerAddCategory": "Add Category",
+  "@drawerAddCategory": {
+    "description": "Drawer"
+  },
+  "drawerAddSubCategory": "Add SubCategory",
+  "@drawerAddSubCategory": {
+    "description": "Drawer"
+  },
+  "drawerAddBrand": "Add Brand",
+  "@drawerAddBrand": {
+    "description": "Drawer"
+  },
+  "drawerAddUnit": "Add Unit",
+  "@drawerAddUnit": {
+    "description": "Drawer"
+  },
+  "drawerProperty": "Property",
+  "@drawerProperty": {
+    "description": "Drawer section"
+  },
+  "drawerAddProperty": "Add Property",
+  "@drawerAddProperty": {
+    "description": "Drawer"
+  },
+  "drawerAllProperties": "All Properties",
+  "@drawerAllProperties": {
+    "description": "Drawer"
+  },
+  "drawerMyProperties": "My Properties",
+  "@drawerMyProperties": {
+    "description": "Drawer"
+  },
+  "drawerRemart": "QNX ReMart",
+  "@drawerRemart": {
+    "description": "Drawer section"
+  },
+  "drawerRemartAdd": "Add Product",
+  "@drawerRemartAdd": {
+    "description": "Drawer ReMart"
+  },
+  "drawerRemartAll": "All Products",
+  "@drawerRemartAll": {
+    "description": "Drawer ReMart"
+  },
+  "drawerRemartMine": "My Items",
+  "@drawerRemartMine": {
+    "description": "Drawer ReMart"
+  },
+  "drawerHelp": "Help & Support",
+  "@drawerHelp": {
+    "description": "Drawer section"
+  },
+  "drawerForBuying": "For Buying",
+  "@drawerForBuying": {
+    "description": "Drawer"
+  },
+  "drawerForSelling": "For Selling",
+  "@drawerForSelling": {
+    "description": "Drawer"
+  },
+  "drawerFaq": "FAQ",
+  "@drawerFaq": {
+    "description": "Drawer"
+  },
+  "drawerAboutUs": "About Us",
+  "@drawerAboutUs": {
+    "description": "Drawer"
+  },
+  "drawerContactUs": "Contact Us",
+  "@drawerContactUs": {
+    "description": "Drawer"
+  },
+  "drawerLogout": "Logout",
+  "@drawerLogout": {
+    "description": "Drawer"
+  },
+  "drawerLoginRegister": "Login / Register",
+  "@drawerLoginRegister": {
+    "description": "Drawer"
+  },
+  "drawerMyAccount": "My Account",
+  "@drawerMyAccount": {
+    "description": "Drawer header"
+  },
+  "accMyActivity": "My activity",
+  "@accMyActivity": {
+    "description": "Account section"
+  },
+  "accMyOrders": "My orders",
+  "@accMyOrders": {
+    "description": "Account"
+  },
+  "accMyOrdersSub": "Track, cancel or return",
+  "@accMyOrdersSub": {
+    "description": "Account"
+  },
+  "accMyEnquiries": "My enquiries",
+  "@accMyEnquiries": {
+    "description": "Account"
+  },
+  "accMyEnquiriesSub": "Product enquiries and their status",
+  "@accMyEnquiriesSub": {
+    "description": "Account"
+  },
+  "accMyProperties": "My properties",
+  "@accMyProperties": {
+    "description": "Account"
+  },
+  "accMyPropertiesSub": "Listings, status and plans",
+  "@accMyPropertiesSub": {
+    "description": "Account"
+  },
+  "accMyRemart": "My ReMart items",
+  "@accMyRemart": {
+    "description": "Account"
+  },
+  "accMyRemartSub": "Items you sell and enquiries you sent",
+  "@accMyRemartSub": {
+    "description": "Account"
+  },
+  "accMySubscription": "My subscription",
+  "@accMySubscription": {
+    "description": "Account"
+  },
+  "accBuyPlan": "Buy a plan to enquire on properties",
+  "@accBuyPlan": {
+    "description": "Account"
+  },
+  "accEnquiriesLeft": "{count} enquiries left",
+  "@accEnquiriesLeft": {
+    "description": "Account",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "accAccount": "Account",
+  "@accAccount": {
+    "description": "Account section"
+  },
+  "accProfileDetails": "Profile details",
+  "@accProfileDetails": {
+    "description": "Account"
+  },
+  "accProfileDetailsSub": "Name, email and mobile",
+  "@accProfileDetailsSub": {
+    "description": "Account"
+  },
+  "accSavedAddresses": "Saved addresses",
+  "@accSavedAddresses": {
+    "description": "Account"
+  },
+  "accSavedAddressesSub": "Delivery addresses for checkout",
+  "@accSavedAddressesSub": {
+    "description": "Account"
+  },
+  "accChangePassword": "Change password",
+  "@accChangePassword": {
+    "description": "Account"
+  },
+  "accChangePasswordSub": "Reset with an OTP on your email",
+  "@accChangePasswordSub": {
+    "description": "Account"
+  },
+  "accSellerProfile": "Seller profile",
+  "@accSellerProfile": {
+    "description": "Account"
+  },
+  "accSellerProfileSub": "Register or update your store",
+  "@accSellerProfileSub": {
+    "description": "Account"
+  },
+  "accLanguageSub": "App language: {name}",
+  "@accLanguageSub": {
+    "description": "Account language row",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "accHelp": "Help & support",
+  "@accHelp": {
+    "description": "Account section"
+  },
+  "accHelpFaq": "Help & FAQ",
+  "@accHelpFaq": {
+    "description": "Account"
+  },
+  "accHelpFaqSub": "Answers to common questions",
+  "@accHelpFaqSub": {
+    "description": "Account"
+  },
+  "accContactUs": "Contact us",
+  "@accContactUs": {
+    "description": "Account"
+  },
+  "accContactUsSub": "Call, email or send a message",
+  "@accContactUsSub": {
+    "description": "Account"
+  },
+  "accTerms": "Terms & privacy",
+  "@accTerms": {
+    "description": "Account"
+  },
+  "accTermsSub": "How we use your data",
+  "@accTermsSub": {
+    "description": "Account"
+  },
+  "accLogout": "Log out",
+  "@accLogout": {
+    "description": "Account"
+  },
+  "accLogoutTitle": "Log out?",
+  "@accLogoutTitle": {
+    "description": "Logout dialog"
+  },
+  "accLogoutBody": "You will need to log in again to use your cart, orders and enquiries.",
+  "@accLogoutBody": {
+    "description": "Logout dialog"
+  },
+  "accWelcome": "Welcome to QNX Mart",
+  "@accWelcome": {
+    "description": "Guest card"
+  },
+  "accWelcomeSub": "Log in to see your orders, enquiries, properties and more.",
+  "@accWelcomeSub": {
+    "description": "Guest card"
+  },
+  "accLoginRegister": "Log in / Register",
+  "@accLoginRegister": {
+    "description": "Guest card"
+  },
+  "accDefaultUser": "QNX Mart user",
+  "@accDefaultUser": {
+    "description": "Profile card"
+  },
+  "accStatOrders": "Orders",
+  "@accStatOrders": {
+    "description": "Stats"
+  },
+  "accStatEnquiriesLeft": "Enquiries left",
+  "@accStatEnquiriesLeft": {
+    "description": "Stats"
+  },
+  "accStatSubscription": "Subscription",
+  "@accStatSubscription": {
+    "description": "Stats"
+  },
+  "accStatNone": "None",
+  "@accStatNone": {
+    "description": "Stats"
+  },
+  "accStatActive": "Active",
+  "@accStatActive": {
+    "description": "Stats"
+  },
+  "accName": "Name",
+  "@accName": {
+    "description": "Profile sheet"
+  },
+  "accEmail": "Email",
+  "@accEmail": {
+    "description": "Profile sheet"
+  },
+  "accMobile": "Mobile",
+  "@accMobile": {
+    "description": "Profile sheet"
+  },
+  "accUsername": "Username",
+  "@accUsername": {
+    "description": "Profile sheet"
+  },
+  "accCompany": "Company",
+  "@accCompany": {
+    "description": "Profile sheet"
+  },
+  "accGstin": "GSTIN",
+  "@accGstin": {
+    "description": "Profile sheet"
+  },
+  "accContactSupport": "To change these details, contact QNX Mart support.",
+  "@accContactSupport": {
+    "description": "Profile sheet"
+  }
+}

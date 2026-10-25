@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../services/api_urls.dart';
 import '../models/franchise_plan_model.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class FranchisePlanService {
   /// Fetch franchise plans for a given product slug.
@@ -32,7 +33,7 @@ class FranchisePlanService {
       } catch (_) {
         return FranchisePlanResponse(
           status: false,
-          message: 'Invalid response from server',
+          message: tr('Invalid response from server'),
           data: [],
         );
       }
@@ -44,25 +45,25 @@ class FranchisePlanService {
       return FranchisePlanResponse(
         status: false,
         message: jsonData['message']?.toString() ??
-            'An error occurred while loading franchise plans.',
+            tr('An error occurred while loading franchise plans.'),
         data: [],
       );
     } on SocketException {
       return FranchisePlanResponse(
         status: false,
-        message: 'No internet connection. Please check your network.',
+        message: tr('No internet connection. Please check your network.'),
         data: [],
       );
     } on HttpException {
       return FranchisePlanResponse(
         status: false,
-        message: 'Server error. Please try again later.',
+        message: tr('Server error. Please try again later.'),
         data: [],
       );
     } catch (e) {
       return FranchisePlanResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
         data: [],
       );
     }

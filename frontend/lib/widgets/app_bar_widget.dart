@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/design_tokens.dart';
 import 'logo_widget.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kOrange = Color(0xFFF7931E);
@@ -46,7 +47,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
                   AppBarIconButton(
                     icon: Icons.arrow_back_ios_new_rounded,
                     iconSize: 18,
-                    tooltip: 'Back',
+                    tooltip: tr('Back'),
                     onPressed: onBackPressed ?? () => Navigator.pop(context),
                   ),
                   const SizedBox(width: 4),
@@ -54,7 +55,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
                 if (title.isNotEmpty)
                   Expanded(
                     child: Text(
-                      title,
+                      tr(title),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(
@@ -135,7 +136,7 @@ class AppBarIconButton extends StatelessWidget {
                     ),
                     alignment: Alignment.center,
                     child: Text(
-                      badgeCount > 99 ? '99+' : '$badgeCount',
+                      tr(badgeCount > 99 ? '99+' : '$badgeCount'),
                       style: DT.text(
                         size: 9,
                         weight: FontWeight.w700,
@@ -164,6 +165,6 @@ class AppBarIconButton extends StatelessWidget {
         ),
       ),
     );
-    return tooltip == null ? button : Tooltip(message: tooltip!, child: button);
+    return tooltip == null ? button : Tooltip(message: tr(tooltip!), child: button);
   }
 }

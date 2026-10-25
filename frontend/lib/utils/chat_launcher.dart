@@ -15,6 +15,7 @@ import '../screens/chat_screen.dart';
 import '../screens/login_screen.dart';
 import '../services/chat_service.dart';
 import 'shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class ChatLauncher {
   ChatLauncher._();
@@ -37,8 +38,8 @@ class ChatLauncher {
     // 1. item + owner must be known
     if (itemId == null || itemId <= 0 || otherUserId == null || otherUserId <= 0) {
       _snack(context, kind == ChatItemKind.property
-          ? 'Agent information is unavailable.'
-          : 'Seller information is unavailable.');
+          ? tr('Agent information is unavailable.')
+          : tr('Seller information is unavailable.'));
       return;
     }
 
@@ -46,7 +47,7 @@ class ChatLauncher {
     final token = await SharedPreferencesHelper.getAccessToken();
     if (!context.mounted) return;
     if (token == null || token.isEmpty) {
-      _snack(context, 'Please login to chat with the $party.');
+      _snack(context, tr('Please login to chat with the {0}.', [party]));
       await Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
       return;
     }
@@ -82,8 +83,8 @@ class ChatLauncher {
       MaterialPageRoute(
         builder: (_) => ChatScreen(
           chatId: r.data!,
-          title: otherName.isNotEmpty ? otherName : 'Chat with $party',
-          subtitle: title,
+          title: otherName.isNotEmpty ? otherName : tr('Chat with {0}', [party]),
+          subtitle: tr(title),
           isBuyer: true, // the person who starts the chat is the buyer
           openOfferOnStart: openOffer,
           suggestedOffer: price,
@@ -102,7 +103,7 @@ class ChatLauncher {
         child: Dialog(
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          child: const Padding(
+          child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 22, vertical: 20),
             child: Row(
               children: [
@@ -112,7 +113,7 @@ class ChatLauncher {
                   child: CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF093C71)),
                 ),
                 SizedBox(width: 16),
-                Expanded(child: Text('Opening chat…', style: TextStyle(fontWeight: FontWeight.w600))),
+                Expanded(child: Text(tr('Opening chat…'), style: TextStyle(fontWeight: FontWeight.w600))),
               ],
             ),
           ),
@@ -125,7 +126,7 @@ class ChatLauncher {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
-        content: Text(msg, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
+        content: Text(tr(msg), style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
         backgroundColor: error ? const Color(0xFFC62828) : const Color(0xFF0F172A),
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),

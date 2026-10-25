@@ -3,6 +3,7 @@ import '../constants/design_tokens.dart';
 import '../models/brand_model.dart';
 import '../services/brand_service.dart';
 import '../widgets/product_ui.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -102,11 +103,11 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategoryId == null) {
-      _snack('Please select a category', isError: true);
+      _snack(tr('Please select a category'), isError: true);
       return;
     }
     if (_selectedSubcategoryId == null) {
-      _snack('Please select a sub category', isError: true);
+      _snack(tr('Please select a sub category'), isError: true);
       return;
     }
 
@@ -143,7 +144,7 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(msg,
+          content: Text(tr(msg),
               style: DT.text(
                   size: 13, weight: FontWeight.w600, color: Colors.white)),
           backgroundColor: isError ? _kRed : const Color(0xFF10B981),
@@ -169,15 +170,15 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
             children: [
               _infoCard(
                 icon: Icons.branding_watermark_outlined,
-                title: _isEdit ? 'Edit brand' : 'New brand',
+                title: _isEdit ? tr('Edit brand') : tr('New brand'),
                 subtitle:
-                'Brands belong to a category and subcategory',
+                tr('Brands belong to a category and subcategory'),
               ),
               const SizedBox(height: 16),
               _sectionCard(
                 icon: Icons.folder_outlined,
-                title: 'Catalog',
-                subtitle: 'Pick where this brand fits',
+                title: tr('Catalog'),
+                subtitle: tr('Pick where this brand fits'),
                 children: [
                   _categoryDropdown(),
                   const SizedBox(height: 14),
@@ -187,30 +188,30 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
               const SizedBox(height: 16),
               _sectionCard(
                 icon: Icons.info_outline,
-                title: 'Brand information',
-                subtitle: 'Name and a short description',
+                title: tr('Brand information'),
+                subtitle: tr('Name and a short description'),
                 children: [
-                  PxLabel('Brand name', required: true),
+                  PxLabel(tr('Brand name'), required: true),
                   TextFormField(
                     controller: _nameCtrl,
                     textCapitalization: TextCapitalization.words,
                     style: DT.text(
                         size: 14, weight: FontWeight.w600, color: DT.onyx900),
                     decoration: pxInputDecoration(
-                      hint: 'e.g. Nike',
+                      hint: tr('e.g. Nike'),
                       icon: Icons.branding_watermark_outlined,
                       iconColor: _brand,
                     ),
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) {
-                        return 'Brand name is required';
+                        return tr('Brand name is required');
                       }
-                      if (v.trim().length < 2) return 'Minimum 2 characters';
+                      if (v.trim().length < 2) return tr('Minimum 2 characters');
                       return null;
                     },
                   ),
                   const SizedBox(height: 14),
-                  PxLabel('Description', optional: true),
+                  PxLabel(tr('Description'), optional: true),
                   TextFormField(
                     controller: _descCtrl,
                     maxLines: 3,
@@ -219,7 +220,7 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
                     style: DT.text(
                         size: 14, weight: FontWeight.w500, color: DT.onyx900),
                     decoration: pxInputDecoration(
-                      hint: 'Enter a short description (optional)',
+                      hint: tr('Enter a short description (optional)'),
                       icon: Icons.description_outlined,
                       iconColor: _brand,
                       tinted: true,
@@ -237,32 +238,32 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
 
   Widget _categoryDropdown() {
     if (_isLoadingCategories) {
-      return _loadingBox('Loading categories…');
+      return _loadingBox(tr('Loading categories…'));
     }
     if (_categories.isEmpty) {
-      return _errorBox('No categories found. Please contact admin.');
+      return _errorBox(tr('No categories found. Please contact admin.'));
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        PxLabel('Category', required: true),
+        PxLabel(tr('Category'), required: true),
         DropdownButtonFormField<int>(
           value: _selectedCategoryId,
           isExpanded: true,
           icon: const Icon(Icons.expand_more, color: DT.slate500),
           style: DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
           decoration: pxInputDecoration(
-            hint: 'Select category',
+            hint: tr('Select category'),
             icon: Icons.folder_outlined,
             iconColor: _brand,
           ),
-          hint: Text('Select category',
+          hint: Text(tr('Select category'),
               style: DT.text(size: 13.5, color: DT.slate400)),
           items: _categories.map((c) {
             return DropdownMenuItem<int>(
               value: c.id,
-              child: Text(c.name,
+              child: Text(trData(c.name),
                   overflow: TextOverflow.ellipsis,
                   style: DT.text(
                       size: 14, weight: FontWeight.w600, color: DT.onyx900)),
@@ -272,7 +273,7 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
             setState(() => _selectedCategoryId = v);
             if (v != null) _loadSubcategories(v);
           },
-          validator: (v) => v == null ? 'Category is required' : null,
+          validator: (v) => v == null ? tr('Category is required') : null,
         ),
       ],
     );
@@ -283,7 +284,7 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          PxLabel('Sub category', required: true),
+          PxLabel(tr('Sub category'), required: true),
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
@@ -298,7 +299,7 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Select a category first',
+                    tr('Select a category first'),
                     style: DT.text(size: 12, color: DT.slate500),
                   ),
                 ),
@@ -313,8 +314,8 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          PxLabel('Sub category', required: true),
-          _loadingBox('Loading sub categories…'),
+          PxLabel(tr('Sub category'), required: true),
+          _loadingBox(tr('Loading sub categories…')),
         ],
       );
     }
@@ -323,8 +324,8 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          PxLabel('Sub category', required: true),
-          _errorBox('No sub categories found for this category.'),
+          PxLabel(tr('Sub category'), required: true),
+          _errorBox(tr('No sub categories found for this category.')),
         ],
       );
     }
@@ -332,30 +333,30 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        PxLabel('Sub category', required: true),
+        PxLabel(tr('Sub category'), required: true),
         DropdownButtonFormField<int>(
           value: _selectedSubcategoryId,
           isExpanded: true,
           icon: const Icon(Icons.expand_more, color: DT.slate500),
           style: DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
           decoration: pxInputDecoration(
-            hint: 'Select sub category',
+            hint: tr('Select sub category'),
             icon: Icons.subdirectory_arrow_right,
             iconColor: _brand,
           ),
-          hint: Text('Select sub category',
+          hint: Text(tr('Select sub category'),
               style: DT.text(size: 13.5, color: DT.slate400)),
           items: _subcategories.map((s) {
             return DropdownMenuItem<int>(
               value: s.id,
-              child: Text(s.name,
+              child: Text(trData(s.name),
                   overflow: TextOverflow.ellipsis,
                   style: DT.text(
                       size: 14, weight: FontWeight.w600, color: DT.onyx900)),
             );
           }).toList(),
           onChanged: (v) => setState(() => _selectedSubcategoryId = v),
-          validator: (v) => v == null ? 'Sub category is required' : null,
+          validator: (v) => v == null ? tr('Sub category is required') : null,
         ),
       ],
     );
@@ -377,7 +378,7 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
             child: CircularProgressIndicator(strokeWidth: 2, color: _brand),
           ),
           const SizedBox(width: 10),
-          Text(text, style: DT.text(size: 12, color: DT.slate500)),
+          Text(tr(text), style: DT.text(size: 12, color: DT.slate500)),
         ],
       ),
     );
@@ -396,7 +397,7 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
           const Icon(Icons.warning_amber_rounded, color: _kOrange, size: 18),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(text, style: DT.text(size: 12, weight: FontWeight.w600, color: _kOrangeDark)),
+            child: Text(tr(text), style: DT.text(size: 12, weight: FontWeight.w600, color: _kOrangeDark)),
           ),
         ],
       ),
@@ -429,13 +430,13 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
+                Text(tr(title),
                     style: DT.text(
                         size: 14,
                         weight: FontWeight.w800,
                         color: DT.onyx900)),
                 const SizedBox(height: 2),
-                Text(subtitle,
+                Text(tr(subtitle),
                     style:
                     DT.text(size: 11.5, color: DT.slate500, height: 1.4)),
               ],
@@ -484,14 +485,14 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title,
+                      Text(tr(title),
                           style: DT.text(
                               size: 14,
                               weight: FontWeight.w700,
                               color: DT.onyx900,
                               height: 1.2)),
                       const SizedBox(height: 2),
-                      Text(subtitle,
+                      Text(tr(subtitle),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(size: 11.5, color: DT.slate500)),
@@ -554,7 +555,7 @@ class _BrandCreateEditScreenState extends State<BrandCreateEditScreen> {
                     const Icon(Icons.check_rounded, size: 20),
                     const SizedBox(width: 8),
                     Text(
-                      _isEdit ? 'Update brand' : 'Create brand',
+                      _isEdit ? tr('Update brand') : tr('Create brand'),
                       style: DT.text(
                           size: 15,
                           weight: FontWeight.w700,

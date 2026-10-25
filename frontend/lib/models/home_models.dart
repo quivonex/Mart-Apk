@@ -1,3 +1,4 @@
+import 'package:qnx_mart/l10n/app_language.dart';
 // lib/models/home_models.dart
 //
 // Data for the redesigned home screen.
@@ -16,15 +17,15 @@ extension MarketplaceX on Marketplace {
   };
 
   String get title => switch (this) {
-    Marketplace.shopping => 'QNXMart — Shopping & Products',
-    Marketplace.realEstate => 'Real Estate — Buy, Sell & Rent',
-    Marketplace.remart => 'QNXRemart — Used & Resale',
+    Marketplace.shopping => tr('QNXMart — Shopping & Products'),
+    Marketplace.realEstate => tr('Real Estate — Buy, Sell & Rent'),
+    Marketplace.remart => tr('QNXRemart — Used & Resale'),
   };
 
   String get shortTitle => switch (this) {
-    Marketplace.shopping => 'QNXMart',
-    Marketplace.realEstate => 'Real Estate',
-    Marketplace.remart => 'QNXRemart',
+    Marketplace.shopping => tr('QNXMart'),
+    Marketplace.realEstate => tr('Real Estate'),
+    Marketplace.remart => tr('QNXRemart'),
   };
 }
 

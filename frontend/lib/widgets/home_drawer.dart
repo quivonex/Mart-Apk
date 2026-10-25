@@ -21,6 +21,8 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../constants/design_tokens.dart';
 import '../screens/chat_list_screen.dart';
+import '../screens/language_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 
@@ -132,87 +134,91 @@ class HomeDrawer extends StatelessWidget {
               children: [
                 const SizedBox(height: 8),
                 // ── Home ───────────────────────────────────────
-                _item(Icons.home_rounded, 'Home', () => go(DrawerRoutes.home),
+                _item(Icons.home_rounded, tr('Home'), () => go(DrawerRoutes.home),
                     bold: true, color: _iconHome),
                 // ── Nearby Search (Google Places) ──────────────
-                _item(Icons.travel_explore_rounded, 'Nearby Search', () => go(DrawerRoutes.nearbySearch),
-                    color: _iconNearby, badge: 'NEW'),
+                _item(Icons.travel_explore_rounded, tr('Nearby Search'), () => go(DrawerRoutes.nearbySearch),
+                    color: _iconNearby, badge: tr('NEW')),
                 const Divider(height: 1, thickness: 1, indent: 18, endIndent: 18, color: _divider),
                 // ── Account ────────────────────────────────────
-                _item(Icons.person_rounded, 'My Profile', () => go(DrawerRoutes.myProfile),
+                _item(Icons.person_rounded, tr('My Profile'), () => go(DrawerRoutes.myProfile),
                     color: _iconProfile),
-                _item(Icons.badge_rounded, 'Seller Profile', () => go(DrawerRoutes.sellerProfile),
+                _item(Icons.badge_rounded, tr('Seller Profile'), () => go(DrawerRoutes.sellerProfile),
                     color: _iconSeller),
                 // Opens the chat list directly (no HomeScreen route needed).
-                _item(Icons.chat_rounded, 'My Chats', () {
+                _item(Icons.chat_rounded, tr('My Chats'), () {
                   final nav = Navigator.of(context);
                   nav.pop();
                   nav.push(MaterialPageRoute(builder: (_) => const ChatListScreen()));
-                }, color: _iconHome, badge: 'NEW'),
-                _item(Icons.forum_rounded, 'My Enquiries', () => go(DrawerRoutes.myEnquiries),
+                }, color: _iconHome, badge: tr('NEW')),
+                _item(Icons.forum_rounded, tr('My Enquiries'), () => go(DrawerRoutes.myEnquiries),
                     color: _iconProfile),
-                _item(Icons.workspace_premium_rounded, 'My Subscription', () => go(DrawerRoutes.mySubscription),
+                _item(Icons.workspace_premium_rounded, tr('My Subscription'), () => go(DrawerRoutes.mySubscription),
                     color: _iconSeller),
 
-                _section('Trending & Quick Links'),
-                _item(Icons.grid_view_rounded, 'All Products', () => go(DrawerRoutes.allProducts),
+                _section(tr('Trending & Quick Links')),
+                _item(Icons.grid_view_rounded, tr('All Products'), () => go(DrawerRoutes.allProducts),
                     color: _iconProducts),
-                _item(Icons.shopping_cart_outlined, 'Cart (${data.cartCount})',
+                _item(Icons.shopping_cart_outlined, tr('Cart ({0})', [data.cartCount]),
                         () => go(DrawerRoutes.cart), color: _iconCart),
 
-                _section('Sell & Management'),
-                _item(Icons.domain_add_rounded, 'Add Company', () => go(DrawerRoutes.addCompany),
+                _section(tr('Sell & Management')),
+                _item(Icons.domain_add_rounded, tr('Add Company'), () => go(DrawerRoutes.addCompany),
                     color: _iconCompany),
-                _item(Icons.inventory_2_rounded, 'Add Product', () => go(DrawerRoutes.addProduct),
+                _item(Icons.inventory_2_rounded, tr('Add Product'), () => go(DrawerRoutes.addProduct),
                     color: _iconProduct),
-                _item(Icons.account_tree_rounded, 'Add Branch', () => go(DrawerRoutes.addBranch),
+                _item(Icons.account_tree_rounded, tr('Add Branch'), () => go(DrawerRoutes.addBranch),
                     color: _iconBranch),
-                _item(Icons.apps_rounded, 'Add Category', () => go(DrawerRoutes.addCategory),
+                _item(Icons.apps_rounded, tr('Add Category'), () => go(DrawerRoutes.addCategory),
                     color: _iconCategory),
-                _item(Icons.segment_rounded, 'Add SubCategory',
+                _item(Icons.segment_rounded, tr('Add SubCategory'),
                         () => go(DrawerRoutes.addSubCategory), color: _iconSubCategory),
-                _item(Icons.sell_rounded, 'Add Brand', () => go(DrawerRoutes.addBrand),
+                _item(Icons.sell_rounded, tr('Add Brand'), () => go(DrawerRoutes.addBrand),
                     color: _iconBrand),
-                _item(Icons.straighten_rounded, 'Add Unit', () => go(DrawerRoutes.addUnit),
+                _item(Icons.straighten_rounded, tr('Add Unit'), () => go(DrawerRoutes.addUnit),
                     color: _iconUnit),
 
-                _section('Property'),
-                _item(Icons.add_box_outlined, 'Add Property', () => go(DrawerRoutes.addProperty),
+                _section(tr('Property')),
+                _item(Icons.add_box_outlined, tr('Add Property'), () => go(DrawerRoutes.addProperty),
                     color: _iconProperty),
-                _item(Icons.apps_outlined, 'All Properties', () => go(DrawerRoutes.allProperties),
+                _item(Icons.apps_outlined, tr('All Properties'), () => go(DrawerRoutes.allProperties),
                     color: _iconAllProperties),
-                _item(Icons.home_work_outlined, 'My Properties', () => go(DrawerRoutes.myProperties),
+                _item(Icons.home_work_outlined, tr('My Properties'), () => go(DrawerRoutes.myProperties),
                     color: _iconProperty),
 
-                _section('QNX ReMart'),
-                _item(Icons.add_box_outlined, 'Add Product', () => go(DrawerRoutes.remartAdd),
+                _section(tr('QNX ReMart')),
+                _item(Icons.add_box_outlined, tr('Add Product'), () => go(DrawerRoutes.remartAdd),
                     color: _iconRemartAdd),
-                _item(Icons.apps_outlined, 'All Products', () => go(DrawerRoutes.remartAll),
+                _item(Icons.apps_outlined, tr('All Products'), () => go(DrawerRoutes.remartAll),
                     color: _iconRemartAll),
-                _item(Icons.inventory_outlined, 'My Items', () => go(DrawerRoutes.remartMine),
+                _item(Icons.inventory_outlined, tr('My Items'), () => go(DrawerRoutes.remartMine),
                     color: _iconRemartAdd),
 
-                _section('Help & Support'),
-                _item(Icons.shopping_cart_checkout_rounded, 'For Buying',
+                _section(tr('Help & Support')),
+                _item(Icons.shopping_cart_checkout_rounded, tr('For Buying'),
                         () => go(DrawerRoutes.forBuying), color: _iconBuying),
-                _item(Icons.storefront_outlined, 'For Selling', () => go(DrawerRoutes.forSelling),
+                _item(Icons.storefront_outlined, tr('For Selling'), () => go(DrawerRoutes.forSelling),
                     color: _iconSelling),
                 _item(Icons.help_outline_rounded, 'FAQ', () => go(DrawerRoutes.faq),
                     color: _iconFaq),
-                _item(Icons.info_outline_rounded, 'About Us', () => go(DrawerRoutes.aboutUs),
+                _item(Icons.info_outline_rounded, tr('About Us'), () => go(DrawerRoutes.aboutUs),
                     color: _iconAbout),
-                _item(Icons.chat_rounded, 'Contact Us', () => go(DrawerRoutes.contactUs),
+                _item(Icons.chat_rounded, tr('Contact Us'), () => go(DrawerRoutes.contactUs),
                     color: _iconContact),
+
+                // ── Language (English / मराठी / हिंदी) ──────────
+                _item(Icons.translate_rounded, '${tr('Language')} · ${AppLanguage.current.nativeName}',
+                    () => showLanguagePicker(context), color: _iconProfile),
 
                 // ── Logout at the very bottom ──────────────────
                 const Divider(height: 24, thickness: 1, indent: 18, endIndent: 18, color: _divider),
                 if (data.loggedIn)
-                  _item(Icons.logout_rounded, 'Logout', () {
+                  _item(Icons.logout_rounded, tr('Logout'), () {
                     Navigator.of(context).pop();
                     onLogout();
                   }, color: _red)
                 else
-                  _item(Icons.login_rounded, 'Login / Register', () {
+                  _item(Icons.login_rounded, tr('Login / Register'), () {
                     Navigator.of(context).pop();
                     onLogin();
                   }, color: _iconHome),
@@ -226,7 +232,7 @@ class HomeDrawer extends StatelessWidget {
                       children: [
                         const Icon(Icons.mail_outline_rounded, size: 18, color: _text),
                         const SizedBox(width: 8),
-                        Text(supportEmail, style: DT.text(size: 14, weight: FontWeight.w400, color: _text)),
+                        Text(tr(supportEmail), style: DT.text(size: 14, weight: FontWeight.w400, color: _text)),
                       ],
                     ),
                   ),
@@ -261,8 +267,8 @@ class HomeDrawer extends StatelessWidget {
                   },
                   child: Text(
                     data.loggedIn
-                        ? (data.userName.isEmpty ? 'My Account' : data.userName)
-                        : 'Login / Register',
+                        ? (data.userName.isEmpty ? tr('My Account') : data.userName)
+                        : tr('Login / Register'),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: DT.text(size: 18, weight: FontWeight.w700, color: Colors.white),
@@ -270,7 +276,7 @@ class HomeDrawer extends StatelessWidget {
                 ),
               ),
               IconButton(
-                tooltip: 'Close',
+                tooltip: tr('Close'),
                 onPressed: () => Navigator.of(context).pop(),
                 icon: const Icon(Icons.close_rounded, color: Colors.white, size: 30),
               ),
@@ -288,7 +294,7 @@ class HomeDrawer extends StatelessWidget {
       const Divider(height: 1, thickness: 1, color: _divider),
       Padding(
         padding: const EdgeInsets.fromLTRB(18, 18, 18, 6),
-        child: Text(title, style: DT.text(size: 16, weight: FontWeight.w700, color: _text)),
+        child: Text(tr(title), style: DT.text(size: 16, weight: FontWeight.w700, color: _text)),
       ),
     ],
   );
@@ -306,7 +312,7 @@ class HomeDrawer extends StatelessWidget {
             Icon(icon, size: 22, color: iconColor),
             const SizedBox(width: 18),
             Expanded(
-              child: Text(label,
+              child: Text(tr(label),
                   style: DT.text(
                       size: bold ? 18 : 17,
                       weight: bold ? FontWeight.w700 : FontWeight.w400,
@@ -317,7 +323,7 @@ class HomeDrawer extends StatelessWidget {
                 margin: const EdgeInsets.only(right: 6),
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(color: iconColor, borderRadius: BorderRadius.circular(20)),
-                child: Text(badge, style: DT.text(size: 10, weight: FontWeight.w800, color: Colors.white)),
+                child: Text(tr(badge), style: DT.text(size: 10, weight: FontWeight.w800, color: Colors.white)),
               ),
             Icon(Icons.chevron_right_rounded, color: const Color(0xFF6C757D), size: 22),
           ],
@@ -325,4 +331,4 @@ class HomeDrawer extends StatelessWidget {
       ),
     );
   }
-}
+}

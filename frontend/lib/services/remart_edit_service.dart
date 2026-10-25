@@ -22,6 +22,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_urls.dart';
 import 'qnx_api.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class RemartEditImage {
   final int id;
@@ -114,7 +115,7 @@ class RemartEditService {
   static Future<RemartEditResult<RemartEditData>> load(int listingId) async {
     final r = await QnxApi.multipart(ApiUrls.remartListingUpdateUrl, {'listing_id': '$listingId'}, const []);
     if (!r.ok) {
-      return RemartEditResult(false, null, r.error('Could not load this item.'), needsLogin: r.authFailed);
+      return RemartEditResult(false, null, r.error(tr('Could not load this item.')), needsLogin: r.authFailed);
     }
     return RemartEditResult(true, RemartEditData.fromJson(r.dataMap), '');
   }
@@ -160,13 +161,13 @@ class RemartEditService {
     final files = [for (final f in newImages) QnxFile('images', f.name, f.bytes)];
     final r = await QnxApi.multipart(ApiUrls.remartListingUpdateUrl, fields, files);
     if (!r.ok) {
-      return RemartEditResult(false, null, r.error('Could not save your changes.'), needsLogin: r.authFailed);
+      return RemartEditResult(false, null, r.error(tr('Could not save your changes.')), needsLogin: r.authFailed);
     }
     final msg = qStr(r.map['message']);
     return RemartEditResult(
       true,
       RemartEditData.fromJson(r.dataMap),
-      msg.isEmpty ? 'Item updated.' : msg,
+      msg.isEmpty ? tr('Item updated.') : msg,
     );
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:qnx_mart/screens/splash_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/login_screen.dart';
@@ -6,8 +7,11 @@ import 'screens/home_screen.dart';
 import 'constants/app_constants.dart';
 import 'package:qnx_mart/constants/app_theme.dart';
 import 'utils/shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AppLanguage.load(); // saved language: en / mr / hi
   runApp(const MyApp());
 }
 
@@ -16,11 +20,23 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'QNX MART',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      home: const SplashScreen(),
+    // Rebuilds when the language changes (English / मराठी / हिंदी).
+    return ValueListenableBuilder<Locale>(
+      valueListenable: AppLanguage.locale,
+      builder: (context, locale, _) => MaterialApp(
+        title: 'QNX MART',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light(),
+        locale: locale,
+        supportedLocales: const [Locale('en'), Locale('mr'), Locale('hi')],
+        // date pickers, copy/paste menus … in the chosen language
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: const SplashScreen(),
+      ),
     );
   }
 }

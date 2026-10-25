@@ -15,6 +15,7 @@ import '../models/product_model.dart';
 import '../models/product_enquiry_model.dart';
 import '../services/product_enquiry_service.dart';
 import '../widgets/product_ui.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -127,7 +128,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
       if (picked == null) return;
       final bytes = await picked.readAsBytes();
       if (bytes.lengthInBytes > 5 * 1024 * 1024) {
-        _showSnackbar('Photo must be under 5MB', isError: true);
+        _showSnackbar(tr('Photo must be under 5MB'), isError: true);
         return;
       }
       if (!mounted) return;
@@ -136,7 +137,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
         _attachmentBytes = bytes;
       });
     } catch (e) {
-      _showSnackbar('Could not add photo: $e', isError: true);
+      _showSnackbar(tr('Could not add photo: {0}', [e]), isError: true);
     }
   }
 
@@ -154,7 +155,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
               children: [
                 Icon(icon, color: _brand, size: 28),
                 const SizedBox(height: _S.xs + 2),
-                Text(label,
+                Text(tr(label),
                     style: DT.text(size: 13, weight: FontWeight.w700, color: _brandDark)),
               ],
             ),
@@ -180,13 +181,13 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                     color: DT.slate300, borderRadius: BorderRadius.circular(2)),
               ),
               const SizedBox(height: _S.md),
-              Text('Add a photo', style: DT.text(size: 16, weight: FontWeight.w800)),
+              Text(tr('Add a photo'), style: DT.text(size: 16, weight: FontWeight.w800)),
               const SizedBox(height: _S.md),
               Row(
                 children: [
-                  tile(ctx, Icons.photo_camera_outlined, 'Camera', ImageSource.camera),
+                  tile(ctx, Icons.photo_camera_outlined, tr('Camera'), ImageSource.camera),
                   const SizedBox(width: _S.md),
-                  tile(ctx, Icons.photo_library_outlined, 'Gallery', ImageSource.gallery),
+                  tile(ctx, Icons.photo_library_outlined, tr('Gallery'), ImageSource.gallery),
                 ],
               ),
             ],
@@ -204,12 +205,12 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) {
-      _showSnackbar('Please fix the highlighted fields', isError: true);
+      _showSnackbar(tr('Please fix the highlighted fields'), isError: true);
       return;
     }
 
     if (_demoRequired == 'yes' && (_demoType == null || _demoType!.isEmpty)) {
-      _showSnackbar('Choose how you want the demo', isError: true);
+      _showSnackbar(tr('Choose how you want the demo'), isError: true);
       return;
     }
 
@@ -260,7 +261,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
               const SizedBox(width: _S.sm),
               Expanded(
                 child: Text(
-                  msg,
+                  tr(msg),
                   style: DT.text(
                       size: 13, weight: FontWeight.w600, color: Colors.white),
                 ),
@@ -335,7 +336,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    tooltip: 'Back',
+                    tooltip: tr('Back'),
                     onPressed: () => Navigator.maybePop(context),
                     icon: const Icon(Icons.arrow_back_rounded,
                         color: Colors.white, size: 24),
@@ -347,7 +348,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Product enquiry',
+                          tr('Product enquiry'),
                           style: DT.text(
                               size: 18,
                               weight: FontWeight.w700,
@@ -356,7 +357,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Send your requirement to the supplier',
+                          tr('Send your requirement to the supplier'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(
@@ -414,12 +415,12 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'You are asking about',
+                  tr('You are asking about'),
                   style: DT.text(size: 11.5, color: DT.slate500),
                 ),
                 const SizedBox(height: _S.xs),
                 Text(
-                  widget.product.name,
+                  trData(widget.product.name),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: DT.text(
@@ -431,7 +432,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                 if (widget.product.companyName.isNotEmpty) ...[
                   const SizedBox(height: _S.xs),
                   Text(
-                    'Sold by ${widget.product.companyName}',
+                    tr('Sold by {0}', [widget.product.companyName]),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: DT.text(size: 11.5, color: DT.slate500),
@@ -475,43 +476,43 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
   Widget _buildContactSection() {
     return _SectionCard(
       icon: Icons.person_outline,
-      title: 'Your contact details',
-      subtitle: 'We will reach you here with a quote',
+      title: tr('Your contact details'),
+      subtitle: tr('We will reach you here with a quote'),
       children: [
         _textField(
           controller: _personNameCtrl,
-          label: 'Full name',
+          label: tr('Full name'),
           required: true,
-          hint: 'John Doe',
+          hint: tr('John Doe'),
           icon: Icons.person_outline_rounded,
           capitalization: TextCapitalization.words,
           textInputAction: TextInputAction.next,
           validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'Enter your name';
-            if (v.trim().length < 2) return 'Name needs at least 2 characters';
+            if (v == null || v.trim().isEmpty) return tr('Enter your name');
+            if (v.trim().length < 2) return tr('Name needs at least 2 characters');
             return null;
           },
         ),
         _textField(
           controller: _emailCtrl,
-          label: 'Email',
+          label: tr('Email'),
           required: true,
           hint: 'john@example.com',
           icon: Icons.mail_outline_rounded,
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
           validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'Enter your email';
+            if (v == null || v.trim().isEmpty) return tr('Enter your email');
             final re = RegExp(r'^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$');
-            if (!re.hasMatch(v.trim())) return 'Enter a valid email address';
+            if (!re.hasMatch(v.trim())) return tr('Enter a valid email address');
             return null;
           },
         ),
         _textField(
           controller: _contactCtrl,
-          label: 'Mobile number',
+          label: tr('Mobile number'),
           required: true,
-          hint: '10-digit mobile number',
+          hint: tr('10-digit mobile number'),
           icon: Icons.phone_outlined,
           keyboardType: TextInputType.phone,
           textInputAction: TextInputAction.next,
@@ -520,8 +521,8 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
             LengthLimitingTextInputFormatter(10),
           ],
           validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'Enter your mobile number';
-            if (v.trim().length != 10) return 'Enter a 10-digit mobile number';
+            if (v == null || v.trim().isEmpty) return tr('Enter your mobile number');
+            if (v.trim().length != 10) return tr('Enter a 10-digit mobile number');
             return null;
           },
         ),
@@ -535,28 +536,28 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
   Widget _buildAddressSection() {
     return _SectionCard(
       icon: Icons.location_on_outlined,
-      title: 'Delivery location',
-      subtitle: 'Helps us check availability and shipping',
+      title: tr('Delivery location'),
+      subtitle: tr('Helps us check availability and shipping'),
       children: [
         _textField(
           controller: _addressCtrl,
-          label: 'Full address',
+          label: tr('Full address'),
           required: true,
-          hint: 'Street, area, landmark',
+          hint: tr('Street, area, landmark'),
           icon: Icons.home_outlined,
           keyboardType: TextInputType.streetAddress,
           capitalization: TextCapitalization.sentences,
           maxLines: 3,
           validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'Enter your address';
+            if (v == null || v.trim().isEmpty) return tr('Enter your address');
             return null;
           },
         ),
         _textField(
           controller: _pincodeCtrl,
-          label: 'Pincode',
+          label: tr('Pincode'),
           required: true,
-          hint: '6-digit pincode',
+          hint: tr('6-digit pincode'),
           icon: Icons.pin_drop_outlined,
           keyboardType: TextInputType.number,
           inputFormatters: [
@@ -564,8 +565,8 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
             LengthLimitingTextInputFormatter(6),
           ],
           validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'Enter your pincode';
-            if (v.trim().length != 6) return 'Enter a 6-digit pincode';
+            if (v == null || v.trim().isEmpty) return tr('Enter your pincode');
+            if (v.trim().length != 6) return tr('Enter a 6-digit pincode');
             return null;
           },
         ),
@@ -580,13 +581,13 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
     final remaining = _messageCtrl.text.length;
     return _SectionCard(
       icon: Icons.edit_note_outlined,
-      title: 'What do you need?',
-      subtitle: 'Tell us quantity and any special requirements',
+      title: tr('What do you need?'),
+      subtitle: tr('Tell us quantity and any special requirements'),
       children: [
         _buildQuantityStepper(),
         const SizedBox(height: _S.md),
         PxLabel(
-          'Message',
+          tr('Message'),
           required: true,
           trailing: Text(
             '$remaining / $_maxMessage',
@@ -602,12 +603,12 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
           maxLength: _maxMessage,
           style: DT.text(size: 14, weight: FontWeight.w500, color: DT.onyx900),
           decoration: pxInputDecoration(
-            hint: 'Describe your requirement (at least 10 characters)',
+            hint: tr('Describe your requirement (at least 10 characters)'),
             tinted: true,
           ).copyWith(counterText: ''),
           validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'Tell us what you need';
-            if (v.trim().length < 10) return 'Write at least 10 characters';
+            if (v == null || v.trim().isEmpty) return tr('Tell us what you need');
+            if (v.trim().length < 10) return tr('Write at least 10 characters');
             return null;
           },
         ),
@@ -619,8 +620,8 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
     return FormField<String>(
       validator: (_) {
         final n = _quantity;
-        if (_quantityCtrl.text.trim().isEmpty) return 'Enter a quantity';
-        if (n < 1) return 'Minimum quantity is 1';
+        if (_quantityCtrl.text.trim().isEmpty) return tr('Enter a quantity');
+        if (n < 1) return tr('Minimum quantity is 1');
         return null;
       },
       builder: (state) {
@@ -635,7 +636,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Quantity',
+                        tr('Quantity'),
                         style: DT.text(
                             size: 13,
                             weight: FontWeight.w700,
@@ -644,7 +645,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                       const SizedBox(height: 2),
                       if (_estimate != null)
                         Text(
-                          'Estimated total: ${_money(_estimate!)}',
+                          tr('Estimated total: {0}', [_money(_estimate!)]),
                           style: DT.text(
                               size: 11.5,
                               weight: FontWeight.w600,
@@ -652,7 +653,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                         )
                       else
                         Text(
-                          'How many units do you need?',
+                          tr('How many units do you need?'),
                           style: DT.text(size: 11.5, color: DT.slate500),
                         ),
                     ],
@@ -704,7 +705,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
               Padding(
                 padding: const EdgeInsets.only(top: _S.xs + 2, left: _S.xs),
                 child: Text(
-                  state.errorText!,
+                  tr(state.errorText!),
                   style: DT.text(size: 11.5, color: _kRed),
                 ),
               ),
@@ -732,14 +733,14 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
     final wantsDemo = _demoRequired == 'yes';
     return _SectionCard(
       icon: Icons.play_circle_outline,
-      title: 'Product demo',
-      subtitle: 'See the product in action before you decide',
+      title: tr('Product demo'),
+      subtitle: tr('See the product in action before you decide'),
       children: [
         Row(
           children: [
             Expanded(
               child: _OptionTile(
-                label: 'No demo needed',
+                label: tr('No demo needed'),
                 selected: !wantsDemo,
                 onTap: () => setState(() {
                   _demoRequired = 'no';
@@ -750,7 +751,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
             const SizedBox(width: _S.sm),
             Expanded(
               child: _OptionTile(
-                label: 'Yes, I want a demo',
+                label: tr('Yes, I want a demo'),
                 selected: wantsDemo,
                 onTap: () => setState(() => _demoRequired = 'yes'),
               ),
@@ -768,7 +769,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'How should we show it?',
+                  tr('How should we show it?'),
                   style: DT.text(
                       size: 12,
                       weight: FontWeight.w700,
@@ -780,7 +781,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                     Expanded(
                       child: _OptionTile(
                         icon: Icons.storefront_outlined,
-                        label: 'At my location',
+                        label: tr('At my location'),
                         selected: _demoType == 'at_location',
                         onTap: () =>
                             setState(() => _demoType = 'at_location'),
@@ -790,7 +791,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                     Expanded(
                       child: _OptionTile(
                         icon: Icons.videocam_outlined,
-                        label: 'Online',
+                        label: tr('Online'),
                         selected: _demoType == 'online',
                         onTap: () =>
                             setState(() => _demoType = 'online'),
@@ -813,15 +814,15 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
   Widget _buildExtrasSection() {
     return _SectionCard(
       icon: Icons.attach_file,
-      title: 'Optional extras',
-      subtitle: 'Add a reference photo or a referral code',
+      title: tr('Optional extras'),
+      subtitle: tr('Add a reference photo or a referral code'),
       children: [
         _buildAttachmentPicker(),
         _textField(
           controller: _referralCtrl,
-          label: 'Referral code',
+          label: tr('Referral code'),
           optional: true,
-          hint: 'Enter a code if you have one',
+          hint: tr('Enter a code if you have one'),
           icon: Icons.card_giftcard_outlined,
           capitalization: TextCapitalization.characters,
           validator: (_) => null,
@@ -861,13 +862,13 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
               ),
               const SizedBox(height: _S.sm + 2),
               Text(
-                'Add a photo',
+                tr('Add a photo'),
                 style: DT.text(
                     size: 13.5, weight: FontWeight.w700, color: DT.onyx900),
               ),
               const SizedBox(height: 2),
               Text(
-                kIsWeb ? 'JPG, PNG or WebP, up to 5MB' : 'Camera or gallery · up to 5MB',
+                kIsWeb ? tr('JPG, PNG or WebP, up to 5MB') : tr('Camera or gallery · up to 5MB'),
                 style: DT.text(size: 11.5, color: DT.slate500),
               ),
             ],
@@ -911,7 +912,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  name,
+                  tr(name),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: DT.text(
@@ -920,19 +921,19 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                 const SizedBox(height: 2),
                 Text(
                     sizeKb >= 1024
-                        ? 'Attached · ${(sizeKb / 1024).toStringAsFixed(1)} MB'
-                        : 'Attached · ${sizeKb.toStringAsFixed(0)} KB',
+                        ? tr('Attached · {0} MB', [(sizeKb / 1024).toStringAsFixed(1)])
+                        : tr('Attached · {0} KB', [sizeKb.toStringAsFixed(0)]),
                     style: DT.text(size: 11.5, color: DT.slate500)),
               ],
             ),
           ),
           IconButton(
-            tooltip: 'Change photo',
+            tooltip: tr('Change photo'),
             onPressed: _pickAttachment,
             icon: const Icon(Icons.swap_horiz_rounded, color: _brand, size: 20),
           ),
           IconButton(
-            tooltip: 'Remove photo',
+            tooltip: tr('Remove photo'),
             onPressed: _removeAttachment,
             icon: const Icon(Icons.close_rounded, color: _kRed, size: 20),
           ),
@@ -969,12 +970,12 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Estimated total',
+                        tr('Estimated total'),
                         style: DT.text(size: 11, color: DT.slate500),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        _money(estimate),
+                        tr(_money(estimate)),
                         style: DT.text(
                             size: 18,
                             weight: FontWeight.w800,
@@ -1016,7 +1017,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
                           const Icon(Icons.send_rounded, size: 18),
                           const SizedBox(width: _S.sm),
                           Text(
-                            'Send enquiry',
+                            tr('Send enquiry'),
                             style: DT.text(
                                 size: 15,
                                 weight: FontWeight.w700,
@@ -1072,7 +1073,7 @@ class _ProductEnquiryScreenState extends State<ProductEnquiryScreen> {
             style:
             DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
             decoration: pxInputDecoration(
-              hint: hint,
+              hint: tr(hint),
               icon: icon,
               iconColor: _brand,
               tinted: tinted,
@@ -1137,7 +1138,7 @@ class _SectionCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        title,
+                        tr(title),
                         style: DT.text(
                             size: 14,
                             weight: FontWeight.w700,
@@ -1146,7 +1147,7 @@ class _SectionCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        subtitle,
+                        tr(subtitle),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: 11.5, color: DT.slate500),
@@ -1212,7 +1213,7 @@ class _OptionTile extends StatelessWidget {
             ],
             Flexible(
               child: Text(
-                label,
+                tr(label),
                 textAlign: TextAlign.center,
                 style: DT.text(
                   size: 12.5,

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/registration_model.dart';
 import 'api_urls.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class RegistrationService {
   // Send OTP
@@ -20,7 +21,7 @@ class RegistrationService {
       if (response.statusCode == 200) {
         return SendOtpResponse.fromJson(responseData);
       } else {
-        String errorMessage = 'Failed to send OTP';
+        String errorMessage = tr('Failed to send OTP');
         if (responseData is Map) {
           if (responseData.containsKey('message')) {
             errorMessage = responseData['message'];
@@ -36,7 +37,7 @@ class RegistrationService {
       if (e is Exception) {
         throw Exception(e.toString());
       }
-      throw Exception('Network error. Please check your connection.');
+      throw Exception(tr('Network error. Please check your connection.'));
     }
   }
 
@@ -56,7 +57,7 @@ class RegistrationService {
       if (response.statusCode == 200) {
         return VerifyOtpResponse.fromJson(responseData);
       } else {
-        String errorMessage = 'OTP verification failed';
+        String errorMessage = tr('OTP verification failed');
         if (responseData is Map) {
           if (responseData.containsKey('message')) {
             errorMessage = responseData['message'];
@@ -72,7 +73,7 @@ class RegistrationService {
       if (e is Exception) {
         throw Exception(e.toString());
       }
-      throw Exception('Network error. Please check your connection.');
+      throw Exception(tr('Network error. Please check your connection.'));
     }
   }
 
@@ -92,7 +93,7 @@ class RegistrationService {
       if (response.statusCode == 200) {
         return RegisterResponse.fromJson(responseData);
       } else {
-        String errorMessage = 'Registration failed';
+        String errorMessage = tr('Registration failed');
         if (responseData is Map) {
           if (responseData.containsKey('message')) {
             errorMessage = responseData['message'];
@@ -108,7 +109,7 @@ class RegistrationService {
       if (e is Exception) {
         throw Exception(e.toString());
       }
-      throw Exception('Network error. Please check your connection.');
+      throw Exception(tr('Network error. Please check your connection.'));
     }
   }
 }

@@ -1,3 +1,4 @@
+import 'package:qnx_mart/l10n/app_language.dart';
 // lib/models/ai_chat_models.dart
 //
 // QNX Mart AI Assistant – data models.
@@ -49,10 +50,10 @@ AiService aiServiceFrom(Object? v) {
 
 extension AiServiceLabel on AiService {
   String get label => switch (this) {
-    AiService.mart => 'Mart',
-    AiService.remart => 'ReMart',
-    AiService.realestate => 'Real Estate',
-    AiService.general => 'General',
+    AiService.mart => tr('Mart'),
+    AiService.remart => tr('ReMart'),
+    AiService.realestate => tr('Real Estate'),
+    AiService.general => tr('General'),
   };
 }
 

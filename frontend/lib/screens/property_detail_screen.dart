@@ -10,6 +10,7 @@ import '../utils/chat_launcher.dart';
 import '../utils/login_gate.dart';
 import 'property_schedule_visit_sheet.dart';
 import 'property_video_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -199,7 +200,7 @@ class _PremiumPropertyDetailScreenState
         _property = response.data;
         _selectedFlat = 0;
       } else {
-        _error = response.message ?? 'Failed to load property details';
+        _error = response.message ?? tr('Failed to load property details');
       }
     });
   }
@@ -214,12 +215,12 @@ class _PremiumPropertyDetailScreenState
       itemId: p.id,
       otherUserId: p.agentUserId,
       title: p.title.isNotEmpty ? p.title : '${p.area}, ${p.city}',
-      otherName: 'Property agent',
+      otherName: tr('Property agent'),
     );
   }
 
   Future<void> _openEnquiry() async {
-    if (!await ensureLoggedIn(context, reason: 'send an enquiry')) return;
+    if (!await ensureLoggedIn(context, reason: tr('send an enquiry'))) return;
     if (!mounted) return;
     Navigator.push(
       context,
@@ -261,7 +262,7 @@ class _PremiumPropertyDetailScreenState
     if (!sent || !mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Site visit requested. Our team will confirm shortly.'),
+        content: Text(tr('Site visit requested. Our team will confirm shortly.')),
         behavior: SnackBarBehavior.floating,
         backgroundColor: _C.navy,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -273,7 +274,7 @@ class _PremiumPropertyDetailScreenState
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(tr(message)),
         behavior: SnackBarBehavior.floating,
         backgroundColor: _C.navy,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -284,8 +285,8 @@ class _PremiumPropertyDetailScreenState
   void _shareSummary() {
     final p = _property!;
     _copyToClipboard(
-      '${p.area}, ${p.city} — ${p.formattedMinPrice} onwards\n${p.address}',
-      'Property details copied',
+      tr('{0}, {1} — {2} onwards\n{3}', [p.area, p.city, p.formattedMinPrice, p.address]),
+      tr('Property details copied'),
     );
   }
 
@@ -343,7 +344,7 @@ class _PremiumPropertyDetailScreenState
       flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)),
       foregroundColor: Colors.white,
       elevation: 0,
-      title: Text(widget.previewName ?? 'Property Detail',
+      title: Text(widget.previewName ?? tr('Property Detail'),
           style: _t(16, FontWeight.w700, Colors.white)),
     );
   }
@@ -372,15 +373,15 @@ class _PremiumPropertyDetailScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Starting price',
+                Text(tr('Starting price'),
                     style: _t(10.5, FontWeight.w500, _C.slate500)),
-                Text(p.formattedMinPrice,
+                Text(tr(p.formattedMinPrice),
                     style: _t(19, FontWeight.w800, _C.navy, ls: -0.4)),
               ],
             ),
             const SizedBox(width: 12),
             Tooltip(
-              message: 'Schedule a site visit',
+              message: tr('Schedule a site visit'),
               child: Material(
                 color: _kTint,
                 borderRadius: BorderRadius.circular(16),
@@ -399,7 +400,7 @@ class _PremiumPropertyDetailScreenState
                       children: [
                         const Icon(Icons.event_available_rounded,
                             size: 20, color: _kBrand),
-                        Text('Visit',
+                        Text(tr('Visit'),
                             style: _t(10, FontWeight.w700,
                                 _kBrand)),
                       ],
@@ -411,7 +412,7 @@ class _PremiumPropertyDetailScreenState
             const SizedBox(width: 8),
             // Chat with agent
             Tooltip(
-              message: 'Chat with agent',
+              message: tr('Chat with agent'),
               child: Material(
                 color: _kTint,
                 borderRadius: BorderRadius.circular(16),
@@ -430,7 +431,7 @@ class _PremiumPropertyDetailScreenState
                       children: [
                         const Icon(Icons.chat_bubble_outline_rounded,
                             size: 19, color: _kBrand),
-                        Text('Chat',
+                        Text(tr('Chat'),
                             style: _t(10, FontWeight.w700,
                                 _kBrand)),
                       ],
@@ -465,7 +466,7 @@ class _PremiumPropertyDetailScreenState
                           borderRadius: BorderRadius.circular(16)),
                     ),
                     icon: const Icon(Icons.mail_outline, size: 20),
-                    label: Text('Enquire Now',
+                    label: Text(tr('Enquire Now'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: _t(15, FontWeight.w700, Colors.white)),
@@ -504,8 +505,8 @@ class _PremiumPropertyDetailScreenState
                 _buildHighlights(),
                 if (_videos.isNotEmpty) ...[
                   const SizedBox(height: 28),
-                  _sectionTitle('Video Tour',
-                      'Walk through the property before you visit'),
+                  _sectionTitle(tr('Video Tour'),
+                      tr('Walk through the property before you visit')),
                   const SizedBox(height: 14),
                   _buildVideos(),
                 ],
@@ -515,13 +516,13 @@ class _PremiumPropertyDetailScreenState
                 ],
                 if (p.flatTypes.isNotEmpty) ...[
                   const SizedBox(height: 28),
-                  _sectionTitle('Configuration', 'Choose a unit type'),
+                  _sectionTitle(tr('Configuration'), tr('Choose a unit type')),
                   const SizedBox(height: 14),
                   _buildConfiguration(),
                 ],
                 if (p.pricingSlabs.isNotEmpty) ...[
                   const SizedBox(height: 28),
-                  _sectionTitle('Pricing', 'Tap a plan for payment details'),
+                  _sectionTitle(tr('Pricing'), tr('Tap a plan for payment details')),
                   const SizedBox(height: 14),
                   ...List.generate(
                     p.pricingSlabs.length,
@@ -536,19 +537,19 @@ class _PremiumPropertyDetailScreenState
                 ],
                 if (p.amenities.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  _sectionTitle('Amenities', null),
+                  _sectionTitle(tr('Amenities'), null),
                   const SizedBox(height: 14),
                   _buildAmenities(),
                 ],
                 if (p.floors.isNotEmpty) ...[
                   const SizedBox(height: 28),
-                  _sectionTitle('Floor Availability', 'Live unit count'),
+                  _sectionTitle(tr('Floor Availability'), tr('Live unit count')),
                   const SizedBox(height: 14),
                   ...p.floors.map(_buildFloorCard),
                 ],
                 if (p.features.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  _sectionTitle('Features', null),
+                  _sectionTitle(tr('Features'), null),
                   const SizedBox(height: 14),
                   _buildFeatures(),
                 ],
@@ -583,27 +584,27 @@ class _PremiumPropertyDetailScreenState
         padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
         child: _GlassButton(
           icon: Icons.arrow_back,
-          tooltip: 'Back',
+          tooltip: tr('Back'),
           onTap: () => Navigator.maybePop(context),
         ),
       ),
       title: AnimatedOpacity(
         duration: const Duration(milliseconds: 200),
         opacity: _collapsed ? 1 : 0,
-        child: Text(widget.previewName ?? p.area,
+        child: Text(tr(widget.previewName ?? p.area),
             style: _t(16, FontWeight.w700, Colors.white)),
       ),
       actions: [
         _GlassButton(
           icon: Icons.ios_share,
-          tooltip: 'Share',
+          tooltip: tr('Share'),
           onTap: _shareSummary,
         ),
         const SizedBox(width: 8),
         _GlassButton(
           icon: _isFavorite ? Icons.favorite : Icons.favorite_border,
           iconColor: _isFavorite ? const Color(0xFFFF6B81) : Colors.white,
-          tooltip: 'Save',
+          tooltip: tr('Save'),
           onTap: () => setState(() => _isFavorite = !_isFavorite),
         ),
         const SizedBox(width: 16),
@@ -716,11 +717,11 @@ class _PremiumPropertyDetailScreenState
           child: Row(
             children: [
               if (p.isVerified)
-                _imageBadge('Verified', Icons.verified, _C.emerald,
+                _imageBadge(tr('Verified'), Icons.verified, _C.emerald,
                     Colors.white),
               if (p.isVerified && p.isFeatured) const SizedBox(width: 6),
               if (p.isFeatured)
-                _imageBadge('Featured', Icons.star_rounded, _C.gold, _C.navyDeep),
+                _imageBadge(tr('Featured'), Icons.star_rounded, _C.gold, _C.navyDeep),
             ],
           ),
         ),
@@ -753,8 +754,8 @@ class _PremiumPropertyDetailScreenState
                     const SizedBox(width: 5),
                     Text(
                         _videos.length == 1
-                            ? 'Watch video'
-                            : 'Watch ${_videos.length} videos',
+                            ? tr('Watch video')
+                            : tr('Watch {0} videos', [_videos.length]),
                         style: _t(11.5, FontWeight.w700, Colors.white)),
                   ],
                 ),
@@ -803,7 +804,7 @@ class _PremiumPropertyDetailScreenState
         children: [
           Icon(icon, size: 12, color: fg),
           const SizedBox(width: 4),
-          Text(label, style: _t(10.5, FontWeight.w800, fg)),
+          Text(tr(label), style: _t(10.5, FontWeight.w800, fg)),
         ],
       ),
     );
@@ -839,7 +840,7 @@ class _PremiumPropertyDetailScreenState
             ),
             const SizedBox(width: 4),
             Expanded(
-              child: Text(p.address,
+              child: Text(tr(p.address),
                   style: _t(13, FontWeight.w500, _C.slate500, height: 1.45)),
             ),
           ],
@@ -902,11 +903,11 @@ class _PremiumPropertyDetailScreenState
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('STARTING PRICE',
+                          Text(tr('STARTING PRICE'),
                               style: _t(10, FontWeight.w700, _C.blue200,
                                   ls: 1.4)),
                           const SizedBox(height: 4),
-                          Text(p.formattedMinPrice,
+                          Text(tr(p.formattedMinPrice),
                               style: _t(32, FontWeight.w800, Colors.white,
                                   ls: -1, height: 1.1)),
                         ],
@@ -927,7 +928,7 @@ class _PremiumPropertyDetailScreenState
                             const Icon(Icons.local_offer_outlined,
                                 size: 13, color: _C.gold),
                             const SizedBox(width: 4),
-                            Text('Negotiable',
+                            Text(tr('Negotiable'),
                                 style: _t(10.5, FontWeight.w800, _C.gold)),
                           ],
                         ),
@@ -942,7 +943,7 @@ class _PremiumPropertyDetailScreenState
                 if (showProgress) ...[
                   Row(
                     children: [
-                      Text('Construction progress',
+                      Text(tr('Construction progress'),
                           style: _t(11.5, FontWeight.w600, _C.blue200)),
                       const Spacer(),
                       Text('${p.completionPercentage}%',
@@ -967,10 +968,10 @@ class _PremiumPropertyDetailScreenState
                       const Icon(Icons.event_available_outlined,
                           size: 16, color: _C.blue200),
                       const SizedBox(width: 8),
-                      Text('Possession',
+                      Text(tr('Possession'),
                           style: _t(11.5, FontWeight.w600, _C.blue200)),
                       const Spacer(),
-                      Text(p.possessionDate,
+                      Text(tr(p.possessionDate),
                           style: _t(13, FontWeight.w800, Colors.white)),
                     ],
                   ),
@@ -991,13 +992,13 @@ class _PremiumPropertyDetailScreenState
     final p = _property!;
     final items = <_Highlight>[
       if (p.totalArea.isNotEmpty)
-        _Highlight(Icons.aspect_ratio, 'Total Area', '${p.totalArea} sqft'),
+        _Highlight(Icons.aspect_ratio, tr('Total Area'), '${p.totalArea} sqft'),
       if (p.plotArea.isNotEmpty)
-        _Highlight(Icons.crop_square, 'Plot Area', '${p.plotArea} sqft'),
+        _Highlight(Icons.crop_square, tr('Plot Area'), '${p.plotArea} sqft'),
       if (p.totalFloors.isNotEmpty)
-        _Highlight(Icons.layers_outlined, 'Floors', p.totalFloors),
+        _Highlight(Icons.layers_outlined, tr('Floors'), p.totalFloors),
       if (p.totalTowers.isNotEmpty)
-        _Highlight(Icons.apartment, 'Towers', p.totalTowers),
+        _Highlight(Icons.apartment, tr('Towers'), p.totalTowers),
     ];
     if (items.isEmpty) return const SizedBox.shrink();
 
@@ -1028,12 +1029,12 @@ class _PremiumPropertyDetailScreenState
                     child: Icon(h.icon, size: 17, color: _C.navy),
                   ),
                   const SizedBox(height: 10),
-                  Text(h.value,
+                  Text(tr(h.value),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: _t(13, FontWeight.w800, _C.slate900)),
                   const SizedBox(height: 1),
-                  Text(h.label,
+                  Text(tr(h.label),
                       style: _t(10.5, FontWeight.w500, _C.slate500)),
                 ],
               ),
@@ -1055,13 +1056,13 @@ class _PremiumPropertyDetailScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle('About this property', null),
+        _sectionTitle(tr('About this property'), null),
         const SizedBox(height: 12),
         AnimatedSize(
           duration: const Duration(milliseconds: 200),
           alignment: Alignment.topCenter,
           child: Text(
-            desc,
+            tr(desc),
             maxLines: (!long || _descExpanded) ? null : 4,
             overflow: TextOverflow.fade,
             style: _t(13.5, FontWeight.w500, _C.slate500, height: 1.7),
@@ -1072,7 +1073,7 @@ class _PremiumPropertyDetailScreenState
             onTap: () => setState(() => _descExpanded = !_descExpanded),
             child: Padding(
               padding: const EdgeInsets.only(top: 6),
-              child: Text(_descExpanded ? 'Show less' : 'Read more',
+              child: Text(_descExpanded ? tr('Show less') : tr('Read more'),
                   style: _t(12.5, FontWeight.w800, _C.navy)),
             ),
           ),
@@ -1092,19 +1093,19 @@ class _PremiumPropertyDetailScreenState
 
     final specs = <_Spec>[
       if (flat.carpetArea > 0)
-        _Spec(Icons.square_foot, 'Carpet', '${flat.carpetArea} sqft'),
+        _Spec(Icons.square_foot, tr('Carpet'), '${flat.carpetArea} sqft'),
       if (flat.builtUpArea > 0)
-        _Spec(Icons.home_work_outlined, 'Built-up', '${flat.builtUpArea} sqft'),
+        _Spec(Icons.home_work_outlined, tr('Built-up'), '${flat.builtUpArea} sqft'),
       if (flat.areaSqft > 0)
-        _Spec(Icons.aspect_ratio, 'Total', '${flat.areaSqft} sqft'),
+        _Spec(Icons.aspect_ratio, tr('Total'), '${flat.areaSqft} sqft'),
       if (flat.bedrooms > 0)
-        _Spec(Icons.bed_outlined, 'Bedrooms', '${flat.bedrooms}'),
+        _Spec(Icons.bed_outlined, tr('Bedrooms'), '${flat.bedrooms}'),
       if (flat.bathrooms > 0)
-        _Spec(Icons.bathtub_outlined, 'Bathrooms', '${flat.bathrooms}'),
+        _Spec(Icons.bathtub_outlined, tr('Bathrooms'), '${flat.bathrooms}'),
       if (flat.balconies > 0)
-        _Spec(Icons.deck_outlined, 'Balconies', '${flat.balconies}'),
+        _Spec(Icons.deck_outlined, tr('Balconies'), '${flat.balconies}'),
       if (flat.parkingCount > 0)
-        _Spec(Icons.local_parking, 'Parking', '${flat.parkingCount}'),
+        _Spec(Icons.local_parking, tr('Parking'), '${flat.parkingCount}'),
     ];
 
     return Column(
@@ -1138,7 +1139,7 @@ class _PremiumPropertyDetailScreenState
                     ]
                         : null,
                   ),
-                  child: Text(flats[i].flatType,
+                  child: Text(tr(flats[i].flatType),
                       style: _t(13, FontWeight.w700,
                           selected ? Colors.white : _C.slate700)),
                 ),
@@ -1160,7 +1161,7 @@ class _PremiumPropertyDetailScreenState
                 Row(
                   children: [
                     Expanded(
-                      child: Text(flat.flatType,
+                      child: Text(tr(flat.flatType),
                           style: _t(20, FontWeight.w800, _C.slate900,
                               ls: -0.4)),
                     ),
@@ -1183,7 +1184,7 @@ class _PremiumPropertyDetailScreenState
                             ),
                           ),
                           const SizedBox(width: 5),
-                          Text(ok ? 'Available' : 'Sold Out',
+                          Text(ok ? tr('Available') : tr('Sold Out'),
                               style: _t(10.5, FontWeight.w800,
                                   ok ? _C.emerald : _C.red)),
                         ],
@@ -1193,7 +1194,7 @@ class _PremiumPropertyDetailScreenState
                 ),
                 if (flat.description.isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  Text(flat.description,
+                  Text(trData(flat.description),
                       style: _t(12.5, FontWeight.w500, _C.slate500)),
                 ],
                 if (specs.isNotEmpty) ...[
@@ -1235,10 +1236,10 @@ class _PremiumPropertyDetailScreenState
                                     crossAxisAlignment:
                                     CrossAxisAlignment.start,
                                     children: [
-                                      Text(s.label,
+                                      Text(tr(s.label),
                                           style: _t(10, FontWeight.w500,
                                               _C.slate500)),
-                                      Text(s.value,
+                                      Text(tr(s.value),
                                           maxLines: 1,
                                           overflow:
                                           TextOverflow.ellipsis,
@@ -1298,7 +1299,7 @@ class _PremiumPropertyDetailScreenState
                         size: 20, color: _C.navy),
                   ),
                   const SizedBox(height: 8),
-                  Text(a.name,
+                  Text(trData(a.name),
                       maxLines: 2,
                       textAlign: TextAlign.center,
                       overflow: TextOverflow.ellipsis,
@@ -1338,7 +1339,7 @@ class _PremiumPropertyDetailScreenState
             Row(
               children: [
                 Expanded(
-                  child: Text(floor.floorName,
+                  child: Text(tr(floor.floorName),
                       style: _t(14, FontWeight.w800, _C.slate900)),
                 ),
                 Text('${floor.availableUnits}',
@@ -1385,10 +1386,10 @@ class _PremiumPropertyDetailScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(_prettifyKey(e.key),
+                  Text(tr(_prettifyKey(e.key)),
                       style: _t(10.5, FontWeight.w500, _C.slate500)),
                   const SizedBox(height: 3),
-                  Text(e.value.toString(),
+                  Text(tr(e.value.toString()),
                       style: _t(13, FontWeight.w800, _C.slate900)),
                 ],
               ),
@@ -1432,20 +1433,20 @@ class _PremiumPropertyDetailScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('RERA REGISTERED',
+                Text(tr('RERA REGISTERED'),
                     style: _t(9.5, FontWeight.w800, _C.gold, ls: 1.3)),
                 const SizedBox(height: 3),
                 Row(
                   children: [
                     Flexible(
-                      child: Text(p.reraNumber,
+                      child: Text(tr(p.reraNumber),
                           overflow: TextOverflow.ellipsis,
                           style: _t(16, FontWeight.w800, Colors.white)),
                     ),
                     const SizedBox(width: 6),
                     GestureDetector(
                       onTap: () =>
-                          _copyToClipboard(p.reraNumber, 'RERA number copied'),
+                          _copyToClipboard(p.reraNumber, tr('RERA number copied')),
                       child: const Icon(Icons.copy_rounded,
                           size: 15, color: _C.blue200),
                     ),
@@ -1547,7 +1548,7 @@ class _PremiumPropertyDetailScreenState
                           child: Text(
                             videos.first.title.trim().isNotEmpty
                                 ? videos.first.title.trim()
-                                : 'Property walkthrough',
+                                : tr('Property walkthrough'),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: _t(14, FontWeight.w700, Colors.white),
@@ -1562,7 +1563,7 @@ class _PremiumPropertyDetailScreenState
                           ),
                           child: Text(
                               videos.length == 1
-                                  ? '1 video'
+                                  ? tr('1 video')
                                   : '${videos.length} videos',
                               style: _t(10.5, FontWeight.w700, Colors.white)),
                         ),
@@ -1589,7 +1590,7 @@ class _PremiumPropertyDetailScreenState
                 label: Text(
                     videos[i].title.trim().isNotEmpty
                         ? videos[i].title.trim()
-                        : 'Video ${i + 1}',
+                        : tr('Video {0}', [i + 1]),
                     style: _t(12, FontWeight.w700, _C.navy)),
                 backgroundColor: Colors.white,
                 side: const BorderSide(color: _C.slate200),
@@ -1641,11 +1642,11 @@ class _PremiumPropertyDetailScreenState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title,
+                        Text(tr(title),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: _t(13.5, FontWeight.w800, _C.slate900)),
-                        Text(subtitle,
+                        Text(tr(subtitle),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: _t(11, FontWeight.w600, _C.slate500)),
@@ -1664,8 +1665,8 @@ class _PremiumPropertyDetailScreenState
       children: [
         action(
           icon: Icons.play_circle_fill_rounded,
-          title: 'Watch Video',
-          subtitle: hasVideo ? (_videos.length == 1 ? 'Video tour' : '${_videos.length} videos') : 'Not available',
+          title: tr('Watch Video'),
+          subtitle: hasVideo ? (_videos.length == 1 ? tr('Video tour') : '${_videos.length} videos') : tr('Not available'),
           fg: const Color(0xFF093C71),
           bg: const Color(0xFFEAF1F9),
           border: const Color(0xFFC9DBEE),
@@ -1675,7 +1676,7 @@ class _PremiumPropertyDetailScreenState
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: const Text('No video tour has been uploaded for this property yet.'),
+                  content: Text(tr('No video tour has been uploaded for this property yet.')),
                   behavior: SnackBarBehavior.floating,
                   backgroundColor: _C.navy,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -1687,8 +1688,8 @@ class _PremiumPropertyDetailScreenState
         const SizedBox(width: 10),
         action(
           icon: Icons.event_available_rounded,
-          title: 'Schedule Visit',
-          subtitle: 'Pick date & time',
+          title: tr('Schedule Visit'),
+          subtitle: tr('Pick date & time'),
           fg: _kBrand,
           bg: _kTint,
           border: _kLine,
@@ -1702,10 +1703,10 @@ class _PremiumPropertyDetailScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: _t(18, FontWeight.w800, _C.slate900, ls: -0.4)),
+        Text(tr(title), style: _t(18, FontWeight.w800, _C.slate900, ls: -0.4)),
         if (subtitle != null) ...[
           const SizedBox(height: 2),
-          Text(subtitle, style: _t(12, FontWeight.w500, _C.slate500)),
+          Text(tr(subtitle), style: _t(12, FontWeight.w500, _C.slate500)),
         ],
       ],
     );
@@ -1716,7 +1717,7 @@ class _PremiumPropertyDetailScreenState
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
       decoration:
       BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-      child: Text(label.toUpperCase(),
+      child: Text(tr(label.toUpperCase()),
           style: _t(10, FontWeight.w800, fg, ls: 0.8)),
     );
   }
@@ -1735,9 +1736,9 @@ class _PremiumPropertyDetailScreenState
               child: const Icon(Icons.error_outline, size: 52, color: _C.red),
             ),
             const SizedBox(height: 20),
-            Text('Failed to Load', style: _t(18, FontWeight.w800, _C.slate900)),
+            Text(tr('Failed to Load'), style: _t(18, FontWeight.w800, _C.slate900)),
             const SizedBox(height: 8),
-            Text(_error ?? 'Something went wrong.',
+            Text(_error ?? tr('Something went wrong.'),
                 textAlign: TextAlign.center,
                 style: _t(13, FontWeight.w500, _C.slate500, height: 1.4)),
             const SizedBox(height: 20),
@@ -1752,7 +1753,7 @@ class _PremiumPropertyDetailScreenState
                     borderRadius: BorderRadius.circular(14)),
               ),
               icon: const Icon(Icons.refresh, size: 18),
-              label: Text('Retry', style: _t(14, FontWeight.w700, Colors.white)),
+              label: Text(tr('Retry'), style: _t(14, FontWeight.w700, Colors.white)),
             ),
           ],
         ),
@@ -1807,7 +1808,7 @@ class _GlassButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Tooltip(
-        message: tooltip,
+        message: tr(tooltip),
         child: GestureDetector(
           onTap: onTap,
           child: Container(
@@ -1878,16 +1879,16 @@ class _PricingCardState extends State<_PricingCard> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(slab.flatType,
+                            Text(tr(slab.flatType),
                                 style: _t(16, FontWeight.w800, _C.slate900)),
                             if (slab.floor > 0)
-                              Text('Floor ${slab.floor}',
+                              Text(tr('Floor {0}', [slab.floor]),
                                   style:
                                   _t(11.5, FontWeight.w500, _C.slate500)),
                           ],
                         ),
                       ),
-                      Text(slab.formattedBasePrice,
+                      Text(tr(slab.formattedBasePrice),
                           style: _t(19, FontWeight.w800, _C.navy, ls: -0.4)),
                       if (hasMore) ...[
                         const SizedBox(width: 6),
@@ -1917,14 +1918,14 @@ class _PricingCardState extends State<_PricingCard> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(stats[i].key,
+                                  Text(tr(stats[i].key),
                                       style: _t(
                                           9.5, FontWeight.w500, _C.slate500)),
                                   const SizedBox(height: 2),
                                   FittedBox(
                                     fit: BoxFit.scaleDown,
                                     alignment: Alignment.centerLeft,
-                                    child: Text(stats[i].value,
+                                    child: Text(tr(stats[i].value),
                                         style: _t(12, FontWeight.w800,
                                             _C.slate900)),
                                   ),
@@ -1957,14 +1958,14 @@ class _PricingCardState extends State<_PricingCard> {
                 children: [
                   if (schedule != null && schedule.isNotEmpty) ...[
                     const SizedBox(height: 12),
-                    Text('PAYMENT SCHEDULE',
+                    Text(tr('PAYMENT SCHEDULE'),
                         style: _t(10, FontWeight.w800, _C.slate500, ls: 1.2)),
                     const SizedBox(height: 12),
                     ..._timeline(schedule.entries.toList()),
                   ],
                   if (charges != null && charges.isNotEmpty) ...[
                     const SizedBox(height: 14),
-                    Text('ADDITIONAL CHARGES',
+                    Text(tr('ADDITIONAL CHARGES'),
                         style: _t(10, FontWeight.w800, _C.slate500, ls: 1.2)),
                     const SizedBox(height: 8),
                     ...charges.entries.map(
@@ -1973,11 +1974,11 @@ class _PricingCardState extends State<_PricingCard> {
                         child: Row(
                           children: [
                             Expanded(
-                              child: Text(_prettifyKey(e.key),
+                              child: Text(tr(_prettifyKey(e.key)),
                                   style:
                                   _t(12.5, FontWeight.w500, _C.slate500)),
                             ),
-                            Text(_money(e.value),
+                            Text(tr(_money(e.value)),
                                 style:
                                 _t(12.5, FontWeight.w800, _C.slate900)),
                           ],
@@ -2029,10 +2030,10 @@ class _PricingCardState extends State<_PricingCard> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: Text(_prettifyKey('${e.key}'),
+                      child: Text(tr(_prettifyKey('${e.key}')),
                           style: _t(12.5, FontWeight.w600, _C.slate700)),
                     ),
-                    Text(_scheduleValue(e.value),
+                    Text(tr(_scheduleValue(e.value)),
                         style: _t(12.5, FontWeight.w800, _C.slate900)),
                   ],
                 ),
@@ -2099,7 +2100,7 @@ class _GalleryViewerState extends State<_GalleryViewer> {
                 children: [
                   _GlassButton(
                     icon: Icons.close,
-                    tooltip: 'Close',
+                    tooltip: tr('Close'),
                     onTap: () => Navigator.pop(context),
                   ),
                   const Spacer(),

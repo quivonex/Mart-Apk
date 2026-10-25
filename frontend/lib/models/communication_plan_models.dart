@@ -1,3 +1,4 @@
+import 'package:qnx_mart/l10n/app_language.dart';
 // lib/models/communication_plan_models.dart
 //
 // QNX ReMart Communication Plan – limits for chats and enquiries.
@@ -12,11 +13,11 @@ DateTime? _date(dynamic v) {
 
 /// "monthly" → "per month", "subscription" → "for the plan period".
 String commPeriodLabel(String p) => switch (p.toLowerCase()) {
-  'daily' => 'per day',
-  'weekly' => 'per week',
-  'monthly' => 'per month',
-  'yearly' || 'annual' => 'per year',
-  'subscription' || '' => 'for the plan period',
+  'daily' => tr('per day'),
+  'weekly' => tr('per week'),
+  'monthly' => tr('per month'),
+  'yearly' || 'annual' => tr('per year'),
+  'subscription' || '' => tr('for the plan period'),
   _ => 'per $p',
 };
 
@@ -27,7 +28,7 @@ String commLimitLabel({
   required String period,
   required String noun,
 }) {
-  if (unlimited) return 'Unlimited ${noun}s';
+  if (unlimited) return tr('Unlimited {0}s', [noun]);
   if (limit == null) return '';
   return '$limit ${limit == 1 ? noun : '${noun}s'} ${commPeriodLabel(period)}';
 }
@@ -67,9 +68,9 @@ class CommPlan {
   String get durationLabel {
     final d = durationDays;
     if (d <= 0) return '';
-    if (d % 365 == 0) return d == 365 ? '1 year' : '${d ~/ 365} years';
-    if (d % 30 == 0) return d == 30 ? '1 month' : '${d ~/ 30} months';
-    return d == 1 ? '1 day' : '$d days';
+    if (d % 365 == 0) return d == 365 ? tr('1 year') : '${d ~/ 365} years';
+    if (d % 30 == 0) return d == 30 ? tr('1 month') : '${d ~/ 30} months';
+    return d == 1 ? tr('1 day') : '$d days';
   }
 
   factory CommPlan.fromJson(Map<String, dynamic> j) => CommPlan(
@@ -131,8 +132,8 @@ class CommSubscription {
   }
 
   String get statusLabel {
-    if (currentlyValid) return 'Active';
-    if (status.isEmpty) return 'Inactive';
+    if (currentlyValid) return tr('Active');
+    if (status.isEmpty) return tr('Inactive');
     return status[0].toUpperCase() + status.substring(1);
   }
 

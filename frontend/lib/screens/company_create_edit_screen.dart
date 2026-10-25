@@ -25,6 +25,7 @@ import '../services/company_locations_service.dart';
 import '../services/company_service.dart';
 import '../widgets/product_ui.dart';
 import 'terms_conditions_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -190,7 +191,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
       _isLoadingStates = false;
       _states = res.data;
       _statesError = res.data.isEmpty
-          ? (res.status ? 'No states found. Add states in the admin panel.' : res.message)
+          ? (res.status ? tr('No states found. Add states in the admin panel.') : res.message)
           : null;
     });
   }
@@ -214,7 +215,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
       _isLoadingDistricts = false;
       _districts = res.data;
       _districtsError = res.data.isEmpty
-          ? (res.status ? 'No districts found for this state.' : res.message)
+          ? (res.status ? tr('No districts found for this state.') : res.message)
           : null;
     });
   }
@@ -237,7 +238,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
       _isLoadingTalukas = false;
       _talukas = res.data;
       _talukasError = res.data.isEmpty
-          ? (res.status ? 'No talukas found for this district.' : res.message)
+          ? (res.status ? tr('No talukas found for this district.') : res.message)
           : null;
     });
   }
@@ -258,7 +259,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
       _isLoadingVillages = false;
       _villages = res.data;
       _villagesError = res.data.isEmpty
-          ? (res.status ? 'No villages found for this taluka.' : res.message)
+          ? (res.status ? tr('No villages found for this taluka.') : res.message)
           : null;
     });
   }
@@ -328,7 +329,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
     setState(() => _isFetchingLocation = true);
     try {
       if (!await Geolocator.isLocationServiceEnabled()) {
-        _snack('Location services are disabled.', isError: true);
+        _snack(tr('Location services are disabled.'), isError: true);
         return;
       }
       var permission = await Geolocator.checkPermission();
@@ -336,11 +337,11 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
         permission = await Geolocator.requestPermission();
       }
       if (permission == LocationPermission.denied) {
-        _snack('Location permission denied', isError: true);
+        _snack(tr('Location permission denied'), isError: true);
         return;
       }
       if (permission == LocationPermission.deniedForever) {
-        _snack('Location permission permanently denied. Enable it in Settings.',
+        _snack(tr('Location permission permanently denied. Enable it in Settings.'),
             isError: true);
         return;
       }
@@ -369,12 +370,12 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
           }
           if (_pickupCtrl.text.trim().isEmpty) _pickupCtrl.text = displayName;
         });
-        _snack('Live location fetched');
+        _snack(tr('Live location fetched'));
       } else {
-        _snack('Coordinates saved. Could not fetch the address.');
+        _snack(tr('Coordinates saved. Could not fetch the address.'));
       }
     } catch (e) {
-      _snack('Error getting location: $e', isError: true);
+      _snack(tr('Error getting location: {0}', [e]), isError: true);
     } finally {
       if (mounted) setState(() => _isFetchingLocation = false);
     }
@@ -394,7 +395,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
       }
       return null;
     } catch (e) {
-      debugPrint('Nominatim error: $e');
+      debugPrint(tr('Nominatim error: {0}', [e]));
       return null;
     }
   }
@@ -467,7 +468,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
       if (picked == null) return;
       final bytes = await picked.readAsBytes();
       if (bytes.lengthInBytes > _maxLogoBytes) {
-        _snack('Logo must be under 2MB', isError: true);
+        _snack(tr('Logo must be under 2MB'), isError: true);
         return;
       }
       if (!mounted) return;
@@ -476,14 +477,14 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
         _logoBytes = bytes;
       });
     } catch (e) {
-      _snack('Could not pick logo: $e', isError: true);
+      _snack(tr('Could not pick logo: {0}', [e]), isError: true);
     }
   }
 
   Future<void> _pickImages() async {
     final room = _maxImages - _imageFiles.length;
     if (room <= 0) {
-      _snack('You can add up to $_maxImages photos', isError: true);
+      _snack(tr('You can add up to {0} photos', [_maxImages]), isError: true);
       return;
     }
     final source = await _askSource();
@@ -520,12 +521,12 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
         _imageBytes.addAll(newBytes);
       });
       if (skippedLarge > 0) {
-        _snack('$skippedLarge photo(s) skipped (over 5MB)', isError: true);
+        _snack(tr('{0} photo(s) skipped (over 5MB)', [skippedLarge]), isError: true);
       } else if (picked.length > room) {
-        _snack('Only $room more photo(s) added (max $_maxImages)');
+        _snack(tr('Only {0} more photo(s) added (max {1})', [room, _maxImages]));
       }
     } catch (e) {
-      _snack('Could not pick photos: $e', isError: true);
+      _snack(tr('Could not pick photos: {0}', [e]), isError: true);
     }
   }
 
@@ -540,7 +541,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
     final v = _extraEmailCtrl.text.trim();
     if (v.isEmpty) return;
     if (!RegExp(r'^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$').hasMatch(v)) {
-      _snack('Invalid email', isError: true);
+      _snack(tr('Invalid email'), isError: true);
       return;
     }
     if (_extraEmails.contains(v)) return;
@@ -554,7 +555,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
     final v = _extraContactCtrl.text.trim();
     if (v.isEmpty) return;
     if (v.length != 10) {
-      _snack('Enter 10-digit number', isError: true);
+      _snack(tr('Enter 10-digit number'), isError: true);
       return;
     }
     if (_extraContacts.contains(v)) return;
@@ -649,20 +650,20 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
     FocusScope.of(context).unfocus();
     setState(() => _submitAttempted = true);
     if (!_formKey.currentState!.validate()) {
-      _snack('Please fix the highlighted fields', isError: true);
+      _snack(tr('Please fix the highlighted fields'), isError: true);
       return;
     }
     if (!_isEdit && _logoFile == null) {
-      _snack('Company logo is required', isError: true);
+      _snack(tr('Company logo is required'), isError: true);
       return;
     }
     if ([_selectedStateId, _selectedDistrictId, _selectedTalukaId, _selectedVillageId]
         .contains(null)) {
-      _snack('Please select state, district, taluka and village', isError: true);
+      _snack(tr('Please select state, district, taluka and village'), isError: true);
       return;
     }
     if (!_acceptTerms) {
-      _snack('Please accept the terms & conditions', isError: true);
+      _snack(tr('Please accept the terms & conditions'), isError: true);
       return;
     }
 
@@ -691,14 +692,14 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
     }
 
     if (_isEdit) {
-      _snack('Company updated');
+      _snack(tr('Company updated'));
       Navigator.pop(context, true);
       return;
     }
 
     final created = response.data != null ? Company.fromJson(response.data!) : null;
     if (created == null || created.id == 0) {
-      _snack('Company created. Pay the registration fee from My Companies.');
+      _snack(tr('Company created. Pay the registration fee from My Companies.'));
       Navigator.pop(context, true);
       return;
     }
@@ -769,7 +770,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
       } else if (order.isSuccess) {
         _order = order;
       } else {
-        _paymentError = order.message ?? 'Could not start payment. Try again.';
+        _paymentError = order.message ?? tr('Could not start payment. Try again.');
       }
     });
   }
@@ -781,8 +782,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
 
     if (kIsWeb) {
       setState(() => _paymentError =
-      'Online payment opens in the QNX Mart Android app. Your company is saved – '
-          'tap "Pay later", then pay from My Companies on your phone.');
+      tr('Online payment opens in the QNX Mart Android app. Your company is saved – tap "Pay later", then pay from My Companies on your phone.'));
       return;
     }
 
@@ -813,7 +813,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
     } catch (e) {
       setState(() {
         _isCheckoutOpen = false;
-        _paymentError = 'Could not open Razorpay: $e';
+        _paymentError = tr('Could not open Razorpay: {0}', [e]);
       });
     }
   }
@@ -844,8 +844,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
         _step = _Step.done;
       } else {
         _paymentError =
-        '${verify.message ?? 'Payment could not be confirmed.'}\n'
-            'If money was deducted, contact support with reference $paymentId.';
+        tr('{0}\nIf money was deducted, contact support with reference {1}.', [verify.message ?? 'Payment could not be confirmed.', paymentId]);
       }
     });
   }
@@ -854,13 +853,13 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
     if (!mounted) return;
     String message;
     if (r.code == Razorpay.PAYMENT_CANCELLED) {
-      message = 'Payment cancelled. You can try again or pay later.';
+      message = tr('Payment cancelled. You can try again or pay later.');
     } else if (r.code == Razorpay.NETWORK_ERROR) {
-      message = 'Network error during payment. Check your connection and retry.';
+      message = tr('Network error during payment. Check your connection and retry.');
     } else {
       final raw = r.message ?? '';
       final desc = RegExp(r'"description"\s*:\s*"([^"]+)"').firstMatch(raw)?.group(1);
-      message = desc ?? (raw.isNotEmpty ? raw : 'Payment failed. Please try again.');
+      message = desc ?? (raw.isNotEmpty ? raw : tr('Payment failed. Please try again.'));
     }
     setState(() {
       _isCheckoutOpen = false;
@@ -873,7 +872,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
     setState(() {
       _isCheckoutOpen = false;
       _paymentError =
-      '${r.walletName ?? 'Wallet'} selected. Finish the payment there, then check My Companies.';
+      tr('{0} selected. Finish the payment there, then check My Companies.', [r.walletName ?? 'Wallet']);
     });
   }
 
@@ -886,7 +885,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(msg),
+          content: Text(tr(msg)),
           backgroundColor: isError ? const Color(0xFFC62828) : const Color(0xFF047857),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 3),
@@ -898,7 +897,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
 
   Future<void> _launchUrl(String url) async {
     if (!await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)) {
-      _snack('Could not open link', isError: true);
+      _snack(tr('Could not open link'), isError: true);
     }
   }
 
@@ -931,14 +930,14 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             builder: (ctx) => AlertDialog(
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rLg)),
-              title: Text('Discard this company?',
+              title: Text(tr('Discard this company?'),
                   style: DT.text(size: 17, weight: FontWeight.w800)),
-              content: Text('The details you entered will be lost.',
+              content: Text(tr('The details you entered will be lost.'),
                   style: DT.text(size: 13.5, color: DT.onyx600, height: 1.5)),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
-                  child: Text('Keep editing',
+                  child: Text(tr('Keep editing'),
                       style: DT.text(size: 13.5, weight: FontWeight.w700, color: DT.slate500)),
                 ),
                 ElevatedButton(
@@ -950,7 +949,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(DT.rMd)),
                   ),
-                  child: Text('Discard',
+                  child: Text(tr('Discard'),
                       style: DT.text(size: 13.5,
                           weight: FontWeight.w700, color: Colors.white)),
                 ),
@@ -978,13 +977,13 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
   PreferredSizeWidget _header() {
     final showSteps = !(_isEdit && _step == _Step.details);
     final title = switch (_step) {
-      _Step.details => _isEdit ? 'Edit company' : 'Add company',
-      _Step.payment => 'Registration payment',
-      _Step.done => 'Registration complete',
+      _Step.details => _isEdit ? tr('Edit company') : tr('Add company'),
+      _Step.payment => tr('Registration payment'),
+      _Step.done => tr('Registration complete'),
     };
     final subtitle = switch (_step) {
       _Step.details =>
-      _isEdit ? widget.existing!.name : 'Register your business on QNXMart B2B',
+      _isEdit ? widget.existing!.name : tr('Register your business on QNXMart B2B'),
       _Step.payment => _company?.name ?? '',
       _Step.done => _company?.name ?? '',
     };
@@ -1008,7 +1007,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                   children: [
                     const SizedBox(width: 4),
                     IconButton(
-                      tooltip: 'Back',
+                      tooltip: tr('Back'),
                       onPressed: () => Navigator.maybePop(context),
                       icon: const Icon(Icons.arrow_back_rounded, color: DT.onyx900),
                     ),
@@ -1017,11 +1016,11 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(title,
+                          Text(tr(title),
                               style: DT.text(
                                   size: 18, weight: FontWeight.w700, color: DT.onyx900)),
                           if (subtitle.isNotEmpty)
-                            Text(subtitle,
+                            Text(tr(subtitle),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: DT.text(
@@ -1075,7 +1074,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                   complete ? PX.emerald600 : (active ? _kBrand : DT.slate300),
                 ),
                 const SizedBox(width: 4),
-                Text('Step $n · $label',
+                Text(tr('Step {0} · {1}', [n, label]),
                     style: DT.text(
                         size: 11.5,
                         weight: active || complete
@@ -1093,28 +1092,28 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
       child: Row(
         children: [
-          step(1, 'Company details', active: !onPay, complete: onPay),
+          step(1, tr('Company details'), active: !onPay, complete: onPay),
           const SizedBox(width: 10),
-          step(2, 'Payment', active: onPay && !done, complete: done),
+          step(2, tr('Payment'), active: onPay && !done, complete: done),
         ],
       ),
     );
   }
 
   List<(String, bool)> get _requiredChecks => [
-    ('Logo', _logoFile != null || _existingLogoUrl.isNotEmpty),
-    ('Company name', _nameCtrl.text.trim().isNotEmpty),
-    ('Owner name', _ownerCtrl.text.trim().isNotEmpty),
-    ('Email', _emailCtrl.text.trim().contains('@')),
-    ('Phone', _phoneCtrl.text.trim().length == 10),
-    ('State', _selectedStateId != null),
-    ('District', _selectedDistrictId != null),
-    ('Taluka', _selectedTalukaId != null),
-    ('Village', _selectedVillageId != null),
-    ('Address', _addressCtrl.text.trim().isNotEmpty),
-    ('Pincode', _pincodeCtrl.text.trim().length == 6),
-    ('Pickup location', _pickupCtrl.text.trim().isNotEmpty),
-    if (!_isEdit) ('Terms', _acceptTerms),
+    (tr('Logo'), _logoFile != null || _existingLogoUrl.isNotEmpty),
+    (tr('Company name'), _nameCtrl.text.trim().isNotEmpty),
+    (tr('Owner name'), _ownerCtrl.text.trim().isNotEmpty),
+    (tr('Email'), _emailCtrl.text.trim().contains('@')),
+    (tr('Phone'), _phoneCtrl.text.trim().length == 10),
+    (tr('State'), _selectedStateId != null),
+    (tr('District'), _selectedDistrictId != null),
+    (tr('Taluka'), _selectedTalukaId != null),
+    (tr('Village'), _selectedVillageId != null),
+    (tr('Address'), _addressCtrl.text.trim().isNotEmpty),
+    (tr('Pincode'), _pincodeCtrl.text.trim().length == 6),
+    (tr('Pickup location'), _pickupCtrl.text.trim().isNotEmpty),
+    if (!_isEdit) (tr('Terms'), _acceptTerms),
   ];
 
   List<bool> get _recommendedChecks => [
@@ -1207,12 +1206,12 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Profile completion',
+                Text(tr('Profile completion'),
                     style: DT.text(size: 12.5, weight: FontWeight.w700)),
                 Text(
                   left == 0
-                      ? 'All required details added'
-                      : '$left required field${left == 1 ? '' : 's'} left',
+                      ? tr('All required details added')
+                      : tr('{0} required field{1} left', [left, left == 1 ? '' : 's']),
                   style: DT.text(
                       size: 11.5,
                       color: left == 0 ? PX.emerald600 : DT.slate500),
@@ -1253,13 +1252,13 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Registration fee pending',
+                Text(tr('Registration fee pending'),
                     style: DT.text(
                         size: 13.5,
                         weight: FontWeight.w800,
                         color: _kOrangeDark)),
                 Text(
-                    'Pay to activate your admin panel and shipping pickup.',
+                    tr('Pay to activate your admin panel and shipping pickup.'),
                     style: DT.text(size: 12, color: _kOrangeDark, height: 1.4)),
               ],
             ),
@@ -1275,7 +1274,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(DT.rMd)),
             ),
-            child: Text('Pay now',
+            child: Text(tr('Pay now'),
                 style: DT.text(
                     size: 13, weight: FontWeight.w800, color: Colors.white)),
           ),
@@ -1287,8 +1286,8 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
   Widget _brandSection() {
     final logoMissing = _submitAttempted && !_isEdit && _logoFile == null;
     return PxSection(
-      title: 'Logo & photos',
-      subtitle: 'Your logo appears on every product and order',
+      title: tr('Logo & photos'),
+      subtitle: tr('Your logo appears on every product and order'),
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
@@ -1329,8 +1328,8 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                       Expanded(
                         child: Text(
                           _isEdit
-                              ? 'Tap the logo to replace it. Square PNG or JPG, up to 2MB.'
-                              : 'Square PNG or JPG, up to 2MB. A clear logo on a plain background looks best.',
+                              ? tr('Tap the logo to replace it. Square PNG or JPG, up to 2MB.')
+                              : tr('Square PNG or JPG, up to 2MB. A clear logo on a plain background looks best.'),
                           style:
                           DT.text(size: 12, color: DT.onyx600, height: 1.55),
                         ),
@@ -1344,11 +1343,11 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
           if (logoMissing)
             Padding(
               padding: const EdgeInsets.only(top: 6),
-              child: Text('Company logo is required',
+              child: Text(tr('Company logo is required'),
                   style: DT.text(size: 11.5, color: _kRed)),
             ),
           const SizedBox(height: 16),
-          PxLabel(_isEdit ? 'Add more photos' : 'Shop / warehouse photos',
+          PxLabel(_isEdit ? tr('Add more photos') : tr('Shop / warehouse photos'),
               optional: true),
           _buildImagesPicker(),
         ],
@@ -1401,7 +1400,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                       color: DT.onyx900.withValues(alpha: 0.75),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Text('Change',
+                    child: Text(tr('Change'),
                         style: DT.text(
                             size: 10.5,
                             weight: FontWeight.w700,
@@ -1428,7 +1427,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             color: _kBrand, size: 20),
       ),
       const SizedBox(height: 6),
-      Text(_isEdit ? 'Logo' : 'Logo *',
+      Text(_isEdit ? tr('Logo') : tr('Logo *'),
           style: DT.text(
               size: 12, weight: FontWeight.w700, color: _kBrand)),
     ],
@@ -1494,7 +1493,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                       const Icon(Icons.add_photo_alternate_outlined,
                           color: DT.slate500, size: 22),
                       const SizedBox(height: 3),
-                      Text('Add',
+                      Text(tr('Add'),
                           style: DT.text(
                               size: 10.5,
                               weight: FontWeight.w600,
@@ -1511,44 +1510,44 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
 
   Widget _detailsSection() {
     return PxSection(
-      title: 'Company details',
-      subtitle: 'Name, owner and how buyers can reach you',
+      title: tr('Company details'),
+      subtitle: tr('Name, owner and how buyers can reach you'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const PxLabel('Company name', required: true),
+          PxLabel(tr('Company name'), required: true),
           PxTextField(
             controller: _nameCtrl,
-            hint: 'e.g. ABC Industries Pvt Ltd',
+            hint: tr('e.g. ABC Industries Pvt Ltd'),
             icon: Icons.business_outlined,
             iconColor: _kBrand,
             capitalization: TextCapitalization.words,
-            validator: (v) => _required(v, 'Company name'),
+            validator: (v) => _required(v, tr('Company name')),
           ),
           const SizedBox(height: 14),
-          const PxLabel('Slogan', optional: true),
+          PxLabel(tr('Slogan'), optional: true),
           PxTextField(
               controller: _sloganCtrl,
-              hint: 'e.g. Quality first',
+              hint: tr('e.g. Quality first'),
               icon: Icons.campaign_outlined),
           const SizedBox(height: 14),
-          const PxLabel('Owner name', required: true),
+          PxLabel(tr('Owner name'), required: true),
           PxTextField(
             controller: _ownerCtrl,
-            hint: 'e.g. Rahul Patil',
+            hint: tr('e.g. Rahul Patil'),
             icon: Icons.person_outline_rounded,
             iconColor: _kBrand,
             capitalization: TextCapitalization.words,
             validator: (v) {
-              if (v == null || v.trim().isEmpty) return 'Owner name required';
+              if (v == null || v.trim().isEmpty) return tr('Owner name required');
               if (!RegExp(r'^[a-zA-Z.\s]+$').hasMatch(v.trim())) {
-                return 'Letters only';
+                return tr('Letters only');
               }
               return null;
             },
           ),
           const SizedBox(height: 14),
-          const PxLabel('Email', required: true),
+          PxLabel(tr('Email'), required: true),
           PxTextField(
             controller: _emailCtrl,
             hint: 'name@company.com',
@@ -1556,10 +1555,10 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             iconColor: _kBrand,
             keyboardType: TextInputType.emailAddress,
             validator: (v) {
-              if (v == null || v.trim().isEmpty) return 'Email required';
+              if (v == null || v.trim().isEmpty) return tr('Email required');
               if (!RegExp(r'^[\w\-\.+]+@([\w\-]+\.)+[\w\-]{2,}$')
                   .hasMatch(v.trim())) {
-                return 'Invalid email';
+                return tr('Invalid email');
               }
               return null;
             },
@@ -1572,7 +1571,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const PxLabel('Phone', required: true),
+                    PxLabel(tr('Phone'), required: true),
                     PxTextField(
                       controller: _phoneCtrl,
                       hint: '10-digit',
@@ -1580,7 +1579,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                       iconColor: _kBrand,
                       keyboardType: TextInputType.phone,
                       inputFormatters: _phoneFormatters,
-                      validator: (v) => _validatePhone(v, 'Phone'),
+                      validator: (v) => _validatePhone(v, tr('Phone')),
                     ),
                   ],
                 ),
@@ -1590,7 +1589,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const PxLabel('WhatsApp', optional: true),
+                    PxLabel(tr('WhatsApp'), optional: true),
                     PxTextField(
                       controller: _whatsappCtrl,
                       hint: '10-digit',
@@ -1599,7 +1598,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                       inputFormatters: _phoneFormatters,
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return null;
-                        return _validatePhone(v, 'WhatsApp');
+                        return _validatePhone(v, tr('WhatsApp'));
                       },
                     ),
                   ],
@@ -1612,7 +1611,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             Align(
               alignment: Alignment.centerRight,
               child: PxLinkButton(
-                label: 'Same as phone',
+                label: tr('Same as phone'),
                 icon: Icons.content_copy_rounded,
                 onTap: () =>
                     setState(() => _whatsappCtrl.text = _phoneCtrl.text.trim()),
@@ -1625,13 +1624,13 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
 
   Widget _addressSection() {
     return PxSection(
-      title: 'Address & location',
-      subtitle: 'Used for your company page and shipping pickup',
+      title: tr('Address & location'),
+      subtitle: tr('Used for your company page and shipping pickup'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _locationPicker(
-            label: 'State',
+            label: tr('State'),
             icon: Icons.map_outlined,
             items: _states,
             selectedId: _selectedStateId,
@@ -1642,52 +1641,52 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
           ),
           const SizedBox(height: 12),
           _locationPicker(
-            label: 'District',
+            label: tr('District'),
             icon: Icons.location_city_outlined,
             items: _districts,
             selectedId: _selectedDistrictId,
             loading: _isLoadingDistricts,
             error: _districtsError,
             enabled: _selectedStateId != null,
-            disabledHint: 'Select a state first',
+            disabledHint: tr('Select a state first'),
             onRetry: () => _fetchDistricts(_selectedStateId!),
             onSelected: _onDistrictSelected,
           ),
           const SizedBox(height: 12),
           _locationPicker(
-            label: 'Taluka',
+            label: tr('Taluka'),
             icon: Icons.account_tree_outlined,
             items: _talukas,
             selectedId: _selectedTalukaId,
             loading: _isLoadingTalukas,
             error: _talukasError,
             enabled: _selectedDistrictId != null,
-            disabledHint: 'Select a district first',
+            disabledHint: tr('Select a district first'),
             onRetry: () => _fetchTalukas(_selectedDistrictId!),
             onSelected: _onTalukaSelected,
           ),
           const SizedBox(height: 12),
           _locationPicker(
-            label: 'Village',
+            label: tr('Village'),
             icon: Icons.holiday_village_outlined,
             items: _villages,
             selectedId: _selectedVillageId,
             loading: _isLoadingVillages,
             error: _villagesError,
             enabled: _selectedTalukaId != null,
-            disabledHint: 'Select a taluka first',
+            disabledHint: tr('Select a taluka first'),
             onRetry: () => _fetchVillages(_selectedTalukaId!),
             onSelected: _onVillageSelected,
           ),
           const SizedBox(height: 16),
-          const PxLabel('Street address', required: true),
+          PxLabel(tr('Street address'), required: true),
           PxTextField(
             controller: _addressCtrl,
-            hint: 'Building, street, landmark',
+            hint: tr('Building, street, landmark'),
             maxLines: 2,
             tinted: true,
             capitalization: TextCapitalization.sentences,
-            validator: (v) => _required(v, 'Address'),
+            validator: (v) => _required(v, tr('Address')),
           ),
           const SizedBox(height: 14),
           Row(
@@ -1698,7 +1697,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const PxLabel('Pincode', required: true),
+                    PxLabel(tr('Pincode'), required: true),
                     PxTextField(
                       controller: _pincodeCtrl,
                       hint: '6-digit',
@@ -1710,9 +1709,9 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                       ],
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) {
-                          return 'Pincode required';
+                          return tr('Pincode required');
                         }
-                        if (v.trim().length != 6) return '6-digit pincode';
+                        if (v.trim().length != 6) return tr('6-digit pincode');
                         return null;
                       },
                     ),
@@ -1725,12 +1724,12 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const PxLabel('Pickup location', required: true),
+                    PxLabel(tr('Pickup location'), required: true),
                     PxTextField(
                       controller: _pickupCtrl,
-                      hint: 'Where couriers collect',
+                      hint: tr('Where couriers collect'),
                       icon: Icons.local_shipping_outlined,
-                      validator: (v) => _required(v, 'Pickup location'),
+                      validator: (v) => _required(v, tr('Pickup location')),
                     ),
                   ],
                 ),
@@ -1742,7 +1741,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             Align(
               alignment: Alignment.centerRight,
               child: PxLinkButton(
-                label: 'Use street address',
+                label: tr('Use street address'),
                 icon: Icons.content_copy_rounded,
                 onTap: () =>
                     setState(() => _pickupCtrl.text = _addressCtrl.text.trim()),
@@ -1761,13 +1760,13 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
               children: [
                 Row(
                   children: [
-                    Text('Map location',
+                    Text(tr('Map location'),
                         style: DT.text(
                             size: 12,
                             weight: FontWeight.w700,
                             color: DT.onyx800)),
                     const Spacer(),
-                    Text('Optional · helps buyers find you',
+                    Text(tr('Optional · helps buyers find you'),
                         style: DT.text(size: 11, color: DT.slate500)),
                   ],
                 ),
@@ -1783,8 +1782,8 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                       : const Icon(Icons.my_location_rounded, size: 18),
                   label: Text(
                       _isFetchingLocation
-                          ? 'Getting your location…'
-                          : 'Use my current location',
+                          ? tr('Getting your location…')
+                          : tr('Use my current location'),
                       style: DT.text(
                           size: 13.5,
                           weight: FontWeight.w700,
@@ -1804,7 +1803,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                     Expanded(
                       child: PxTextField(
                         controller: _latitudeCtrl,
-                        hint: 'Latitude',
+                        hint: tr('Latitude'),
                         dense: true,
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true, signed: true),
@@ -1814,7 +1813,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                     Expanded(
                       child: PxTextField(
                         controller: _longitudeCtrl,
-                        hint: 'Longitude',
+                        hint: tr('Longitude'),
                         dense: true,
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true, signed: true),
@@ -1833,15 +1832,15 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
 
   Widget _registrationSection() {
     return PxSection(
-      title: 'Registration & tax',
-      subtitle: 'Optional, but verified details build buyer trust',
+      title: tr('Registration & tax'),
+      subtitle: tr('Optional, but verified details build buyer trust'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const PxLabel('GST number', optional: true),
+          PxLabel(tr('GST number'), optional: true),
           PxTextField(
             controller: _gstCtrl,
-            hint: 'e.g. 27ABCDE1234F1Z5',
+            hint: tr('e.g. 27ABCDE1234F1Z5'),
             icon: Icons.receipt_long_outlined,
             capitalization: TextCapitalization.characters,
             inputFormatters: [LengthLimitingTextInputFormatter(15)],
@@ -1850,7 +1849,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
               if (t.isEmpty) return null;
               if (!RegExp(r'^\d{2}[A-Z]{5}\d{4}[A-Z][A-Z\d]Z[A-Z\d]$')
                   .hasMatch(t)) {
-                return 'Invalid GST number';
+                return tr('Invalid GST number');
               }
               return null;
             },
@@ -1866,7 +1865,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                     const PxLabel('PAN'),
                     PxTextField(
                       controller: _panCtrl,
-                      hint: 'ABCDE1234F',
+                      hint: tr('ABCDE1234F'),
                       icon: Icons.credit_card_outlined,
                       capitalization: TextCapitalization.characters,
                       inputFormatters: [LengthLimitingTextInputFormatter(10)],
@@ -1874,7 +1873,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                         final t = (v ?? '').trim().toUpperCase();
                         if (t.isEmpty) return null;
                         if (!RegExp(r'^[A-Z]{5}\d{4}[A-Z]$').hasMatch(t)) {
-                          return 'Invalid PAN';
+                          return tr('Invalid PAN');
                         }
                         return null;
                       },
@@ -1887,10 +1886,10 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const PxLabel('Registration no.'),
+                    PxLabel(tr('Registration no.')),
                     PxTextField(
                         controller: _regNoCtrl,
-                        hint: 'REG123',
+                        hint: tr('REG123'),
                         icon: Icons.assignment_outlined),
                   ],
                 ),
@@ -1905,10 +1904,10 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const PxLabel('IAN no.'),
+                    PxLabel(tr('IAN no.')),
                     PxTextField(
                       controller: _ianCtrl,
-                      hint: 'IAN123',
+                      hint: tr('IAN123'),
                       icon: Icons.verified_outlined,
                       inputFormatters: [LengthLimitingTextInputFormatter(25)],
                     ),
@@ -1920,10 +1919,10 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const PxLabel('Firm reg. year'),
+                    PxLabel(tr('Firm reg. year')),
                     PxTextField(
                       controller: _farmYearCtrl,
-                      hint: 'e.g. 2020',
+                      hint: tr('e.g. 2020'),
                       icon: Icons.calendar_today_outlined,
                       keyboardType: TextInputType.number,
                       inputFormatters: [
@@ -1935,7 +1934,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                         if (t.isEmpty) return null;
                         final y = int.tryParse(t) ?? 0;
                         if (y < 1900 || y > DateTime.now().year) {
-                          return 'Invalid year';
+                          return tr('Invalid year');
                         }
                         return null;
                       },
@@ -1952,8 +1951,8 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
 
   Widget _contactsSection() {
     return PxSection(
-      title: 'Extra contacts',
-      subtitle: 'More emails or numbers for enquiries',
+      title: tr('Extra contacts'),
+      subtitle: tr('More emails or numbers for enquiries'),
       icon: Icons.contacts_outlined,
       compact: true,
       child: Column(
@@ -1961,8 +1960,8 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
         children: [
           const SizedBox(height: 6),
           _buildChipsEditor(
-            label: 'Email IDs',
-            hint: 'Type an email and tap +',
+            label: tr('Email IDs'),
+            hint: tr('Type an email and tap +'),
             controller: _extraEmailCtrl,
             items: _extraEmails,
             keyboardType: TextInputType.emailAddress,
@@ -1972,8 +1971,8 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
           ),
           const SizedBox(height: 14),
           _buildChipsEditor(
-            label: 'Contact numbers',
-            hint: '10-digit number, tap +',
+            label: tr('Contact numbers'),
+            hint: tr('10-digit number, tap +'),
             controller: _extraContactCtrl,
             items: _extraContacts,
             keyboardType: TextInputType.phone,
@@ -2010,10 +2009,10 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
           onSubmitted: (_) => onSubmitted(),
           style: DT.text(size: 13.5, weight: FontWeight.w500),
           decoration: pxInputDecoration(
-            hint: hint,
+            hint: tr(hint),
             icon: icon,
             suffix: IconButton(
-              tooltip: 'Add',
+              tooltip: tr('Add'),
               icon: const Icon(Icons.add_circle_rounded, color: _kBrand),
               onPressed: onSubmitted,
             ),
@@ -2034,7 +2033,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(items[i],
+                      Text(tr(items[i]),
                           style: DT.text(
                               size: 12,
                               weight: FontWeight.w500,
@@ -2066,34 +2065,34 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
               PxLabel(label, optional: true),
               PxTextField(
                   controller: c,
-                  hint: hint,
+                  hint: tr(hint),
                   icon: icon,
                   keyboardType: TextInputType.url),
             ],
           ),
         );
     return PxSection(
-      title: 'Online presence',
-      subtitle: 'Website, social pages and policies',
+      title: tr('Online presence'),
+      subtitle: tr('Website, social pages and policies'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          link(_websiteCtrl, 'Website', 'yourcompany.com',
+          link(_websiteCtrl, tr('Website'), 'yourcompany.com',
               Icons.language_rounded),
-          link(_facebookCtrl, 'Facebook', 'facebook.com/yourpage',
+          link(_facebookCtrl, tr('Facebook'), 'facebook.com/yourpage',
               Icons.facebook_rounded),
-          link(_instagramCtrl, 'Instagram', 'instagram.com/yourpage',
+          link(_instagramCtrl, tr('Instagram'), 'instagram.com/yourpage',
               Icons.camera_alt_outlined),
-          link(_linkedinCtrl, 'LinkedIn', 'linkedin.com/company/…',
+          link(_linkedinCtrl, tr('LinkedIn'), tr('linkedin.com/company/…'),
               Icons.work_outline_rounded),
-          link(_youtubeCtrl, 'YouTube', 'youtube.com/@yourchannel',
+          link(_youtubeCtrl, tr('YouTube'), 'youtube.com/@yourchannel',
               Icons.smart_display_outlined),
           const Divider(height: 20, color: DT.slate100),
-          link(_privacyCtrl, 'Privacy policy URL', 'https://…',
+          link(_privacyCtrl, tr('Privacy policy URL'), 'https://…',
               Icons.privacy_tip_outlined),
-          link(_termsCtrl, 'Terms & conditions URL', 'https://…',
+          link(_termsCtrl, tr('Terms & conditions URL'), 'https://…',
               Icons.gavel_outlined),
-          Text('Links without https:// are fixed automatically.',
+          Text(tr('Links without https:// are fixed automatically.'),
               style: DT.text(size: 11.5, color: DT.slate400)),
         ],
       ),
@@ -2102,27 +2101,27 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
 
   Widget _aboutSection() {
     return PxSection(
-      title: 'About your company',
-      subtitle: 'Shown on your company page',
+      title: tr('About your company'),
+      subtitle: tr('Shown on your company page'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          PxLabel('Short description',
+          PxLabel(tr('Short description'),
               trailing: Text('${_shortDescCtrl.text.length}/160',
                   style: DT.text(size: 11, color: DT.slate400))),
           PxTextField(
             controller: _shortDescCtrl,
-            hint: 'One line about what you do',
+            hint: tr('One line about what you do'),
             maxLines: 2,
             tinted: true,
             capitalization: TextCapitalization.sentences,
             inputFormatters: [LengthLimitingTextInputFormatter(160)],
           ),
           const SizedBox(height: 14),
-          const PxLabel('Long description', optional: true),
+          PxLabel(tr('Long description'), optional: true),
           PxTextField(
             controller: _longDescCtrl,
-            hint: 'Products, experience, clients, certifications…',
+            hint: tr('Products, experience, clients, certifications…'),
             maxLines: 5,
             tinted: true,
             capitalization: TextCapitalization.sentences,
@@ -2134,27 +2133,27 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
 
   Widget _featuresSection() {
     return PxSection(
-      title: 'Certifications & features',
+      title: tr('Certifications & features'),
       icon: Icons.workspace_premium_outlined,
       compact: true,
       child: Column(
         children: [
           const SizedBox(height: 4),
           _switchTile(
-              'ISI certified',
-              'Bureau of Indian Standards mark',
+              tr('ISI certified'),
+              tr('Bureau of Indian Standards mark'),
               Icons.verified_rounded,
               _isiCertified,
                   (v) => setState(() => _isiCertified = v)),
           _switchTile(
-              'ISO certified',
-              'International quality standard',
+              tr('ISO certified'),
+              tr('International quality standard'),
               Icons.workspace_premium_rounded,
               _isoCertified,
                   (v) => setState(() => _isoCertified = v)),
           _switchTile(
-              'Cash on delivery',
-              'Buyers can pay when the order arrives',
+              tr('Cash on delivery'),
+              tr('Buyers can pay when the order arrives'),
               Icons.payments_outlined,
               _codAvailable,
                   (v) => setState(() => _codAvailable = v)),
@@ -2181,10 +2180,10 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
+                Text(tr(title),
                     style: DT.text(
                         size: 13, weight: FontWeight.w700, color: DT.onyx900)),
-                Text(subtitle, style: DT.text(size: 11, color: DT.slate500)),
+                Text(tr(subtitle), style: DT.text(size: 11, color: DT.slate500)),
               ],
             ),
           ),
@@ -2205,15 +2204,15 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
   Widget _finishSection() {
     final termsMissing = _submitAttempted && !_acceptTerms;
     return PxSection(
-      title: 'Almost done',
-      subtitle: 'A one-time registration fee is charged after creation',
+      title: tr('Almost done'),
+      subtitle: tr('A one-time registration fee is charged after creation'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const PxLabel('Referral code', optional: true),
+          PxLabel(tr('Referral code'), optional: true),
           PxTextField(
             controller: _referralCtrl,
-            hint: 'Marketing partner code',
+            hint: tr('Marketing partner code'),
             icon: Icons.card_giftcard_outlined,
             capitalization: TextCapitalization.characters,
           ),
@@ -2244,7 +2243,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                   Expanded(
                     child: Text.rich(
                       TextSpan(
-                        text: 'I accept the ',
+                        text: tr('I accept the '),
                         style: DT.text(
                             size: 13,
                             weight: FontWeight.w500,
@@ -2255,7 +2254,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                             baseline: TextBaseline.alphabetic,
                             child: GestureDetector(
                               onTap: _openTerms,
-                              child: Text('Terms & Conditions',
+                              child: Text(tr('Terms & Conditions'),
                                   style: DT.text(
                                       size: 13,
                                       weight: FontWeight.w700,
@@ -2277,7 +2276,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
           if (termsMissing)
             Padding(
               padding: const EdgeInsets.only(top: 6, left: 4),
-              child: Text('Please accept the terms to continue',
+              child: Text(tr('Please accept the terms to continue'),
                   style: DT.text(size: 11.5, color: _kRed)),
             ),
         ],
@@ -2335,7 +2334,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                             child: CircularProgressIndicator(
                                 strokeWidth: 2.2, color: Colors.white)),
                         const SizedBox(width: 10),
-                        Text(_isEdit ? 'Saving…' : 'Creating company…',
+                        Text(_isEdit ? tr('Saving…') : tr('Creating company…'),
                             style: DT.text(
                                 size: 14,
                                 weight: FontWeight.w700,
@@ -2353,8 +2352,8 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                         const SizedBox(width: 8),
                         Text(
                             _isEdit
-                                ? 'Save changes'
-                                : 'Create & continue to payment',
+                                ? tr('Save changes')
+                                : tr('Create & continue to payment'),
                             style: DT.text(
                                 size: 14,
                                 weight: FontWeight.w700,
@@ -2367,8 +2366,8 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
               const SizedBox(height: 6),
               Text(
                 left == 0
-                    ? 'All required details added · ${_completion}% complete'
-                    : '$left required field${left == 1 ? '' : 's'} left',
+                    ? tr('All required details added · {0}% complete', [_completion])
+                    : tr('{0} required field{1} left', [left, left == 1 ? '' : 's']),
                 style: DT.text(
                     size: 11,
                     color: left == 0 ? PX.emerald600 : DT.slate400),
@@ -2402,14 +2401,14 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                       children: [
                         PxPill(
                           text: _isEdit
-                              ? 'Company registered'
-                              : 'Company created',
+                              ? tr('Company registered')
+                              : tr('Company created'),
                           bg: PX.emerald100,
                           fg: DT.emerald700,
                           icon: Icons.check_rounded,
                         ),
                         const SizedBox(height: 6),
-                        Text(company.name,
+                        Text(trData(company.name),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: DT.text(
@@ -2417,7 +2416,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                                 weight: FontWeight.w800,
                                 color: DT.onyx900)),
                         if (company.ownerName.isNotEmpty)
-                          Text(company.ownerName,
+                          Text(tr(company.ownerName),
                               style:
                               DT.text(size: 12.5, color: DT.slate500)),
                       ],
@@ -2445,7 +2444,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('ONE-TIME REGISTRATION FEE',
+                        Text(tr('ONE-TIME REGISTRATION FEE'),
                             style: DT.text(
                                 size: 11,
                                 weight: FontWeight.w800,
@@ -2461,13 +2460,13 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                                 backgroundColor: Colors.white24),
                           )
                         else
-                          Text(order?.amountLabel ?? '—',
+                          Text(tr(order?.amountLabel ?? '—'),
                               style: DT.text(
                                   size: 36,
                                   weight: FontWeight.w900,
                                   color: Colors.white,
                                   letterSpacing: -1)),
-                        Text('Paid once · no renewal',
+                        Text(tr('Paid once · no renewal'),
                             style:
                             DT.text(size: 12, color: Colors.white70)),
                       ],
@@ -2479,11 +2478,11 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                       children: [
                         _benefit(
                             Icons.dashboard_customize_outlined,
-                            'Company admin panel (login link sent to ${company.email.isEmpty ? 'your email' : company.email})'),
+                            tr('Company admin panel (login link sent to {0})', [company.email.isEmpty ? 'your email' : company.email])),
                         _benefit(Icons.local_shipping_outlined,
-                            'Shipping pickup set up for your orders'),
+                            tr('Shipping pickup set up for your orders')),
                         _benefit(Icons.storefront_outlined,
-                            'List products for B2B buyers'),
+                            tr('List products for B2B buyers')),
                       ],
                     ),
                   ),
@@ -2506,7 +2505,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                         color: _kRed, size: 20),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Text(_paymentError!,
+                      child: Text(tr(_paymentError!),
                           style: DT.text(
                               size: 12.5, color: _kRed, height: 1.45)),
                     ),
@@ -2539,8 +2538,8 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                       size: 18),
                   label: Text(
                     order == null
-                        ? (_isCreatingOrder ? 'Preparing payment…' : 'Retry')
-                        : 'Pay ${order.amountLabel} securely',
+                        ? (_isCreatingOrder ? tr('Preparing payment…') : tr('Retry'))
+                        : tr('Pay {0} securely', [order.amountLabel]),
                     style: DT.text(
                         size: 15,
                         weight: FontWeight.w800,
@@ -2567,8 +2566,8 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                 const SizedBox(width: 5),
                 Text(
                   kIsWeb
-                      ? 'Razorpay checkout works in the Android app only'
-                      : 'Secured by Razorpay · UPI, cards, net banking',
+                      ? tr('Razorpay checkout works in the Android app only')
+                      : tr('Secured by Razorpay · UPI, cards, net banking'),
                   style: DT.text(size: 11.5, color: DT.slate400),
                 ),
               ],
@@ -2578,7 +2577,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
               child: TextButton(
                 onPressed:
                 _busy ? null : () => Navigator.pop(context, true),
-                child: Text('Pay later',
+                child: Text(tr('Pay later'),
                     style: DT.text(
                         size: 14,
                         weight: FontWeight.w700,
@@ -2586,7 +2585,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
               ),
             ),
             Center(
-              child: Text('You can pay any time from My Companies.',
+              child: Text(tr('You can pay any time from My Companies.'),
                   style: DT.text(size: 11.5, color: DT.slate400)),
             ),
           ],
@@ -2611,7 +2610,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                         child: CircularProgressIndicator(
                             strokeWidth: 2.5, color: _kBrand)),
                     const SizedBox(width: 16),
-                    Text('Confirming payment…',
+                    Text(tr('Confirming payment…'),
                         style: DT.text(size: 14, weight: FontWeight.w700)),
                   ],
                 ),
@@ -2639,7 +2638,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
         Expanded(
           child: Padding(
             padding: const EdgeInsets.only(top: 5),
-            child: Text(text,
+            child: Text(tr(text),
                 style:
                 DT.text(size: 13, color: DT.onyx800, height: 1.4)),
           ),
@@ -2668,13 +2667,12 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                   size: 50, color: DT.emerald700),
             ),
             const SizedBox(height: 22),
-            Text('Payment successful',
+            Text(tr('Payment successful'),
                 style: DT.text(
                     size: 22, weight: FontWeight.w800, color: DT.onyx900)),
             const SizedBox(height: 8),
             Text(
-              '${company.name} is now registered on QNXMart B2B'
-                  '${_order != null && !_order!.alreadyPaid ? ' · ${_order!.amountLabel} paid' : ''}.',
+              tr('{0} is now registered on QNXMart B2B{1}.', [company.name, _order != null && !_order!.alreadyPaid ? ' · ${_order!.amountLabel} paid' : '']),
               textAlign: TextAlign.center,
               style: DT.text(size: 14, color: DT.onyx600, height: 1.5),
             ),
@@ -2687,7 +2685,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                   borderRadius: BorderRadius.circular(999),
                   onTap: () {
                     Clipboard.setData(ClipboardData(text: _paidPaymentId!));
-                    _snack('Payment reference copied');
+                    _snack(tr('Payment reference copied'));
                   },
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
@@ -2695,7 +2693,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('Ref: $_paidPaymentId',
+                        Text(tr('Ref: {0}', [_paidPaymentId]),
                             style: DT.text(
                                 size: 12.5,
                                 weight: FontWeight.w700,
@@ -2725,8 +2723,8 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                   Expanded(
                     child: Text(
                       company.email.isNotEmpty
-                          ? 'Admin panel login details were sent to ${company.email}.'
-                          : 'Admin panel login details were sent to your email.',
+                          ? tr('Admin panel login details were sent to {0}.', [company.email])
+                          : tr('Admin panel login details were sent to your email.'),
                       style: DT.text(
                           size: 12.5, color: _kBrandDark, height: 1.45),
                     ),
@@ -2759,7 +2757,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(DT.rMd)),
                   ),
-                  child: Text('Go to My Companies',
+                  child: Text(tr('Go to My Companies'),
                       style: DT.text(
                           size: 15,
                           weight: FontWeight.w700,
@@ -2784,7 +2782,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
     Widget initials() => Container(
       color: _kTint,
       alignment: Alignment.center,
-      child: Text(c.name.isEmpty ? '?' : c.name[0].toUpperCase(),
+      child: Text(tr(c.name.isEmpty ? '?' : c.name[0].toUpperCase()),
           style: DT.text(
               size: 22, weight: FontWeight.w800, color: _kBrand)),
     );
@@ -2828,11 +2826,11 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
 
     String hint;
     if (!enabled) {
-      hint = disabledHint ?? 'Select $label';
+      hint = disabledHint ?? tr('Select {0}', [label]);
     } else if (loading) {
-      hint = 'Loading ${label.toLowerCase()}s…';
+      hint = tr('Loading {0}s…', [label.toLowerCase()]);
     } else if (items.isEmpty) {
-      hint = 'No ${label.toLowerCase()}s available';
+      hint = tr('No {0}s available', [label.toLowerCase()]);
     } else {
       hint = 'Select ${label.toLowerCase()}';
     }
@@ -2873,7 +2871,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      selected?.name ?? hint,
+                      tr(selected?.name ?? hint),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(
@@ -2906,11 +2904,11 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                     size: 14, color: _kRed),
                 const SizedBox(width: 4),
                 Expanded(
-                    child: Text(error,
+                    child: Text(tr(error),
                         style: DT.text(size: 11.5, color: _kRed))),
                 GestureDetector(
                   onTap: onRetry,
-                  child: Text('Retry',
+                  child: Text(tr('Retry'),
                       style: DT.text(
                           size: 11.5,
                           weight: FontWeight.w700,
@@ -2922,7 +2920,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
         else if (missing)
           Padding(
             padding: const EdgeInsets.only(top: 5, left: 2),
-            child: Text('$label is required',
+            child: Text(tr('{0} is required', [label]),
                 style: DT.text(size: 11.5, color: _kRed)),
           ),
       ],
@@ -2966,7 +2964,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                       child: Row(
                         children: [
                           Expanded(
-                            child: Text('Select ${label.toLowerCase()}',
+                            child: Text(tr('Select {0}', [label.toLowerCase()]),
                                 style: DT.text(
                                     size: 16.5, weight: FontWeight.w800)),
                           ),
@@ -2984,7 +2982,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                           onChanged: (v) => setSheet(() => query = v),
                           style: DT.text(size: 13.5),
                           decoration: pxInputDecoration(
-                              hint: 'Search ${label.toLowerCase()}',
+                              hint: tr('Search {0}', [label.toLowerCase()]),
                               icon: Icons.search_rounded,
                               tinted: true),
                         ),
@@ -2993,7 +2991,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                     Expanded(
                       child: filtered.isEmpty
                           ? Center(
-                          child: Text('No match for "$query"',
+                          child: Text(tr('No match for "{0}"', [query]),
                               style: DT.text(
                                   size: 13, color: DT.slate500)))
                           : ListView.separated(
@@ -3004,7 +3002,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                           final item = filtered[i];
                           final sel = item.id == selectedId;
                           return ListTile(
-                            title: Text(item.name,
+                            title: Text(trData(item.name),
                                 style: DT.text(
                                     size: 14,
                                     weight: sel
@@ -3064,7 +3062,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'Tap on the map to move the pin',
+                    tr('Tap on the map to move the pin'),
                     style: DT.text(size: 11.5, color: DT.onyx700),
                   ),
                 ),
@@ -3103,7 +3101,7 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
                   ),
                 ),
                 PxLinkButton(
-                  label: 'Open in Google Maps',
+                  label: tr('Open in Google Maps'),
                   icon: Icons.open_in_new_rounded,
                   iconAfter: true,
                   onTap: () => _launchUrl(
@@ -3123,12 +3121,12 @@ class _CompanyCreateEditScreenState extends State<CompanyCreateEditScreen> {
   ];
 
   String? _required(String? v, String name) =>
-      (v == null || v.trim().isEmpty) ? '$name is required' : null;
+      (v == null || v.trim().isEmpty) ? tr('{0} is required', [name]) : null;
 
   String? _validatePhone(String? v, String name) {
-    if (v == null || v.trim().isEmpty) return '$name is required';
+    if (v == null || v.trim().isEmpty) return tr('{0} is required', [name]);
     if (!RegExp(r'^[6-9]\d{9}$').hasMatch(v.trim())) {
-      return 'Enter valid 10-digit number';
+      return tr('Enter valid 10-digit number');
     }
     return null;
   }
@@ -3275,10 +3273,10 @@ class _InteractiveMapViewState extends State<_InteractiveMapView> {
             ),
 
             // Attribution (required by OSM/Esri)
-            const RichAttributionWidget(
+            RichAttributionWidget(
               attributions: [
-                TextSourceAttribution('Esri World Imagery'),
-                TextSourceAttribution('OpenStreetMap contributors'),
+                TextSourceAttribution(tr('Esri World Imagery')),
+                TextSourceAttribution(tr('OpenStreetMap contributors')),
               ],
             ),
           ],
@@ -3362,13 +3360,13 @@ Future<ImageSource?> _pickMediaSource(BuildContext context,
                 children: [
                   Icon(icon, color: _kBrand, size: 28),
                   const SizedBox(height: 6),
-                  Text(label,
+                  Text(tr(label),
                       style: DT.text(
                           size: 13.5,
                           weight: FontWeight.w700,
                           color: DT.onyx900)),
                   const SizedBox(height: 2),
-                  Text(hint,
+                  Text(tr(hint),
                       textAlign: TextAlign.center,
                       style: DT.text(size: 11, color: DT.slate500)),
                 ],
@@ -3397,7 +3395,7 @@ Future<ImageSource?> _pickMediaSource(BuildContext context,
                   borderRadius: BorderRadius.circular(2)),
             ),
             const SizedBox(height: 14),
-            Text(video ? 'Add a video' : 'Add photos',
+            Text(video ? tr('Add a video') : tr('Add photos'),
                 style: DT.text(size: 16, weight: FontWeight.w800)),
             const SizedBox(height: 14),
             Row(
@@ -3407,8 +3405,8 @@ Future<ImageSource?> _pickMediaSource(BuildContext context,
                     video
                         ? Icons.videocam_outlined
                         : Icons.photo_camera_outlined,
-                    'Camera',
-                    video ? 'Record now' : 'Take a photo',
+                    tr('Camera'),
+                    video ? tr('Record now') : tr('Take a photo'),
                     ImageSource.camera),
                 const SizedBox(width: 12),
                 tile(
@@ -3416,8 +3414,8 @@ Future<ImageSource?> _pickMediaSource(BuildContext context,
                     video
                         ? Icons.video_library_outlined
                         : Icons.photo_library_outlined,
-                    video ? 'Upload video' : 'Upload photo',
-                    'From gallery',
+                    video ? tr('Upload video') : tr('Upload photo'),
+                    tr('From gallery'),
                     ImageSource.gallery),
               ],
             ),

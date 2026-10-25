@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class ProductEnquiryRequest {
   final String product;         // Product ID (required)
@@ -144,7 +145,7 @@ class ProductEnquiryResponse {
   /// User-friendly message
   String get displayMessage {
     if (isSuccess) {
-      return message ?? 'Enquiry submitted successfully';
+      return message ?? tr('Enquiry submitted successfully');
     }
 
     if (errors != null && errors!.isNotEmpty) {
@@ -156,7 +157,7 @@ class ProductEnquiryResponse {
       return firstError.toString();
     }
 
-    return message ?? error ?? 'Something went wrong';
+    return message ?? error ?? tr('Something went wrong');
   }
 
   /// All field errors as flat list

@@ -16,6 +16,7 @@ import '../widgets/catalog_widgets.dart';
 import '../widgets/company_ui.dart';
 import '../widgets/product_ui.dart';
 import 'subcategory_screens.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -102,16 +103,16 @@ class _CategoryManageScreenState extends State<CategoryManageScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
-              child: Text(c.name, style: DT.text(size: 16, weight: FontWeight.w800)),
+              child: Text(trData(c.name), style: DT.text(size: 16, weight: FontWeight.w800)),
             ),
             ListTile(
               leading: const Icon(Icons.edit_outlined, color: _kBrand),
-              title: Text('Edit category', style: DT.text(size: 14, weight: FontWeight.w600)),
+              title: Text(tr('Edit category'), style: DT.text(size: 14, weight: FontWeight.w600)),
               onTap: () => Navigator.pop(ctx, 'edit'),
             ),
             ListTile(
               leading: const Icon(Icons.account_tree_outlined, color: _kBrand),
-              title: Text('Subcategories', style: DT.text(size: 14, weight: FontWeight.w600)),
+              title: Text(tr('Subcategories'), style: DT.text(size: 14, weight: FontWeight.w600)),
               onTap: () => Navigator.pop(ctx, 'subs'),
             ),
             const SizedBox(height: 8),
@@ -154,7 +155,7 @@ class _CategoryManageScreenState extends State<CategoryManageScreen> {
         backgroundColor: DT.background,
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(65), // Fixed: Increased height to 65 to prevent 1px overflow
-          child: CompanyTopBar(title: 'Categories', subtitle: widget.companyName),
+          child: CompanyTopBar(title: tr('Categories'), subtitle: tr(widget.companyName)),
         ),
         floatingActionButton: _items.isEmpty
             ? null
@@ -163,7 +164,7 @@ class _CategoryManageScreenState extends State<CategoryManageScreen> {
           backgroundColor: _kBrand,
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add_rounded),
-          label: Text('Add category',
+          label: Text(tr('Add category'),
               style: DT.text(size: 13.5, weight: FontWeight.w700, color: Colors.white)),
         ),
         body: CatalogManageList<CatalogCategory>(
@@ -171,8 +172,8 @@ class _CategoryManageScreenState extends State<CategoryManageScreen> {
           error: _error,
           items: _items,
           emptyIcon: Icons.category_outlined,
-          emptyTitle: 'No categories yet',
-          emptyMessage: 'Categories group your products, e.g. Batteries, Inverters, Solar.',
+          emptyTitle: tr('No categories yet'),
+          emptyMessage: tr('Categories group your products, e.g. Batteries, Inverters, Solar.'),
           onRefresh: _load,
           onAdd: () => _openForm(),
           onEdit: _openActions,
@@ -290,7 +291,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
           _selectedCompanyId = widget.existing!.companyId;
         }
       } else {
-        _companiesError = res.message ?? 'Could not load your companies';
+        _companiesError = res.message ?? tr('Could not load your companies');
       }
     });
   }
@@ -327,7 +328,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
 
     final companyId = _effectiveCompanyId;
     if (companyId == null) {
-      showCompanySnack(context, 'Please select a company', error: true);
+      showCompanySnack(context, tr('Please select a company'), error: true);
       return;
     }
 
@@ -378,9 +379,9 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
             children: [
               _infoCard(
                 icon: Icons.category_outlined,
-                title: _isEdit ? 'Edit category' : 'New category',
+                title: _isEdit ? tr('Edit category') : tr('New category'),
                 subtitle:
-                'Categories group your products, e.g. Batteries, Inverters',
+                tr('Categories group your products, e.g. Batteries, Inverters'),
               ),
 
               // ── Company section: only when opened from the Drawer ──
@@ -388,8 +389,8 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                 const SizedBox(height: 16),
                 _sectionCard(
                   icon: Icons.business_outlined,
-                  title: 'Company',
-                  subtitle: 'Category will belong to this company',
+                  title: tr('Company'),
+                  subtitle: tr('Category will belong to this company'),
                   children: [_companyDropdown()],
                 ),
               ],
@@ -397,30 +398,30 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
               const SizedBox(height: 16),
               _sectionCard(
                 icon: Icons.info_outline,
-                title: 'Category information',
-                subtitle: 'Name and a short description',
+                title: tr('Category information'),
+                subtitle: tr('Name and a short description'),
                 children: [
-                  PxLabel('Category name', required: true),
+                  PxLabel(tr('Category name'), required: true),
                   TextFormField(
                     controller: _name,
                     textCapitalization: TextCapitalization.words,
                     style: DT.text(
                         size: 14, weight: FontWeight.w600, color: DT.onyx900),
                     decoration: pxInputDecoration(
-                      hint: 'e.g. Batteries',
+                      hint: tr('e.g. Batteries'),
                       icon: Icons.category_outlined,
                       iconColor: _brand,
                     ),
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) {
-                        return 'Category name is required';
+                        return tr('Category name is required');
                       }
-                      if (v.trim().length < 2) return 'Minimum 2 characters';
+                      if (v.trim().length < 2) return tr('Minimum 2 characters');
                       return null;
                     },
                   ),
                   const SizedBox(height: 14),
-                  PxLabel('Description', optional: true),
+                  PxLabel(tr('Description'), optional: true),
                   TextFormField(
                     controller: _desc,
                     maxLines: 3,
@@ -429,7 +430,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                     style: DT.text(
                         size: 14, weight: FontWeight.w500, color: DT.onyx900),
                     decoration: pxInputDecoration(
-                      hint: 'Enter a short description (optional)',
+                      hint: tr('Enter a short description (optional)'),
                       icon: Icons.notes_outlined,
                       iconColor: _brand,
                       tinted: true,
@@ -440,24 +441,24 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
               const SizedBox(height: 16),
               _sectionCard(
                 icon: Icons.store_mall_directory_outlined,
-                title: 'Branch',
-                subtitle: 'Optional. Leave empty to use company-wide',
+                title: tr('Branch'),
+                subtitle: tr('Optional. Leave empty to use company-wide'),
                 children: [
                   CatalogPickerField<CatalogBranch>(
-                    label: 'Assign to branch',
+                    label: tr('Assign to branch'),
                     icon: Icons.store_mall_directory_outlined,
                     items: _branches,
                     selected: _branch,
                     loading: _loadingBranches,
                     error: _branchError,
                     enabled: _effectiveCompanyId != null,
-                    disabledHint: 'Select a company first',
+                    disabledHint: tr('Select a company first'),
                     onRetry: _loadBranches,
                     onChanged: (b) => setState(() => _branch = b),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Leave empty to use this category for the whole company.',
+                    tr('Leave empty to use this category for the whole company.'),
                     style: DT.text(size: 11.5, color: DT.slate500),
                   ),
                 ],
@@ -491,7 +492,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    tooltip: 'Back',
+                    tooltip: tr('Back'),
                     onPressed: () => Navigator.maybePop(context),
                     icon: const Icon(Icons.arrow_back_rounded,
                         color: Colors.white, size: 24),
@@ -503,7 +504,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _isEdit ? 'Edit category' : 'Add category',
+                          _isEdit ? tr('Edit category') : tr('Add category'),
                           style: DT.text(
                               size: 18,
                               weight: FontWeight.w700,
@@ -512,7 +513,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                         ),
                         Text(
                           _effectiveCompanyName.isEmpty
-                              ? 'Manage category details'
+                              ? tr('Manage category details')
                               : _effectiveCompanyName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -544,14 +545,14 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
           border: Border.all(color: DT.slate200),
         ),
         child: Row(
-          children: const [
+          children: [
             SizedBox(
               height: 18,
               width: 18,
               child: CircularProgressIndicator(strokeWidth: 2, color: _brand),
             ),
             SizedBox(width: 10),
-            Text('Loading companies…'),
+            Text(tr('Loading companies…')),
           ],
         ),
       );
@@ -571,13 +572,13 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                _companiesError!,
+                tr(_companiesError!),
                 style: DT.text(size: 12, color: _kRed),
               ),
             ),
             TextButton(
               onPressed: _loadCompanies,
-              child: Text('Retry',
+              child: Text(tr('Retry'),
                   style: DT.text(
                       size: 12,
                       weight: FontWeight.w700,
@@ -602,7 +603,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'No companies found. Please create a company first.',
+                tr('No companies found. Please create a company first.'),
                 style: DT.text(size: 12, weight: FontWeight.w600, color: _kOrangeDark),
               ),
             ),
@@ -617,16 +618,16 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
       icon: const Icon(Icons.expand_more, color: DT.slate500),
       style: DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
       decoration: pxInputDecoration(
-        hint: 'Select company',
+        hint: tr('Select company'),
         icon: Icons.business_outlined,
         iconColor: _brand,
       ),
-      hint: Text('Select company',
+      hint: Text(tr('Select company'),
           style: DT.text(size: 13.5, color: DT.slate400)),
       items: _companies.map((c) {
         return DropdownMenuItem<int>(
           value: c.id,
-          child: Text(c.name,
+          child: Text(trData(c.name),
               overflow: TextOverflow.ellipsis,
               style: DT.text(
                   size: 14, weight: FontWeight.w600, color: DT.onyx900)),
@@ -640,7 +641,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
         });
         _loadBranches();
       },
-      validator: (v) => v == null ? 'Company is required' : null,
+      validator: (v) => v == null ? tr('Company is required') : null,
     );
   }
 
@@ -671,13 +672,13 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
+                Text(tr(title),
                     style: DT.text(
                         size: 14,
                         weight: FontWeight.w800,
                         color: DT.onyx900)),
                 const SizedBox(height: 2),
-                Text(subtitle,
+                Text(tr(subtitle),
                     style:
                     DT.text(size: 11.5, color: DT.slate500, height: 1.4)),
               ],
@@ -727,14 +728,14 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title,
+                      Text(tr(title),
                           style: DT.text(
                               size: 14,
                               weight: FontWeight.w700,
                               color: DT.onyx900,
                               height: 1.2)),
                       const SizedBox(height: 2),
-                      Text(subtitle,
+                      Text(tr(subtitle),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(size: 11.5, color: DT.slate500)),
@@ -798,7 +799,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                     const Icon(Icons.check_rounded, size: 20),
                     const SizedBox(width: 8),
                     Text(
-                      _isEdit ? 'Save changes' : 'Add category',
+                      _isEdit ? tr('Save changes') : tr('Add category'),
                       style: DT.text(
                           size: 15,
                           weight: FontWeight.w700,

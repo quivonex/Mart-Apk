@@ -1,3 +1,4 @@
+import 'package:qnx_mart/l10n/app_language.dart';
 class LoanEnquiryRequest {
   final String name;
   final String mobile;
@@ -74,8 +75,8 @@ class LoanEnquiryResponse {
 
   String get displayMessage {
     if (isSuccess) {
-      return message ?? 'Enquiry submitted successfully!';
+      return message ?? tr('Enquiry submitted successfully!');
     }
-    return message ?? error ?? 'Something went wrong';
+    return message ?? error ?? tr('Something went wrong');
   }
 }

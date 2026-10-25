@@ -19,6 +19,7 @@ import '../services/property_enquiry_service.dart';
 import '../utils/login_gate.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'customer_subscription_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -73,7 +74,7 @@ Future<bool> showScheduleVisitSheet(
       String? location,
     }) async {
   // The enquiry API needs a logged-in user.
-  if (!await ensureLoggedIn(context, reason: 'schedule a site visit')) return false;
+  if (!await ensureLoggedIn(context, reason: tr('schedule a site visit'))) return false;
   if (!context.mounted) return false;
   final r = await showModalBottomSheet<bool>(
     context: context,
@@ -165,7 +166,7 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
   }
 
   String _longDate(DateTime d) =>
-      '${_weekdays[d.weekday - 1]}, ${d.day} ${_months[d.month - 1]} ${d.year}';
+      '${tr(_weekdays[d.weekday - 1])}, ${d.day} ${tr(_months[d.month - 1])} ${d.year}';
 
   String _slotLabel(int h) => _slots.firstWhere((s) => s.$1 == h).$2;
 
@@ -176,7 +177,7 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
       initialDate: _date ?? _days.first,
       firstDate: _days.first,
       lastDate: DateTime(now.year, now.month + 3, now.day),
-      helpText: 'Choose visit date',
+      helpText: tr('Choose visit date'),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
           colorScheme: Theme.of(ctx).colorScheme.copyWith(
@@ -203,19 +204,19 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
     final formOk = _formKey.currentState!.validate();
     if (_date == null || _hour == null || !formOk) {
       setState(() => _error = _date == null
-          ? 'Choose a visit date'
+          ? tr('Choose a visit date')
           : _hour == null
-          ? 'Choose a time slot'
-          : 'Please fix the highlighted fields');
+          ? tr('Choose a time slot')
+          : tr('Please fix the highlighted fields'));
       return;
     }
 
     final lines = <String>[
       'Site visit request',
-      'Preferred date: ${_longDate(_date!)}',
-      'Preferred time: ${_slotLabel(_hour!)}',
-      'Visitors: $_visitors',
-      if (_note.text.trim().isNotEmpty) 'Note: ${_note.text.trim()}',
+      tr('Preferred date: {0}', [_longDate(_date!)]),
+      tr('Preferred time: {0}', [_slotLabel(_hour!)]),
+      tr('Visitors: {0}', [_visitors]),
+      if (_note.text.trim().isNotEmpty) tr('Note: {0}', [_note.text.trim()]),
     ];
 
     setState(() => _sending = true);
@@ -295,18 +296,14 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Schedule a site visit',
+                    Text(tr('Schedule a site visit'),
                         style: DT.text(
                             size: 16.5,
                             weight: FontWeight.w800,
                             color: Colors.white)),
                     const SizedBox(height: 2),
                     Text(
-                      [
-                        widget.propertyTitle,
-                        if ((widget.location ?? '').trim().isNotEmpty)
-                          widget.location!.trim(),
-                      ].join(' · '),
+                      tr([widget.propertyTitle, if ((widget.location ?? '').trim().isNotEmpty) widget.location!.trim()].join(' · ')),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(size: 12, color: const Color(0xD9FFFFFF)),
@@ -343,7 +340,7 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
               children: [
                 _block(
                   icon: Icons.calendar_month_rounded,
-                  title: 'Pick a date',
+                  title: tr('Pick a date'),
                   trailing: TextButton.icon(
                     onPressed: _pickOtherDate,
                     style: TextButton.styleFrom(
@@ -353,7 +350,7 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     icon: const Icon(Icons.edit_calendar_rounded, size: 15),
-                    label: Text('Other date',
+                    label: Text(tr('Other date'),
                         style: DT.text(
                             size: 12, weight: FontWeight.w700, color: _SV.brand)),
                   ),
@@ -362,28 +359,28 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
                 const SizedBox(height: 12),
                 _block(
                   icon: Icons.schedule_rounded,
-                  title: 'Pick a time',
+                  title: tr('Pick a time'),
                   child: _timeGrid(),
                 ),
                 const SizedBox(height: 12),
                 _block(
                   icon: Icons.person_outline_rounded,
-                  title: 'Your details',
+                  title: tr('Your details'),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _label('Full name', required: true),
+                      _label(tr('Full name'), required: true),
                       TextFormField(
                         controller: _name,
                         textCapitalization: TextCapitalization.words,
                         style: _inputStyle,
-                        decoration: _input('Your name', Icons.badge_outlined),
+                        decoration: _input(tr('Your name'), Icons.badge_outlined),
                         validator: (v) => (v ?? '').trim().length < 2
-                            ? 'Enter your name'
+                            ? tr('Enter your name')
                             : null,
                       ),
                       const SizedBox(height: 12),
-                      _label('Mobile number', required: true),
+                      _label(tr('Mobile number'), required: true),
                       TextFormField(
                         controller: _mobile,
                         keyboardType: TextInputType.phone,
@@ -393,18 +390,18 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
                         ],
                         style: _inputStyle,
                         decoration:
-                        _input('10-digit mobile', Icons.phone_iphone_rounded),
+                        _input(tr('10-digit mobile'), Icons.phone_iphone_rounded),
                         validator: (v) {
                           final t = (v ?? '').trim();
-                          if (t.length != 10) return 'Enter a 10-digit mobile number';
+                          if (t.length != 10) return tr('Enter a 10-digit mobile number');
                           if (!RegExp(r'^[6-9]').hasMatch(t)) {
-                            return 'Enter a valid Indian mobile number';
+                            return tr('Enter a valid Indian mobile number');
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 12),
-                      _label('Email', required: true),
+                      _label(tr('Email'), required: true),
                       TextFormField(
                         controller: _email,
                         keyboardType: TextInputType.emailAddress,
@@ -413,9 +410,9 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
                         _input('you@example.com', Icons.alternate_email_rounded),
                         validator: (v) {
                           final t = (v ?? '').trim();
-                          if (t.isEmpty) return 'Enter your email';
+                          if (t.isEmpty) return tr('Enter your email');
                           if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(t)) {
-                            return 'Enter a valid email';
+                            return tr('Enter a valid email');
                           }
                           return null;
                         },
@@ -423,7 +420,7 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
                       const SizedBox(height: 14),
                       _visitorsRow(),
                       const SizedBox(height: 12),
-                      _label('Note for the agent'),
+                      _label(tr('Note for the agent')),
                       TextFormField(
                         controller: _note,
                         maxLines: 3,
@@ -431,7 +428,7 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
                         textCapitalization: TextCapitalization.sentences,
                         style: _inputStyle,
                         decoration: _input(
-                            'e.g. Interested in 2 BHK, east facing', null),
+                            tr('e.g. Interested in 2 BHK, east facing'), null),
                       ),
                     ],
                   ),
@@ -497,7 +494,7 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(_isToday(d) ? 'Today' : _weekdays[d.weekday - 1],
+                  Text(_isToday(d) ? tr('Today') : tr(_weekdays[d.weekday - 1]),
                       style: DT.text(
                           size: 10.5,
                           weight: FontWeight.w600,
@@ -508,7 +505,7 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
                           size: 19,
                           weight: FontWeight.w800,
                           color: sel ? Colors.white : _SV.ink)),
-                  Text(_months[d.month - 1],
+                  Text(tr(_months[d.month - 1]),
                       style: DT.text(
                           size: 10,
                           weight: FontWeight.w600,
@@ -560,7 +557,7 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
             width: sel ? 1.5 : 1,
           ),
         ),
-        child: Text(label,
+        child: Text(tr(label),
             style: DT.text(
               size: 12,
               weight: FontWeight.w700,
@@ -595,7 +592,7 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
         const Icon(Icons.groups_outlined, size: 18, color: _SV.muted),
         const SizedBox(width: 8),
         Expanded(
-          child: Text('Number of visitors',
+          child: Text(tr('Number of visitors'),
               style: DT.text(
                   size: 12.5, weight: FontWeight.w600, color: _SV.body)),
         ),
@@ -631,23 +628,23 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
               TextSpan(
                 style: DT.text(size: 12.5, color: const Color(0xFF7C2D12)),
                 children: [
-                  const TextSpan(text: 'Visit on '),
+                  TextSpan(text: tr('Visit on ')),
                   TextSpan(
-                      text: _longDate(_date!),
+                      text: tr(_longDate(_date!)),
                       style: DT.text(
                           size: 12.5,
                           weight: FontWeight.w800,
                           color: const Color(0xFF7C2D12))),
                   const TextSpan(text: ' at '),
                   TextSpan(
-                      text: _slotLabel(_hour!),
+                      text: tr(_slotLabel(_hour!)),
                       style: DT.text(
                           size: 12.5,
                           weight: FontWeight.w800,
                           color: const Color(0xFF7C2D12))),
                   TextSpan(
                       text:
-                      ' · $_visitors visitor${_visitors == 1 ? '' : 's'}'),
+                      tr(' · {0} visitor{1}', [_visitors, _visitors == 1 ? '' : 's'])),
                 ],
               ),
             ),
@@ -698,7 +695,7 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
                       strokeWidth: 2, color: Colors.white))
                   : const Icon(Icons.send_rounded,
                   size: 18, color: Colors.white),
-              label: Text(_sending ? 'Sending…' : 'Request site visit',
+              label: Text(_sending ? tr('Sending…') : tr('Request site visit'),
                   style: DT.text(
                       size: 14.5,
                       weight: FontWeight.w700,
@@ -739,13 +736,12 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
                   color: _SV.green, size: 42),
             ),
             const SizedBox(height: 16),
-            Text('Visit request sent!',
+            Text(tr('Visit request sent!'),
                 style: DT.text(
                     size: 19, weight: FontWeight.w800, color: _SV.ink)),
             const SizedBox(height: 6),
             Text(
-              'We will call you on ${_mobile.text.trim()} to confirm your visit on '
-                  '${_longDate(_date!)} at ${_slotLabel(_hour!)}.',
+              tr('We will call you on {0} to confirm your visit on {2} at {2}.', [_mobile.text.trim(), _longDate(_date!), _slotLabel(_hour!)]),
               textAlign: TextAlign.center,
               style: DT.text(size: 13, color: _SV.muted, height: 1.45),
             ),
@@ -762,7 +758,7 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
                 ),
-                child: Text('Done',
+                child: Text(tr('Done'),
                     style: DT.text(
                         size: 14.5,
                         weight: FontWeight.w700,
@@ -809,7 +805,7 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(title,
+                child: Text(tr(title),
                     style: DT.text(
                         size: 13.5, weight: FontWeight.w800, color: _SV.ink)),
               ),
@@ -827,7 +823,7 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
     padding: const EdgeInsets.only(bottom: 6),
     child: Text.rich(
       TextSpan(
-        text: text,
+        text: tr(text),
         style: DT.text(size: 12, weight: FontWeight.w600, color: _SV.body),
         children: [
           if (required)
@@ -852,7 +848,7 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
         const Icon(Icons.error_outline_rounded, size: 18, color: _kRed),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(text,
+          child: Text(tr(text),
               style: DT.text(
                   size: 12.5, weight: FontWeight.w600, color: _kRed)),
         ),
@@ -869,7 +865,7 @@ class _ScheduleVisitSheetState extends State<_ScheduleVisitSheet> {
       borderSide: BorderSide(color: c, width: w),
     );
     return InputDecoration(
-      hintText: hint,
+      hintText: tr(hint),
       hintStyle: DT.text(size: 12.5, color: _SV.hint),
       prefixIcon: icon == null ? null : Icon(icon, size: 18, color: _SV.hint),
       isDense: true,

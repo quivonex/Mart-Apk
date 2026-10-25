@@ -41,6 +41,7 @@ import 'branch_screens.dart';
 import 'category_screens.dart';
 import 'subcategory_screens.dart';
 import 'unit_screens.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -79,7 +80,7 @@ class _CompanyOption implements CatalogOption {
   @override
   String get label => company.name;
   @override
-  String get sublabel => company.isPaid ? '' : 'Registration fee pending';
+  String get sublabel => company.isPaid ? '' : tr('Registration fee pending');
   @override
   bool get isActive => company.isActive;
 }
@@ -313,10 +314,10 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
       setState(() => _draftSavedAt = DateTime.now());
       if (!silent) {
         if (!mounted) return;
-        showCompanySnack(context, 'Draft saved on this device (photos are not included)');
+        showCompanySnack(context, tr('Draft saved on this device (photos are not included)'));
       }
     } catch (_) {
-      if (!silent && mounted) showCompanySnack(context, 'Could not save draft', error: true);
+      if (!silent && mounted) showCompanySnack(context, tr('Could not save draft'), error: true);
     }
   }
 
@@ -392,9 +393,9 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
   Future<void> _reset() async {
     final ok = await confirmAction(
       context,
-      title: 'Start over?',
-      message: 'This clears everything you entered and deletes the saved draft.',
-      confirmLabel: 'Reset form',
+      title: tr('Start over?'),
+      message: tr('This clears everything you entered and deletes the saved draft.'),
+      confirmLabel: tr('Reset form'),
       destructive: true,
     );
     if (!ok || !mounted) return;
@@ -528,8 +529,8 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
       _loadingCompanies = false;
       _companies = list;
       _companiesError = r.isSuccess
-          ? (list.isEmpty ? 'Create a company first.' : null)
-          : (r.message ?? 'Could not load companies');
+          ? (list.isEmpty ? tr('Create a company first.') : null)
+          : (r.message ?? tr('Could not load companies'));
     });
 
     final wantId = _take('company') ?? widget.companyId;
@@ -771,7 +772,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
       if (x == null) return;
       final bytes = await x.readAsBytes();
       if (bytes.lengthInBytes > _maxImageBytes) {
-        if (mounted) showCompanySnack(context, 'Image must be under 5MB', error: true);
+        if (mounted) showCompanySnack(context, tr('Image must be under 5MB'), error: true);
         return;
       }
       if (!mounted) return;
@@ -780,7 +781,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
         _thumbBytes = bytes;
       });
     } catch (e) {
-      if (mounted) showCompanySnack(context, 'Could not pick image: $e', error: true);
+      if (mounted) showCompanySnack(context, tr('Could not pick image: {0}', [e]), error: true);
     }
   }
 
@@ -795,7 +796,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
   Future<void> _pickImages() async {
     final room = _maxImages - _keptExistingImages - _images.length;
     if (room <= 0) {
-      showCompanySnack(context, 'You can add up to $_maxImages extra photos', error: true);
+      showCompanySnack(context, tr('You can add up to {0} extra photos', [_maxImages]), error: true);
       return;
     }
     final source = await _askSource();
@@ -827,18 +828,18 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
         _imageBytes.addAll(bytes);
       });
       if (skipped > 0) {
-        showCompanySnack(context, '$skipped photo(s) skipped (over 5MB)', error: true);
+        showCompanySnack(context, tr('{0} photo(s) skipped (over 5MB)', [skipped]), error: true);
       } else if (picked.length > room) {
-        showCompanySnack(context, 'Only $room more photo(s) added');
+        showCompanySnack(context, tr('Only {0} more photo(s) added', [room]));
       }
     } catch (e) {
-      if (mounted) showCompanySnack(context, 'Could not pick photos: $e', error: true);
+      if (mounted) showCompanySnack(context, tr('Could not pick photos: {0}', [e]), error: true);
     }
   }
 
   Future<void> _pickVideo() async {
     if (_videos.length >= _maxVideos) {
-      showCompanySnack(context, 'You can add up to $_maxVideos videos', error: true);
+      showCompanySnack(context, tr('You can add up to {0} videos', [_maxVideos]), error: true);
       return;
     }
     final source = await _askSource(video: true);
@@ -851,7 +852,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
       if (size > _maxVideoBytes) {
         if (mounted) {
           showCompanySnack(context,
-              'Video must be under ${_maxVideoBytes ~/ (1024 * 1024)}MB', error: true);
+              tr('Video must be under {0}MB', [_maxVideoBytes ~/ (1024 * 1024)]), error: true);
         }
         return;
       }
@@ -861,7 +862,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
         _videoSizes.add(size);
       });
     } catch (e) {
-      if (mounted) showCompanySnack(context, 'Could not add video: $e', error: true);
+      if (mounted) showCompanySnack(context, tr('Could not add video: {0}', [e]), error: true);
     }
   }
 
@@ -893,7 +894,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
 
   String _prettyDate(DateTime d) {
     const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return '${d.day} ${m[d.month - 1]} ${d.year}';
+    return '${d.day} ${tr(m[d.month - 1])} ${d.year}';
   }
 
   String _time(DateTime d) =>
@@ -921,18 +922,18 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
   bool _pos(TextEditingController c) => (double.tryParse(c.text.trim()) ?? 0) > 0;
 
   List<(String, bool)> get _requiredChecks => [
-    ('Company', _company != null),
-    ('Category', _category != null),
-    ('Subcategory', _subcategory != null),
-    ('Unit', _unit != null),
-    ('Product name', _name.text.trim().length >= 3),
-    ('Price', _pos(_price)),
-    ('Stock quantity', int.tryParse(_stock.text.trim()) != null),
-    ('Weight', _pos(_weight)),
-    ('Length', _pos(_length)),
-    ('Width', _pos(_width)),
-    ('Height', _pos(_height)),
-    ('Main photo', _thumb != null || _existingThumbUrl.isNotEmpty),
+    (tr('Company'), _company != null),
+    (tr('Category'), _category != null),
+    (tr('Subcategory'), _subcategory != null),
+    (tr('Unit'), _unit != null),
+    (tr('Product name'), _name.text.trim().length >= 3),
+    (tr('Price'), _pos(_price)),
+    (tr('Stock quantity'), int.tryParse(_stock.text.trim()) != null),
+    (tr('Weight'), _pos(_weight)),
+    (tr('Length'), _pos(_length)),
+    (tr('Width'), _pos(_width)),
+    (tr('Height'), _pos(_height)),
+    (tr('Main photo'), _thumb != null || _existingThumbUrl.isNotEmpty),
   ];
 
   List<bool> get _recommendedChecks => [
@@ -958,19 +959,19 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
   // =====================================================================
   String? _validateExtras() {
     final c = _company;
-    if (c == null) return 'Select a company';
+    if (c == null) return tr('Select a company');
     if (!_isEdit && !c.company.isPaid) {
-      return 'Pay the registration fee for ${c.label} before adding products';
+      return tr('Pay the registration fee for {0} before adding products', [c.label]);
     }
-    if (_category == null) return 'Select a category';
-    if (_subcategory == null) return 'Select a subcategory';
-    if (_unit == null) return 'Select a unit';
+    if (_category == null) return tr('Select a category');
+    if (_subcategory == null) return tr('Select a subcategory');
+    if (_unit == null) return tr('Select a unit');
     if (!_pos(_weight) || !_pos(_length) || !_pos(_width) || !_pos(_height)) {
-      return 'Enter packed weight, length, width and height';
+      return tr('Enter packed weight, length, width and height');
     }
-    if (_thumb == null && _existingThumbUrl.isEmpty) return 'Add a main product photo';
+    if (_thumb == null && _existingThumbUrl.isEmpty) return tr('Add a main product photo');
     if (_mfgDate != null && _expDate != null && !_expDate!.isAfter(_mfgDate!)) {
-      return 'Expiry date must be after the manufacturing date';
+      return tr('Expiry date must be after the manufacturing date');
     }
     return null;
   }
@@ -1045,14 +1046,14 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
     final extra = _validateExtras();
     if (!formOk || extra != null) {
       if (!mounted) return;
-      showCompanySnack(context, extra ?? 'Please fix the highlighted fields', error: true);
+      showCompanySnack(context, extra ?? tr('Please fix the highlighted fields'), error: true);
       return;
     }
 
     if (_isEdit) {
       final changes = _changedFields();
       if (changes.isEmpty && !_hasMediaChanges) {
-        showCompanySnack(context, 'Nothing has changed yet');
+        showCompanySnack(context, tr('Nothing has changed yet'));
         return;
       }
       setState(() => _saving = true);
@@ -1073,9 +1074,8 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
       }
       if (!mounted) return;
       await _doneDialog(
-        'Changes sent for review',
-        'The admin will review your changes to ${_name.text.trim()}. The live listing '
-            'stays as it is until they are approved.',
+        tr('Changes sent for review'),
+        tr('The admin will review your changes to {0}. The live listing stays as it is until they are approved.', [_name.text.trim()]),
       );
       if (mounted) Navigator.pop(context, true);
       return;
@@ -1103,9 +1103,8 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
     await _clearDraft();
     if (!mounted) return;
     await _doneDialog(
-      'Product submitted',
-      '${_name.text.trim()} was added and is waiting for admin approval. It will be '
-          'visible to buyers once approved.',
+      tr('Product submitted'),
+      tr('{0} was added and is waiting for admin approval. It will be visible to buyers once approved.', [_name.text.trim()]),
     );
     if (mounted) Navigator.pop(context, true);
   }
@@ -1121,9 +1120,9 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
         decoration: const BoxDecoration(color: DT.emerald50, shape: BoxShape.circle),
         child: const Icon(Icons.check_rounded, color: DT.emerald700, size: 32),
       ),
-      title: Text(title,
+      title: Text(tr(title),
           textAlign: TextAlign.center, style: DT.text(size: 18, weight: FontWeight.w800)),
-      content: Text(body,
+      content: Text(tr(body),
           textAlign: TextAlign.center,
           style: DT.text(size: 13, color: DT.onyx600, height: 1.5)),
       actions: [
@@ -1137,7 +1136,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
             ),
-            child: Text('Done',
+            child: Text(tr('Done'),
                 style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
           ),
         ),
@@ -1149,9 +1148,9 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
     if (_isEdit) {
       final leave = await confirmAction(
         context,
-        title: 'Discard changes?',
-        message: 'Your edits to this product will be lost.',
-        confirmLabel: 'Discard',
+        title: tr('Discard changes?'),
+        message: tr('Your edits to this product will be lost.'),
+        confirmLabel: tr('Discard'),
         destructive: true,
       );
       if (leave && mounted) Navigator.pop(context);
@@ -1239,7 +1238,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
               children: [
                 const SizedBox(width: 4),
                 IconButton(
-                  tooltip: 'Back',
+                  tooltip: tr('Back'),
                   onPressed: () => Navigator.maybePop(context),
                   icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 24),
                 ),
@@ -1252,7 +1251,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                       Row(
                         children: [
                           Flexible(
-                            child: Text(_isEdit ? 'Edit product' : 'Add product',
+                            child: Text(_isEdit ? tr('Edit product') : tr('Add product'),
                                 overflow: TextOverflow.ellipsis,
                                 style: DT.text(
                                     size: 18, weight: FontWeight.w700, color: Colors.white)),
@@ -1264,7 +1263,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                         ],
                       ),
                       Text(
-                        _isEdit ? widget.existing!.name : 'New B2B product listing',
+                        _isEdit ? widget.existing!.name : tr('New B2B product listing'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: 12, weight: FontWeight.w500, color: const Color(0xFFC9DBEE)),
@@ -1275,7 +1274,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                 if (!_isEdit)
                   TextButton(
                     onPressed: _saving ? null : _reset,
-                    child: Text('Reset',
+                    child: Text(tr('Reset'),
                         style: DT.text(size: 12.5, weight: FontWeight.w600, color: _kBrand)),
                   ),
                 const SizedBox(width: 8),
@@ -1288,7 +1287,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
   }
 
   Widget _savedBadge(DateTime at) => Tooltip(
-    message: 'Saved on this device at ${_time(at)}',
+    message: tr('Saved on this device at {0}', [_time(at)]),
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
@@ -1305,7 +1304,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
             decoration: const BoxDecoration(color: PX.emerald500, shape: BoxShape.circle),
           ),
           const SizedBox(width: 5),
-          Text('Auto-saved',
+          Text(tr('Auto-saved'),
               style: DT.text(size: 11, weight: FontWeight.w600, color: DT.emerald700)),
         ],
       ),
@@ -1314,9 +1313,8 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
 
   Widget _draftBanner() => _notice(
     icon: Icons.history_rounded,
-    text: 'Restored your draft from ${_prettyDate(_restoredDraftAt!)}, '
-        '${_time(_restoredDraftAt!)}. Photos need to be added again.',
-    action: 'Discard',
+    text: tr('Restored your draft from {0}, {1}. Photos need to be added again.', [_prettyDate(_restoredDraftAt!), _time(_restoredDraftAt!)]),
+    action: tr('Discard'),
     onAction: _reset,
   );
 
@@ -1325,8 +1323,8 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
     return _notice(
       icon: rejected ? Icons.error_outline_rounded : Icons.schedule_rounded,
       text: rejected
-          ? 'This product was rejected by the admin. Update the details and send them for review.'
-          : 'This product is still waiting for admin approval.',
+          ? tr('This product was rejected by the admin. Update the details and send them for review.')
+          : tr('This product is still waiting for admin approval.'),
       warn: true,
     );
   }
@@ -1351,7 +1349,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
           Icon(icon, size: 18, color: warn ? _kOrangeDark : _kBrand),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(text,
+            child: Text(tr(text),
                 style: DT.text(
                     size: 12, color: warn ? _kOrangeDark : _kBrandDark, height: 1.5)),
           ),
@@ -1360,7 +1358,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
               onTap: onAction,
               child: Padding(
                 padding: const EdgeInsets.only(left: 8),
-                child: Text(action,
+                child: Text(tr(action),
                     style: DT.text(size: 12, weight: FontWeight.w700, color: _kBrand)),
               ),
             ),
@@ -1396,12 +1394,12 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Listing completion',
+                Text(tr('Listing completion'),
                     style: DT.text(size: 12, weight: FontWeight.w700, color: DT.onyx900)),
                 Text(
                   left == 0
-                      ? 'All required details added'
-                      : '$left required field${left == 1 ? '' : 's'} left',
+                      ? tr('All required details added')
+                      : tr('{0} required field{1} left', [left, left == 1 ? '' : 's']),
                   style: DT.text(size: 11, color: DT.slate500),
                 ),
               ],
@@ -1428,12 +1426,12 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
   Widget _catalogSection() {
     final c = _company;
     return PxSection(
-      title: 'Company & catalog',
-      subtitle: 'Select the company and where this product is listed',
+      title: tr('Company & catalog'),
+      subtitle: tr('Select the company and where this product is listed'),
       child: Column(
         children: [
           CatalogPickerField<_CompanyOption>(
-            label: 'Company',
+            label: tr('Company'),
             icon: Icons.business_outlined,
             required: true,
             items: _companies,
@@ -1450,21 +1448,20 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
             const SizedBox(height: 8),
             _notice(
               icon: Icons.payments_outlined,
-              text: 'Registration fee is pending for ${c.label}. Pay it from My Companies '
-                  'to add products.',
+              text: tr('Registration fee is pending for {0}. Pay it from My Companies to add products.', [c.label]),
               warn: true,
             ),
           ],
           const SizedBox(height: 16),
           CatalogPickerField<CatalogBranch>(
-            label: 'Branch',
+            label: tr('Branch'),
             icon: Icons.store_mall_directory_outlined,
             items: _branches,
             selected: _branch,
             loading: _loadingBranches,
             error: _branchesError,
             enabled: c != null,
-            disabledHint: 'Select a company first',
+            disabledHint: tr('Select a company first'),
             onRetry: _loadBranches,
             onChanged: (b) {
               setState(() => _branch = b);
@@ -1480,7 +1477,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
           ),
           const SizedBox(height: 16),
           CatalogPickerField<CatalogCategory>(
-            label: 'Category',
+            label: tr('Category'),
             icon: Icons.category_outlined,
             required: true,
             items: _visibleCategories,
@@ -1488,7 +1485,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
             loading: _loadingCategories,
             error: _categoriesError,
             enabled: c != null,
-            disabledHint: 'Select a company first',
+            disabledHint: tr('Select a company first'),
             showRequiredError: _submitAttempted,
             onRetry: _loadCategories,
             onChanged: (v) {
@@ -1500,7 +1497,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
           ),
           const SizedBox(height: 16),
           CatalogPickerField<CatalogSubCategory>(
-            label: 'Subcategory',
+            label: tr('Subcategory'),
             icon: Icons.account_tree_outlined,
             required: true,
             items: _subcategories,
@@ -1508,7 +1505,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
             loading: _loadingSubcategories,
             error: _subcategoriesError,
             enabled: _category != null,
-            disabledHint: 'Select a category first',
+            disabledHint: tr('Select a category first'),
             showRequiredError: _submitAttempted,
             onRetry: _loadSubcategories,
             onChanged: (v) {
@@ -1520,14 +1517,14 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
           ),
           const SizedBox(height: 16),
           CatalogPickerField<CatalogBrand>(
-            label: 'Brand',
+            label: tr('Brand'),
             icon: Icons.verified_outlined,
             items: _brands,
             selected: _brand,
             loading: _loadingBrands,
             error: _brandsError,
             enabled: _subcategory != null,
-            disabledHint: 'Select a subcategory first',
+            disabledHint: tr('Select a subcategory first'),
             onRetry: _loadBrands,
             onChanged: (v) {
               setState(() => _brand = v);
@@ -1536,7 +1533,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
           ),
           const SizedBox(height: 16),
           CatalogPickerField<CatalogUnit>(
-            label: 'Unit',
+            label: tr('Unit'),
             icon: Icons.straighten_rounded,
             required: true,
             items: _units,
@@ -1560,29 +1557,29 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
   // ── 2. Product details ──────────────────────────────────
   Widget _detailsSection() {
     return PxSection(
-      title: 'Product details',
-      subtitle: 'Name buyers search for and a clear description',
+      title: tr('Product details'),
+      subtitle: tr('Name buyers search for and a clear description'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const PxLabel('Product name', required: true),
+          PxLabel(tr('Product name'), required: true),
           PxTextField(
             controller: _name,
-            hint: 'e.g. Exide 150Ah Inverter Battery',
+            hint: tr('e.g. Exide 150Ah Inverter Battery'),
             icon: Icons.inventory_2_outlined,
             capitalization: TextCapitalization.words,
             inputFormatters: [LengthLimitingTextInputFormatter(200)],
-            validator: (v) => (v ?? '').trim().length < 3 ? 'Enter the product name' : null,
+            validator: (v) => (v ?? '').trim().length < 3 ? tr('Enter the product name') : null,
           ),
           const SizedBox(height: 16),
           PxLabel(
-            'Description',
+            tr('Description'),
             trailing: Text('${_description.text.length}/2000',
                 style: DT.text(size: 11, color: DT.slate400)),
           ),
           PxTextField(
             controller: _description,
-            hint: 'Material, grade, ratings, what is in the box…',
+            hint: tr('Material, grade, ratings, what is in the box…'),
             maxLines: 4,
             tinted: true,
             capitalization: TextCapitalization.sentences,
@@ -1599,12 +1596,12 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
     final p = _priceValue;
     final unit = _unit?.shortName ?? _unit?.name;
     return PxSection(
-      title: 'Price & tax',
-      subtitle: 'Price, trade discount and GST',
+      title: tr('Price & tax'),
+      subtitle: tr('Price, trade discount and GST'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const PxLabel('Price (MRP / unit)', required: true),
+          PxLabel(tr('Price (MRP / unit)'), required: true),
           PxTextField(
             controller: _price,
             hint: '0.00',
@@ -1619,14 +1616,14 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
             inputFormatters: [DecimalInputFormatter()],
             validator: (v) {
               final d = double.tryParse((v ?? '').trim());
-              if (d == null || d <= 0) return 'Enter a price greater than 0';
+              if (d == null || d <= 0) return tr('Enter a price greater than 0');
               return null;
             },
           ),
           const SizedBox(height: 16),
-          const PxLabel('Discount'),
+          PxLabel(tr('Discount')),
           PxSegmented<String>(
-            options: const [('none', 'None'), ('flat', 'Flat ₹'), ('percent', 'Percent %')],
+            options: [('none', tr('None')), ('flat', tr('Flat ₹')), ('percent', tr('Percent %'))],
             value: _discountType,
             onChanged: (v) {
               setState(() {
@@ -1645,7 +1642,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                   child: PxTextField(
                     controller: _discountValue,
                     dense: true,
-                    hint: _discountType == 'flat' ? 'Discount amount' : 'Discount %',
+                    hint: _discountType == 'flat' ? tr('Discount amount') : tr('Discount %'),
                     prefix: Padding(
                       padding: const EdgeInsets.only(left: 12, right: 4),
                       child: Text(_discountType == 'flat' ? '₹' : '%',
@@ -1655,10 +1652,10 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                     inputFormatters: [DecimalInputFormatter()],
                     validator: (v) {
                       final d = double.tryParse((v ?? '').trim());
-                      if (d == null || d <= 0) return 'Enter the discount';
-                      if (_discountType == 'percent' && d >= 100) return 'Must be under 100%';
+                      if (d == null || d <= 0) return tr('Enter the discount');
+                      if (_discountType == 'percent' && d >= 100) return tr('Must be under 100%');
                       if (_discountType == 'flat' && p != null && d >= p) {
-                        return 'Must be less than the price';
+                        return tr('Must be less than the price');
                       }
                       return null;
                     },
@@ -1669,7 +1666,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 10),
                     child: Text(
-                      fp > 0 ? 'Net: ${formatRupees(fp)}' : 'Invalid',
+                      fp > 0 ? tr('Net: {0}', [formatRupees(fp)]) : tr('Invalid'),
                       style: DT.text(
                           size: 12,
                           weight: FontWeight.w600,
@@ -1680,8 +1677,8 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
             ),
           ],
           const SizedBox(height: 16),
-          PxLabel('GST slab',
-              trailing: Text('Standard GST rates', style: DT.text(size: 11, color: DT.slate500))),
+          PxLabel(tr('GST slab'),
+              trailing: Text(tr('Standard GST rates'), style: DT.text(size: 11, color: DT.slate500))),
           Row(
             children: [
               for (final (i, g) in const [0.0, 5.0, 12.0, 18.0, 28.0].indexed) ...[
@@ -1691,10 +1688,10 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          const PxLabel('HSN code'),
+          PxLabel(tr('HSN code')),
           PxTextField(
             controller: _hsn,
-            hint: 'HSN code (e.g. 8507)',
+            hint: tr('HSN code (e.g. 8507)'),
             icon: Icons.qr_code_2_rounded,
             keyboardType: TextInputType.number,
             inputFormatters: [
@@ -1704,7 +1701,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
             validator: (v) {
               final t = (v ?? '').trim();
               if (t.isEmpty) return null;
-              return t.length < 4 ? 'HSN is 4 to 8 digits' : null;
+              return t.length < 4 ? tr('HSN is 4 to 8 digits') : null;
             },
           ),
         ],
@@ -1753,7 +1750,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
           const SizedBox(height: 4),
           PxTextField(
             controller: c,
-            hint: label[0],
+            hint: tr(label[0]),
             dense: true,
             textAlign: TextAlign.center,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -1764,26 +1761,26 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
     );
 
     return PxSection(
-      title: 'Stock & shipping',
-      subtitle: 'Available quantity and packed size for shipping charges',
+      title: tr('Stock & shipping'),
+      subtitle: tr('Available quantity and packed size for shipping charges'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const PxLabel('Stock quantity', required: true),
+          PxLabel(tr('Stock quantity'), required: true),
           PxTextField(
             controller: _stock,
-            hint: 'Stock quantity',
+            hint: tr('Stock quantity'),
             icon: Icons.inventory_outlined,
             iconColor: _kBrand,
             bold: true,
-            suffixText: unit,
+            suffixText: trN(unit),
             keyboardType: TextInputType.number,
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
               LengthLimitingTextInputFormatter(7),
             ],
             validator: (v) =>
-            int.tryParse((v ?? '').trim()) == null ? 'Enter the stock quantity' : null,
+            int.tryParse((v ?? '').trim()) == null ? tr('Enter the stock quantity') : null,
           ),
           const SizedBox(height: 16),
           Container(
@@ -1798,10 +1795,10 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
               children: [
                 Row(
                   children: [
-                    Text('Packed weight & size',
+                    Text(tr('Packed weight & size'),
                         style: DT.text(size: 12, weight: FontWeight.w700, color: DT.onyx800)),
                     const Spacer(),
-                    Text('For shipping charges', style: DT.text(size: 11, color: DT.slate500)),
+                    Text(tr('For shipping charges'), style: DT.text(size: 11, color: DT.slate500)),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -1810,7 +1807,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                     Expanded(
                       child: PxTextField(
                         controller: _weight,
-                        hint: 'Weight *',
+                        hint: tr('Weight *'),
                         icon: Icons.scale_outlined,
                         dense: true,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -1833,11 +1830,11 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    dim('Length', _length),
+                    dim(tr('Length'), _length),
                     const SizedBox(width: 8),
-                    dim('Width', _width),
+                    dim(tr('Width'), _width),
                     const SizedBox(width: 8),
-                    dim('Height', _height),
+                    dim(tr('Height'), _height),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -1860,7 +1857,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
           if (dimsMissing)
             Padding(
               padding: const EdgeInsets.only(top: 6, left: 2),
-              child: Text('Enter weight, length, width and height',
+              child: Text(tr('Enter weight, length, width and height'),
                   style: DT.text(size: 11.5, color: _kRed)),
             ),
         ],
@@ -1894,17 +1891,17 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
             child: const Icon(Icons.photo_camera_outlined, color: _kBrand, size: 22),
           ),
           const SizedBox(height: 6),
-          Text('Main photo *',
+          Text(tr('Main photo *'),
               style: DT.text(size: 12, weight: FontWeight.w700, color: _kBrand)),
-          Text('Primary angle',
+          Text(tr('Primary angle'),
               style: DT.text(size: 10, color: _kBrand.withValues(alpha: 0.8))),
         ],
       );
     }
 
     return PxSection(
-      title: 'Photos',
-      subtitle: 'Clear photos sell better',
+      title: tr('Photos'),
+      subtitle: tr('Clear photos sell better'),
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
@@ -1954,7 +1951,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                                 color: DT.onyx900.withValues(alpha: 0.75),
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: Text('Change',
+                              child: Text(tr('Change'),
                                   style: DT.text(
                                       size: 10.5,
                                       weight: FontWeight.w700,
@@ -1986,8 +1983,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'The main photo is shown in search and listings. Use a clean shot on '
-                              'a plain white background. JPG or PNG up to 5MB.',
+                          tr('The main photo is shown in search and listings. Use a clean shot on a plain white background. JPG or PNG up to 5MB.'),
                           style: DT.text(size: 12, color: DT.onyx600, height: 1.55),
                         ),
                       ),
@@ -2000,10 +1996,10 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
           if (thumbMissing)
             Padding(
               padding: const EdgeInsets.only(top: 6),
-              child: Text('Main photo is required', style: DT.text(size: 11.5, color: _kRed)),
+              child: Text(tr('Main photo is required'), style: DT.text(size: 11.5, color: _kRed)),
             ),
           const SizedBox(height: 16),
-          const PxLabel('More photos'),
+          PxLabel(tr('More photos')),
           SizedBox(
             height: 80,
             child: ListView(
@@ -2049,7 +2045,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                             const Icon(Icons.add_photo_alternate_outlined,
                                 color: DT.slate500, size: 22),
                             const SizedBox(height: 3),
-                            Text('Add',
+                            Text(tr('Add'),
                                 style: DT.text(
                                     size: 10.5, weight: FontWeight.w600, color: DT.slate500)),
                           ],
@@ -2064,7 +2060,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Text(
-                  '${_deleteImageIds.length} photo(s) will be removed once the update is approved.',
+                  tr('{0} photo(s) will be removed once the update is approved.', [_deleteImageIds.length]),
                   style: DT.text(size: 11.5, color: _kRed)),
             ),
         ],
@@ -2105,7 +2101,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                     color: DT.emerald700,
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Text('New',
+                  child: Text(tr('New'),
                       style: DT.text(size: 9, weight: FontWeight.w700, color: Colors.white)),
                 ),
               ),
@@ -2136,8 +2132,8 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
   Widget _videosSection() {
     final full = _videos.length >= _maxVideos;
     return PxSection(
-      title: 'Videos',
-      subtitle: 'Optional · a short demo helps buyers decide',
+      title: tr('Videos'),
+      subtitle: tr('Optional · a short demo helps buyers decide'),
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
@@ -2183,11 +2179,11 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(_videos.isEmpty ? 'Add a video' : 'Add another video',
+                            Text(_videos.isEmpty ? tr('Add a video') : tr('Add another video'),
                                 style: DT.text(
                                     size: 13.5, weight: FontWeight.w700, color: _kBrand)),
                             const SizedBox(height: 2),
-                            Text('Record or upload · MP4 / MOV · up to 2 min, ${_maxVideoBytes ~/ (1024 * 1024)}MB',
+                            Text(tr('Record or upload · MP4 / MOV · up to 2 min, {0}MB', [_maxVideoBytes ~/ (1024 * 1024)]),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: DT.text(size: 11.5, color: DT.slate500)),
@@ -2202,7 +2198,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
           if (_isEdit && _videos.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: Text('New videos are added once the update is approved.',
+              child: Text(tr('New videos are added once the update is approved.'),
                   style: DT.text(size: 11.5, color: DT.slate500)),
             ),
         ],
@@ -2239,14 +2235,14 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name,
+                Text(tr(name),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: DT.text(size: 13, weight: FontWeight.w700, color: DT.onyx900)),
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    Text('${mb.toStringAsFixed(mb < 10 ? 1 : 0)} MB',
+                    Text(tr('{0} MB', [mb.toStringAsFixed(mb < 10 ? 1 : 0)]),
                         style: DT.text(size: 11.5, color: DT.slate500)),
                     if (_isEdit) ...[
                       const SizedBox(width: 6),
@@ -2256,7 +2252,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                           color: DT.emerald700,
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Text('New',
+                        child: Text(tr('New'),
                             style: DT.text(size: 9, weight: FontWeight.w700, color: Colors.white)),
                       ),
                     ],
@@ -2266,7 +2262,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
             ),
           ),
           IconButton(
-            tooltip: 'Remove video',
+            tooltip: tr('Remove video'),
             onPressed: () => setState(() {
               _videos.removeAt(i);
               _videoSizes.removeAt(i);
@@ -2281,14 +2277,14 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
   // ── 6. Specifications ───────────────────────────────────
   Widget _specsCard() {
     return PxSection(
-      title: 'Specifications',
+      title: tr('Specifications'),
       icon: Icons.tune_rounded,
       compact: true,
-      trailing: PxLinkButton(label: 'Add', icon: Icons.add_rounded, onTap: () => _editSpec()),
+      trailing: PxLinkButton(label: tr('Add'), icon: Icons.add_rounded, onTap: () => _editSpec()),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Optional. e.g. Capacity: 150Ah, Voltage: 12V, Warranty: 36 months',
+          Text(tr('Optional. e.g. Capacity: 150Ah, Voltage: 12V, Warranty: 36 months'),
               style: DT.text(size: 12, color: DT.slate500, height: 1.45)),
           if (_specs.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -2364,41 +2360,39 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
   Widget _variantsCard() {
     final existing = widget.existing?.variants ?? const <MyProductVariant>[];
     return PxSection(
-      title: 'Variants',
+      title: tr('Variants'),
       icon: Icons.commit_rounded,
       compact: true,
       trailing: _isEdit
           ? null
-          : PxLinkButton(label: 'Add', icon: Icons.add_rounded, onTap: () => _editVariant()),
+          : PxLinkButton(label: tr('Add'), icon: Icons.add_rounded, onTap: () => _editVariant()),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (_isEdit)
             Text(
               existing.isEmpty
-                  ? 'No variants. Variants can only be added when creating a product.'
-                  : 'Variants can\'t be changed through an update request yet.',
+                  ? tr('No variants. Variants can only be added when creating a product.')
+                  : tr('Variants can\'t be changed through an update request yet.'),
               style: DT.text(size: 12, color: DT.slate500, height: 1.45),
             )
           else if (_variants.isEmpty)
             Text(
-              'Optional. Add when the product comes in options with their own price or stock, '
-                  'e.g. 100Ah / 150Ah.',
+              tr('Optional. Add when the product comes in options with their own price or stock, e.g. 100Ah / 150Ah.'),
               style: DT.text(size: 12, color: DT.slate500, height: 1.45),
             ),
           for (final v in existing) ...[
             const SizedBox(height: 8),
             _variantRow(
-              title: v.title,
-              subtitle: '${formatRupees(v.price)} · ${v.stock} in stock · ${v.sku}',
+              title: tr(v.title),
+              subtitle: tr('{0} · {1} in stock · {2}', [formatRupees(v.price), v.stock, v.sku]),
             ),
           ],
           for (var i = 0; i < _variants.length; i++) ...[
             const SizedBox(height: 8),
             _variantRow(
-              title: _variants[i].title,
-              subtitle: '${formatRupees(_variants[i].price)} · ${_variants[i].stock} in stock'
-                  '${_variants[i].sku.isEmpty ? '' : ' · ${_variants[i].sku}'}',
+              title: tr(_variants[i].title),
+              subtitle: tr('{0} · {1} in stock{2}', [formatRupees(_variants[i].price), _variants[i].stock, _variants[i].sku.isEmpty ? '' : ' · ${_variants[i].sku}']),
               image: _variants[i].imageBytes,
               onEdit: () => _editVariant(i),
               onDelete: () {
@@ -2445,9 +2439,9 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: DT.text(size: 13, weight: FontWeight.w700)),
+                Text(tr(title), style: DT.text(size: 13, weight: FontWeight.w700)),
                 const SizedBox(height: 2),
-                Text(subtitle,
+                Text(tr(subtitle),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: DT.text(size: 11.5, color: DT.slate500)),
@@ -2534,7 +2528,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                       Icon(icon, size: 16, color: _kBrand),
                       const SizedBox(width: 6),
                       Expanded(
-                        child: Text(label,
+                        child: Text(tr(label),
                             style: DT.text(
                                 size: 11, weight: FontWeight.w600, color: DT.slate500)),
                       ),
@@ -2549,7 +2543,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text(value == null ? empty : _prettyDate(value),
+                  Text(tr(value == null ? empty : _prettyDate(value)),
                       style: DT.text(
                           size: 12,
                           weight: FontWeight.w700,
@@ -2563,23 +2557,23 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
     }
 
     return PxSection(
-      title: 'More details',
-      subtitle: 'Manufacturing dates and dealership',
+      title: tr('More details'),
+      subtitle: tr('Manufacturing dates and dealership'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              dateTile('Manufactured', Icons.event_outlined, _mfgDate, true, 'Select date'),
+              dateTile(tr('Manufactured'), Icons.event_outlined, _mfgDate, true, tr('Select date')),
               const SizedBox(width: 12),
-              dateTile('Expires', Icons.event_available_outlined, _expDate, false,
-                  'Does not expire'),
+              dateTile(tr('Expires'), Icons.event_available_outlined, _expDate, false,
+                  tr('Does not expire')),
             ],
           ),
           const SizedBox(height: 12),
           PxTextField(
             controller: _bestBefore,
-            hint: 'Best before / shelf life (e.g. 24 months)',
+            hint: tr('Best before / shelf life (e.g. 24 months)'),
             icon: Icons.timelapse_rounded,
             inputFormatters: [LengthLimitingTextInputFormatter(50)],
           ),
@@ -2597,10 +2591,10 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Franchise & distributorship',
+                      Text(tr('Franchise & distributorship'),
                           style: DT.text(size: 12, weight: FontWeight.w700, color: DT.onyx900)),
                       const SizedBox(height: 2),
-                      Text('Let buyers enquire about a franchise or dealership for this product',
+                      Text(tr('Let buyers enquire about a franchise or dealership for this product'),
                           style: DT.text(size: 11, color: DT.slate500, height: 1.35)),
                     ],
                   ),
@@ -2625,9 +2619,8 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
           _notice(
             icon: Icons.verified_user_outlined,
             text: _isEdit
-                ? 'Changes are reviewed by the admin before they go live. Buyers keep seeing '
-                'the current listing until then.'
-                : 'New products are reviewed by the admin before they are shown to buyers.',
+                ? tr('Changes are reviewed by the admin before they go live. Buyers keep seeing the current listing until then.')
+                : tr('New products are reviewed by the admin before they are shown to buyers.'),
           ),
         ],
       ),
@@ -2679,7 +2672,7 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                             child: CircularProgressIndicator(
                                 strokeWidth: 2.2, color: Colors.white)),
                         const SizedBox(width: 10),
-                        Text('Uploading…',
+                        Text(tr('Uploading…'),
                             style: DT.text(
                                 size: 14, weight: FontWeight.w700, color: Colors.white)),
                       ],
@@ -2691,8 +2684,8 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                         const SizedBox(width: 8),
                         Text(
                             _isEdit
-                                ? 'Submit changes for review'
-                                : 'Submit product for review',
+                                ? tr('Submit changes for review')
+                                : tr('Submit product for review'),
                             style: DT.text(
                                 size: 14, weight: FontWeight.w700, color: Colors.white)),
                       ],
@@ -2713,14 +2706,14 @@ class _ProductCreateScreenState extends State<ProductCreateScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       minimumSize: const Size(0, 32),
                     ),
-                    child: Text(_isEdit ? 'Cancel' : 'Save as draft',
+                    child: Text(_isEdit ? tr('Cancel') : tr('Save as draft'),
                         style: DT.text(size: 12, weight: FontWeight.w600, color: DT.slate500)),
                   ),
                   const Spacer(),
                   Text(
                     left == 0
-                        ? '${_completion}% complete · ready to submit'
-                        : '$left required field${left == 1 ? '' : 's'} left',
+                        ? tr('{0}% complete · ready to submit', [_completion])
+                        : tr('{0} required field{1} left', [left, left == 1 ? '' : 's']),
                     style: DT.text(
                         size: 11, color: left == 0 ? PX.emerald600 : DT.slate400),
                   ),
@@ -2831,7 +2824,7 @@ class _SpecSheetState extends State<_SpecSheet> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(widget.initial == null ? 'Add specification' : 'Edit specification',
+                Text(widget.initial == null ? tr('Add specification') : tr('Edit specification'),
                     style: DT.text(size: 17, weight: FontWeight.w800)),
                 const SizedBox(height: 12),
                 Wrap(
@@ -2840,7 +2833,7 @@ class _SpecSheetState extends State<_SpecSheet> {
                   children: [
                     for (final s in _suggest)
                       ActionChip(
-                        label: Text(s,
+                        label: Text(tr(s),
                             style: DT.text(size: 12, weight: FontWeight.w600, color: DT.onyx700)),
                         backgroundColor: DT.slate50,
                         side: const BorderSide(color: DT.slate200),
@@ -2850,21 +2843,21 @@ class _SpecSheetState extends State<_SpecSheet> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                const PxLabel('Name', required: true),
+                PxLabel(tr('Name'), required: true),
                 PxTextField(
                   controller: _key,
-                  hint: 'e.g. Capacity',
+                  hint: tr('e.g. Capacity'),
                   capitalization: TextCapitalization.words,
                   inputFormatters: [LengthLimitingTextInputFormatter(40)],
-                  validator: (v) => (v ?? '').trim().isEmpty ? 'Enter a name' : null,
+                  validator: (v) => (v ?? '').trim().isEmpty ? tr('Enter a name') : null,
                 ),
                 const SizedBox(height: 12),
-                const PxLabel('Value', required: true),
+                PxLabel(tr('Value'), required: true),
                 PxTextField(
                   controller: _value,
-                  hint: 'e.g. 150Ah',
+                  hint: tr('e.g. 150Ah'),
                   inputFormatters: [LengthLimitingTextInputFormatter(120)],
-                  validator: (v) => (v ?? '').trim().isEmpty ? 'Enter a value' : null,
+                  validator: (v) => (v ?? '').trim().isEmpty ? tr('Enter a value') : null,
                 ),
                 const SizedBox(height: 18),
                 SizedBox(
@@ -2884,7 +2877,7 @@ class _SpecSheetState extends State<_SpecSheet> {
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
                       ),
-                      child: Text('Save',
+                      child: Text(tr('Save'),
                           style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
                     ),
                   ),
@@ -2983,7 +2976,7 @@ class _VariantSheetState extends State<_VariantSheet> {
     if (!_formKey.currentState!.validate()) return;
     final attrs = _attrMap;
     if (attrs.isEmpty) {
-      showCompanySnack(context, 'Add at least one option, e.g. Capacity: 150Ah', error: true);
+      showCompanySnack(context, tr('Add at least one option, e.g. Capacity: 150Ah'), error: true);
       return;
     }
     Navigator.pop(
@@ -3021,10 +3014,10 @@ class _VariantSheetState extends State<_VariantSheet> {
                 ),
               ),
               const SizedBox(height: 16),
-              Text(widget.existing == null ? 'Add variant' : 'Edit variant',
+              Text(widget.existing == null ? tr('Add variant') : tr('Edit variant'),
                   style: DT.text(size: 17, weight: FontWeight.w800)),
               const SizedBox(height: 14),
-              const PxLabel('Options', required: true),
+              PxLabel(tr('Options'), required: true),
               for (var i = 0; i < _attrs.length; i++)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -3033,7 +3026,7 @@ class _VariantSheetState extends State<_VariantSheet> {
                       Expanded(
                         child: PxTextField(
                           controller: _attrs[i].$1,
-                          hint: 'Option (Capacity)',
+                          hint: tr('Option (Capacity)'),
                           dense: true,
                           capitalization: TextCapitalization.words,
                         ),
@@ -3042,7 +3035,7 @@ class _VariantSheetState extends State<_VariantSheet> {
                       Expanded(
                         child: PxTextField(
                           controller: _attrs[i].$2,
-                          hint: 'Value (150Ah)',
+                          hint: tr('Value (150Ah)'),
                           dense: true,
                         ),
                       ),
@@ -3062,7 +3055,7 @@ class _VariantSheetState extends State<_VariantSheet> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: PxLinkButton(
-                    label: 'Add option',
+                    label: tr('Add option'),
                     icon: Icons.add_rounded,
                     onTap: () => setState(
                             () => _attrs.add((TextEditingController(), TextEditingController()))),
@@ -3076,7 +3069,7 @@ class _VariantSheetState extends State<_VariantSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const PxLabel('Price', required: true),
+                        PxLabel(tr('Price'), required: true),
                         PxTextField(
                           controller: _price,
                           bold: true,
@@ -3090,7 +3083,7 @@ class _VariantSheetState extends State<_VariantSheet> {
                           inputFormatters: [DecimalInputFormatter()],
                           validator: (v) {
                             final d = double.tryParse((v ?? '').trim());
-                            return (d == null || d <= 0) ? 'Enter price' : null;
+                            return (d == null || d <= 0) ? tr('Enter price') : null;
                           },
                         ),
                       ],
@@ -3101,7 +3094,7 @@ class _VariantSheetState extends State<_VariantSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const PxLabel('Stock', required: true),
+                        PxLabel(tr('Stock'), required: true),
                         PxTextField(
                           controller: _stock,
                           bold: true,
@@ -3111,7 +3104,7 @@ class _VariantSheetState extends State<_VariantSheet> {
                             LengthLimitingTextInputFormatter(7),
                           ],
                           validator: (v) =>
-                          int.tryParse((v ?? '').trim()) == null ? 'Enter stock' : null,
+                          int.tryParse((v ?? '').trim()) == null ? tr('Enter stock') : null,
                         ),
                       ],
                     ),
@@ -3122,7 +3115,7 @@ class _VariantSheetState extends State<_VariantSheet> {
               const PxLabel('SKU', optional: true),
               PxTextField(
                 controller: _sku,
-                hint: 'Leave empty to auto-generate',
+                hint: tr('Leave empty to auto-generate'),
                 icon: Icons.tag_rounded,
                 inputFormatters: [LengthLimitingTextInputFormatter(90)],
               ),
@@ -3147,7 +3140,7 @@ class _VariantSheetState extends State<_VariantSheet> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text('Variant photo (optional)',
+                    child: Text(tr('Variant photo (optional)'),
                         style: DT.text(size: 12.5, color: DT.slate500)),
                   ),
                   if (_imageBytes != null)
@@ -3156,7 +3149,7 @@ class _VariantSheetState extends State<_VariantSheet> {
                         _image = null;
                         _imageBytes = null;
                       }),
-                      child: Text('Remove',
+                      child: Text(tr('Remove'),
                           style: DT.text(size: 12.5, weight: FontWeight.w700, color: _kRed)),
                     ),
                 ],
@@ -3179,7 +3172,7 @@ class _VariantSheetState extends State<_VariantSheet> {
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DT.rMd)),
                     ),
-                    child: Text(widget.existing == null ? 'Add variant' : 'Save variant',
+                    child: Text(widget.existing == null ? tr('Add variant') : tr('Save variant'),
                         style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
                   ),
                 ),
@@ -3210,10 +3203,10 @@ Future<ImageSource?> pickMediaSource(BuildContext context, {bool video = false})
                 children: [
                   Icon(icon, color: _kBrand, size: 28),
                   const SizedBox(height: 6),
-                  Text(label,
+                  Text(tr(label),
                       style: DT.text(size: 13.5, weight: FontWeight.w700, color: DT.onyx900)),
                   const SizedBox(height: 2),
-                  Text(hint,
+                  Text(tr(hint),
                       textAlign: TextAlign.center,
                       style: DT.text(size: 11, color: DT.slate500)),
                 ],
@@ -3241,16 +3234,16 @@ Future<ImageSource?> pickMediaSource(BuildContext context, {bool video = false})
               BoxDecoration(color: DT.slate300, borderRadius: BorderRadius.circular(2)),
             ),
             const SizedBox(height: 14),
-            Text(video ? 'Add a video' : 'Add photos',
+            Text(video ? tr('Add a video') : tr('Add photos'),
                 style: DT.text(size: 16, weight: FontWeight.w800)),
             const SizedBox(height: 14),
             Row(
               children: [
                 tile(ctx, video ? Icons.videocam_outlined : Icons.photo_camera_outlined,
-                    'Camera', video ? 'Record now' : 'Take a photo', ImageSource.camera),
+                    tr('Camera'), video ? tr('Record now') : tr('Take a photo'), ImageSource.camera),
                 const SizedBox(width: 12),
                 tile(ctx, video ? Icons.video_library_outlined : Icons.photo_library_outlined,
-                    video ? 'Upload video' : 'Upload photo', 'From gallery', ImageSource.gallery),
+                    video ? tr('Upload video') : tr('Upload photo'), tr('From gallery'), ImageSource.gallery),
               ],
             ),
           ],

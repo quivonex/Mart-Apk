@@ -6,6 +6,7 @@ import '../services/catalog_service.dart';
 import '../services/company_service.dart';
 import '../services/subcategory_service.dart';
 import '../widgets/product_ui.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -96,7 +97,7 @@ class _SubCategoryCreateEditScreenState
           _loadCategories(_companies.first.id);
         }
       } else {
-        _companiesError = res.message ?? 'Could not load your companies';
+        _companiesError = res.message ?? tr('Could not load your companies');
       }
     });
   }
@@ -130,7 +131,7 @@ class _SubCategoryCreateEditScreenState
         if (fallback.isSuccess) {
           _categories = fallback.data;
         } else {
-          _categoriesError = r.message ?? 'Could not load categories';
+          _categoriesError = r.message ?? tr('Could not load categories');
         }
       });
     }
@@ -140,11 +141,11 @@ class _SubCategoryCreateEditScreenState
     if (!_formKey.currentState!.validate()) return;
 
     if (_selectedCompanyId == null) {
-      _snack('Please select a company', isError: true);
+      _snack(tr('Please select a company'), isError: true);
       return;
     }
     if (_selectedCategoryId == null) {
-      _snack('Please select a category', isError: true);
+      _snack(tr('Please select a category'), isError: true);
       return;
     }
 
@@ -179,7 +180,7 @@ class _SubCategoryCreateEditScreenState
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(msg,
+          content: Text(tr(msg),
               style: DT.text(
                   size: 13, weight: FontWeight.w600, color: Colors.white)),
           backgroundColor: isError ? _kRed : const Color(0xFF10B981),
@@ -206,51 +207,51 @@ class _SubCategoryCreateEditScreenState
             children: [
               _infoCard(
                 icon: Icons.account_tree_outlined,
-                title: _isEdit ? 'Edit subcategory' : 'New subcategory',
+                title: _isEdit ? tr('Edit subcategory') : tr('New subcategory'),
                 subtitle:
-                'Subcategories live inside a category, e.g. Car Batteries',
+                tr('Subcategories live inside a category, e.g. Car Batteries'),
               ),
               const SizedBox(height: 16),
               _sectionCard(
                 icon: Icons.business_outlined,
-                title: 'Company',
-                subtitle: 'Subcategory will belong to a category of this company',
+                title: tr('Company'),
+                subtitle: tr('Subcategory will belong to a category of this company'),
                 children: [_companyDropdown()],
               ),
               const SizedBox(height: 16),
               _sectionCard(
                 icon: Icons.folder_outlined,
-                title: 'Parent category',
-                subtitle: 'Which category does it belong to?',
+                title: tr('Parent category'),
+                subtitle: tr('Which category does it belong to?'),
                 children: [_categoryDropdown()],
               ),
               const SizedBox(height: 16),
               _sectionCard(
                 icon: Icons.info_outline,
-                title: 'Subcategory information',
-                subtitle: 'Name and a short description',
+                title: tr('Subcategory information'),
+                subtitle: tr('Name and a short description'),
                 children: [
-                  PxLabel('Subcategory name', required: true),
+                  PxLabel(tr('Subcategory name'), required: true),
                   TextFormField(
                     controller: _nameCtrl,
                     textCapitalization: TextCapitalization.words,
                     style: DT.text(
                         size: 14, weight: FontWeight.w600, color: DT.onyx900),
                     decoration: pxInputDecoration(
-                      hint: 'e.g. Mobile Phones',
+                      hint: tr('e.g. Mobile Phones'),
                       icon: Icons.category_outlined,
                       iconColor: _brand,
                     ),
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) {
-                        return 'Name is required';
+                        return tr('Name is required');
                       }
-                      if (v.trim().length < 2) return 'Minimum 2 characters';
+                      if (v.trim().length < 2) return tr('Minimum 2 characters');
                       return null;
                     },
                   ),
                   const SizedBox(height: 14),
-                  PxLabel('Description', optional: true),
+                  PxLabel(tr('Description'), optional: true),
                   TextFormField(
                     controller: _descCtrl,
                     maxLines: 4,
@@ -259,7 +260,7 @@ class _SubCategoryCreateEditScreenState
                     style: DT.text(
                         size: 14, weight: FontWeight.w500, color: DT.onyx900),
                     decoration: pxInputDecoration(
-                      hint: 'Enter a short description (optional)',
+                      hint: tr('Enter a short description (optional)'),
                       icon: Icons.notes_outlined,
                       iconColor: _brand,
                       tinted: true,
@@ -295,7 +296,7 @@ class _SubCategoryCreateEditScreenState
               child: Row(
                 children: [
                   IconButton(
-                    tooltip: 'Back',
+                    tooltip: tr('Back'),
                     onPressed: () => Navigator.maybePop(context),
                     icon: const Icon(Icons.arrow_back_rounded,
                         color: Colors.white, size: 24),
@@ -307,7 +308,7 @@ class _SubCategoryCreateEditScreenState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _isEdit ? 'Edit subcategory' : 'Add subcategory',
+                          _isEdit ? tr('Edit subcategory') : tr('Add subcategory'),
                           style: DT.text(
                               size: 18,
                               weight: FontWeight.w700,
@@ -315,7 +316,7 @@ class _SubCategoryCreateEditScreenState
                               letterSpacing: -0.3),
                         ),
                         Text(
-                          'Group products inside a category',
+                          tr('Group products inside a category'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(
@@ -338,13 +339,13 @@ class _SubCategoryCreateEditScreenState
   // ── Company dropdown ──────────────────────────────────
   Widget _companyDropdown() {
     if (_isLoadingCompanies) {
-      return _loadingBox('Loading companies…');
+      return _loadingBox(tr('Loading companies…'));
     }
     if (_companiesError != null) {
       return _errorBox(_companiesError!, onRetry: _loadCompanies);
     }
     if (_companies.isEmpty) {
-      return _errorBox('No companies found. Please create a company first.');
+      return _errorBox(tr('No companies found. Please create a company first.'));
     }
 
     return DropdownButtonFormField<int>(
@@ -353,16 +354,16 @@ class _SubCategoryCreateEditScreenState
       icon: const Icon(Icons.expand_more, color: DT.slate500),
       style: DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
       decoration: pxInputDecoration(
-        hint: 'Select company',
+        hint: tr('Select company'),
         icon: Icons.business_outlined,
         iconColor: _brand,
       ),
-      hint: Text('Select company',
+      hint: Text(tr('Select company'),
           style: DT.text(size: 13.5, color: DT.slate400)),
       items: _companies.map((c) {
         return DropdownMenuItem<int>(
           value: c.id,
-          child: Text(c.name,
+          child: Text(trData(c.name),
               overflow: TextOverflow.ellipsis,
               style: DT.text(
                   size: 14, weight: FontWeight.w600, color: DT.onyx900)),
@@ -376,17 +377,17 @@ class _SubCategoryCreateEditScreenState
         });
         if (v != null) _loadCategories(v);
       },
-      validator: (v) => v == null ? 'Company is required' : null,
+      validator: (v) => v == null ? tr('Company is required') : null,
     );
   }
 
   // ── Category dropdown (depends on company) ────────────
   Widget _categoryDropdown() {
     if (_selectedCompanyId == null) {
-      return _hintBox('Select a company first');
+      return _hintBox(tr('Select a company first'));
     }
     if (_isLoadingCategories) {
-      return _loadingBox('Loading categories…');
+      return _loadingBox(tr('Loading categories…'));
     }
     if (_categoriesError != null) {
       return _errorBox(_categoriesError!,
@@ -394,7 +395,7 @@ class _SubCategoryCreateEditScreenState
     }
     if (_categories.isEmpty) {
       return _errorBox(
-          'No categories found for this company. Please create a category first.');
+          tr('No categories found for this company. Please create a category first.'));
     }
 
     return DropdownButtonFormField<int>(
@@ -403,23 +404,23 @@ class _SubCategoryCreateEditScreenState
       icon: const Icon(Icons.expand_more, color: DT.slate500),
       style: DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
       decoration: pxInputDecoration(
-        hint: 'Select category',
+        hint: tr('Select category'),
         icon: Icons.folder_outlined,
         iconColor: _brand,
       ),
-      hint: Text('Select category',
+      hint: Text(tr('Select category'),
           style: DT.text(size: 13.5, color: DT.slate400)),
       items: _categories.map((c) {
         return DropdownMenuItem<int>(
           value: c.id,
-          child: Text(c.name,
+          child: Text(trData(c.name),
               overflow: TextOverflow.ellipsis,
               style: DT.text(
                   size: 14, weight: FontWeight.w600, color: DT.onyx900)),
         );
       }).toList(),
       onChanged: (v) => setState(() => _selectedCategoryId = v),
-      validator: (v) => v == null ? 'Category is required' : null,
+      validator: (v) => v == null ? tr('Category is required') : null,
     );
   }
 
@@ -440,7 +441,7 @@ class _SubCategoryCreateEditScreenState
             child: CircularProgressIndicator(strokeWidth: 2, color: _brand),
           ),
           const SizedBox(width: 10),
-          Text(text, style: DT.text(size: 12, color: DT.slate500)),
+          Text(tr(text), style: DT.text(size: 12, color: DT.slate500)),
         ],
       ),
     );
@@ -459,12 +460,12 @@ class _SubCategoryCreateEditScreenState
           const Icon(Icons.error_outline, color: _kRed, size: 18),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(text, style: DT.text(size: 12, color: _kRed)),
+            child: Text(tr(text), style: DT.text(size: 12, color: _kRed)),
           ),
           if (onRetry != null)
             TextButton(
               onPressed: onRetry,
-              child: Text('Retry',
+              child: Text(tr('Retry'),
                   style: DT.text(
                       size: 12,
                       weight: FontWeight.w700,
@@ -488,7 +489,7 @@ class _SubCategoryCreateEditScreenState
           const Icon(Icons.info_outline, color: DT.slate400, size: 18),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(text, style: DT.text(size: 12, color: DT.slate500)),
+            child: Text(tr(text), style: DT.text(size: 12, color: DT.slate500)),
           ),
         ],
       ),
@@ -522,13 +523,13 @@ class _SubCategoryCreateEditScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
+                Text(tr(title),
                     style: DT.text(
                         size: 14,
                         weight: FontWeight.w800,
                         color: DT.onyx900)),
                 const SizedBox(height: 2),
-                Text(subtitle,
+                Text(tr(subtitle),
                     style:
                     DT.text(size: 11.5, color: DT.slate500, height: 1.4)),
               ],
@@ -578,14 +579,14 @@ class _SubCategoryCreateEditScreenState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title,
+                      Text(tr(title),
                           style: DT.text(
                               size: 14,
                               weight: FontWeight.w700,
                               color: DT.onyx900,
                               height: 1.2)),
                       const SizedBox(height: 2),
-                      Text(subtitle,
+                      Text(tr(subtitle),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(size: 11.5, color: DT.slate500)),
@@ -650,8 +651,8 @@ class _SubCategoryCreateEditScreenState
                     const SizedBox(width: 8),
                     Text(
                       _isEdit
-                          ? 'Update subcategory'
-                          : 'Create subcategory',
+                          ? tr('Update subcategory')
+                          : tr('Create subcategory'),
                       style: DT.text(
                           size: 15,
                           weight: FontWeight.w700,

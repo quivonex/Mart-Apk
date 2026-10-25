@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/order_model.dart';
 import 'api_urls.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class OrderService {
   static const String _contentType = 'application/json';
@@ -44,7 +45,7 @@ class OrderService {
       final String? accessToken = await _getAccessToken();
 
       if (accessToken == null || accessToken.isEmpty) {
-        throw Exception('Authentication required. Please login again.');
+        throw Exception(tr('Authentication required. Please login again.'));
       }
 
       final response = await http.post(
@@ -58,13 +59,13 @@ class OrderService {
       );
 
       if (response.statusCode == 401) {
-        throw Exception('Unauthenticated. Please login again.');
+        throw Exception(tr('Unauthenticated. Please login again.'));
       }
 
       if (response.statusCode >= 400) {
         // Show the backend's own message (e.g. "Shipment not found.").
         // Before, the inner catch swallowed it and showed "Server error: 404".
-        String msg = 'Server error: ${response.statusCode}';
+        String msg = tr('Server error: {0}', [response.statusCode]);
         try {
           final errorData = jsonDecode(response.body);
           if (errorData is Map) {
@@ -81,13 +82,13 @@ class OrderService {
       final OrderResponse orderResponse = OrderResponse.fromJson(jsonData);
 
       if (!orderResponse.success) {
-        throw Exception(orderResponse.message ?? 'Failed to load orders.');
+        throw Exception(orderResponse.message ?? tr('Failed to load orders.'));
       }
 
       return orderResponse;
     } catch (e) {
       if (e is Exception) rethrow;
-      throw Exception('Failed to load orders: ${e.toString()}');
+      throw Exception(tr('Failed to load orders: {0}', [e.toString()]));
     }
   }
 
@@ -97,7 +98,7 @@ class OrderService {
       final String? accessToken = await _getAccessToken();
 
       if (accessToken == null || accessToken.isEmpty) {
-        throw Exception('Authentication required. Please login again.');
+        throw Exception(tr('Authentication required. Please login again.'));
       }
 
       final response = await http.post(
@@ -111,13 +112,13 @@ class OrderService {
       );
 
       if (response.statusCode == 401) {
-        throw Exception('Unauthenticated. Please login again.');
+        throw Exception(tr('Unauthenticated. Please login again.'));
       }
 
       if (response.statusCode >= 400) {
         // Show the backend's own message (e.g. "Shipment not found.").
         // Before, the inner catch swallowed it and showed "Server error: 404".
-        String msg = 'Server error: ${response.statusCode}';
+        String msg = tr('Server error: {0}', [response.statusCode]);
         try {
           final errorData = jsonDecode(response.body);
           if (errorData is Map) {
@@ -135,13 +136,13 @@ class OrderService {
       OrderDetailResponse.fromJson(jsonData);
 
       if (!detailResponse.success) {
-        throw Exception(detailResponse.message ?? 'Order not found.');
+        throw Exception(detailResponse.message ?? tr('Order not found.'));
       }
 
       return detailResponse;
     } catch (e) {
       if (e is Exception) rethrow;
-      throw Exception('Failed to load order detail: ${e.toString()}');
+      throw Exception(tr('Failed to load order detail: {0}', [e.toString()]));
     }
   }
 
@@ -151,7 +152,7 @@ class OrderService {
       final String? accessToken = await _getAccessToken();
 
       if (accessToken == null || accessToken.isEmpty) {
-        throw Exception('Authentication required. Please login again.');
+        throw Exception(tr('Authentication required. Please login again.'));
       }
 
       final response = await http.post(
@@ -165,13 +166,13 @@ class OrderService {
       );
 
       if (response.statusCode == 401) {
-        throw Exception('Unauthenticated. Please login again.');
+        throw Exception(tr('Unauthenticated. Please login again.'));
       }
 
       if (response.statusCode >= 400) {
         // Show the backend's own message (e.g. "Shipment not found.").
         // Before, the inner catch swallowed it and showed "Server error: 404".
-        String msg = 'Server error: ${response.statusCode}';
+        String msg = tr('Server error: {0}', [response.statusCode]);
         try {
           final errorData = jsonDecode(response.body);
           if (errorData is Map) {
@@ -189,13 +190,13 @@ class OrderService {
       CancelOrderResponse.fromJson(jsonData);
 
       if (!cancelResponse.success) {
-        throw Exception(cancelResponse.message ?? 'Failed to cancel order.');
+        throw Exception(cancelResponse.message ?? tr('Failed to cancel order.'));
       }
 
       return cancelResponse;
     } catch (e) {
       if (e is Exception) rethrow;
-      throw Exception('Failed to cancel order: ${e.toString()}');
+      throw Exception(tr('Failed to cancel order: {0}', [e.toString()]));
     }
   }
 
@@ -205,7 +206,7 @@ class OrderService {
       final String? accessToken = await _getAccessToken();
 
       if (accessToken == null || accessToken.isEmpty) {
-        throw Exception('Authentication required. Please login again.');
+        throw Exception(tr('Authentication required. Please login again.'));
       }
 
       final response = await http.post(
@@ -219,13 +220,13 @@ class OrderService {
       );
 
       if (response.statusCode == 401) {
-        throw Exception('Unauthenticated. Please login again.');
+        throw Exception(tr('Unauthenticated. Please login again.'));
       }
 
       if (response.statusCode >= 400) {
         // Show the backend's own message (e.g. "Shipment not found.").
         // Before, the inner catch swallowed it and showed "Server error: 404".
-        String msg = 'Server error: ${response.statusCode}';
+        String msg = tr('Server error: {0}', [response.statusCode]);
         try {
           final errorData = jsonDecode(response.body);
           if (errorData is Map) {
@@ -244,13 +245,13 @@ class OrderService {
 
       if (!trackResponse.success) {
         throw Exception(
-            trackResponse.message ?? 'Tracking information not available.');
+            trackResponse.message ?? tr('Tracking information not available.'));
       }
 
       return trackResponse;
     } catch (e) {
       if (e is Exception) rethrow;
-      throw Exception('Failed to track shipment: ${e.toString()}');
+      throw Exception(tr('Failed to track shipment: {0}', [e.toString()]));
     }
   }
 
@@ -265,7 +266,7 @@ class OrderService {
       final String? accessToken = await _getAccessToken();
 
       if (accessToken == null || accessToken.isEmpty) {
-        throw Exception('Authentication required. Please login again.');
+        throw Exception(tr('Authentication required. Please login again.'));
       }
 
       final Map<String, dynamic> body = {
@@ -289,13 +290,13 @@ class OrderService {
       );
 
       if (response.statusCode == 401) {
-        throw Exception('Unauthenticated. Please login again.');
+        throw Exception(tr('Unauthenticated. Please login again.'));
       }
 
       if (response.statusCode >= 400) {
         // Show the backend's own message (e.g. "Shipment not found.").
         // Before, the inner catch swallowed it and showed "Server error: 404".
-        String msg = 'Server error: ${response.statusCode}';
+        String msg = tr('Server error: {0}', [response.statusCode]);
         try {
           final errorData = jsonDecode(response.body);
           if (errorData is Map) {
@@ -314,13 +315,13 @@ class OrderService {
 
       if (!returnResponse.success) {
         throw Exception(
-            returnResponse.message ?? 'Failed to submit return request.');
+            returnResponse.message ?? tr('Failed to submit return request.'));
       }
 
       return returnResponse;
     } catch (e) {
       if (e is Exception) rethrow;
-      throw Exception('Failed to submit return: ${e.toString()}');
+      throw Exception(tr('Failed to submit return: {0}', [e.toString()]));
     }
   }
 }

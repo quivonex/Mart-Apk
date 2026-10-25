@@ -3,6 +3,7 @@ import '../constants/design_tokens.dart';
 import '../models/product_model.dart';
 import '../screens/product_enquiry_screen.dart';
 import '../utils/cart_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -125,7 +126,7 @@ class ProductCard extends StatelessWidget {
                           size: 10, color: _kBrand),
                       const SizedBox(width: 3),
                       Text(
-                        'Franchise',
+                        tr('Franchise'),
                         style: DT.text(
                           size: 9,
                           weight: FontWeight.w700,
@@ -160,14 +161,14 @@ class ProductCard extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          product.categoryName,
+          trData(product.categoryName),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: DT.text(size: 10, weight: FontWeight.w500, color: DT.onyx600),
         ),
         const SizedBox(height: 2),
         Text(
-          product.name,
+          trData(product.name),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: DT.text(
@@ -179,7 +180,7 @@ class ProductCard extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          product.companyName,
+          tr(product.companyName),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: DT.text(size: 10, weight: FontWeight.w500, color: DT.slate500),
@@ -218,7 +219,7 @@ class ProductCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  '${product.discountValue}% off',
+                  tr('{0}% off', [product.discountValue]),
                   style: DT.text(
                     size: 8.5,
                     weight: FontWeight.w700,
@@ -264,7 +265,7 @@ class ProductCard extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  'Enquiry',
+                  tr('Enquiry'),
                   style: DT.text(
                     size: 11,
                     weight: FontWeight.w700,
@@ -296,7 +297,7 @@ class ProductCard extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  'Add',
+                  tr('Add'),
                   style: DT.text(
                     size: 11,
                     weight: FontWeight.w700,

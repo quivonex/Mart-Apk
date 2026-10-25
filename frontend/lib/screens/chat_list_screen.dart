@@ -16,6 +16,7 @@ import '../utils/shared_preferences_helper.dart';
 import 'chat_screen.dart';
 import 'communication_plans_screen.dart';
 import 'login_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -64,7 +65,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       setState(() {
         _loading = false;
         _needsLogin = true;
-        _error = 'Please login to see your chats.';
+        _error = tr('Please login to see your chats.');
       });
       return;
     }
@@ -89,8 +90,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
       MaterialPageRoute(
         builder: (_) => ChatScreen(
           chatId: c.id,
-          title: c.displayName,
-          subtitle: c.itemTitle,
+          title: tr(c.displayName),
+          subtitle: tr(c.itemTitle),
           isBuyer: _buying(c),
         ),
       ),
@@ -148,16 +149,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
         flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)),
         foregroundColor: Colors.white,
         elevation: 0,
-        title: Text(unread > 0 ? 'My Chats ($unread)' : 'My Chats',
+        title: Text(unread > 0 ? tr('My Chats ({0})', [unread]) : tr('My Chats'),
             style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
         actions: [
           IconButton(
-            tooltip: 'Chat plans',
+            tooltip: tr('Chat plans'),
             onPressed: _openPlans,
             icon: const Icon(Icons.workspace_premium_rounded),
           ),
           IconButton(
-            tooltip: 'Refresh',
+            tooltip: tr('Refresh'),
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh_rounded),
           ),
@@ -175,18 +176,18 @@ class _ChatListScreenState extends State<ChatListScreen> {
       ]);
     }
     if (_needsLogin) {
-      return _state(Icons.lock_outline_rounded, 'Login required', _error ?? 'Please login again.', 'Login',
+      return _state(Icons.lock_outline_rounded, tr('Login required'), _error ?? tr('Please login again.'), tr('Login'),
           () async {
         await Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
         if (mounted) _load();
       });
     }
     if (_error != null && _chats.isEmpty) {
-      return _state(Icons.cloud_off_rounded, 'Could not load chats', _error!, 'Try again', _load);
+      return _state(Icons.cloud_off_rounded, tr('Could not load chats'), _error!, tr('Try again'), _load);
     }
     if (_chats.isEmpty) {
-      return _state(Icons.forum_outlined, 'No chats yet',
-          'Open a product, property or ReMart item and tap "Chat" to talk to the seller.', null, null,
+      return _state(Icons.forum_outlined, tr('No chats yet'),
+          tr('Open a product, property or ReMart item and tap "Chat" to talk to the seller.'), null, null,
           header: _usage == null ? null : _usageStrip(_usage!));
     }
     final list = _visible;
@@ -200,7 +201,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             onChanged: (v) => setState(() => _query = v),
             style: DT.text(size: 14, color: ChatColors.ink),
             decoration: InputDecoration(
-              hintText: 'Search chats',
+              hintText: tr('Search chats'),
               hintStyle: DT.text(size: 13.5, color: ChatColors.hint),
               prefixIcon: const Icon(Icons.search_rounded, color: ChatColors.muted),
               isDense: true,
@@ -220,10 +221,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
             padding: const EdgeInsets.all(32),
             child: Text(
                 _query.trim().isNotEmpty
-                    ? 'No chats match "$_query".'
+                    ? tr('No chats match "{0}".', [_query])
                     : _filter == 'buying'
-                        ? 'No chats where you are the buyer yet.'
-                        : 'No chats where you are the seller yet.',
+                        ? tr('No chats where you are the buyer yet.')
+                        : tr('No chats where you are the seller yet.'),
                 textAlign: TextAlign.center,
                 style: DT.text(size: 13, color: ChatColors.muted)),
           ),
@@ -283,9 +284,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 10),
       child: Row(
         children: [
-          chip('all', 'All', Icons.forum_rounded),
-          chip('buying', 'Buyer', Icons.shopping_bag_outlined),
-          chip('selling', 'Seller', Icons.storefront_outlined),
+          chip('all', tr('All'), Icons.forum_rounded),
+          chip('buying', tr('Buyer'), Icons.shopping_bag_outlined),
+          chip('selling', tr('Seller'), Icons.storefront_outlined),
         ],
       ),
     );
@@ -295,9 +296,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
   Widget _usageStrip(CommUsage u) {
     final exhausted = u.exhausted;
     final text = u.unlimited
-        ? 'Unlimited chats · ${u.used} used'
+        ? tr('Unlimited chats · {0} used', [u.used])
         : exhausted
-            ? 'Chat limit reached (${u.used} / ${u.limit ?? 0})'
+            ? tr('Chat limit reached ({0} / {1})', [u.used, u.limit ?? 0])
             : '${u.used} / ${u.limit ?? 0} chats used · ${u.remaining ?? 0} left';
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
@@ -316,7 +317,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(text,
+                Text(tr(text),
                     style: DT.text(
                         size: 12.5,
                         weight: FontWeight.w800,
@@ -340,7 +341,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           TextButton(
             onPressed: _openPlans,
             style: TextButton.styleFrom(foregroundColor: _kBrand),
-            child: Text(exhausted ? 'Buy plan' : 'Plans',
+            child: Text(exhausted ? tr('Buy plan') : tr('Plans'),
                 style: DT.text(size: 12.5, weight: FontWeight.w800, color: _kBrand)),
           ),
         ],
@@ -353,7 +354,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     final mineLast = last != null && _me != null && last.senderId == _me;
     String preview;
     if (last == null) {
-      preview = 'No messages yet';
+      preview = tr('No messages yet');
     } else if (last.isOffer) {
       preview = '${mineLast ? 'You offered' : 'Offer'}: ${chatRupees(last.offerAmount ?? 0)}';
     } else {
@@ -385,7 +386,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     Row(
                       children: [
                         Expanded(
-                          child: Text(c.displayName,
+                          child: Text(tr(c.displayName),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: DT.text(
@@ -393,7 +394,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                   weight: unread ? FontWeight.w800 : FontWeight.w700,
                                   color: ChatColors.ink)),
                         ),
-                        Text(time,
+                        Text(tr(time),
                             style: DT.text(
                                 size: 11,
                                 weight: unread ? FontWeight.w800 : FontWeight.w500,
@@ -412,17 +413,17 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 color: ChatColors.tint,
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: Text(c.itemLabel,
+                              child: Text(tr(c.itemLabel),
                                   style: DT.text(size: 10, weight: FontWeight.w800, color: _kBrand)),
                             ),
                           Expanded(
-                            child: Text(c.itemTitle,
+                            child: Text(tr(c.itemTitle),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: DT.text(size: 12, weight: FontWeight.w600, color: ChatColors.body)),
                           ),
                           if (role != null)
-                            Text(role ? 'Buying' : 'Selling',
+                            Text(role ? tr('Buying') : tr('Selling'),
                                 style: DT.text(
                                     size: 10.5,
                                     weight: FontWeight.w800,
@@ -438,7 +439,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           const SizedBox(width: 4),
                         ],
                         Expanded(
-                          child: Text(preview,
+                          child: Text(tr(preview),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: DT.text(
@@ -452,7 +453,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                             constraints: const BoxConstraints(minWidth: 20),
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(color: _kBrand, borderRadius: BorderRadius.circular(20)),
-                            child: Text(c.unreadCount > 99 ? '99+' : '${c.unreadCount}',
+                            child: Text(tr(c.unreadCount > 99 ? '99+' : '${c.unreadCount}'),
                                 textAlign: TextAlign.center,
                                 style: DT.text(size: 10.5, weight: FontWeight.w800, color: Colors.white)),
                           ),
@@ -483,10 +484,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          Text(title,
+          Text(tr(title),
               textAlign: TextAlign.center, style: DT.text(size: 16, weight: FontWeight.w800, color: ChatColors.ink)),
           const SizedBox(height: 4),
-          Text(body,
+          Text(tr(body),
               textAlign: TextAlign.center, style: DT.text(size: 13, color: ChatColors.muted, height: 1.45)),
           if (button != null && onTap != null) ...[
             const SizedBox(height: 14),
@@ -494,7 +495,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
               child: FilledButton(
                 style: FilledButton.styleFrom(backgroundColor: _kBrand),
                 onPressed: onTap,
-                child: Text(button),
+                child: Text(tr(button)),
               ),
             ),
           ],

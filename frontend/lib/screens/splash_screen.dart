@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'home_screen.dart';
 import 'login_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 //
@@ -71,6 +72,8 @@ class _SplashScreenState extends State<SplashScreen>
     final loggedIn = await SharedPreferencesHelper.isLoggedIn();
     if (!mounted) return;
 
+    // Splash → Home (logged in) or Login. Language is changed from the
+    // 🌐 button on the Home header (saved language is loaded in main()).
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -176,8 +179,8 @@ class _SplashScreenState extends State<SplashScreen>
       child: Image.asset(
         '$_imgDir/qnx_mart_logo.png',
         fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => const Center(
-          child: Text('QNX',
+        errorBuilder: (_, __, ___) => Center(
+          child: Text(tr('QNX'),
               style: TextStyle(
                   fontSize: 26, fontWeight: FontWeight.w900, color: _kBrand)),
         ),
@@ -189,7 +192,7 @@ class _SplashScreenState extends State<SplashScreen>
     return Column(
       children: [
         Text(
-          'QNX MART',
+          tr('QNX MART'),
           style: TextStyle(
             fontSize: short ? 28 : 34,
             fontWeight: FontWeight.w900,
@@ -200,7 +203,7 @@ class _SplashScreenState extends State<SplashScreen>
         ),
         SizedBox(height: short ? 8 : 12),
         Text(
-          'B2B E-Commerce Platform',
+          tr('B2B E-Commerce Platform'),
           style: TextStyle(
             fontSize: short ? 15 : 17,
             fontWeight: FontWeight.w700,
@@ -209,7 +212,7 @@ class _SplashScreenState extends State<SplashScreen>
         ),
         const SizedBox(height: 4),
         Text(
-          'Grow Together, Sell Better',
+          tr('Grow Together, Sell Better'),
           style: TextStyle(
             fontSize: short ? 13 : 14.5,
             fontWeight: FontWeight.w500,

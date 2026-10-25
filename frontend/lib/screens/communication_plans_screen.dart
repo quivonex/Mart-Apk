@@ -21,6 +21,7 @@ import '../utils/shared_preferences_helper.dart';
 import 'chat_screen.dart' show ChatColors, chatRupees;
 import 'comm_payment_history_screen.dart';
 import 'login_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -35,7 +36,7 @@ const _kHeader = LinearGradient(
 String _date(DateTime? d) {
   if (d == null) return '—';
   const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return '${d.day} ${m[d.month - 1]} ${d.year}';
+  return '${d.day} ${tr(m[d.month - 1])} ${d.year}';
 }
 
 class CommunicationPlansScreen extends StatefulWidget {
@@ -81,7 +82,7 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
       setState(() {
         _loading = false;
         _needsLogin = true;
-        _error = 'Please login to see the chat plans.';
+        _error = tr('Please login to see the chat plans.');
       });
       return;
     }
@@ -109,7 +110,7 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
-        content: Text(msg, style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
+        content: Text(tr(msg), style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
         backgroundColor: error ? ChatColors.red : ChatColors.ink,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
@@ -123,9 +124,9 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
     final a = _active;
     if (a != null) {
       final go = await _confirm(
-        'You already have a plan',
-        'Your ${a.planName} plan is active till ${_date(a.expiresAt)}. Buy ${plan.name} anyway?',
-        'Buy ${plan.name}',
+        tr('You already have a plan'),
+        tr('Your {0} plan is active till {1}. Buy {2} anyway?', [a.planName, _date(a.expiresAt), plan.name]),
+        tr('Buy {0}', [plan.name]),
       );
       if (!go || !mounted) return;
     }
@@ -140,7 +141,7 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
             _error = o.message;
           });
         } else {
-          await _alert('Could not start payment', o.message, error: true);
+          await _alert(tr('Could not start payment'), o.message, error: true);
         }
         return;
       }
@@ -164,11 +165,11 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
       });
       if (!mounted) return;
       if (pay.cancelled) {
-        _snack('Payment cancelled.');
+        _snack(tr('Payment cancelled.'));
         return;
       }
       if (!pay.ok) {
-        await _alert('Payment failed', pay.error, error: true);
+        await _alert(tr('Payment failed'), pay.error, error: true);
         return;
       }
       final v = await CommunicationPlanService.verify(
@@ -179,7 +180,7 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
       if (!mounted) return;
       if (v.ok) {
         _bought = true;
-        await _alert('Plan activated', '${v.data}\n\nReference: ${pay.paymentId}');
+        await _alert(tr('Plan activated'), tr('{0}\n\nReference: {1}', [v.data, pay.paymentId]));
         if (mounted) _load();
       } else if (v.needsLogin) {
         setState(() {
@@ -188,8 +189,8 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
         });
       } else {
         await _alert(
-          'Payment not confirmed',
-          '${v.message}\n\nIf money was deducted, keep this reference and contact support:\n${pay.paymentId}',
+          tr('Payment not confirmed'),
+          tr('{0}\n\nIf money was deducted, keep this reference and contact support:\n{1}', [v.message, pay.paymentId]),
           error: true,
         );
       }
@@ -205,17 +206,17 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(title, style: DT.text(size: 17, weight: FontWeight.w800, color: ChatColors.ink)),
-        content: Text(body, style: DT.text(size: 13.5, color: ChatColors.body, height: 1.45)),
+        title: Text(tr(title), style: DT.text(size: 17, weight: FontWeight.w800, color: ChatColors.ink)),
+        content: Text(tr(body), style: DT.text(size: 13.5, color: ChatColors.body, height: 1.45)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: DT.text(size: 14, weight: FontWeight.w700, color: ChatColors.muted)),
+            child: Text(tr('Cancel'), style: DT.text(size: 14, weight: FontWeight.w700, color: ChatColors.muted)),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: _kBrand),
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(yes),
+            child: Text(tr(yes)),
           ),
         ],
       ),
@@ -236,9 +237,9 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
         child: Icon(error ? Icons.error_outline_rounded : Icons.check_rounded,
             color: error ? ChatColors.red : ChatColors.green, size: 30),
       ),
-      title: Text(title,
+      title: Text(tr(title),
           textAlign: TextAlign.center, style: DT.text(size: 17, weight: FontWeight.w800, color: ChatColors.ink)),
-      content: Text(body,
+      content: Text(tr(body),
           textAlign: TextAlign.center, style: DT.text(size: 13, color: ChatColors.body, height: 1.5)),
       actions: [
         SizedBox(
@@ -246,7 +247,7 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
           child: FilledButton(
             style: FilledButton.styleFrom(backgroundColor: _kBrand),
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
+            child: Text(tr('OK')),
           ),
         ),
       ],
@@ -270,15 +271,15 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
           flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)),
           foregroundColor: Colors.white,
           elevation: 0,
-          title: Text('Chat & Enquiry Plans', style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
+          title: Text(tr('Chat & Enquiry Plans'), style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
           actions: [
             IconButton(
-              tooltip: 'Payment history',
+              tooltip: tr('Payment history'),
               onPressed: _openHistory,
               icon: const Icon(Icons.receipt_long_outlined),
             ),
             IconButton(
-              tooltip: 'Refresh',
+              tooltip: tr('Refresh'),
               onPressed: _loading ? null : _load,
               icon: const Icon(Icons.refresh_rounded),
             ),
@@ -301,7 +302,7 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
       ]);
     }
     if (_needsLogin) {
-      return _state(Icons.lock_outline_rounded, 'Login required', _error ?? 'Please login again.', 'Login',
+      return _state(Icons.lock_outline_rounded, tr('Login required'), _error ?? tr('Please login again.'), tr('Login'),
               () async {
             await Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
             if (mounted) _load();
@@ -321,18 +322,18 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
           ),
           const SizedBox(height: 14),
         ],
-        Text(active == null ? 'Choose a plan' : 'Upgrade / renew',
+        Text(active == null ? tr('Choose a plan') : tr('Upgrade / renew'),
             style: DT.text(size: 15, weight: FontWeight.w800, color: ChatColors.ink)),
         const SizedBox(height: 10),
         if (_error != null)
           _errorBox(_error!)
         else if (_plans.isEmpty)
-          _note(Icons.inventory_2_outlined, 'No plans available right now. Please check again later.')
+          _note(Icons.inventory_2_outlined, tr('No plans available right now. Please check again later.'))
         else
           for (final p in _plans) ...[_planCard(p, active), const SizedBox(height: 12)],
         if (history.isNotEmpty) ...[
           const SizedBox(height: 8),
-          Text('Past plans', style: DT.text(size: 15, weight: FontWeight.w800, color: ChatColors.ink)),
+          Text(tr('Past plans'), style: DT.text(size: 15, weight: FontWeight.w800, color: ChatColors.ink)),
           const SizedBox(height: 10),
           for (final s in history)
             GestureDetector(
@@ -359,7 +360,7 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
                     const Icon(Icons.receipt_long_outlined, color: _kBrand, size: 20),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Text('Payment history',
+                      child: Text(tr('Payment history'),
                           style: DT.text(size: 14, weight: FontWeight.w800, color: ChatColors.ink)),
                     ),
                     const Icon(Icons.chevron_right_rounded, color: _kBrand),
@@ -384,13 +385,13 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
           children: [
             const Icon(Icons.insights_rounded, color: Colors.white, size: 20),
             const SizedBox(width: 8),
-            Text('Your usage', style: DT.text(size: 15, weight: FontWeight.w800, color: Colors.white)),
+            Text(tr('Your usage'), style: DT.text(size: 15, weight: FontWeight.w800, color: Colors.white)),
           ],
         ),
         const SizedBox(height: 12),
-        _usageRow('Chats', Icons.chat_rounded, _chatUsage),
+        _usageRow(tr('Chats'), Icons.chat_rounded, _chatUsage),
         const SizedBox(height: 12),
-        _usageRow('Enquiries', Icons.forum_rounded, _enquiryUsage),
+        _usageRow(tr('Enquiries'), Icons.forum_rounded, _enquiryUsage),
       ],
     ),
   );
@@ -399,9 +400,9 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
     String value;
     String sub = '';
     if (u == null) {
-      value = 'No active plan';
+      value = tr('No active plan');
     } else if (u.unlimited) {
-      value = 'Unlimited · ${u.used} used';
+      value = tr('Unlimited · {0} used', [u.used]);
     } else {
       value = '${u.used} / ${u.limit ?? 0} used';
       sub = '${u.remaining ?? 0} left${u.periodEnd == null ? '' : ' · resets ${_date(u.periodEnd)}'}';
@@ -414,9 +415,9 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
           children: [
             Icon(icon, size: 16, color: Colors.white.withValues(alpha: 0.85)),
             const SizedBox(width: 6),
-            Text(label, style: DT.text(size: 13, weight: FontWeight.w700, color: Colors.white)),
+            Text(tr(label), style: DT.text(size: 13, weight: FontWeight.w700, color: Colors.white)),
             const Spacer(),
-            Text(value,
+            Text(tr(value),
                 style: DT.text(
                     size: 13, weight: FontWeight.w800, color: exhausted ? const Color(0xFFFED7AA) : Colors.white)),
           ],
@@ -435,7 +436,7 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
         ],
         if (sub.isNotEmpty) ...[
           const SizedBox(height: 4),
-          Text(sub, style: DT.text(size: 11, color: Colors.white.withValues(alpha: 0.8))),
+          Text(tr(sub), style: DT.text(size: 11, color: Colors.white.withValues(alpha: 0.8))),
         ],
       ],
     );
@@ -462,7 +463,7 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
                 children: [
                   const Icon(Icons.verified_rounded, size: 14, color: ChatColors.green),
                   const SizedBox(width: 4),
-                  Text('ACTIVE PLAN', style: DT.text(size: 10.5, weight: FontWeight.w800, color: ChatColors.green)),
+                  Text(tr('ACTIVE PLAN'), style: DT.text(size: 10.5, weight: FontWeight.w800, color: ChatColors.green)),
                 ],
               ),
             ),
@@ -472,7 +473,7 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
           ],
         ),
         const SizedBox(height: 10),
-        Text(s.planName, style: DT.text(size: 20, weight: FontWeight.w800, color: ChatColors.ink)),
+        Text(trData(s.planName), style: DT.text(size: 20, weight: FontWeight.w800, color: ChatColors.ink)),
         const SizedBox(height: 2),
         Text('${_date(s.startsAt)} – ${_date(s.expiresAt)}',
             style: DT.text(size: 12.5, weight: FontWeight.w600, color: ChatColors.body)),
@@ -515,7 +516,7 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
                     Row(
                       children: [
                         Flexible(
-                          child: Text(p.name, style: DT.text(size: 16, weight: FontWeight.w800, color: ChatColors.ink)),
+                          child: Text(trData(p.name), style: DT.text(size: 16, weight: FontWeight.w800, color: ChatColors.ink)),
                         ),
                         if (current) ...[
                           const SizedBox(width: 6),
@@ -523,23 +524,23 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                             decoration:
                             BoxDecoration(color: ChatColors.greenBg, borderRadius: BorderRadius.circular(6)),
-                            child: Text('Current',
+                            child: Text(tr('Current'),
                                 style: DT.text(size: 10, weight: FontWeight.w800, color: ChatColors.green)),
                           ),
                         ],
                       ],
                     ),
                     if (p.durationLabel.isNotEmpty)
-                      Text(p.durationLabel, style: DT.text(size: 12, color: ChatColors.muted)),
+                      Text(tr(p.durationLabel), style: DT.text(size: 12, color: ChatColors.muted)),
                   ],
                 ),
               ),
-              Text(chatRupees(p.price), style: DT.text(size: 18, weight: FontWeight.w800, color: _kBrand)),
+              Text(tr(chatRupees(p.price)), style: DT.text(size: 18, weight: FontWeight.w800, color: _kBrand)),
             ],
           ),
           if (p.description.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(p.description, style: DT.text(size: 12.5, color: ChatColors.body, height: 1.4)),
+            Text(trData(p.description), style: DT.text(size: 12.5, color: ChatColors.body, height: 1.4)),
           ],
           const SizedBox(height: 10),
           const Divider(height: 1, color: ChatColors.line),
@@ -547,7 +548,7 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
           if (p.chatLabel.isNotEmpty) _feature(Icons.chat_rounded, p.chatLabel),
           if (p.enquiryLabel.isNotEmpty) _feature(Icons.forum_outlined, p.enquiryLabel),
           if (p.durationDays > 0)
-            _feature(Icons.event_available_rounded, 'Valid for ${p.durationDays} days'),
+            _feature(Icons.event_available_rounded, tr('Valid for {0} days', [p.durationDays])),
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
@@ -587,7 +588,7 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(s.planName, style: DT.text(size: 14, weight: FontWeight.w800, color: ChatColors.ink)),
+              Text(trData(s.planName), style: DT.text(size: 14, weight: FontWeight.w800, color: ChatColors.ink)),
               Text('${_date(s.startsAt)} – ${_date(s.expiresAt)} · ${chatRupees(s.pricePaid)}',
                   style: DT.text(size: 11.5, color: ChatColors.muted)),
             ],
@@ -596,7 +597,7 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(color: ChatColors.orangeBg, borderRadius: BorderRadius.circular(20)),
-          child: Text(s.statusLabel,
+          child: Text(tr(s.statusLabel),
               style: DT.text(size: 10.5, weight: FontWeight.w800, color: ChatColors.orangeText)),
         ),
       ],
@@ -609,7 +610,7 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
       children: [
         Icon(icon, size: 16, color: _kBrandLight),
         const SizedBox(width: 8),
-        Expanded(child: Text(text, style: DT.text(size: 12.5, color: ChatColors.body))),
+        Expanded(child: Text(tr(text), style: DT.text(size: 12.5, color: ChatColors.body))),
       ],
     ),
   );
@@ -625,7 +626,7 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
       children: [
         Icon(icon, color: _kBrand),
         const SizedBox(width: 10),
-        Expanded(child: Text(text, style: DT.text(size: 13, color: ChatColors.body))),
+        Expanded(child: Text(tr(text), style: DT.text(size: 13, color: ChatColors.body))),
       ],
     ),
   );
@@ -641,12 +642,12 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
       children: [
         const Icon(Icons.cloud_off_rounded, size: 34, color: ChatColors.red),
         const SizedBox(height: 8),
-        Text(msg, textAlign: TextAlign.center, style: DT.text(size: 13, color: ChatColors.body, height: 1.45)),
+        Text(tr(msg), textAlign: TextAlign.center, style: DT.text(size: 13, color: ChatColors.body, height: 1.45)),
         const SizedBox(height: 12),
         FilledButton(
           style: FilledButton.styleFrom(backgroundColor: _kBrand),
           onPressed: _load,
-          child: const Text('Try again'),
+          child: Text(tr('Try again')),
         ),
       ],
     ),
@@ -664,16 +665,16 @@ class _CommunicationPlansScreenState extends State<CommunicationPlansScreen> {
         ),
       ),
       const SizedBox(height: 12),
-      Text(title,
+      Text(tr(title),
           textAlign: TextAlign.center, style: DT.text(size: 16, weight: FontWeight.w800, color: ChatColors.ink)),
       const SizedBox(height: 4),
-      Text(body, textAlign: TextAlign.center, style: DT.text(size: 13, color: ChatColors.muted, height: 1.45)),
+      Text(tr(body), textAlign: TextAlign.center, style: DT.text(size: 13, color: ChatColors.muted, height: 1.45)),
       const SizedBox(height: 14),
       Center(
         child: FilledButton(
           style: FilledButton.styleFrom(backgroundColor: _kBrand),
           onPressed: onTap,
-          child: Text(button),
+          child: Text(tr(button)),
         ),
       ),
     ],

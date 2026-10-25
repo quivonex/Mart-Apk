@@ -18,6 +18,7 @@ import 'category_screens.dart';
 import 'company_create_edit_screen.dart';
 import 'subcategory_create_edit_screen.dart';
 import 'subcategory_screens.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kRed = Color(0xFFC62828);
@@ -28,7 +29,7 @@ void _snack(BuildContext context, String msg, {bool error = false}) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(
-      content: Text(msg),
+      content: Text(tr(msg)),
       backgroundColor: error ? _kRed : null,
       behavior: SnackBarBehavior.floating,
     ));
@@ -71,7 +72,7 @@ Future<T?> _pickFromList<T>(
               padding: const EdgeInsets.fromLTRB(20, 18, 12, 8),
               child: Row(
                 children: [
-                  Expanded(child: Text(title, style: DT.text(size: 17, weight: FontWeight.w800))),
+                  Expanded(child: Text(tr(title), style: DT.text(size: 17, weight: FontWeight.w800))),
                   IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close_rounded)),
                 ],
               ),
@@ -86,8 +87,8 @@ Future<T?> _pickFromList<T>(
                   final it = items[i];
                   final sub = sublabel?.call(it) ?? '';
                   return ListTile(
-                    title: Text(label(it), style: DT.text(size: 14.5, weight: FontWeight.w600)),
-                    subtitle: sub.isEmpty ? null : Text(sub, style: DT.text(size: 12, color: DT.slate500)),
+                    title: Text(tr(label(it)), style: DT.text(size: 14.5, weight: FontWeight.w600)),
+                    subtitle: sub.isEmpty ? null : Text(tr(sub), style: DT.text(size: 12, color: DT.slate500)),
                     trailing: const Icon(Icons.chevron_right_rounded),
                     onTap: () => Navigator.pop(ctx, it),
                   );
@@ -106,7 +107,7 @@ Future<Company?> pickCompany(BuildContext context, {required String forWhat}) as
   final r = await _withLoader(context, CompanyService.getMyCompanies);
   if (!context.mounted) return null;
   if (!r.isSuccess) {
-    _snack(context, r.message ?? 'Could not load your companies', error: true);
+    _snack(context, r.message ?? tr('Could not load your companies'), error: true);
     return null;
   }
   final companies = r.data.where((c) => c.isActive).toList();
@@ -114,11 +115,11 @@ Future<Company?> pickCompany(BuildContext context, {required String forWhat}) as
     final create = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Add a company first'),
-        content: Text('You need a company before you can add a $forWhat.'),
+        title: Text(tr('Add a company first')),
+        content: Text(tr('You need a company before you can add a {0}.', [forWhat])),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Add company')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('Cancel'))),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('Add company'))),
         ],
       ),
     );
@@ -131,10 +132,10 @@ Future<Company?> pickCompany(BuildContext context, {required String forWhat}) as
   if (companies.length == 1) return companies.first;
   return _pickFromList<Company>(
     context,
-    title: 'Add $forWhat for which company?',
+    title: tr('Add {0} for which company?', [forWhat]),
     items: companies,
     label: (c) => c.name,
-    sublabel: (c) => c.isPaid ? '' : 'Registration fee pending',
+    sublabel: (c) => c.isPaid ? '' : tr('Registration fee pending'),
   );
 }
 
@@ -150,7 +151,7 @@ Future<void> startAddBranch(BuildContext context) async {
     ),
   );
   if (saved == true && context.mounted) {
-    _snack(context, 'Branch added successfully');
+    _snack(context, tr('Branch added successfully'));
   }
 }
 
@@ -166,7 +167,7 @@ Future<void> startAddCategory(BuildContext context) async {
     ),
   );
   if (saved != null && context.mounted) {
-    _snack(context, 'Category "${saved.name}" added successfully');
+    _snack(context, tr('Category "{0}" added successfully', [saved.name]));
   }
 }
 
@@ -182,6 +183,6 @@ Future<void> startAddSubCategory(BuildContext context) async {
     ),
   );
   if (saved == true && context.mounted) {
-    _snack(context, 'Subcategory added successfully');
+    _snack(context, tr('Subcategory added successfully'));
   }
 }

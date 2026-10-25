@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_constants.dart';
 import '../models/franchise_plan_model.dart';
 import '../services/franchise_apply_service.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -113,7 +114,7 @@ class _FranchiseApplyScreenState extends State<FranchiseApplyScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                response.displayMessage,
+                tr(response.displayMessage),
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
@@ -151,7 +152,7 @@ class _FranchiseApplyScreenState extends State<FranchiseApplyScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          'Franchise Application',
+          tr('Franchise Application'),
           style: GoogleFonts.inter(
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -170,42 +171,42 @@ class _FranchiseApplyScreenState extends State<FranchiseApplyScreen> {
               _buildPlanSummary(),
               const SizedBox(height: 20),
 
-              _sectionTitle('Franchise Details'),
+              _sectionTitle(tr('Franchise Details')),
               const SizedBox(height: 12),
               _buildField(
                 controller: _franchiseNameCtrl,
-                label: 'Franchise Name',
-                hint: 'e.g. Latur Central Franchise',
+                label: tr('Franchise Name'),
+                hint: tr('e.g. Latur Central Franchise'),
                 icon: Icons.storefront_outlined,
-                validator: (v) => _required(v, 'Franchise name'),
+                validator: (v) => _required(v, tr('Franchise name')),
               ),
               const SizedBox(height: 14),
               _buildField(
                 controller: _ownerNameCtrl,
-                label: 'Owner Name',
-                hint: 'e.g. John Doe',
+                label: tr('Owner Name'),
+                hint: tr('e.g. John Doe'),
                 icon: Icons.person_outline,
-                validator: (v) => _required(v, 'Owner name'),
+                validator: (v) => _required(v, tr('Owner name')),
               ),
               const SizedBox(height: 14),
               _buildField(
                 controller: _emailCtrl,
-                label: 'Email',
+                label: tr('Email'),
                 hint: 'john@example.com',
                 icon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Email is required';
+                  if (v == null || v.trim().isEmpty) return tr('Email is required');
                   final re = RegExp(r'^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$');
-                  if (!re.hasMatch(v.trim())) return 'Enter a valid email';
+                  if (!re.hasMatch(v.trim())) return tr('Enter a valid email');
                   return null;
                 },
               ),
               const SizedBox(height: 14),
               _buildField(
                 controller: _mobileCtrl,
-                label: 'Mobile Number',
-                hint: '10-digit mobile number',
+                label: tr('Mobile Number'),
+                hint: tr('10-digit mobile number'),
                 icon: Icons.phone_outlined,
                 keyboardType: TextInputType.phone,
                 inputFormatters: [
@@ -214,17 +215,17 @@ class _FranchiseApplyScreenState extends State<FranchiseApplyScreen> {
                 ],
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) {
-                    return 'Mobile number is required';
+                    return tr('Mobile number is required');
                   }
-                  if (v.trim().length != 10) return 'Enter a valid 10-digit number';
+                  if (v.trim().length != 10) return tr('Enter a valid 10-digit number');
                   return null;
                 },
               ),
               const SizedBox(height: 14),
               _buildField(
                 controller: _altMobileCtrl,
-                label: 'Alternate Mobile (Optional)',
-                hint: '10-digit alternate number',
+                label: tr('Alternate Mobile (Optional)'),
+                hint: tr('10-digit alternate number'),
                 icon: Icons.phone_android_outlined,
                 keyboardType: TextInputType.phone,
                 inputFormatters: [
@@ -233,43 +234,43 @@ class _FranchiseApplyScreenState extends State<FranchiseApplyScreen> {
                 ],
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return null;
-                  if (v.trim().length != 10) return 'Enter a valid 10-digit number';
+                  if (v.trim().length != 10) return tr('Enter a valid 10-digit number');
                   return null;
                 },
               ),
               const SizedBox(height: 20),
 
-              _sectionTitle('Address'),
+              _sectionTitle(tr('Address')),
               const SizedBox(height: 12),
               _buildField(
                 controller: _addressCtrl,
-                label: 'Address',
-                hint: 'Street, area, landmark',
+                label: tr('Address'),
+                hint: tr('Street, area, landmark'),
                 icon: Icons.home_outlined,
                 maxLines: 2,
-                validator: (v) => _required(v, 'Address'),
+                validator: (v) => _required(v, tr('Address')),
               ),
               const SizedBox(height: 14),
               _buildField(
                 controller: _cityCtrl,
-                label: 'City / District',
-                hint: 'e.g. Mumbai',
+                label: tr('City / District'),
+                hint: tr('e.g. Mumbai'),
                 icon: Icons.location_city_outlined,
-                validator: (v) => _required(v, 'City'),
+                validator: (v) => _required(v, tr('City')),
               ),
               const SizedBox(height: 14),
               _buildField(
                 controller: _stateCtrl,
-                label: 'State',
-                hint: 'e.g. Maharashtra',
+                label: tr('State'),
+                hint: tr('e.g. Maharashtra'),
                 icon: Icons.map_outlined,
-                validator: (v) => _required(v, 'State'),
+                validator: (v) => _required(v, tr('State')),
               ),
               const SizedBox(height: 14),
               _buildField(
                 controller: _pincodeCtrl,
-                label: 'Pincode',
-                hint: '6-digit pincode',
+                label: tr('Pincode'),
+                hint: tr('6-digit pincode'),
                 icon: Icons.pin_drop_outlined,
                 keyboardType: TextInputType.number,
                 inputFormatters: [
@@ -277,19 +278,19 @@ class _FranchiseApplyScreenState extends State<FranchiseApplyScreen> {
                   LengthLimitingTextInputFormatter(6),
                 ],
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Pincode is required';
-                  if (v.trim().length != 6) return 'Enter a valid 6-digit pincode';
+                  if (v == null || v.trim().isEmpty) return tr('Pincode is required');
+                  if (v.trim().length != 6) return tr('Enter a valid 6-digit pincode');
                   return null;
                 },
               ),
               const SizedBox(height: 20),
 
-              _sectionTitle('Business Info (Optional)'),
+              _sectionTitle(tr('Business Info (Optional)')),
               const SizedBox(height: 12),
               _buildField(
                 controller: _gstCtrl,
-                label: 'GST Number',
-                hint: 'e.g. 27ABCDE1234F1Z5',
+                label: tr('GST Number'),
+                hint: tr('e.g. 27ABCDE1234F1Z5'),
                 icon: Icons.receipt_long_outlined,
                 textCapitalization: TextCapitalization.characters,
                 validator: (_) => null,
@@ -297,8 +298,8 @@ class _FranchiseApplyScreenState extends State<FranchiseApplyScreen> {
               const SizedBox(height: 14),
               _buildField(
                 controller: _panCtrl,
-                label: 'PAN Number',
-                hint: 'e.g. ABCDE1234F',
+                label: tr('PAN Number'),
+                hint: tr('e.g. ABCDE1234F'),
                 icon: Icons.credit_card_outlined,
                 textCapitalization: TextCapitalization.characters,
                 inputFormatters: [LengthLimitingTextInputFormatter(10)],
@@ -307,8 +308,8 @@ class _FranchiseApplyScreenState extends State<FranchiseApplyScreen> {
               const SizedBox(height: 14),
               _buildField(
                 controller: _referralCtrl,
-                label: 'Referral Code (Optional)',
-                hint: 'Enter referral code if any',
+                label: tr('Referral Code (Optional)'),
+                hint: tr('Enter referral code if any'),
                 icon: Icons.card_giftcard_outlined,
                 validator: (_) => null,
               ),
@@ -338,7 +339,7 @@ class _FranchiseApplyScreenState extends State<FranchiseApplyScreen> {
                     ),
                   )
                       : Text(
-                    'Submit Application',
+                    tr('Submit Application'),
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -378,7 +379,7 @@ class _FranchiseApplyScreenState extends State<FranchiseApplyScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Selected Plan',
+            tr('Selected Plan'),
             style: GoogleFonts.inter(
               fontSize: 12,
               color: Colors.white70,
@@ -393,7 +394,7 @@ class _FranchiseApplyScreenState extends State<FranchiseApplyScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.plan.planName,
+                      trData(widget.plan.planName),
                       style: GoogleFonts.inter(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -402,7 +403,7 @@ class _FranchiseApplyScreenState extends State<FranchiseApplyScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      widget.productName,
+                      trData(widget.productName),
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         color: Colors.white70,
@@ -423,7 +424,7 @@ class _FranchiseApplyScreenState extends State<FranchiseApplyScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  widget.plan.amountLabel,
+                  tr(widget.plan.amountLabel),
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -442,14 +443,14 @@ class _FranchiseApplyScreenState extends State<FranchiseApplyScreen> {
 
   String? _required(String? value, String fieldName) {
     if (value == null || value.trim().isEmpty) {
-      return '$fieldName is required';
+      return tr('{0} is required', [fieldName]);
     }
     return null;
   }
 
   Widget _sectionTitle(String title) {
     return Text(
-      title,
+      tr(title),
       style: GoogleFonts.inter(
         fontSize: 15,
         fontWeight: FontWeight.w700,
@@ -477,8 +478,8 @@ class _FranchiseApplyScreenState extends State<FranchiseApplyScreen> {
       maxLines: maxLines,
       textCapitalization: textCapitalization,
       decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
+        labelText: tr(label),
+        hintText: tr(hint),
         prefixIcon: Icon(icon, color: _kBrand),
         filled: true,
         fillColor: Colors.white,

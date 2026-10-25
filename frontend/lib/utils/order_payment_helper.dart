@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../services/checkout_service.dart';
 import 'shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 enum OrderPayOutcome { paid, cancelled, failed }
 
@@ -36,13 +37,13 @@ class OrderPaymentHelper {
   static void _snack(BuildContext context, String msg, {bool error = false}) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(msg), backgroundColor: error ? const Color(0xFFDC2626) : null));
+      ..showSnackBar(SnackBar(content: Text(tr(msg)), backgroundColor: error ? const Color(0xFFDC2626) : null));
   }
 
   static Future<OrderPayOutcome> _run(
       BuildContext context, int shipOrderId, String description, String? phone) async {
     if (kIsWeb) {
-      _snack(context, 'Online payment works in the QNXMart Android app. Open My Orders there to pay.');
+      _snack(context, tr('Online payment works in the QNXMart Android app. Open My Orders there to pay.'));
       return OrderPayOutcome.failed;
     }
 
@@ -59,7 +60,7 @@ class OrderPaymentHelper {
     final key = '${d['key_id'] ?? ''}';
     final amount = d['amount'] is int ? d['amount'] as int : int.tryParse('${d['amount']}') ?? 0;
     if (rzpOrderId.isEmpty || key.isEmpty || amount <= 0) {
-      _snack(context, 'Payment could not be started. Please try again.', error: true);
+      _snack(context, tr('Payment could not be started. Please try again.'), error: true);
       return OrderPayOutcome.failed;
     }
 
@@ -93,7 +94,7 @@ class OrderPaymentHelper {
       });
     } catch (e) {
       razorpay.clear();
-      if (context.mounted) _snack(context, 'Could not open payment: $e', error: true);
+      if (context.mounted) _snack(context, tr('Could not open payment: {0}', [e]), error: true);
       return OrderPayOutcome.failed;
     }
 
@@ -103,10 +104,10 @@ class OrderPaymentHelper {
 
     if (success == null) {
       if (failure != null && failure.code == Razorpay.PAYMENT_CANCELLED) {
-        _snack(context, 'Payment cancelled. You can pay later from My Orders.');
+        _snack(context, tr('Payment cancelled. You can pay later from My Orders.'));
         return OrderPayOutcome.cancelled;
       }
-      _snack(context, failure?.message?.isNotEmpty == true ? 'Payment failed: ${failure!.message}' : 'Payment failed.',
+      _snack(context, failure?.message?.isNotEmpty == true ? tr('Payment failed: {0}', [failure!.message]) : tr('Payment failed.'),
           error: true);
       return OrderPayOutcome.failed;
     }
@@ -121,7 +122,7 @@ class OrderPaymentHelper {
     if (verify.ok) return OrderPayOutcome.paid;
     _snack(
       context,
-      '${verify.message}\nIf money was deducted, contact support with reference ${success.paymentId}.',
+      tr('{0}\nIf money was deducted, contact support with reference {1}.', [verify.message, success.paymentId]),
       error: true,
     );
     return OrderPayOutcome.failed;

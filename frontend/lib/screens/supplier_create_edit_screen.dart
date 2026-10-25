@@ -15,6 +15,7 @@ import '../models/supplier_model.dart';
 import '../services/company_locations_service.dart';
 import '../services/supplier_service.dart';
 import '../widgets/company_ui.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -167,12 +168,12 @@ class _SupplierCreateEditScreenState extends State<SupplierCreateEditScreen> {
     setState(() => _locating = true);
     try {
       if (!await Geolocator.isLocationServiceEnabled()) {
-        throw 'Turn on location services and try again.';
+        throw tr('Turn on location services and try again.');
       }
       var perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
       if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
-        throw 'Location permission is needed to capture coordinates.';
+        throw tr('Location permission is needed to capture coordinates.');
       }
       // Same call style as company_create_edit_screen.dart (geolocator ^10)
       final pos = await Geolocator.getCurrentPosition(
@@ -198,7 +199,7 @@ class _SupplierCreateEditScreenState extends State<SupplierCreateEditScreen> {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
     if ([_stateId, _districtId, _talukaId, _villageId].contains(null)) {
-      showCompanySnack(context, 'Select state, district, taluka and village.', error: true);
+      showCompanySnack(context, tr('Select state, district, taluka and village.'), error: true);
       return;
     }
 
@@ -235,8 +236,8 @@ class _SupplierCreateEditScreenState extends State<SupplierCreateEditScreen> {
     return Scaffold(
       backgroundColor: DT.background,
       appBar: CompanyTopBar(
-        title: _isEdit ? 'Edit supplier' : 'Add supplier',
-        subtitle: widget.company.name,
+        title: _isEdit ? tr('Edit supplier') : tr('Add supplier'),
+        subtitle: tr(widget.company.name),
       ),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
@@ -247,14 +248,14 @@ class _SupplierCreateEditScreenState extends State<SupplierCreateEditScreen> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
             children: [
               SectionCard(
-                title: 'Supplier',
+                title: tr('Supplier'),
                 child: Column(children: [
-                  _field(_nameCtrl, 'Business or person name',
+                  _field(_nameCtrl, tr('Business or person name'),
                       icon: Icons.storefront_outlined,
                       capitalization: TextCapitalization.words,
                       validator: (v) =>
-                      (v ?? '').trim().length < 2 ? 'Enter the supplier name' : null),
-                  _field(_phoneCtrl, 'Phone number',
+                      (v ?? '').trim().length < 2 ? tr('Enter the supplier name') : null),
+                  _field(_phoneCtrl, tr('Phone number'),
                       icon: Icons.phone_outlined,
                       keyboard: TextInputType.phone,
                       formatters: [
@@ -263,48 +264,48 @@ class _SupplierCreateEditScreenState extends State<SupplierCreateEditScreen> {
                       ],
                       validator: (v) => RegExp(r'^[6-9]\d{9}$').hasMatch((v ?? '').trim())
                           ? null
-                          : 'Enter a valid 10-digit mobile number'),
-                  _field(_emailCtrl, 'Email',
+                          : tr('Enter a valid 10-digit mobile number')),
+                  _field(_emailCtrl, tr('Email'),
                       icon: Icons.mail_outline_rounded,
                       keyboard: TextInputType.emailAddress,
                       validator: (v) =>
                       RegExp(r'^[\w.+-]+@[\w-]+\.[\w.-]+$').hasMatch((v ?? '').trim())
                           ? null
-                          : 'Enter a valid email'),
+                          : tr('Enter a valid email')),
                 ]),
               ),
               const SizedBox(height: 12),
               SectionCard(
-                title: 'Address',
+                title: tr('Address'),
                 child: Column(children: [
-                  _field(_addressCtrl, 'Street, building, landmark',
+                  _field(_addressCtrl, tr('Street, building, landmark'),
                       icon: Icons.home_work_outlined,
                       maxLines: 3,
                       capitalization: TextCapitalization.sentences,
                       validator: (v) =>
-                      (v ?? '').trim().isEmpty ? 'Enter the address' : null),
-                  _dropdown('State', _states, _stateId, _loadingStates, (v) => _onState(v)),
-                  _dropdown('District', _districts, _districtId, _loadingDistricts,
+                      (v ?? '').trim().isEmpty ? tr('Enter the address') : null),
+                  _dropdown(tr('State'), _states, _stateId, _loadingStates, (v) => _onState(v)),
+                  _dropdown(tr('District'), _districts, _districtId, _loadingDistricts,
                           (v) => _onDistrict(v),
                       enabled: _stateId != null),
-                  _dropdown('Taluka', _talukas, _talukaId, _loadingTalukas,
+                  _dropdown(tr('Taluka'), _talukas, _talukaId, _loadingTalukas,
                           (v) => _onTaluka(v),
                       enabled: _districtId != null),
-                  _dropdown('Village', _villages, _villageId, _loadingVillages,
+                  _dropdown(tr('Village'), _villages, _villageId, _loadingVillages,
                           (v) => setState(() => _villageId = v),
                       enabled: _talukaId != null),
                 ]),
               ),
               const SizedBox(height: 12),
               SectionCard(
-                title: 'Map location',
-                trailing: Text('Optional', style: DT.text(size: 11.5, color: DT.slate400)),
+                title: tr('Map location'),
+                trailing: Text(tr('Optional'), style: DT.text(size: 11.5, color: DT.slate400)),
                 child: Row(
                   children: [
                     Expanded(
                       child: Text(
                         _lat.isEmpty
-                            ? 'Capture coordinates while you are at the supplier.'
+                            ? tr('Capture coordinates while you are at the supplier.')
                             : '$_lat, $_lng',
                         style: DT.text(
                           size: 12.5,
@@ -323,7 +324,7 @@ class _SupplierCreateEditScreenState extends State<SupplierCreateEditScreen> {
                           height: 14,
                           child: CircularProgressIndicator(strokeWidth: 2))
                           : const Icon(Icons.my_location_rounded, size: 16),
-                      label: Text(_lat.isEmpty ? 'Use current' : 'Update',
+                      label: Text(_lat.isEmpty ? tr('Use current') : tr('Update'),
                           style: DT.text(
                               size: 12.5, weight: FontWeight.w700, color: _kBrand)),
                       style: OutlinedButton.styleFrom(
@@ -369,7 +370,7 @@ class _SupplierCreateEditScreenState extends State<SupplierCreateEditScreen> {
                     width: 22,
                     height: 22,
                     child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                    : Text(_isEdit ? 'Save changes' : 'Add supplier',
+                    : Text(_isEdit ? tr('Save changes') : tr('Add supplier'),
                     style: DT.text(size: 14.5, weight: FontWeight.w700, color: Colors.white)),
               ),
             ),
@@ -405,7 +406,7 @@ class _SupplierCreateEditScreenState extends State<SupplierCreateEditScreen> {
   }
 
   InputDecoration _decoration(String label, IconData icon) => InputDecoration(
-    labelText: label,
+    labelText: tr(label),
     labelStyle: DT.text(size: 13, color: DT.slate500),
     prefixIcon: Icon(icon, size: 19, color: DT.slate400),
     filled: true,
@@ -455,14 +456,14 @@ class _SupplierCreateEditScreenState extends State<SupplierCreateEditScreen> {
                 value: safeValue,
                 isExpanded: true,
                 hint: Text(
-                  loading ? 'Loading $label…' : (enabled ? 'Select $label' : label),
+                  loading ? tr('Loading {0}…', [label]) : (enabled ? tr('Select {0}', [label]) : label),
                   style: DT.text(size: 13.5, color: DT.slate400),
                 ),
                 icon: const Icon(Icons.expand_more_rounded, color: DT.slate400),
                 items: items
                     .map((e) => DropdownMenuItem<int>(
                   value: e.id,
-                  child: Text(e.name,
+                  child: Text(trData(e.name),
                       overflow: TextOverflow.ellipsis, style: DT.text(size: 13.5)),
                 ))
                     .toList(),

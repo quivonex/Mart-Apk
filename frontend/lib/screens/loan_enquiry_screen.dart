@@ -12,6 +12,7 @@ import '../constants/design_tokens.dart';
 import '../models/loan_enquiry_model.dart';
 import '../services/loan_enquiry_service.dart';
 import '../widgets/product_ui.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -198,7 +199,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
             const SizedBox(width: _S.sm),
             Expanded(
               child: Text(
-                response.displayMessage,
+                tr(response.displayMessage),
                 style: DT.text(
                     size: 13, weight: FontWeight.w600, color: Colors.white),
               ),
@@ -306,7 +307,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    tooltip: 'Back',
+                    tooltip: tr('Back'),
                     onPressed: () => Navigator.maybePop(context),
                     icon: const Icon(Icons.arrow_back_rounded,
                         color: Colors.white, size: 24),
@@ -321,7 +322,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
                           children: [
                             Flexible(
                               child: Text(
-                                'Loan Enquiry',
+                                tr('Loan Enquiry'),
                                 overflow: TextOverflow.ellipsis,
                                 style: DT.text(
                                     size: 18,
@@ -346,7 +347,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
                                       size: 11, color: _brand),
                                   const SizedBox(width: 3),
                                   Text(
-                                    'Verified',
+                                    tr('Verified'),
                                     style: DT.text(
                                         size: 10,
                                         weight: FontWeight.w700,
@@ -359,7 +360,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'QNX Mart Capital & Credit Network',
+                          tr('QNX Mart Capital & Credit Network'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(size: 12, color: const Color(0xFFC9DBEE)),
@@ -422,7 +423,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
                     const Icon(Icons.bolt, size: 14, color: DT.amber300),
                     const SizedBox(width: 6),
                     Text(
-                      'INSTANT APPROVAL IN 15 MINS',
+                      tr('INSTANT APPROVAL IN 15 MINS'),
                       style: DT.text(
                           size: 10,
                           weight: FontWeight.w800,
@@ -434,7 +435,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
               ),
               const SizedBox(height: _S.md),
               Text(
-                'Business Loan\nMade Simple',
+                tr('Business Loan\nMade Simple'),
                 style: DT.text(
                     size: 24,
                     weight: FontWeight.w800,
@@ -444,7 +445,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
               ),
               const SizedBox(height: _S.sm),
               Text(
-                'Instant credit limits up to ₹50 Lakhs with verified Tier-1 banking partners. Quick digital sanction for purchase orders and expansion.',
+                tr('Instant credit limits up to ₹50 Lakhs with verified Tier-1 banking partners. Quick digital sanction for purchase orders and expansion.'),
                 style: DT.text(
                     size: 12.5,
                     color: const Color(0xFFC9DBEE),
@@ -459,18 +460,18 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
                   borderRadius: BorderRadius.circular(DT.rMd),
                   border: Border.all(color: Colors.white24),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
                     Expanded(
                         child: _TrustPip(
                             value: '8.75%',
                             suffix: ' p.a.',
-                            label: 'Starting APR')),
+                            label: tr('Starting APR'))),
                     Expanded(
-                        child: _TrustPip(value: 'Zero', label: 'Collateral')),
+                        child: _TrustPip(value: 'Zero', label: tr('Collateral'))),
                     Expanded(
                         child: _TrustPip(
-                            value: 'Up to 60m', label: 'Flexible Tenure')),
+                            value: 'Up to 60m', label: tr('Flexible Tenure'))),
                   ],
                 ),
               ),
@@ -486,24 +487,24 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
   Widget _buildSchemes() {
     return _SectionCard(
       icon: Icons.flash_on_rounded,
-      title: 'Fast-track loan schemes',
-      subtitle: 'Choose a category and get matched',
+      title: tr('Fast-track loan schemes'),
+      subtitle: tr('Choose a category and get matched'),
       children: [
-        const Row(
+        Row(
           children: [
             Expanded(
               child: _SchemeTile(
                 icon: Icons.receipt_long_outlined,
-                title: 'Purchase Order Finance',
-                subtitle: 'Collateral-free for MSME',
+                title: tr('Purchase Order Finance'),
+                subtitle: tr('Collateral-free for MSME'),
               ),
             ),
             SizedBox(width: _S.sm),
             Expanded(
               child: _SchemeTile(
                 icon: Icons.precision_manufacturing_outlined,
-                title: 'Machinery & Capex',
-                subtitle: 'Direct OEM disbursal',
+                title: tr('Machinery & Capex'),
+                subtitle: tr('Direct OEM disbursal'),
               ),
             ),
           ],
@@ -534,21 +535,21 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
       ),
       child: Row(
         children: [
-          const Flexible(
+          Flexible(
             child: _Step(
                 number: 1,
-                title: 'Loan Details',
-                subtitle: 'In Progress',
+                title: tr('Loan Details'),
+                subtitle: tr('In Progress'),
                 active: true),
           ),
           connector(),
-          const Flexible(
-            child: _Step(number: 2, title: 'Bank KYC', subtitle: 'GST & PAN'),
+          Flexible(
+            child: _Step(number: 2, title: tr('Bank KYC'), subtitle: tr('GST & PAN')),
           ),
           connector(),
-          const Flexible(
+          Flexible(
             child: _Step(
-                number: 3, title: 'Disbursal', subtitle: 'Direct Credit'),
+                number: 3, title: tr('Disbursal'), subtitle: tr('Direct Credit')),
           ),
         ],
       ),
@@ -560,26 +561,26 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
   Widget _buildPersonalCard() {
     return _SectionCard(
       icon: Icons.person_outline,
-      title: 'Personal details',
-      subtitle: 'Primary applicant or authorized director',
+      title: tr('Personal details'),
+      subtitle: tr('Primary applicant or authorized director'),
       children: [
-        PxLabel('Full name', required: true),
+        PxLabel(tr('Full name'), required: true),
         TextFormField(
           controller: _nameController,
           textCapitalization: TextCapitalization.words,
           textInputAction: TextInputAction.next,
           style: DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
           decoration: pxInputDecoration(
-            hint: 'e.g. Rajesh Kumar',
+            hint: tr('e.g. Rajesh Kumar'),
             icon: Icons.badge_outlined,
             iconColor: _brand,
           ),
           validator: (v) => (v == null || v.trim().isEmpty)
-              ? 'Name is required'
+              ? tr('Name is required')
               : null,
         ),
         const SizedBox(height: _S.md),
-        PxLabel('Mobile number', required: true),
+        PxLabel(tr('Mobile number'), required: true),
         TextFormField(
           controller: _mobileController,
           keyboardType: TextInputType.phone,
@@ -595,20 +596,20 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
             iconColor: _brand,
           ),
           validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'Mobile number is required';
+            if (v == null || v.trim().isEmpty) return tr('Mobile number is required');
             if (v.trim().length != 10) {
-              return 'Enter a valid 10-digit mobile number';
+              return tr('Enter a valid 10-digit mobile number');
             }
             return null;
           },
         ),
         const SizedBox(height: _S.xs),
         Text(
-          'Bank approval code will be dispatched to this number',
+          tr('Bank approval code will be dispatched to this number'),
           style: DT.text(size: 11, color: DT.slate500),
         ),
         const SizedBox(height: _S.md),
-        PxLabel('Email address', required: true),
+        PxLabel(tr('Email address'), required: true),
         TextFormField(
           controller: _emailController,
           keyboardType: TextInputType.emailAddress,
@@ -620,10 +621,10 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
             iconColor: _brand,
           ),
           validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'Email is required';
+            if (v == null || v.trim().isEmpty) return tr('Email is required');
             final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
             if (!emailRegex.hasMatch(v.trim())) {
-              return 'Enter a valid email address';
+              return tr('Enter a valid email address');
             }
             return null;
           },
@@ -640,21 +641,21 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
 
     return _SectionCard(
       icon: Icons.account_balance_outlined,
-      title: 'Loan requirements',
-      subtitle: 'Configure capital and repayment timeline',
+      title: tr('Loan requirements'),
+      subtitle: tr('Configure capital and repayment timeline'),
       children: [
-        PxLabel('Loan facility type', required: true),
+        PxLabel(tr('Loan facility type'), required: true),
         DropdownButtonFormField<String>(
           value: _selectedLoanType,
           isExpanded: true,
           icon: const Icon(Icons.expand_more, color: DT.slate500),
           style: DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
           decoration: pxInputDecoration(
-            hint: 'Select loan type',
+            hint: tr('Select loan type'),
             icon: Icons.payments_outlined,
             iconColor: _brand,
           ),
-          hint: Text('Select loan type',
+          hint: Text(tr('Select loan type'),
               style: DT.text(size: 13.5, color: DT.slate400)),
           items: LoanEnquiryRequest.loanTypeOptions.map((option) {
             return DropdownMenuItem<String>(
@@ -667,13 +668,13 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
           }).toList(),
           onChanged: (v) => setState(() => _selectedLoanType = v),
           validator: (v) => (v == null || v.isEmpty)
-              ? 'Please select a loan type'
+              ? tr('Please select a loan type')
               : null,
         ),
         const SizedBox(height: _S.md),
 
         // Loan amount with preset chips
-        PxLabel('Required loan amount', required: true),
+        PxLabel(tr('Required loan amount'), required: true),
         TextFormField(
           controller: _loanAmountController,
           keyboardType: TextInputType.number,
@@ -681,7 +682,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
           style: DT.text(
               size: 15, weight: FontWeight.w800, color: DT.onyx900),
           decoration: pxInputDecoration(
-            hint: 'e.g. 15,00,000',
+            hint: tr('e.g. 15,00,000'),
             prefix: Padding(
               padding: const EdgeInsets.only(left: 14, right: 4),
               child: Text('₹',
@@ -690,8 +691,8 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
             ),
           ),
           validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'Loan amount is required';
-            if (_digitsToInt(v) <= 0) return 'Enter a valid amount';
+            if (v == null || v.trim().isEmpty) return tr('Loan amount is required');
+            if (_digitsToInt(v) <= 0) return tr('Enter a valid amount');
             return null;
           },
         ),
@@ -716,7 +717,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
                           color: selected ? _brand : _kLine),
                     ),
                     child: Text(
-                      e.value,
+                      tr(e.value),
                       style: DT.text(
                         size: 11.5,
                         weight: FontWeight.w700,
@@ -732,7 +733,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
         const SizedBox(height: _S.lg),
 
         // Tenure pills
-        PxLabel('Tenure duration', required: true),
+        PxLabel(tr('Tenure duration'), required: true),
         Row(
           children: List.generate(_tenureOptions.length, (i) {
             final years = _tenureOptions[i];
@@ -754,7 +755,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
                           color: selected ? _brand : DT.slate200),
                     ),
                     child: Text(
-                      years == 1 ? '1 Year' : '$years Years',
+                      years == 1 ? tr('1 Year') : tr('{0} Years', [years]),
                       style: DT.text(
                         size: 12.5,
                         weight:
@@ -771,29 +772,29 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
         const SizedBox(height: _S.lg),
 
         // Monthly turnover
-        PxLabel('Average monthly turnover', required: true),
+        PxLabel(tr('Average monthly turnover'), required: true),
         TextFormField(
           controller: _monthlyIncomeController,
           keyboardType: TextInputType.number,
           inputFormatters: [_IndianAmountFormatter()],
           style: DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
           decoration: pxInputDecoration(
-            hint: 'e.g. 4,50,000',
+            hint: tr('e.g. 4,50,000'),
             icon: Icons.trending_up,
             iconColor: _brand,
             suffixText: '/ month',
           ),
           validator: (v) {
             if (v == null || v.trim().isEmpty) {
-              return 'Monthly turnover is required';
+              return tr('Monthly turnover is required');
             }
-            if (_digitsToInt(v) <= 0) return 'Enter a valid turnover';
+            if (_digitsToInt(v) <= 0) return tr('Enter a valid turnover');
             return null;
           },
         ),
         const SizedBox(height: _S.xs),
         Text(
-          'Average bank credits over the last 6 months',
+          tr('Average bank credits over the last 6 months'),
           style: DT.text(size: 11, color: DT.slate500),
         ),
         const SizedBox(height: _S.lg),
@@ -823,11 +824,11 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Estimated EMI',
+                    Text(tr('Estimated EMI'),
                         style: DT.text(size: 11, color: DT.slate500)),
                     const SizedBox(height: 2),
                     Text(
-                      emi > 0 ? '~₹${_inr(emi)} / mo' : '—',
+                      emi > 0 ? tr('~₹{0} / mo', [_inr(emi)]) : '—',
                       style: DT.text(
                           size: 15,
                           weight: FontWeight.w800,
@@ -839,13 +840,13 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('@ 9.25% p.a.',
+                  Text(tr('@ 9.25% p.a.'),
                       style: DT.text(
                           size: 11.5,
                           weight: FontWeight.w800,
                           color: _brand)),
                   const SizedBox(height: 2),
-                  Text('Zero foreclosure fee',
+                  Text(tr('Zero foreclosure fee'),
                       style: DT.text(size: 10.5, color: DT.slate500)),
                 ],
               ),
@@ -861,22 +862,22 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
   Widget _buildLocationCard() {
     return _SectionCard(
       icon: Icons.storefront_outlined,
-      title: 'Business location',
-      subtitle: 'Operating plant, warehouse, or retail premises',
+      title: tr('Business location'),
+      subtitle: tr('Operating plant, warehouse, or retail premises'),
       children: [
-        PxLabel('City / District', required: true),
+        PxLabel(tr('City / District'), required: true),
         TextFormField(
           controller: _cityController,
           textCapitalization: TextCapitalization.words,
           textInputAction: TextInputAction.next,
           style: DT.text(size: 14, weight: FontWeight.w600, color: DT.onyx900),
           decoration: pxInputDecoration(
-            hint: 'e.g. Pune / Mumbai',
+            hint: tr('e.g. Pune / Mumbai'),
             icon: Icons.apartment,
             iconColor: _brand,
           ),
           validator: (v) =>
-          (v == null || v.trim().isEmpty) ? 'City is required' : null,
+          (v == null || v.trim().isEmpty) ? tr('City is required') : null,
         ),
         const SizedBox(height: _S.md),
         Row(
@@ -886,7 +887,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  PxLabel('State', required: true),
+                  PxLabel(tr('State'), required: true),
                   TextFormField(
                     controller: _stateController,
                     textCapitalization: TextCapitalization.words,
@@ -894,12 +895,12 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
                     style: DT.text(
                         size: 14, weight: FontWeight.w600, color: DT.onyx900),
                     decoration: pxInputDecoration(
-                      hint: 'e.g. Maharashtra',
+                      hint: tr('e.g. Maharashtra'),
                       icon: Icons.map_outlined,
                       iconColor: _brand,
                     ),
                     validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'State is required'
+                        ? tr('State is required')
                         : null,
                   ),
                 ],
@@ -910,7 +911,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  PxLabel('Pincode', required: true),
+                  PxLabel(tr('Pincode'), required: true),
                   TextFormField(
                     controller: _pincodeController,
                     keyboardType: TextInputType.number,
@@ -927,9 +928,9 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
                     ),
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) {
-                        return 'Pincode is required';
+                        return tr('Pincode is required');
                       }
-                      if (v.trim().length != 6) return 'Enter 6 digits';
+                      if (v.trim().length != 6) return tr('Enter 6 digits');
                       return null;
                     },
                   ),
@@ -947,10 +948,10 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
   Widget _buildRemarksCard() {
     return _SectionCard(
       icon: Icons.edit_note,
-      title: 'Additional information',
-      subtitle: 'Optional notes for credit underwriters',
+      title: tr('Additional information'),
+      subtitle: tr('Optional notes for credit underwriters'),
       children: [
-        PxLabel('Remarks / specific purchase order details', optional: true),
+        PxLabel(tr('Remarks / specific purchase order details'), optional: true),
         TextFormField(
           controller: _remarksController,
           maxLines: 4,
@@ -959,7 +960,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
           style: DT.text(size: 14, weight: FontWeight.w500, color: DT.onyx900),
           decoration: pxInputDecoration(
             hint:
-            'Specify existing trade lines, purchase order references, or specific disbursement target dates…',
+            tr('Specify existing trade lines, purchase order references, or specific disbursement target dates…'),
             tinted: true,
           ),
         ),
@@ -983,7 +984,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
         children: [
           Icon(icon, size: 12, color: color),
           const SizedBox(width: 6),
-          Text(name,
+          Text(tr(name),
               style: DT.text(
                   size: 11.5, weight: FontWeight.w700, color: DT.onyx900)),
         ],
@@ -1007,7 +1008,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  'SANCTIONING INSTITUTIONAL PARTNERS',
+                  tr('SANCTIONING INSTITUTIONAL PARTNERS'),
                   overflow: TextOverflow.ellipsis,
                   style: DT.text(
                       size: 10.5,
@@ -1016,7 +1017,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
                       letterSpacing: 0.6),
                 ),
               ),
-              Text('256-bit encrypted',
+              Text(tr('256-bit encrypted'),
                   style: DT.text(size: 10, color: DT.slate500)),
             ],
           ),
@@ -1025,10 +1026,10 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
             spacing: _S.sm,
             runSpacing: _S.sm,
             children: [
-              chip('SBI Commercial', Icons.account_balance_rounded, _brand),
-              chip('HDFC Capital', Icons.account_balance_rounded,
+              chip(tr('SBI Commercial'), Icons.account_balance_rounded, _brand),
+              chip(tr('HDFC Capital'), Icons.account_balance_rounded,
                   const Color(0xFF093C71)),
-              chip('ICICI Trade', Icons.account_balance_rounded,
+              chip(tr('ICICI Trade'), Icons.account_balance_rounded,
                   const Color(0xFFF7931E)),
             ],
           ),
@@ -1072,7 +1073,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
                   : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Submit loan enquiry',
+                  Text(tr('Submit loan enquiry'),
                       style: DT.text(
                           size: 15,
                           weight: FontWeight.w800,
@@ -1099,7 +1100,7 @@ class _LoanEnquiryScreenState extends State<LoanEnquiryScreen> {
               const SizedBox(width: _S.xs),
               Flexible(
                 child: Text(
-                  'By submitting, you agree to QNX Mart Credit Terms & official CIBIL inquiry consent.',
+                  tr('By submitting, you agree to QNX Mart Credit Terms & official CIBIL inquiry consent.'),
                   textAlign: TextAlign.center,
                   style: DT.text(size: 10.5, color: DT.slate400),
                 ),
@@ -1164,7 +1165,7 @@ class _SectionCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        title,
+                        tr(title),
                         style: DT.text(
                             size: 14,
                             weight: FontWeight.w700,
@@ -1173,7 +1174,7 @@ class _SectionCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        subtitle,
+                        tr(subtitle),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: 11.5, color: DT.slate500),
@@ -1206,11 +1207,11 @@ class _TrustPip extends StatelessWidget {
       children: [
         Text.rich(
           TextSpan(
-            text: value,
+            text: tr(value),
             children: [
               if (suffix != null)
                 TextSpan(
-                  text: suffix,
+                  text: trN(suffix),
                   style: const TextStyle(
                       fontWeight: FontWeight.w400, color: Color(0xFFC9DBEE)),
                 ),
@@ -1222,7 +1223,7 @@ class _TrustPip extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          label,
+          tr(label),
           textAlign: TextAlign.center,
           style: DT.text(
               size: 10.5,
@@ -1268,7 +1269,7 @@ class _SchemeTile extends StatelessWidget {
           ),
           const SizedBox(height: _S.sm),
           Text(
-            title,
+            tr(title),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: DT.text(
@@ -1279,7 +1280,7 @@ class _SchemeTile extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            subtitle,
+            tr(subtitle),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: DT.text(size: 10.5, color: DT.slate500),
@@ -1334,7 +1335,7 @@ class _Step extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  title,
+                  tr(title),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: DT.text(
@@ -1344,7 +1345,7 @@ class _Step extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  subtitle,
+                  tr(subtitle),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: DT.text(size: 10, color: DT.slate500),

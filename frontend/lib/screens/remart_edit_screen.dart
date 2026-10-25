@@ -14,6 +14,7 @@ import '../services/qnx_api.dart';
 import '../services/remart_edit_service.dart';
 import '../widgets/edit_form_kit.dart';
 import 'login_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 const _maxPhotos = 10;
 
@@ -138,11 +139,11 @@ class _RemartEditScreenState extends State<RemartEditScreen> {
     final d = _data;
     if (d == null) return;
     if (!(_form.currentState?.validate() ?? false)) {
-      ekSnack(context, 'Please check the highlighted fields', error: true);
+      ekSnack(context, tr('Please check the highlighted fields'), error: true);
       return;
     }
     if (_photoCount == 0) {
-      ekSnack(context, 'Keep at least one photo', error: true);
+      ekSnack(context, tr('Keep at least one photo'), error: true);
       return;
     }
     String? changed(String now, String before) => now.trim() == before.trim() ? null : now.trim();
@@ -188,7 +189,7 @@ class _RemartEditScreenState extends State<RemartEditScreen> {
         _removed.isEmpty &&
         _added.isEmpty;
     if (nothing) {
-      ekSnack(context, 'No changes to save');
+      ekSnack(context, tr('No changes to save'));
       return;
     }
 
@@ -225,7 +226,7 @@ class _RemartEditScreenState extends State<RemartEditScreen> {
     final d = _data;
     return Scaffold(
       backgroundColor: EK.bg,
-      appBar: ekAppBar('Edit item', subtitle: d?.title ?? widget.title),
+      appBar: ekAppBar(tr('Edit item'), subtitle: tr(d?.title ?? widget.title)),
       body: _loading || d == null
           ? EkState(loading: _loading, error: _error, onRetry: _load)
           : Form(
@@ -235,7 +236,7 @@ class _RemartEditScreenState extends State<RemartEditScreen> {
                 children: [
                   if (d.status.isNotEmpty && d.status != 'active') _statusNote(d.status),
                   EkSection(
-                    title: 'Photos',
+                    title: tr('Photos'),
                     subtitle: '$_photoCount/$_maxPhotos · tap ✕ to remove',
                     icon: Icons.photo_library_outlined,
                     children: [
@@ -251,23 +252,23 @@ class _RemartEditScreenState extends State<RemartEditScreen> {
                     ],
                   ),
                   EkSection(
-                    title: 'Item details',
-                    subtitle: [d.categoryName, d.subcategoryName].where((s) => s.isNotEmpty).join(' › '),
+                    title: tr('Item details'),
+                    subtitle: tr([d.categoryName, d.subcategoryName].where((s) => s.isNotEmpty).join(' › ')),
                     icon: Icons.inventory_2_outlined,
                     children: [
                       EkField(
                         controller: _title,
-                        label: 'Title',
+                        label: tr('Title'),
                         maxLength: 120,
-                        validator: (v) => (v ?? '').trim().length < 3 ? 'Enter a title' : null,
+                        validator: (v) => (v ?? '').trim().length < 3 ? tr('Enter a title') : null,
                       ),
                       EkField(
                         controller: _desc,
-                        label: 'Description',
+                        label: tr('Description'),
                         maxLines: 5,
-                        validator: (v) => (v ?? '').trim().isEmpty ? 'Enter a description' : null,
+                        validator: (v) => (v ?? '').trim().isEmpty ? tr('Enter a description') : null,
                       ),
-                      Text('Condition', style: DT.text(size: 12, weight: FontWeight.w700, color: EK.muted)),
+                      Text(tr('Condition'), style: DT.text(size: 12, weight: FontWeight.w700, color: EK.muted)),
                       const SizedBox(height: 8),
                       EkChoice<String>(
                         options: _conditions,
@@ -275,66 +276,66 @@ class _RemartEditScreenState extends State<RemartEditScreen> {
                         onChanged: (v) => setState(() => _condition = v),
                       ),
                       const SizedBox(height: 14),
-                      Text('You are', style: DT.text(size: 12, weight: FontWeight.w700, color: EK.muted)),
+                      Text(tr('You are'), style: DT.text(size: 12, weight: FontWeight.w700, color: EK.muted)),
                       const SizedBox(height: 8),
                       EkChoice<String>(
-                        options: const [('individual', 'Individual'), ('business', 'Business')],
+                        options: [('individual', tr('Individual')), ('business', tr('Business'))],
                         value: _sellerType,
                         onChanged: (v) => setState(() => _sellerType = v),
                       ),
                       if (_attr.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         for (final e in _attr.entries)
-                          EkField(controller: e.value, label: _labelOf(e.key)),
+                          EkField(controller: e.value, label: tr(_labelOf(e.key))),
                       ],
                     ],
                   ),
                   EkSection(
-                    title: 'Price',
+                    title: tr('Price'),
                     icon: Icons.currency_rupee_rounded,
                     children: [
                       EkField(
                         controller: _price,
-                        label: 'Price',
+                        label: tr('Price'),
                         prefix: '₹ ',
                         keyboard: const TextInputType.numberWithOptions(decimal: true),
                         validator: (v) {
                           final p = double.tryParse((v ?? '').trim().replaceAll(',', ''));
-                          return p == null || p <= 0 ? 'Enter a valid price' : null;
+                          return p == null || p <= 0 ? tr('Enter a valid price') : null;
                         },
                       ),
                       EkSwitch(
-                        label: 'Price is negotiable',
+                        label: tr('Price is negotiable'),
                         value: _negotiable,
                         onChanged: (v) => setState(() => _negotiable = v),
                       ),
                     ],
                   ),
                   EkSection(
-                    title: 'Location',
+                    title: tr('Location'),
                     icon: Icons.location_on_outlined,
                     children: [
                       EkField(
                         controller: _city,
-                        label: 'City',
-                        validator: (v) => (v ?? '').trim().isEmpty ? 'Enter the city' : null,
+                        label: tr('City'),
+                        validator: (v) => (v ?? '').trim().isEmpty ? tr('Enter the city') : null,
                       ),
-                      EkField(controller: _area, label: 'Area / locality'),
-                      EkField(controller: _address, label: 'Address', maxLines: 2),
+                      EkField(controller: _area, label: tr('Area / locality')),
+                      EkField(controller: _address, label: tr('Address'), maxLines: 2),
                       EkField(
                         controller: _pincode,
-                        label: 'Pincode',
+                        label: tr('Pincode'),
                         keyboard: TextInputType.number,
                         maxLength: 6,
                         validator: (v) {
                           final s = (v ?? '').trim();
-                          return s.isEmpty || RegExp(r'^\d{6}$').hasMatch(s) ? null : 'Enter a 6-digit pincode';
+                          return s.isEmpty || RegExp(r'^\d{6}$').hasMatch(s) ? null : tr('Enter a 6-digit pincode');
                         },
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
-                  EkButton(label: 'Save changes', icon: Icons.check_rounded, busy: _saving, onPressed: _save),
+                  EkButton(label: tr('Save changes'), icon: Icons.check_rounded, busy: _saving, onPressed: _save),
                 ],
               ),
             ),
@@ -343,10 +344,10 @@ class _RemartEditScreenState extends State<RemartEditScreen> {
 
   Widget _statusNote(String status) {
     final text = switch (status) {
-      'pending' => 'This item is waiting for approval / payment. Changes are saved but it stays pending.',
-      'sold' => 'This item is marked as sold and is not shown to buyers.',
-      'expired' => 'This item has expired. Changes are saved but it is not shown to buyers.',
-      _ => 'Status: $status',
+      'pending' => tr('This item is waiting for approval / payment. Changes are saved but it stays pending.'),
+      'sold' => tr('This item is marked as sold and is not shown to buyers.'),
+      'expired' => tr('This item has expired. Changes are saved but it is not shown to buyers.'),
+      _ => tr('Status: {0}', [status]),
     };
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -362,7 +363,7 @@ class _RemartEditScreenState extends State<RemartEditScreen> {
           const Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFFC2410C)),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(text, style: DT.text(size: 12.5, color: const Color(0xFFC2410C), height: 1.4)),
+            child: Text(tr(text), style: DT.text(size: 12.5, color: const Color(0xFFC2410C), height: 1.4)),
           ),
         ],
       ),

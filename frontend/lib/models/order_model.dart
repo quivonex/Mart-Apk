@@ -1,3 +1,4 @@
+import 'package:qnx_mart/l10n/app_language.dart';
 // ==================== My Orders List Models ====================
 
 class OrderResponse {
@@ -87,7 +88,7 @@ class OrderData {
         'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
       ];
-      return '${months[dateTime.month - 1]} ${dateTime.day}, ${dateTime.year}';
+      return '${tr(months[dateTime.month - 1])} ${dateTime.day}, ${dateTime.year}';
     } catch (e) {
       return createdAt;
     }
@@ -356,7 +357,7 @@ class OrderDetailData {
         'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
       ];
-      return '${months[dateTime.month - 1]} ${dateTime.day}, ${dateTime.year}';
+      return '${tr(months[dateTime.month - 1])} ${dateTime.day}, ${dateTime.year}';
     } catch (e) {
       return createdAt;
     }
@@ -489,7 +490,7 @@ class StatusHistory {
         'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
       ];
-      return '${months[dateTime.month - 1]} ${dateTime.day}, ${dateTime.year}';
+      return '${tr(months[dateTime.month - 1])} ${dateTime.day}, ${dateTime.year}';
     } catch (e) {
       return timestamp;
     }
@@ -649,7 +650,7 @@ class ShipmentTrack {
         'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
       ];
-      return '${months[dateTime.month - 1]} ${dateTime.day}, ${dateTime.year}';
+      return '${tr(months[dateTime.month - 1])} ${dateTime.day}, ${dateTime.year}';
     } catch (e) {
       return edd;
     }
@@ -696,7 +697,7 @@ class ShipmentTrackActivity {
       ];
       final hour = dateTime.hour.toString().padLeft(2, '0');
       final minute = dateTime.minute.toString().padLeft(2, '0');
-      return '${months[dateTime.month - 1]} ${dateTime.day}, ${dateTime.year} $hour:$minute';
+      return '${tr(months[dateTime.month - 1])} ${dateTime.day}, ${dateTime.year} $hour:$minute';
     } catch (e) {
       return date;
     }

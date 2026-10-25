@@ -1,3 +1,4 @@
+import 'package:qnx_mart/l10n/app_language.dart';
 // ============ Property Image Model ============
 
 class PropertyImage {
@@ -154,23 +155,23 @@ class Property {
 
   /// Backend label for property_type (same as the website).
   String get typeLabel => switch (propertyType) {
-    'flat' => 'Flat / Apartment',
-    'villa' => 'Villa / Bungalow',
-    'plot' => 'Plot / Land',
-    'commercial' => 'Commercial Space',
-    'shop' => 'Shop / Retail',
-    'office' => 'Office Space',
-    'warehouse' => 'Warehouse',
-    'other' => 'Other',
+    'flat' => tr('Flat / Apartment'),
+    'villa' => tr('Villa / Bungalow'),
+    'plot' => tr('Plot / Land'),
+    'commercial' => tr('Commercial Space'),
+    'shop' => tr('Shop / Retail'),
+    'office' => tr('Office Space'),
+    'warehouse' => tr('Warehouse'),
+    'other' => tr('Other'),
     _ => formattedPropertyType,
   };
 
   /// Backend label for transaction_type.
   String get transactionLabel => switch (transactionType) {
-    'sale' => 'For Sale',
-    'rent' => 'For Rent',
-    'lease' => 'For Lease',
-    'pg' => 'PG / Hostel',
+    'sale' => tr('For Sale'),
+    'rent' => tr('For Rent'),
+    'lease' => tr('For Lease'),
+    'pg' => tr('PG / Hostel'),
     _ => formattedTransactionType,
   };
 
@@ -201,13 +202,13 @@ class Property {
   /// Formatted price string (e.g. "₹50.0 L" or "₹1.2 Cr")
   String get formattedMinPrice {
     final price = minPrice;
-    if (price <= 0) return 'Price on request';
+    if (price <= 0) return tr('Price on request');
     if (price >= 10000000) {
-      return '₹${(price / 10000000).toStringAsFixed(2)} Cr';
+      return tr('₹{0} Cr', [(price / 10000000).toStringAsFixed(2)]);
     } else if (price >= 100000) {
-      return '₹${(price / 100000).toStringAsFixed(2)} L';
+      return tr('₹{0} L', [(price / 100000).toStringAsFixed(2)]);
     } else if (price >= 1000) {
-      return '₹${(price / 1000).toStringAsFixed(1)} K';
+      return tr('₹{0} K', [(price / 1000).toStringAsFixed(1)]);
     }
     return '₹${price.toStringAsFixed(0)}';
   }
@@ -223,7 +224,7 @@ class Property {
     if (transactionType.isEmpty) return '';
     final capped =
         transactionType[0].toUpperCase() + transactionType.substring(1);
-    return 'For $capped';
+    return tr('For {0}', [capped]);
   }
 
   Map<String, dynamic> toJson() {
@@ -434,13 +435,13 @@ class PricingSlabDetail {
 
   String get formattedBasePrice {
     final price = basePriceAsDouble;
-    if (price <= 0) return 'Price on request';
+    if (price <= 0) return tr('Price on request');
     if (price >= 10000000) {
-      return '₹${(price / 10000000).toStringAsFixed(2)} Cr';
+      return tr('₹{0} Cr', [(price / 10000000).toStringAsFixed(2)]);
     } else if (price >= 100000) {
-      return '₹${(price / 100000).toStringAsFixed(2)} L';
+      return tr('₹{0} L', [(price / 100000).toStringAsFixed(2)]);
     } else if (price >= 1000) {
-      return '₹${(price / 1000).toStringAsFixed(1)} K';
+      return tr('₹{0} K', [(price / 1000).toStringAsFixed(1)]);
     }
     return '₹${price.toStringAsFixed(0)}';
   }
@@ -712,7 +713,7 @@ class PropertyDetail {
     if (transactionType.isEmpty) return '';
     final capped =
         transactionType[0].toUpperCase() + transactionType.substring(1);
-    return 'For $capped';
+    return tr('For {0}', [capped]);
   }
 
   double get minPrice {
@@ -728,13 +729,13 @@ class PropertyDetail {
 
   String get formattedMinPrice {
     final price = minPrice;
-    if (price <= 0) return 'Price on request';
+    if (price <= 0) return tr('Price on request');
     if (price >= 10000000) {
-      return '₹${(price / 10000000).toStringAsFixed(2)} Cr';
+      return tr('₹{0} Cr', [(price / 10000000).toStringAsFixed(2)]);
     } else if (price >= 100000) {
-      return '₹${(price / 100000).toStringAsFixed(2)} L';
+      return tr('₹{0} L', [(price / 100000).toStringAsFixed(2)]);
     } else if (price >= 1000) {
-      return '₹${(price / 1000).toStringAsFixed(1)} K';
+      return tr('₹{0} K', [(price / 1000).toStringAsFixed(1)]);
     }
     return '₹${price.toStringAsFixed(0)}';
   }
@@ -765,4 +766,4 @@ class PropertyDetailResponse {
   }
 
   bool get isSuccess => status && data != null;
-}
+}

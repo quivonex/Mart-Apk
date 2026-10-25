@@ -1,3 +1,4 @@
+import 'package:qnx_mart/l10n/app_language.dart';
 // ============ Unit Model ============
 
 class Unit {
@@ -95,7 +96,7 @@ class UnitActionResponse {
   }
 
   String get displayMessage {
-    if (isSuccess) return message ?? 'Success';
+    if (isSuccess) return message ?? tr('Success');
 
     if (errors != null && errors!.isNotEmpty) {
       final firstKey = errors!.keys.first;
@@ -106,6 +107,6 @@ class UnitActionResponse {
       return firstError.toString();
     }
 
-    return message ?? 'Something went wrong';
+    return message ?? tr('Something went wrong');
   }
 }

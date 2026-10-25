@@ -17,6 +17,7 @@ import 'api_urls.dart';
 import '../models/company_model.dart';
 import '../models/company_stock_model.dart';
 import '../utils/shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class CompanyService {
   static const _timeout = Duration(seconds: 30);
@@ -109,15 +110,15 @@ class CompanyService {
   }
 
   static String _err(Object e) {
-    if (e is SocketException) return 'No internet connection.';
-    if (e is HttpException) return 'Could not reach the server.';
+    if (e is SocketException) return tr('No internet connection.');
+    if (e is HttpException) return tr('Could not reach the server.');
     if (e is http.ClientException) {
-      return 'Could not reach the server. Check the base URL and that Django is running.';
+      return tr('Could not reach the server. Check the base URL and that Django is running.');
     }
     if (e.toString().contains('TimeoutException')) {
-      return 'The server took too long to respond. Try again.';
+      return tr('The server took too long to respond. Try again.');
     }
-    return 'Something went wrong: $e';
+    return tr('Something went wrong: {0}', [e]);
   }
 
   // ─────────────────────────────────────────────────────────
@@ -129,7 +130,7 @@ class CompanyService {
       if (code == 200) return CompanyListResponse.fromJson(json);
       return CompanyListResponse(
         status: false,
-        message: json['message']?.toString() ?? 'Failed to load companies',
+        message: json['message']?.toString() ?? tr('Failed to load companies'),
         data: [],
       );
     } catch (e) {
@@ -264,7 +265,7 @@ class CompanyService {
         status: ok,
         message: (ok ? json['message'] : (json['error'] ?? json['message']))
             ?.toString() ??
-            (ok ? 'Done' : 'Request failed'),
+            (ok ? tr('Done') : tr('Request failed')),
       );
     } catch (e) {
       return CompanySimpleResponse(status: false, message: _err(e));

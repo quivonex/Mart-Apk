@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'api_urls.dart';
 import '../models/subcategory_model.dart';
 import '../utils/shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class SubCategoryService {
   static Future<Map<String, String>> _headers() async {
@@ -35,13 +36,13 @@ class SubCategoryService {
     } on SocketException {
       return CategoryNamesResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
         data: [],
       );
     } catch (e) {
       return CategoryNamesResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
         data: [],
       );
     }
@@ -66,13 +67,13 @@ class SubCategoryService {
     } on SocketException {
       return SubCategoryListResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
         data: [],
       );
     } catch (e) {
       return SubCategoryListResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
         data: [],
       );
     }
@@ -105,12 +106,12 @@ class SubCategoryService {
     } on SocketException {
       return SubCategoryActionResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
       );
     } catch (e) {
       return SubCategoryActionResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
       );
     }
   }
@@ -144,12 +145,12 @@ class SubCategoryService {
     } on SocketException {
       return SubCategoryActionResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
       );
     } catch (e) {
       return SubCategoryActionResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
       );
     }
   }
@@ -173,12 +174,12 @@ class SubCategoryService {
     } on SocketException {
       return SubCategoryActionResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
       );
     } catch (e) {
       return SubCategoryActionResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
       );
     }
   }
@@ -202,12 +203,12 @@ class SubCategoryService {
     } on SocketException {
       return SubCategoryActionResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
       );
     } catch (e) {
       return SubCategoryActionResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
       );
     }
   }

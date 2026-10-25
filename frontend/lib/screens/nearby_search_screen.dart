@@ -31,6 +31,7 @@ import '../utils/login_gate.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'login_screen.dart';
 import 'nearby_subscription_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -224,7 +225,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
       _locIssue = _LocIssue.none;
       if (_followLive) {
         _point = here;
-        _pointLabel = 'My location';
+        _pointLabel = tr('My location');
       }
     });
     if (!_followLive) return;
@@ -248,7 +249,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
     setState(() {
       _followLive = true;
       _point = here;
-      _pointLabel = 'My location';
+      _pointLabel = tr('My location');
     });
     _fitRadius();
     if (_posSub == null) _listenLive();
@@ -260,7 +261,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
   Future<void> _fixLocation() async {
     if (kIsWeb) {
       if (_locIssue == _LocIssue.blocked) {
-        _snack('Location is blocked for this site. Click the lock icon in the address bar → Location → Allow, then try again.');
+        _snack(tr('Location is blocked for this site. Click the lock icon in the address bar → Location → Allow, then try again.'));
       }
       _startLiveLocation();
       return;
@@ -336,13 +337,13 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
     FocusScope.of(context).unfocus();
     final q = _query.text.trim();
     if (q.isEmpty) {
-      _snack('Type what you are looking for (e.g. transport, warehouse).');
+      _snack(tr('Type what you are looking for (e.g. transport, warehouse).'));
       return;
     }
     // The API needs a logged-in user.
     if (!await _hasToken()) {
       if (!mounted) return;
-      await ensureLoggedIn(context, reason: 'search nearby places');
+      await ensureLoggedIn(context, reason: tr('search nearby places'));
       if (!await _hasToken()) return;
     }
     if (!mounted) return;
@@ -388,7 +389,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
 
   /// Opens the plans. Coming back with an active plan re-runs the search.
   Future<void> _openPlans() async {
-    if (!await ensureLoggedIn(context, reason: 'see the Nearby Search plans')) return;
+    if (!await ensureLoggedIn(context, reason: tr('see the Nearby Search plans'))) return;
     if (!mounted) return;
     final active = await Navigator.push<bool>(
       context,
@@ -415,7 +416,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
-        content: Text(msg, style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
+        content: Text(tr(msg), style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
         backgroundColor: _NS.ink,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
@@ -425,27 +426,27 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
 
   Future<void> _launch(Uri uri, String what) async {
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!ok && mounted) _snack('Could not open $what.');
+    if (!ok && mounted) _snack(tr('Could not open {0}.', [what]));
   }
 
   void _openWhatsApp(NearbyPlace p) {
     final n = p.whatsappNumber;
     if (n.isEmpty) {
-      _snack('WhatsApp number is not available for this place.');
+      _snack(tr('WhatsApp number is not available for this place.'));
       return;
     }
     final text = Uri.encodeComponent('Hi ${p.name}, I found your business on QNX Mart. I would like to know more.');
-    _launch(Uri.parse('https://wa.me/$n?text=$text'), 'WhatsApp');
+    _launch(Uri.parse('https://wa.me/$n?text=$text'), tr('WhatsApp'));
   }
 
   void _openDirections(NearbyPlace p) {
     if (p.hasLocation) {
-      _launch(p.directionsUri, 'Google Maps');
+      _launch(p.directionsUri, tr('Google Maps'));
       return;
     }
     // No coordinates → search the name / address in Google Maps.
     final q = Uri.encodeComponent('${p.name} ${p.address}'.trim());
-    _launch(Uri.parse('https://www.google.com/maps/search/?api=1&query=$q'), 'Google Maps');
+    _launch(Uri.parse('https://www.google.com/maps/search/?api=1&query=$q'), tr('Google Maps'));
   }
 
   /// Bottom sheet with the 2 options: Chat on WhatsApp / View on Map.
@@ -479,7 +480,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(p.name,
+                        Text(trData(p.name),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: DT.text(size: 16, weight: FontWeight.w800, color: _NS.ink, height: 1.25)),
@@ -487,7 +488,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
                         _ratingRow(p),
                         if (p.address.isNotEmpty) ...[
                           const SizedBox(height: 4),
-                          Text(p.address,
+                          Text(tr(p.address),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: DT.text(size: 12, color: _NS.muted, height: 1.4)),
@@ -500,8 +501,8 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
               const SizedBox(height: 18),
               _sheetButton(
                 icon: Icons.chat_rounded,
-                label: 'Chat on WhatsApp',
-                sub: hasWa ? p.phone : 'Number not available',
+                label: tr('Chat on WhatsApp'),
+                sub: hasWa ? p.phone : tr('Number not available'),
                 color: hasWa ? _NS.whatsapp : _NS.hint,
                 onTap: () {
                   Navigator.pop(ctx);
@@ -511,10 +512,10 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
               const SizedBox(height: 10),
               _sheetButton(
                 icon: Icons.directions_rounded,
-                label: 'View on Map',
+                label: tr('View on Map'),
                 sub: p.hasLocation
-                    ? 'Directions in Google Maps · ${_dist(p.distanceKm)}'
-                    : 'Search in Google Maps',
+                    ? tr('Directions in Google Maps · {0}', [_dist(p.distanceKm)])
+                    : tr('Search in Google Maps'),
                 color: _NS.brand,
                 onTap: () {
                   Navigator.pop(ctx);
@@ -560,9 +561,9 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(label, style: DT.text(size: 15, weight: FontWeight.w800, color: _NS.ink)),
+                      Text(tr(label), style: DT.text(size: 15, weight: FontWeight.w800, color: _NS.ink)),
                       const SizedBox(height: 2),
-                      Text(sub,
+                      Text(tr(sub),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(size: 12, color: _NS.muted)),
@@ -587,7 +588,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
         flexibleSpace: Container(decoration: const BoxDecoration(gradient: _kHeader)),
         foregroundColor: Colors.white,
         elevation: 0,
-        title: Text('Nearby Search', style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
+        title: Text(tr('Nearby Search'), style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
         actions: [
           Padding(padding: const EdgeInsets.only(right: 10), child: _planButton()),
         ],
@@ -606,9 +607,9 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
   Widget _planButton() {
     final s = _sub;
     final active = s != null && s.isActive;
-    final label = active ? '${s!.planName} · ${s.daysLeft}d left' : 'Subscription';
+    final label = active ? tr('{0} · {1}d left', [s!.planName, s.daysLeft]) : 'Subscription';
     return Tooltip(
-      message: active ? 'Plan active till ${nearbyDate(s!.expiresAt)}' : 'Buy a Nearby Search plan',
+      message: active ? tr('Plan active till {0}', [nearbyDate(s!.expiresAt)]) : tr('Buy a Nearby Search plan'),
       child: Material(
         color: Colors.white.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(20),
@@ -629,7 +630,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
                     size: 16, color: active ? _NS.green : Colors.white),
                 const SizedBox(width: 5),
                 Flexible(
-                  child: Text(label,
+                  child: Text(tr(label),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(size: 12, weight: FontWeight.w700, color: Colors.white)),
@@ -657,7 +658,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
               onChanged: (_) => setState(() {}),
               style: DT.text(size: 14, weight: FontWeight.w600, color: _NS.ink),
               decoration: InputDecoration(
-                hintText: 'Search transport, shops…',
+                hintText: tr('Search transport, shops…'),
                 hintStyle: DT.text(size: 13.5, color: _NS.hint),
                 prefixIcon: const Icon(Icons.search_rounded, color: _NS.muted),
                 suffixIcon: _query.text.isEmpty
@@ -719,7 +720,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
             child: DecoratedBox(
               decoration: BoxDecoration(color: _kBrand, borderRadius: BorderRadius.circular(14)),
               child: IconButton(
-                tooltip: 'Search',
+                tooltip: tr('Search'),
                 onPressed: _loading ? null : () => _search(),
                 icon: _loading
                     ? const SizedBox(
@@ -743,8 +744,8 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
         position: _live!,
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
         infoWindow: InfoWindow(
-          title: 'You are here',
-          snippet: _followLive ? 'Searching within $_km km' : 'Live location',
+          title: tr('You are here'),
+          snippet: _followLive ? tr('Searching within {0} km', [_km]) : tr('Live location'),
         ),
         zIndex: 3,
       ),
@@ -753,7 +754,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
         markerId: const MarkerId('selected_location'),
         position: _point,
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-        infoWindow: InfoWindow(title: 'Search here', snippet: '$_km km radius'),
+        infoWindow: InfoWindow(title: tr('Search here'), snippet: tr('{0} km radius', [_km])),
         zIndex: 2,
       ),
     for (var i = 0; i < _places.length; i++)
@@ -764,7 +765,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
           infoWindow: InfoWindow(
             title: '${i + 1}. ${_places[i].name}',
-            snippet: _places[i].canOpen ? 'Tap for WhatsApp / View on Map' : null,
+            snippet: _places[i].canOpen ? tr('Tap for WhatsApp / View on Map') : null,
             onTap: _places[i].canOpen ? () => _showOptions(_places[i]) : null,
           ),
           onTap: _places[i].canOpen ? () => _showOptions(_places[i]) : null,
@@ -783,7 +784,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
               _gmap = c;
               _fitRadius();
             },
-            onTap: (latLng) => _setPoint(latLng, 'Selected on map'),
+            onTap: (latLng) => _setPoint(latLng, tr('Selected on map')),
             mapType: MapType.normal,
             myLocationEnabled: !kIsWeb && _live != null, // blue dot (mobile); web uses the blue pin
             myLocationButtonEnabled: false, // own button (works on web too)
@@ -824,7 +825,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
                   const Icon(Icons.touch_app_rounded, size: 15, color: _NS.brand),
                   const SizedBox(width: 5),
                   Flexible(
-                    child: Text('Tap on the map to set location',
+                    child: Text(tr('Tap on the map to set location'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: 11.5, weight: FontWeight.w700, color: _NS.ink)),
@@ -843,7 +844,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
             shape: const CircleBorder(),
             elevation: 3,
             child: IconButton(
-              tooltip: _followLive ? 'Following your live location' : 'Go to my location',
+              tooltip: _followLive ? tr('Following your live location') : tr('Go to my location'),
               onPressed: _locating ? null : _goLive,
               icon: _locating
                   ? const SizedBox(
@@ -862,7 +863,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
             shape: const CircleBorder(),
             elevation: 3,
             child: IconButton(
-              tooltip: _satellite ? 'Street map' : 'Satellite',
+              tooltip: _satellite ? tr('Street map') : tr('Satellite'),
               onPressed: () => setState(() => _satellite = !_satellite),
               icon: Icon(_satellite ? Icons.map_rounded : Icons.satellite_alt_rounded, color: _NS.brand),
             ),
@@ -891,8 +892,8 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
                   Flexible(
                     child: Text(
                       _followLive && _live != null
-                          ? 'Live location · ${_point.latitude.toStringAsFixed(4)}, ${_point.longitude.toStringAsFixed(4)} · $_km km'
-                          : '$_pointLabel · ${_point.latitude.toStringAsFixed(4)}, ${_point.longitude.toStringAsFixed(4)} · $_km km',
+                          ? tr('Live location · {0}, {1} · {2} km', [_point.latitude.toStringAsFixed(4), _point.longitude.toStringAsFixed(4), _km])
+                          : tr('{0} · {1}, {2} · {3} km', [_pointLabel, _point.latitude.toStringAsFixed(4), _point.longitude.toStringAsFixed(4), _km]),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(size: 11, weight: FontWeight.w700, color: Colors.white),
@@ -923,7 +924,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
                       const SizedBox(
                           width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: _NS.brand)),
                       const SizedBox(width: 10),
-                      Text('Finding your location…',
+                      Text(tr('Finding your location…'),
                           style: DT.text(size: 12.5, weight: FontWeight.w700, color: _NS.ink)),
                     ],
                   ),
@@ -940,15 +941,15 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
 
   Widget _locationBanner() {
     final (String text, String button) = switch (_locIssue) {
-      _LocIssue.serviceOff => ('Location (GPS) is turned off. Turn it on to see places near you.', 'Turn on'),
+      _LocIssue.serviceOff => (tr('Location (GPS) is turned off. Turn it on to see places near you.'), tr('Turn on')),
       _LocIssue.blocked => (
       kIsWeb
-          ? 'Location is blocked for this site. Allow it from the lock icon in the address bar.'
-          : 'Location permission is blocked. Allow it in Settings to see places near you.',
-      kIsWeb ? 'Try again' : 'Settings'
+          ? tr('Location is blocked for this site. Allow it from the lock icon in the address bar.')
+          : tr('Location permission is blocked. Allow it in Settings to see places near you.'),
+      kIsWeb ? tr('Try again') : tr('Settings')
       ),
-      _LocIssue.denied => ('Allow location access to see places near you.', 'Allow'),
-      _ => ('Could not get your location. You can also tap on the map.', 'Retry'),
+      _LocIssue.denied => (tr('Allow location access to see places near you.'), tr('Allow')),
+      _ => (tr('Could not get your location. You can also tap on the map.'), tr('Retry')),
     };
     return Material(
       color: const Color(0xFFFFF7ED), // conditions: orange
@@ -965,7 +966,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
             const Icon(Icons.location_off_rounded, size: 18, color: Color(0xFFC2410C)),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(text,
+              child: Text(tr(text),
                   style: DT.text(size: 11.5, weight: FontWeight.w600, color: const Color(0xFFC2410C), height: 1.3)),
             ),
             const SizedBox(width: 6),
@@ -977,7 +978,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: _fixLocation,
-              child: Text(button, style: DT.text(size: 12, weight: FontWeight.w700, color: Colors.white)),
+              child: Text(tr(button), style: DT.text(size: 12, weight: FontWeight.w700, color: Colors.white)),
             ),
           ],
         ),
@@ -996,10 +997,10 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
             children: [
               const SizedBox(width: 32, height: 32, child: CircularProgressIndicator(color: _NS.brand, strokeWidth: 3)),
               const SizedBox(height: 12),
-              Text('Searching "$_lastKeyword" within $_km km…',
+              Text(tr('Searching "{0}" within {1} km…', [_lastKeyword, _km]),
                   textAlign: TextAlign.center, style: DT.text(size: 13.5, weight: FontWeight.w700, color: _NS.ink)),
               const SizedBox(height: 4),
-              Text('This can take a few seconds.',
+              Text(tr('This can take a few seconds.'),
                   textAlign: TextAlign.center, style: DT.text(size: 12, color: _NS.muted)),
             ],
           ),
@@ -1012,24 +1013,24 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
       final limit = m.contains('limit') || m.contains('exhaust');
       return _message(
         Icons.workspace_premium_rounded,
-        limit ? 'Plan limit reached' : 'Subscription required',
-        _error ?? 'No active subscription found. Please purchase a plan.',
-        buttonLabel: 'View plans',
+        limit ? tr('Plan limit reached') : tr('Subscription required'),
+        _error ?? tr('No active subscription found. Please purchase a plan.'),
+        buttonLabel: tr('View plans'),
         onButton: _openPlans,
       );
     }
     if (_error != null) {
       return _message(
         _needsLogin ? Icons.lock_outline_rounded : Icons.cloud_off_rounded,
-        _needsLogin ? 'Login required' : 'Search failed',
+        _needsLogin ? tr('Login required') : tr('Search failed'),
         _error!,
-        buttonLabel: _needsLogin ? 'Login' : 'Try again',
+        buttonLabel: _needsLogin ? tr('Login') : tr('Try again'),
         onButton: _needsLogin ? _openLogin : () => _search(),
       );
     }
     if (_places.isEmpty) {
-      return _message(Icons.search_off_rounded, 'No places found',
-          'Nothing found for "$_lastKeyword" within $_km km. Try a bigger radius or another keyword.');
+      return _message(Icons.search_off_rounded, tr('No places found'),
+          tr('Nothing found for "{0}" within {1} km. Try a bigger radius or another keyword.', [_lastKeyword, _km]));
     }
     return Column(
       children: [
@@ -1038,12 +1039,12 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
           child: Row(
             children: [
               Expanded(
-                child: Text('${_places.length} results for "$_lastKeyword"',
+                child: Text(tr('{0} results for "{1}"', [_places.length, _lastKeyword]),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: DT.text(size: 13, weight: FontWeight.w800, color: _NS.ink)),
               ),
-              Text('Nearest first', style: DT.text(size: 11.5, weight: FontWeight.w600, color: _NS.muted)),
+              Text(tr('Nearest first'), style: DT.text(size: 11.5, weight: FontWeight.w600, color: _NS.muted)),
             ],
           ),
         ),
@@ -1078,7 +1079,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
           _osmReady = true;
           _fitRadius();
         },
-        onTap: (_, p) => _setPoint(LatLng(p.latitude, p.longitude), 'Selected on map'),
+        onTap: (_, p) => _setPoint(LatLng(p.latitude, p.longitude), tr('Selected on map')),
       ),
       children: [
         if (_satellite)
@@ -1153,9 +1154,9 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
               child: const _LiveDot(size: 18),
             ),
         ]),
-        const fm.RichAttributionWidget(
+        fm.RichAttributionWidget(
           alignment: fm.AttributionAlignment.bottomLeft,
-          attributions: [fm.TextSourceAttribution('OpenStreetMap contributors')],
+          attributions: [fm.TextSourceAttribution(tr('OpenStreetMap contributors'))],
         ),
       ],
     );
@@ -1176,10 +1177,10 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
         ),
       ),
       const SizedBox(height: 12),
-      Text('Find businesses near you',
+      Text(tr('Find businesses near you'),
           textAlign: TextAlign.center, style: DT.text(size: 16, weight: FontWeight.w800, color: _NS.ink)),
       const SizedBox(height: 4),
-      Text('Set the location on the map, choose the distance and search.',
+      Text(tr('Set the location on the map, choose the distance and search.'),
           textAlign: TextAlign.center, style: DT.text(size: 12.5, color: _NS.muted, height: 1.4)),
       const SizedBox(height: 14),
       Wrap(
@@ -1190,7 +1191,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
           for (final s in _suggestions)
             ActionChip(
               onPressed: () => _search(s.$2),
-              label: Text(s.$1),
+              label: Text(tr(s.$1)),
               labelStyle: DT.text(size: 12, weight: FontWeight.w700, color: _NS.brandDark),
               backgroundColor: Colors.white,
               side: const BorderSide(color: _NS.tintLine),
@@ -1214,16 +1215,16 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
             ),
           ),
           const SizedBox(height: 12),
-          Text(title, textAlign: TextAlign.center, style: DT.text(size: 16, weight: FontWeight.w800, color: _NS.ink)),
+          Text(tr(title), textAlign: TextAlign.center, style: DT.text(size: 16, weight: FontWeight.w800, color: _NS.ink)),
           const SizedBox(height: 4),
-          Text(body, textAlign: TextAlign.center, style: DT.text(size: 13, color: _NS.muted, height: 1.45)),
+          Text(tr(body), textAlign: TextAlign.center, style: DT.text(size: 13, color: _NS.muted, height: 1.45)),
           if (buttonLabel != null && onButton != null) ...[
             const SizedBox(height: 14),
             Center(
               child: FilledButton(
                 style: FilledButton.styleFrom(backgroundColor: _kBrand), // buttons: only #093C71
                 onPressed: onButton,
-                child: Text(buttonLabel),
+                child: Text(tr(buttonLabel)),
               ),
             ),
           ],
@@ -1250,7 +1251,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
     final half = p.rating - full >= 0.5;
     return Row(
       children: [
-        Text(p.rating.toStringAsFixed(1), style: DT.text(size: 12, weight: FontWeight.w800, color: _NS.ink)),
+        Text(tr(p.rating.toStringAsFixed(1)), style: DT.text(size: 12, weight: FontWeight.w800, color: _NS.ink)),
         const SizedBox(width: 3),
         for (var i = 0; i < 5; i++)
           Icon(
@@ -1308,7 +1309,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(p.name,
+                    Text(trData(p.name),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: 14, weight: FontWeight.w800, color: _NS.ink)),
@@ -1316,7 +1317,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
                     _ratingRow(p),
                     if (p.category.isNotEmpty) ...[
                       const SizedBox(height: 2),
-                      Text(p.category,
+                      Text(trData(p.category),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(size: 11, weight: FontWeight.w600, color: _NS.body)),
@@ -1325,7 +1326,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
                     Row(
                       children: [
                         if (p.openNow != null) ...[
-                          Text(p.openNow! ? 'Open' : 'Closed',
+                          Text(p.openNow! ? tr('Open') : tr('Closed'),
                               style: DT.text(
                                   size: 11,
                                   weight: FontWeight.w800,
@@ -1333,7 +1334,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
                           Text('  ·  ', style: DT.text(size: 11, color: _NS.hint)),
                         ],
                         Expanded(
-                          child: Text(p.address,
+                          child: Text(tr(p.address),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: DT.text(size: 11.5, color: _NS.muted)),
@@ -1349,7 +1350,7 @@ class _NearbySearchScreenState extends State<NearbySearchScreen> with WidgetsBin
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                     decoration: BoxDecoration(color: _NS.tint, borderRadius: BorderRadius.circular(20)),
-                    child: Text(_dist(p.distanceKm),
+                    child: Text(tr(_dist(p.distanceKm)),
                         style: DT.text(size: 10.5, weight: FontWeight.w800, color: _NS.brandDark)),
                   ),
                   const SizedBox(height: 6),

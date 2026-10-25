@@ -14,6 +14,7 @@ import '../services/qnx_api.dart';
 import '../services/real_estate_service.dart';
 import '../widgets/edit_form_kit.dart';
 import 'login_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 const _maxPhotos = 20;
 
@@ -100,7 +101,7 @@ class _PropertyEditScreenState extends State<PropertyEditScreen> {
     if (!r.status || d == null) {
       setState(() {
         _loading = false;
-        _error = r.message ?? 'Could not load this property.';
+        _error = r.message ?? tr('Could not load this property.');
       });
       return;
     }
@@ -161,7 +162,7 @@ class _PropertyEditScreenState extends State<PropertyEditScreen> {
     final d = _d;
     if (d == null) return;
     if (!(_form.currentState?.validate() ?? false)) {
-      ekSnack(context, 'Please check the highlighted fields', error: true);
+      ekSnack(context, tr('Please check the highlighted fields'), error: true);
       return;
     }
     final fields = <String, String?>{};
@@ -178,7 +179,7 @@ class _PropertyEditScreenState extends State<PropertyEditScreen> {
       fields['possession_date'] = _possession;
     }
     if (fields.isEmpty && _removed.isEmpty && _added.isEmpty) {
-      ekSnack(context, 'No changes to save');
+      ekSnack(context, tr('No changes to save'));
       return;
     }
 
@@ -202,14 +203,14 @@ class _PropertyEditScreenState extends State<PropertyEditScreen> {
     Navigator.pop(context, true);
   }
 
-  String? _required(String? v, String what) => (v ?? '').trim().isEmpty ? 'Enter $what' : null;
+  String? _required(String? v, String what) => (v ?? '').trim().isEmpty ? tr('Enter {0}', [what]) : null;
 
   String? _number(String? v, {double? max}) {
     final s = (v ?? '').trim();
     if (s.isEmpty) return null;
     final n = double.tryParse(s);
-    if (n == null || n < 0) return 'Enter a number';
-    if (max != null && n > max) return 'Max $max';
+    if (n == null || n < 0) return tr('Enter a number');
+    if (max != null && n > max) return tr('Max {0}', [max]);
     return null;
   }
 
@@ -225,7 +226,7 @@ class _PropertyEditScreenState extends State<PropertyEditScreen> {
     final d = _d;
     return Scaffold(
       backgroundColor: EK.bg,
-      appBar: ekAppBar('Edit property', subtitle: d?.title ?? widget.title),
+      appBar: ekAppBar(tr('Edit property'), subtitle: tr(d?.title ?? widget.title)),
       body: _loading || d == null
           ? EkState(loading: _loading, error: _error, onRetry: _load)
           : Form(
@@ -234,7 +235,7 @@ class _PropertyEditScreenState extends State<PropertyEditScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                 children: [
                   EkSection(
-                    title: 'Photos',
+                    title: tr('Photos'),
                     subtitle: '$_photoCount/$_maxPhotos · tap ✕ to remove',
                     icon: Icons.photo_library_outlined,
                     children: [
@@ -254,83 +255,83 @@ class _PropertyEditScreenState extends State<PropertyEditScreen> {
                     ],
                   ),
                   EkSection(
-                    title: 'Basic details',
+                    title: tr('Basic details'),
                     icon: Icons.apartment_rounded,
                     children: [
                       EkField(
                           controller: _c['title']!,
-                          label: 'Title',
+                          label: tr('Title'),
                           maxLength: 200,
-                          validator: (v) => _required(v, 'a title')),
-                      EkField(controller: _c['description']!, label: 'Description', maxLines: 6),
+                          validator: (v) => _required(v, tr('a title'))),
+                      EkField(controller: _c['description']!, label: tr('Description'), maxLines: 6),
                       EkSwitch(
-                        label: 'Price is negotiable',
+                        label: tr('Price is negotiable'),
                         value: _negotiable,
                         onChanged: (v) => setState(() => _negotiable = v),
                       ),
                     ],
                   ),
                   EkSection(
-                    title: 'Location',
+                    title: tr('Location'),
                     icon: Icons.location_on_outlined,
                     children: [
-                      EkField(controller: _c['city']!, label: 'City', validator: (v) => _required(v, 'the city')),
-                      EkField(controller: _c['area']!, label: 'Area / locality'),
-                      EkField(controller: _c['address']!, label: 'Address', maxLines: 2),
-                      EkField(controller: _c['landmark']!, label: 'Landmark'),
+                      EkField(controller: _c['city']!, label: tr('City'), validator: (v) => _required(v, tr('the city'))),
+                      EkField(controller: _c['area']!, label: tr('Area / locality')),
+                      EkField(controller: _c['address']!, label: tr('Address'), maxLines: 2),
+                      EkField(controller: _c['landmark']!, label: tr('Landmark')),
                       EkField(
                         controller: _c['pincode']!,
-                        label: 'Pincode',
+                        label: tr('Pincode'),
                         keyboard: TextInputType.number,
                         maxLength: 6,
                         validator: (v) {
                           final s = (v ?? '').trim();
-                          return s.isEmpty || RegExp(r'^\d{6}$').hasMatch(s) ? null : 'Enter a 6-digit pincode';
+                          return s.isEmpty || RegExp(r'^\d{6}$').hasMatch(s) ? null : tr('Enter a 6-digit pincode');
                         },
                       ),
                       EkField(
                         controller: _c['google_location_url']!,
-                        label: 'Google Maps link',
+                        label: tr('Google Maps link'),
                         keyboard: TextInputType.url,
                         validator: _url,
                       ),
                     ],
                   ),
                   EkSection(
-                    title: 'Size & project',
+                    title: tr('Size & project'),
                     icon: Icons.square_foot_rounded,
                     children: [
                       EkField(
                         controller: _c['total_area']!,
-                        label: 'Total area (sq ft)',
+                        label: tr('Total area (sq ft)'),
                         keyboard: const TextInputType.numberWithOptions(decimal: true),
                         validator: (v) => _number(v),
                       ),
                       EkField(
                         controller: _c['plot_area']!,
-                        label: 'Plot area (sq ft)',
+                        label: tr('Plot area (sq ft)'),
                         keyboard: const TextInputType.numberWithOptions(decimal: true),
                         validator: (v) => _number(v),
                       ),
                       EkSwitch(
-                        label: 'Under construction',
-                        subtitle: _underConstruction ? null : 'Ready to move',
+                        label: tr('Under construction'),
+                        subtitle: _underConstruction ? null : tr('Ready to move'),
                         value: _underConstruction,
                         onChanged: (v) => setState(() => _underConstruction = v),
                       ),
                       if (_underConstruction) ...[
                         EkField(
                           controller: _c['completion_percentage']!,
-                          label: 'Completion %',
+                          label: tr('Completion %'),
                           keyboard: TextInputType.number,
                           validator: (v) => _number(v, max: 100),
                         ),
                         _dateTile(),
                       ],
-                      EkField(controller: _c['rera_number']!, label: 'RERA number'),
+                      EkField(controller: _c['rera_number']!, label: tr('RERA number')),
                       EkField(
                         controller: _c['property_website_url']!,
-                        label: 'Project website',
+                        label: tr('Project website'),
                         keyboard: TextInputType.url,
                         validator: _url,
                       ),
@@ -338,7 +339,7 @@ class _PropertyEditScreenState extends State<PropertyEditScreen> {
                   ),
                   _note(),
                   const SizedBox(height: 14),
-                  EkButton(label: 'Save changes', icon: Icons.check_rounded, busy: _saving, onPressed: _save),
+                  EkButton(label: tr('Save changes'), icon: Icons.check_rounded, busy: _saving, onPressed: _save),
                 ],
               ),
             ),
@@ -346,7 +347,7 @@ class _PropertyEditScreenState extends State<PropertyEditScreen> {
   }
 
   Widget _dateTile() {
-    final label = _possession.isEmpty ? 'Choose date' : qDateLabel(DateTime.tryParse(_possession));
+    final label = _possession.isEmpty ? tr('Choose date') : qDateLabel(DateTime.tryParse(_possession));
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: InkWell(
@@ -363,9 +364,9 @@ class _PropertyEditScreenState extends State<PropertyEditScreen> {
               const Icon(Icons.event_outlined, size: 18, color: EK.brand),
               const SizedBox(width: 10),
               Expanded(
-                child: Text('Possession date', style: DT.text(size: 13, color: EK.muted)),
+                child: Text(tr('Possession date'), style: DT.text(size: 13, color: EK.muted)),
               ),
-              Text(label, style: DT.text(size: 13.5, weight: FontWeight.w700, color: EK.ink)),
+              Text(tr(label), style: DT.text(size: 13.5, weight: FontWeight.w700, color: EK.ink)),
             ],
           ),
         ),
@@ -387,7 +388,7 @@ class _PropertyEditScreenState extends State<PropertyEditScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Prices, flat types and floor plans stay as they are. Contact support to change them.',
+                tr('Prices, flat types and floor plans stay as they are. Contact support to change them.'),
                 style: DT.text(size: 12, color: EK.brandDark, height: 1.4),
               ),
             ),

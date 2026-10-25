@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../models/franchise_plan_model.dart';
 import 'api_urls.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class FranchiseApplyService {
   /// Submit franchise application.
@@ -34,7 +35,7 @@ class FranchiseApplyService {
       } catch (_) {
         return FranchiseApplyResponse(
           status: false,
-          message: 'Invalid response from server.',
+          message: tr('Invalid response from server.'),
         );
       }
 
@@ -48,17 +49,17 @@ class FranchiseApplyService {
     } on SocketException {
       return FranchiseApplyResponse(
         status: false,
-        message: 'No internet connection. Please check your network.',
+        message: tr('No internet connection. Please check your network.'),
       );
     } on HttpException {
       return FranchiseApplyResponse(
         status: false,
-        message: 'Server error. Please try again later.',
+        message: tr('Server error. Please try again later.'),
       );
     } catch (e) {
       return FranchiseApplyResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
       );
     }
   }

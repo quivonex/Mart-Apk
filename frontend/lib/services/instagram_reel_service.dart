@@ -7,6 +7,7 @@
 
 import 'api_urls.dart';
 import 'qnx_api.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class InstagramReel {
   final int id;
@@ -34,11 +35,11 @@ class InstagramReel {
   /// Instagram account / short code shown when there is no title.
   String get shortLabel {
     final u = Uri.tryParse(link);
-    if (u == null) return 'Instagram reel';
+    if (u == null) return tr('Instagram reel');
     final parts = u.pathSegments.where((s) => s.isNotEmpty).toList();
     final i = parts.indexWhere((s) => s == 'reel' || s == 'reels' || s == 'p');
     if (i > 0) return '@${parts[i - 1]}';
-    return 'Instagram reel';
+    return tr('Instagram reel');
   }
 }
 

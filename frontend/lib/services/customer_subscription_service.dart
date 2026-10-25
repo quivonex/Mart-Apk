@@ -18,6 +18,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../utils/shared_preferences_helper.dart';
 import 'api_urls.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 double _d(dynamic v) => v is num ? v.toDouble() : double.tryParse('${v ?? ''}') ?? 0;
 int _i(dynamic v) => v is int ? v : int.tryParse('${v ?? ''}') ?? 0;
@@ -124,13 +125,13 @@ class CustomerSubscriptionService {
 
   static String _err(Object e) {
     final s = e.toString();
-    if (s.contains('SocketException') || s.contains('ClientException')) return 'Could not reach the server.';
-    if (e is TimeoutException) return 'The server took too long to respond.';
+    if (s.contains('SocketException') || s.contains('ClientException')) return tr('Could not reach the server.');
+    if (e is TimeoutException) return tr('The server took too long to respond.');
     return s.replaceFirst('Exception: ', '');
   }
 
   static String _msg(int code, Map<String, dynamic> j, String fallback) {
-    if (code == 401) return 'Your session has expired. Please log in again.';
+    if (code == 401) return tr('Your session has expired. Please log in again.');
     return '${j['message'] ?? j['detail'] ?? j['error'] ?? fallback}';
   }
 
@@ -140,7 +141,7 @@ class CustomerSubscriptionService {
   static Future<SubscriptionResult<List<CustomerPlan>>> plans() async {
     try {
       final (code, j) = await _post(ApiUrls.customerSubscriptionPlansUrl, {}, auth: false);
-      if (!_ok(code, j)) return SubscriptionResult(false, _msg(code, j, 'Could not load plans'), const []);
+      if (!_ok(code, j)) return SubscriptionResult(false, _msg(code, j, tr('Could not load plans')), const []);
       final list = (j['data'] as List? ?? [])
           .whereType<Map>()
           .map((e) => CustomerPlan.fromJson(Map<String, dynamic>.from(e)))
@@ -157,7 +158,7 @@ class CustomerSubscriptionService {
   static Future<SubscriptionResult<(CustomerSubscriptionInfo?, List<CustomerSubscriptionInfo>)>> mySubscriptions() async {
     try {
       final (code, j) = await _post(ApiUrls.customerMySubscriptionsUrl, {});
-      if (!_ok(code, j)) return SubscriptionResult(false, _msg(code, j, 'Could not load your subscriptions'));
+      if (!_ok(code, j)) return SubscriptionResult(false, _msg(code, j, tr('Could not load your subscriptions')));
       final cur = j['current_subscription'] is Map
           ? CustomerSubscriptionInfo.fromJson(Map<String, dynamic>.from(j['current_subscription']))
           : null;
@@ -175,7 +176,7 @@ class CustomerSubscriptionService {
   static Future<SubscriptionResult<Map<String, dynamic>>> createOrder(int planId) async {
     try {
       final (code, j) = await _post(ApiUrls.customerSubscriptionCreateOrderUrl, {'plan_id': planId});
-      if (!_ok(code, j)) return SubscriptionResult(false, _msg(code, j, 'Could not start the payment'));
+      if (!_ok(code, j)) return SubscriptionResult(false, _msg(code, j, tr('Could not start the payment')));
       final o = j['order'] is Map ? Map<String, dynamic>.from(j['order']) : const <String, dynamic>{};
       final rz = j['razorpay'] is Map ? Map<String, dynamic>.from(j['razorpay']) : const <String, dynamic>{};
       return SubscriptionResult(true, '', {
@@ -200,7 +201,7 @@ class CustomerSubscriptionService {
         'razorpay_payment_id': paymentId,
         'razorpay_signature': signature,
       });
-      if (!_ok(code, j)) return SubscriptionResult(false, _msg(code, j, 'Payment could not be verified'));
+      if (!_ok(code, j)) return SubscriptionResult(false, _msg(code, j, tr('Payment could not be verified')));
       return SubscriptionResult(true, '${j['message'] ?? 'Subscription activated'}');
     } catch (e) {
       return SubscriptionResult(false, _err(e));

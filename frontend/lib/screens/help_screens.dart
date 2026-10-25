@@ -14,6 +14,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../constants/design_tokens.dart';
 import '../services/api_urls.dart';
 import '../utils/shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -44,72 +45,72 @@ class HelpInfoScreen extends StatelessWidget {
   const HelpInfoScreen({super.key, required this.topic, this.onNavigate});
 
   String get _title => switch (topic) {
-    HelpTopic.buying => 'For Buying',
-    HelpTopic.selling => 'For Selling',
+    HelpTopic.buying => tr('For Buying'),
+    HelpTopic.selling => tr('For Selling'),
     HelpTopic.faq => 'FAQ',
-    HelpTopic.about => 'About Us',
+    HelpTopic.about => tr('About Us'),
   };
 
   String get _intro => switch (topic) {
     HelpTopic.buying =>
-    'How to find products, contact sellers and place orders on QNXMart B2B.',
+    tr('How to find products, contact sellers and place orders on QNXMart B2B.'),
     HelpTopic.selling =>
-    'Grow your business by reaching thousands of buyers on QNX Mart. Follow the steps below to start selling.',
-    HelpTopic.faq => 'Answers to the questions we hear most often.',
-    HelpTopic.about => 'Who we are and what QNXMart B2B offers.',
+    tr('Grow your business by reaching thousands of buyers on QNX Mart. Follow the steps below to start selling.'),
+    HelpTopic.faq => tr('Answers to the questions we hear most often.'),
+    HelpTopic.about => tr('Who we are and what QNXMart B2B offers.'),
   };
 
   List<_Block> get _blocks => switch (topic) {
-    HelpTopic.buying => const [
-      _Block(Icons.search_rounded, '1. Find what you need',
-          'Search from the home screen, pick a category, or open All Products. Use Filters to sort by price or show only products with stock or franchise options.'),
-      _Block(Icons.mail_outline_rounded, '2. Send an enquiry',
-          'Tap Enquiry on any product to ask the seller about bulk pricing, delivery or specifications. The seller receives your details and contacts you.'),
-      _Block(Icons.shopping_cart_outlined, '3. Add to cart and order',
-          'Tap Cart to add a product, then open your cart to review quantities and place the order. You need to be logged in to use the cart.'),
-      _Block(Icons.receipt_long_outlined, '4. Track your orders',
-          'Open Orders from the bottom bar to see the status of everything you have ordered.'),
-      _Block(Icons.storefront_rounded, 'Franchise opportunities',
-          'Products marked Franchise can be taken up as a franchise. Tap the Franchise badge to see the plans and apply.'),
-      _Block(Icons.account_balance_outlined, 'Business loans',
-          'Need funds for your purchase? Use Get Your Loan on the home screen to send a loan enquiry to our banking partners.'),
+    HelpTopic.buying => [
+      _Block(Icons.search_rounded, tr('1. Find what you need'),
+          tr('Search from the home screen, pick a category, or open All Products. Use Filters to sort by price or show only products with stock or franchise options.')),
+      _Block(Icons.mail_outline_rounded, tr('2. Send an enquiry'),
+          tr('Tap Enquiry on any product to ask the seller about bulk pricing, delivery or specifications. The seller receives your details and contacts you.')),
+      _Block(Icons.shopping_cart_outlined, tr('3. Add to cart and order'),
+          tr('Tap Cart to add a product, then open your cart to review quantities and place the order. You need to be logged in to use the cart.')),
+      _Block(Icons.receipt_long_outlined, tr('4. Track your orders'),
+          tr('Open Orders from the bottom bar to see the status of everything you have ordered.')),
+      _Block(Icons.storefront_rounded, tr('Franchise opportunities'),
+          tr('Products marked Franchise can be taken up as a franchise. Tap the Franchise badge to see the plans and apply.')),
+      _Block(Icons.account_balance_outlined, tr('Business loans'),
+          tr('Need funds for your purchase? Use Get Your Loan on the home screen to send a loan enquiry to our banking partners.')),
     ],
   // Tree Diagram Steps for Selling
-    HelpTopic.selling => const [
-      _Block(Icons.person_add_alt_1_rounded, 'Sign Up', 'Create your account', stepNumber: 1),
-      _Block(Icons.business_rounded, 'Create Company', 'Add company details', stepNumber: 2),
-      _Block(Icons.account_tree_rounded, 'Create Branch', 'Add branch details', stepNumber: 3),
-      _Block(Icons.local_offer_rounded, 'Add Category', 'Create categories', stepNumber: 4),
-      _Block(Icons.person_pin_rounded, 'Add Sub Category', 'Create sub categories', stepNumber: 5),
-      _Block(Icons.receipt_long_rounded, 'Add GST', 'Add tax details', stepNumber: 6),
-      _Block(Icons.inventory_2_rounded, 'Add Product', 'List your items', stepNumber: 7),
-      _Block(Icons.check_circle_rounded, 'Done', 'Start Selling', stepNumber: 8),
+    HelpTopic.selling => [
+      _Block(Icons.person_add_alt_1_rounded, tr('Sign Up'), tr('Create your account'), stepNumber: 1),
+      _Block(Icons.business_rounded, tr('Create Company'), tr('Add company details'), stepNumber: 2),
+      _Block(Icons.account_tree_rounded, tr('Create Branch'), tr('Add branch details'), stepNumber: 3),
+      _Block(Icons.local_offer_rounded, tr('Add Category'), tr('Create categories'), stepNumber: 4),
+      _Block(Icons.person_pin_rounded, tr('Add Sub Category'), tr('Create sub categories'), stepNumber: 5),
+      _Block(Icons.receipt_long_rounded, tr('Add GST'), tr('Add tax details'), stepNumber: 6),
+      _Block(Icons.inventory_2_rounded, tr('Add Product'), tr('List your items'), stepNumber: 7),
+      _Block(Icons.check_circle_rounded, tr('Done'), tr('Start Selling'), stepNumber: 8),
     ],
-    HelpTopic.faq => const [
-      _Block(Icons.help_outline_rounded, 'Do I need an account to browse?',
-          'No. Anyone can browse products and properties. You need to log in to use the cart, place orders, send some enquiries or sell.'),
-      _Block(Icons.help_outline_rounded, 'Why is my product not visible to buyers?',
-          'New products stay "In review" until the admin approves them. You can check the status in My Products.'),
-      _Block(Icons.help_outline_rounded, 'I paid the registration fee but my company shows Pending.',
-          'Open My Companies and tap Pay now on that company. If the payment was already captured, the app confirms it without charging you again. If it still shows Pending, contact us with your payment reference.'),
-      _Block(Icons.help_outline_rounded, 'Can I change a product after it is approved?',
-          'Yes. Tap Edit details in My Products. Your changes are sent for approval and go live once approved. Only one change request can be pending per product.'),
-      _Block(Icons.help_outline_rounded, 'What is QNX ReMart?',
-          'QNX ReMart is our marketplace for used and resale items. Browse listings in the app and send an enquiry to the seller.'),
-      _Block(Icons.help_outline_rounded, 'How do I contact support?',
-          'Use Contact Us in the menu or email $_supportEmail.'),
+    HelpTopic.faq => [
+      _Block(Icons.help_outline_rounded, tr('Do I need an account to browse?'),
+          tr('No. Anyone can browse products and properties. You need to log in to use the cart, place orders, send some enquiries or sell.')),
+      _Block(Icons.help_outline_rounded, tr('Why is my product not visible to buyers?'),
+          tr('New products stay "In review" until the admin approves them. You can check the status in My Products.')),
+      _Block(Icons.help_outline_rounded, tr('I paid the registration fee but my company shows Pending.'),
+          tr('Open My Companies and tap Pay now on that company. If the payment was already captured, the app confirms it without charging you again. If it still shows Pending, contact us with your payment reference.')),
+      _Block(Icons.help_outline_rounded, tr('Can I change a product after it is approved?'),
+          tr('Yes. Tap Edit details in My Products. Your changes are sent for approval and go live once approved. Only one change request can be pending per product.')),
+      _Block(Icons.help_outline_rounded, tr('What is QNX ReMart?'),
+          tr('QNX ReMart is our marketplace for used and resale items. Browse listings in the app and send an enquiry to the seller.')),
+      _Block(Icons.help_outline_rounded, tr('How do I contact support?'),
+          tr('Use Contact Us in the menu or email {0}.', [_supportEmail])),
     ],
-    HelpTopic.about => const [
-      _Block(Icons.business_rounded, 'QNXMart B2B',
-          'QNXMart B2B is a marketplace for small and growing businesses, operated by Quivonex Solutions Pvt. Ltd. Our tagline says it best: Market chalega nahi, daudega.'),
-      _Block(Icons.shopping_bag_outlined, 'QNXMart — Shopping & Products',
-          'Verified companies list their products for business buyers, with enquiries, cart ordering, shipping and franchise options.'),
-      _Block(Icons.apartment_rounded, 'Real Estate — Buy, Sell & Rent',
-          'Verified properties from trusted channel partners, with enquiries and site-visit scheduling.'),
-      _Block(Icons.recycling_rounded, 'QNXRemart — Used & Resale',
-          'A marketplace for buying and selling used and resale goods.'),
-      _Block(Icons.account_balance_outlined, 'Finance',
-          'Business loan enquiries with our banking and finance partners.'),
+    HelpTopic.about => [
+      _Block(Icons.business_rounded, tr('QNXMart B2B'),
+          tr('QNXMart B2B is a marketplace for small and growing businesses, operated by Quivonex Solutions Pvt. Ltd. Our tagline says it best: Market chalega nahi, daudega.')),
+      _Block(Icons.shopping_bag_outlined, tr('QNXMart — Shopping & Products'),
+          tr('Verified companies list their products for business buyers, with enquiries, cart ordering, shipping and franchise options.')),
+      _Block(Icons.apartment_rounded, tr('Real Estate — Buy, Sell & Rent'),
+          tr('Verified properties from trusted channel partners, with enquiries and site-visit scheduling.')),
+      _Block(Icons.recycling_rounded, tr('QNXRemart — Used & Resale'),
+          tr('A marketplace for buying and selling used and resale goods.')),
+      _Block(Icons.account_balance_outlined, tr('Finance'),
+          tr('Business loan enquiries with our banking and finance partners.')),
     ],
   };
 
@@ -122,7 +123,7 @@ class HelpInfoScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(_title, style: DT.text(size: 18, weight: FontWeight.w700)),
+        title: Text(tr(_title), style: DT.text(size: 18, weight: FontWeight.w700)),
         backgroundColor: Colors.white,
         foregroundColor: DT.onyx900,
         elevation: 0,
@@ -135,7 +136,7 @@ class HelpInfoScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
-          Text(_intro, style: DT.text(size: 14, color: DT.onyx600, height: 1.5)),
+          Text(tr(_intro), style: DT.text(size: 14, color: DT.onyx600, height: 1.5)),
           const SizedBox(height: 20),
 
           // Render Selling Guide as a Tree Diagram, others as list
@@ -178,9 +179,9 @@ class HelpInfoScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(b.title, style: DT.text(size: 15, weight: FontWeight.w700)),
+              Text(trData(b.title), style: DT.text(size: 15, weight: FontWeight.w700)),
               const SizedBox(height: 4),
-              Text(b.body, style: DT.text(size: 13.5, color: DT.onyx600, height: 1.5)),
+              Text(tr(b.body), style: DT.text(size: 13.5, color: DT.onyx600, height: 1.5)),
             ],
           ),
         ),
@@ -202,11 +203,11 @@ class HelpInfoScreen extends StatelessWidget {
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
         iconColor: _blue,
         collapsedIconColor: DT.slate500,
-        title: Text(b.title, style: DT.text(size: 14.5, weight: FontWeight.w700)),
+        title: Text(trData(b.title), style: DT.text(size: 14.5, weight: FontWeight.w700)),
         children: [
           Align(
             alignment: Alignment.centerLeft,
-            child: Text(b.body, style: DT.text(size: 13.5, color: DT.onyx600, height: 1.5)),
+            child: Text(tr(b.body), style: DT.text(size: 13.5, color: DT.onyx600, height: 1.5)),
           ),
         ],
       ),
@@ -222,9 +223,9 @@ class HelpInfoScreen extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Still need help?', style: DT.text(size: 15, weight: FontWeight.w700, color: Colors.white)),
+        Text(tr('Still need help?'), style: DT.text(size: 15, weight: FontWeight.w700, color: Colors.white)),
         const SizedBox(height: 4),
-        Text('Write to us and our team will get back to you.',
+        Text(tr('Write to us and our team will get back to you.'),
             style: DT.text(size: 13, color: Colors.white70)),
         const SizedBox(height: 12),
         Row(
@@ -239,7 +240,7 @@ class HelpInfoScreen extends StatelessWidget {
                   elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                child: Text('Contact Us',
+                child: Text(tr('Contact Us'),
                     style: DT.text(size: 13.5, weight: FontWeight.w700, color: Colors.white)),
               ),
             ),
@@ -252,7 +253,7 @@ class HelpInfoScreen extends StatelessWidget {
                   side: const BorderSide(color: Colors.white38),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                child: Text('Email us',
+                child: Text(tr('Email us'),
                     style: DT.text(size: 13.5, weight: FontWeight.w700, color: Colors.white)),
               ),
             ),
@@ -395,7 +396,7 @@ class _TreeStepCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  block.title,
+                  trData(block.title),
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -403,7 +404,7 @@ class _TreeStepCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  block.body,
+                  tr(block.body),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -560,10 +561,10 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
         final v = e.value is List && (e.value as List).isNotEmpty ? (e.value as List).first : e.value;
         msg = '${e.key}: $v';
       } else {
-        msg = (j is Map ? j['message'] : null)?.toString() ?? 'Could not send your message.';
+        msg = (j is Map ? j['message'] : null)?.toString() ?? tr('Could not send your message.');
       }
     } catch (_) {
-      msg = 'Could not reach the server. Please try again.';
+      msg = tr('Could not reach the server. Please try again.');
     }
     if (!mounted) return;
     setState(() => _sending = false);
@@ -573,13 +574,13 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
         context: context,
         builder: (ctx) => AlertDialog(
           icon: const Icon(Icons.check_circle_rounded, color: Color(0xFF198754), size: 48),
-          title: Text('Message sent', style: DT.text(size: 18, weight: FontWeight.w800)),
-          content: Text('$msg\nWe will get back to you soon.',
+          title: Text(tr('Message sent'), style: DT.text(size: 18, weight: FontWeight.w800)),
+          content: Text(tr('{0}\nWe will get back to you soon.', [msg]),
               textAlign: TextAlign.center, style: DT.text(size: 13.5, color: DT.onyx600, height: 1.5)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text('OK', style: DT.text(size: 14, weight: FontWeight.w700, color: _blue)),
+              child: Text(tr('OK'), style: DT.text(size: 14, weight: FontWeight.w700, color: _blue)),
             ),
           ],
         ),
@@ -587,7 +588,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
       if (mounted) Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(msg),
+        content: Text(tr(msg)),
         backgroundColor: _kRed,
         behavior: SnackBarBehavior.floating,
       ));
@@ -595,7 +596,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
   }
 
   InputDecoration _dec(String label, IconData icon) => InputDecoration(
-    labelText: label,
+    labelText: tr(label),
     labelStyle: DT.text(size: 13.5, color: DT.slate500),
     prefixIcon: Icon(icon, size: 20, color: DT.slate400),
     filled: true,
@@ -620,7 +621,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text('Contact Us', style: DT.text(size: 18, weight: FontWeight.w700)),
+        title: Text(tr('Contact Us'), style: DT.text(size: 18, weight: FontWeight.w700)),
         backgroundColor: Colors.white,
         foregroundColor: DT.onyx900,
         elevation: 0,
@@ -647,13 +648,13 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                       child: GestureDetector(
                         onTap: () => launchUrl(Uri.parse('mailto:$_supportEmail')),
                         child: Text.rich(TextSpan(
-                          text: 'Email us at ',
+                          text: tr('Email us at '),
                           style: DT.text(size: 13.5, color: DT.onyx700),
                           children: [
                             TextSpan(
-                                text: _supportEmail,
+                                text: tr(_supportEmail),
                                 style: DT.text(size: 13.5, weight: FontWeight.w700, color: _blue)),
-                            const TextSpan(text: ' or send a message below.'),
+                            TextSpan(text: tr(' or send a message below.')),
                           ],
                         )),
                       ),
@@ -666,8 +667,8 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                 controller: _name,
                 textCapitalization: TextCapitalization.words,
                 inputFormatters: [LengthLimitingTextInputFormatter(150)],
-                decoration: _dec('Your name *', Icons.person_outline_rounded),
-                validator: (v) => (v ?? '').trim().length < 2 ? 'Enter your name' : null,
+                decoration: _dec(tr('Your name *'), Icons.person_outline_rounded),
+                validator: (v) => (v ?? '').trim().length < 2 ? tr('Enter your name') : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -677,27 +678,27 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                   FilteringTextInputFormatter.digitsOnly,
                   LengthLimitingTextInputFormatter(10),
                 ],
-                decoration: _dec('Mobile number *', Icons.phone_outlined),
+                decoration: _dec(tr('Mobile number *'), Icons.phone_outlined),
                 validator: (v) =>
-                RegExp(r'^[6-9]\d{9}$').hasMatch((v ?? '').trim()) ? null : 'Enter a valid 10-digit number',
+                RegExp(r'^[6-9]\d{9}$').hasMatch((v ?? '').trim()) ? null : tr('Enter a valid 10-digit number'),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _email,
                 keyboardType: TextInputType.emailAddress,
-                decoration: _dec('Email', Icons.alternate_email_rounded),
+                decoration: _dec(tr('Email'), Icons.alternate_email_rounded),
                 validator: (v) {
                   final t = (v ?? '').trim();
                   if (t.isEmpty) return null;
-                  return RegExp(r'^[\w.+-]+@[\w-]+\.[\w.-]+$').hasMatch(t) ? null : 'Invalid email';
+                  return RegExp(r'^[\w.+-]+@[\w-]+\.[\w.-]+$').hasMatch(t) ? null : tr('Invalid email');
                 },
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _subject,
                 inputFormatters: [LengthLimitingTextInputFormatter(50)], // backend max_length=50
-                decoration: _dec('Subject *', Icons.subject_rounded),
-                validator: (v) => (v ?? '').trim().isEmpty ? 'Enter a subject' : null,
+                decoration: _dec(tr('Subject *'), Icons.subject_rounded),
+                validator: (v) => (v ?? '').trim().isEmpty ? tr('Enter a subject') : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -705,8 +706,8 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                 maxLines: 5,
                 minLines: 4,
                 textCapitalization: TextCapitalization.sentences,
-                decoration: _dec('Message *', Icons.chat_bubble_outline_rounded),
-                validator: (v) => (v ?? '').trim().length < 10 ? 'Please write a little more' : null,
+                decoration: _dec(tr('Message *'), Icons.chat_bubble_outline_rounded),
+                validator: (v) => (v ?? '').trim().length < 10 ? tr('Please write a little more') : null,
               ),
               const SizedBox(height: 20),
               SizedBox(
@@ -717,7 +718,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                       ? const SizedBox(
                       width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white))
                       : const Icon(Icons.send_rounded, size: 18),
-                  label: Text(_sending ? 'Sending…' : 'Send message',
+                  label: Text(_sending ? tr('Sending…') : tr('Send message'),
                       style: DT.text(size: 15, weight: FontWeight.w700, color: Colors.white)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _kBrand, // buttons: only #093C71
@@ -732,7 +733,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
               Center(
                 child: TextButton(
                   onPressed: () => launchUrl(Uri.parse(_website), mode: LaunchMode.externalApplication),
-                  child: Text('Visit qnxmartb2b.com',
+                  child: Text(tr('Visit qnxmartb2b.com'),
                       style: DT.text(size: 13, weight: FontWeight.w600, color: _blue)),
                 ),
               ),

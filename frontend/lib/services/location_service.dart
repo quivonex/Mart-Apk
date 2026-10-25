@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import '../services/api_urls.dart';
 import '../models/company_locations_models.dart';
 import '../utils/shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class LocationService {
   static Future<Map<String, String>> _headers() async {
@@ -37,19 +38,19 @@ class LocationService {
       }
       return LocationResponse(
         status: false,
-        message: 'Failed to load states (${response.statusCode})',
+        message: tr('Failed to load states ({0})', [response.statusCode]),
         data: [],
       );
     } on SocketException {
       return LocationResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
         data: [],
       );
     } catch (e) {
       return LocationResponse(
         status: false,
-        message: 'Error: $e',
+        message: tr('Error: {0}', [e]),
         data: [],
       );
     }
@@ -76,19 +77,19 @@ class LocationService {
       }
       return LocationResponse(
         status: false,
-        message: 'Failed to load districts',
+        message: tr('Failed to load districts'),
         data: [],
       );
     } on SocketException {
       return LocationResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
         data: [],
       );
     } catch (e) {
       return LocationResponse(
         status: false,
-        message: 'Error: $e',
+        message: tr('Error: {0}', [e]),
         data: [],
       );
     }
@@ -121,19 +122,19 @@ class LocationService {
       }
       return LocationResponse(
         status: false,
-        message: 'Failed to load talukas',
+        message: tr('Failed to load talukas'),
         data: [],
       );
     } on SocketException {
       return LocationResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
         data: [],
       );
     } catch (e) {
       return LocationResponse(
         status: false,
-        message: 'Error: $e',
+        message: tr('Error: {0}', [e]),
         data: [],
       );
     }
@@ -168,19 +169,19 @@ class LocationService {
       }
       return LocationResponse(
         status: false,
-        message: 'Failed to load villages',
+        message: tr('Failed to load villages'),
         data: [],
       );
     } on SocketException {
       return LocationResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
         data: [],
       );
     } catch (e) {
       return LocationResponse(
         status: false,
-        message: 'Error: $e',
+        message: tr('Error: {0}', [e]),
         data: [],
       );
     }

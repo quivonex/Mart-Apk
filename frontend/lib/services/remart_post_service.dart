@@ -21,6 +21,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'api_urls.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class RemartOption {
   final int id;
@@ -159,8 +160,8 @@ class RemartPostService {
 
   static String _err(Object e) {
     final s = e.toString();
-    if (s.contains('SocketException') || s.contains('ClientException')) return 'Could not reach the server.';
-    if (e is TimeoutException) return 'The server took too long to respond.';
+    if (s.contains('SocketException') || s.contains('ClientException')) return tr('Could not reach the server.');
+    if (e is TimeoutException) return tr('The server took too long to respond.');
     return s.replaceFirst('Exception: ', '');
   }
 
@@ -172,12 +173,12 @@ class RemartPostService {
     try {
       j = jsonDecode(res.body);
     } catch (_) {
-      throw Exception('Server error (${res.statusCode}).');
+      throw Exception(tr('Server error ({0}).', [res.statusCode]));
     }
-    if (j is! Map) throw Exception('Unexpected server response.');
+    if (j is! Map) throw Exception(tr('Unexpected server response.'));
     final m = Map<String, dynamic>.from(j);
-    if (res.statusCode == 401) throw Exception('Your session has expired. Please log in again.');
-    if (res.statusCode >= 400 || m['success'] == false) throw Exception(_message(m, 'Request failed.'));
+    if (res.statusCode == 401) throw Exception(tr('Your session has expired. Please log in again.'));
+    if (res.statusCode >= 400 || m['success'] == false) throw Exception(_message(m, tr('Request failed.')));
     return m;
   }
 
@@ -252,7 +253,7 @@ class RemartPostService {
         'sort_order': sortOrder,
       });
       final d = m['data'];
-      if (d is! Map) return const RemartResult(false, 'Attribute saved but no data was returned.');
+      if (d is! Map) return RemartResult(false, tr('Attribute saved but no data was returned.'));
       return RemartResult(true, '${m['message'] ?? 'Attribute created'}',
           RemartAttribute.fromJson(Map<String, dynamic>.from(d)));
     } catch (e) {
@@ -297,7 +298,7 @@ class RemartPostService {
   }) async {
     try {
       final token = await SharedPreferencesHelper.getAccessToken();
-      if (token == null || token.isEmpty) return const RemartResult(false, 'Please log in to post an item.');
+      if (token == null || token.isEmpty) return RemartResult(false, tr('Please log in to post an item.'));
 
       final req = http.MultipartRequest('POST', Uri.parse('${ApiUrls.baseUrl}/olx/listings/create/'))
         ..headers.addAll({'Accept': 'application/json', 'Authorization': 'Bearer $token'})
@@ -322,9 +323,9 @@ class RemartPostService {
         final d = jsonDecode(res.body);
         j = d is Map ? Map<String, dynamic>.from(d) : {};
       } catch (_) {
-        return RemartResult(false, 'Server error (${res.statusCode}). Please try again.');
+        return RemartResult(false, tr('Server error ({0}). Please try again.', [res.statusCode]));
       }
-      if (res.statusCode == 401) return const RemartResult(false, 'Your session has expired. Please log in again.');
+      if (res.statusCode == 401) return RemartResult(false, tr('Your session has expired. Please log in again.'));
       if (res.statusCode >= 200 && res.statusCode < 300 && j['success'] == true) {
         final d = j['data'] is Map ? Map<String, dynamic>.from(j['data']) : const <String, dynamic>{};
         final id = d['id'] is int ? d['id'] as int : int.tryParse('${d['id']}');
@@ -342,9 +343,9 @@ class RemartPostService {
         );
         return RemartResult(true, '${j['message'] ?? 'Listing created'}', id);
       }
-      return RemartResult(false, _message(j, 'Could not create the listing.'));
+      return RemartResult(false, _message(j, tr('Could not create the listing.')));
     } on TimeoutException {
-      return const RemartResult(false, 'Upload took too long. Check your connection and try again.');
+      return RemartResult(false, tr('Upload took too long. Check your connection and try again.'));
     } catch (e) {
       return RemartResult(false, _err(e));
     }

@@ -9,6 +9,7 @@ import '../models/company_model.dart';
 import '../models/company_stock_model.dart';
 import '../services/company_service.dart';
 import '../widgets/company_ui.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -68,11 +69,11 @@ class _CompanyStockScreenState extends State<CompanyStockScreen> {
       child: Scaffold(
         backgroundColor: DT.background,
         appBar: CompanyTopBar(
-          title: 'Stock',
-          subtitle: widget.company.name,
+          title: tr('Stock'),
+          subtitle: tr(widget.company.name),
           actions: [
             IconButton(
-              tooltip: 'Refresh',
+              tooltip: tr('Refresh'),
               onPressed: _load,
               icon: const Icon(Icons.refresh_rounded, color: DT.onyx700),
             ),
@@ -85,8 +86,8 @@ class _CompanyStockScreenState extends State<CompanyStockScreen> {
             labelStyle: DT.text(size: 13, weight: FontWeight.w700),
             unselectedLabelStyle: DT.text(size: 13, weight: FontWeight.w600),
             tabs: [
-              const Tab(text: 'All stock'),
-              Tab(text: lowCount > 0 ? 'Low stock ($lowCount)' : 'Low stock'),
+              Tab(text: tr('All stock')),
+              Tab(text: lowCount > 0 ? tr('Low stock ({0})', [lowCount]) : tr('Low stock')),
             ],
           ),
         ),
@@ -105,18 +106,18 @@ class _CompanyStockScreenState extends State<CompanyStockScreen> {
     if (!s.isSuccess) {
       return StateView(
         icon: Icons.cloud_off_rounded,
-        title: 'Could not load stock',
-        message: s.message ?? 'Try again in a moment.',
-        actionLabel: 'Try again',
+        title: tr('Could not load stock'),
+        message: s.message ?? tr('Try again in a moment.'),
+        actionLabel: tr('Try again'),
         onAction: _load,
         isError: true,
       );
     }
     if (s.products.isEmpty) {
-      return const StateView(
+      return StateView(
         icon: Icons.inventory_2_outlined,
-        title: 'No products yet',
-        message: 'Stock levels show up here once you add products to this company.',
+        title: tr('No products yet'),
+        message: tr('Stock levels show up here once you add products to this company.'),
       );
     }
 
@@ -132,7 +133,7 @@ class _CompanyStockScreenState extends State<CompanyStockScreen> {
           if (_companyMismatch) ...[_mismatchNote(s.companyName), const SizedBox(height: 12)],
           _summary(s),
           const SizedBox(height: 14),
-          Text('Lowest remaining first',
+          Text(tr('Lowest remaining first'),
               style: DT.text(size: 12, color: DT.slate500, weight: FontWeight.w600)),
           const SizedBox(height: 8),
           for (final p in sorted) ...[_StockRow(item: p), const SizedBox(height: 8)],
@@ -149,7 +150,7 @@ class _CompanyStockScreenState extends State<CompanyStockScreen> {
           Text('$value',
               style: DT.text(size: 22, weight: FontWeight.w800, color: color, letterSpacing: -0.5)),
           const SizedBox(height: 2),
-          Text(label, style: DT.text(size: 11.5, color: DT.slate500, weight: FontWeight.w600)),
+          Text(tr(label), style: DT.text(size: 11.5, color: DT.slate500, weight: FontWeight.w600)),
         ],
       ),
     );
@@ -161,9 +162,9 @@ class _CompanyStockScreenState extends State<CompanyStockScreen> {
         border: Border.all(color: DT.border),
       ),
       child: Row(children: [
-        cell('Total stock', s.totalStock, DT.onyx900),
-        cell('Sold', s.totalSold, DT.emerald700),
-        cell('Remaining', s.totalRemaining, _kBrand),
+        cell(tr('Total stock'), s.totalStock, DT.onyx900),
+        cell(tr('Sold'), s.totalSold, DT.emerald700),
+        cell(tr('Remaining'), s.totalRemaining, _kBrand),
       ]),
     );
   }
@@ -176,8 +177,7 @@ class _CompanyStockScreenState extends State<CompanyStockScreen> {
       border: Border.all(color: _kOrangeLine),
     ),
     child: Text(
-      'Showing stock for $backendName. The server currently returns stock for '
-          'your first company only.',
+      tr('Showing stock for {0}. The server currently returns stock for your first company only.', [backendName]),
       style: DT.text(size: 12, color: _kOrangeDark, height: 1.45),
     ),
   );
@@ -190,18 +190,18 @@ class _CompanyStockScreenState extends State<CompanyStockScreen> {
     if (!l.isSuccess) {
       return StateView(
         icon: Icons.cloud_off_rounded,
-        title: 'Could not load low stock',
-        message: l.message ?? 'Try again in a moment.',
-        actionLabel: 'Try again',
+        title: tr('Could not load low stock'),
+        message: l.message ?? tr('Try again in a moment.'),
+        actionLabel: tr('Try again'),
         onAction: _load,
         isError: true,
       );
     }
     if (l.products.isEmpty) {
-      return const StateView(
+      return StateView(
         icon: Icons.check_circle_outline_rounded,
-        title: 'Stock levels look healthy',
-        message: 'Products with 10 or fewer units left will appear here.',
+        title: tr('Stock levels look healthy'),
+        message: tr('Products with 10 or fewer units left will appear here.'),
       );
     }
     final sorted = [...l.products]..sort((a, b) => a.stockQuantity.compareTo(b.stockQuantity));
@@ -244,13 +244,13 @@ class _StockRow extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(item.productName,
+                child: Text(trData(item.productName),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: DT.text(size: 13.5, weight: FontWeight.w700, height: 1.3)),
               ),
               const SizedBox(width: 10),
-              Text(item.isOut ? 'Out of stock' : '${item.remainingStock} left',
+              Text(item.isOut ? tr('Out of stock') : '${item.remainingStock} left',
                   style: DT.text(size: 13, weight: FontWeight.w800, color: color)),
             ],
           ),
@@ -265,7 +265,7 @@ class _StockRow extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          Text('${item.soldQuantity} sold of ${item.stockQuantity}',
+          Text(tr('{0} sold of {1}', [item.soldQuantity, item.stockQuantity]),
               style: DT.text(size: 11.5, color: DT.slate500)),
         ],
       ),
@@ -312,18 +312,18 @@ class _LowStockRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.name,
+                Text(trData(item.name),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: DT.text(size: 13.5, weight: FontWeight.w700, height: 1.3)),
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Text(_money(item.finalPrice > 0 ? item.finalPrice : item.price),
+                    Text(tr(_money(item.finalPrice > 0 ? item.finalPrice : item.price)),
                         style: DT.text(size: 12.5, weight: FontWeight.w700)),
                     if (item.finalPrice > 0 && item.price > item.finalPrice) ...[
                       const SizedBox(width: 6),
-                      Text(_money(item.price),
+                      Text(tr(_money(item.price)),
                           style: DT.text(
                               size: 11.5,
                               color: DT.slate400,

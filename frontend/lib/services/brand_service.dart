@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import '../services/api_urls.dart';
 import '../models/brand_model.dart';
 import '../utils/shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class BrandService {
   static Future<Map<String, String>> _headers() async {
@@ -35,13 +36,13 @@ class BrandService {
     } on SocketException {
       return CategoryNamesResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
         data: [],
       );
     } catch (e) {
       return CategoryNamesResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
         data: [],
       );
     }
@@ -68,13 +69,13 @@ class BrandService {
     } on SocketException {
       return SubCategoryNamesResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
         data: [],
       );
     } catch (e) {
       return SubCategoryNamesResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
         data: [],
       );
     }
@@ -99,13 +100,13 @@ class BrandService {
     } on SocketException {
       return BrandListResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
         data: [],
       );
     } catch (e) {
       return BrandListResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
         data: [],
       );
     }
@@ -140,12 +141,12 @@ class BrandService {
     } on SocketException {
       return BrandActionResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
       );
     } catch (e) {
       return BrandActionResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
       );
     }
   }
@@ -181,12 +182,12 @@ class BrandService {
     } on SocketException {
       return BrandActionResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
       );
     } catch (e) {
       return BrandActionResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
       );
     }
   }
@@ -210,12 +211,12 @@ class BrandService {
     } on SocketException {
       return BrandActionResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
       );
     } catch (e) {
       return BrandActionResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
       );
     }
   }
@@ -239,12 +240,12 @@ class BrandService {
     } on SocketException {
       return BrandActionResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
       );
     } catch (e) {
       return BrandActionResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
       );
     }
   }

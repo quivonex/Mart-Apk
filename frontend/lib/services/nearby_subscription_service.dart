@@ -27,6 +27,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'api_urls.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 double _d(dynamic v) => v is num ? v.toDouble() : double.tryParse('${v ?? ''}'.replaceAll(',', '')) ?? 0;
 int _i(dynamic v) => v is num ? v.toInt() : int.tryParse('${v ?? ''}') ?? double.tryParse('${v ?? ''}')?.toInt() ?? 0;
@@ -67,7 +68,7 @@ String nearbyRupees(double v) {
 /// "21 Oct 2026"
 String nearbyDate(DateTime d) {
   const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return '${d.day} ${m[d.month - 1]} ${d.year}';
+  return '${d.day} ${tr(m[d.month - 1])} ${d.year}';
 }
 
 // ============================================================ models
@@ -99,9 +100,9 @@ class NearbyPlan {
   String get durationLabel {
     final d = durationDays;
     if (d <= 0) return '';
-    if (d % 365 == 0) return d == 365 ? '1 year' : '${d ~/ 365} years';
-    if (d % 30 == 0) return d == 30 ? '1 month' : '${d ~/ 30} months';
-    return d == 1 ? '1 day' : '$d days';
+    if (d % 365 == 0) return d == 365 ? tr('1 year') : '${d ~/ 365} years';
+    if (d % 30 == 0) return d == 30 ? tr('1 month') : '${d ~/ 30} months';
+    return d == 1 ? tr('1 day') : '$d days';
   }
 
   /// "Valid until" if bought today.
@@ -377,13 +378,13 @@ class NearbySubscriptionService {
     try {
       return await run();
     } on TimeoutException {
-      return NearbyApiResult<T>.fail('The server is taking too long. Please try again.');
+      return NearbyApiResult<T>.fail(tr('The server is taking too long. Please try again.'));
     } catch (e) {
       final s = e.toString();
       return NearbyApiResult<T>.fail(
         s.contains('SocketException') || s.contains('ClientException')
-            ? 'Could not reach the server. Check your internet connection.'
-            : 'Something went wrong: $s',
+            ? tr('Could not reach the server. Check your internet connection.')
+            : tr('Something went wrong: {0}', [s]),
       );
     }
   }
@@ -391,18 +392,18 @@ class NearbySubscriptionService {
   /// 401 → token is removed so the app asks for login again.
   static Future<NearbyApiResult<T>> _sessionExpired<T>(Map<String, dynamic> j) async {
     await SharedPreferencesHelper.clearAll();
-    return NearbyApiResult<T>.fail(_msg(j, 'Your session has expired. Please log in again.'), needsLogin: true);
+    return NearbyApiResult<T>.fail(_msg(j, tr('Your session has expired. Please log in again.')), needsLogin: true);
   }
 
   // ---------------------------------------------------------- 1. plans
   static Future<NearbyApiResult<NearbyPlansData>> plans() => _guard(() async {
     final r = await _post(ApiUrls.nearbySubscriptionPlansUrl, {});
-    if (r == null) return NearbyApiResult.fail('Server error. Please try again.');
+    if (r == null) return NearbyApiResult.fail(tr('Server error. Please try again.'));
     final (code, j) = r;
     if (code == 401) return _sessionExpired(j);
-    if (code == 403) return NearbyApiResult.fail(_msg(j, 'You are not allowed to view plans.'));
+    if (code == 403) return NearbyApiResult.fail(_msg(j, tr('You are not allowed to view plans.')));
     if (!_okCode(code) || (j['status'] ?? j['success']) == false || j['data'] is! List) {
-      return NearbyApiResult.fail(_msg(j, 'Unable to load plans.'));
+      return NearbyApiResult.fail(_msg(j, tr('Unable to load plans.')));
     }
     final plans = [
       for (final e in (j['data'] as List).whereType<Map>()) NearbyPlan.fromJson(Map<String, dynamic>.from(e)),
@@ -440,7 +441,7 @@ class NearbySubscriptionService {
   // ---------------------------------------------------------- 2. create order
   static Future<NearbyApiResult<NearbyOrder>> createOrder(NearbyPlan plan) => _guard(() async {
     final r = await _post(ApiUrls.nearbySubscriptionCreateOrderUrl, {'plan_id': plan.id});
-    if (r == null) return NearbyApiResult.fail('Server error. Please try again.');
+    if (r == null) return NearbyApiResult.fail(tr('Server error. Please try again.'));
     final (code, j) = r;
     if (code == 401) return _sessionExpired(j);
     // Backends differ – look for the fields at the top level, in data,
@@ -450,13 +451,11 @@ class NearbySubscriptionService {
     final key = _pick(maps, const ['razorpay_key', 'razorpay_key_id', 'key_id', 'key', 'rzp_key']);
     final st = j['status'] ?? j['success'];
     final failed = !_okCode(code) || st == false || '$st'.toLowerCase() == 'false' || '$st'.toLowerCase() == 'error';
-    if (failed) return NearbyApiResult.fail(_msg(j, 'Unable to create order.'));
+    if (failed) return NearbyApiResult.fail(_msg(j, tr('Unable to create order.')));
     if (orderId.isEmpty || key.isEmpty) {
       final got = maps.expand((m) => m.keys).toSet().join(', ');
       return NearbyApiResult.fail(
-          'Order was created but the response has no ${orderId.isEmpty ? 'order_id' : ''}'
-              '${orderId.isEmpty && key.isEmpty ? ' / ' : ''}${key.isEmpty ? 'razorpay_key' : ''}.\n'
-              'Fields received: $got');
+          tr('Order was created but the response has no {0}{2}{2}.\nFields received: {3}', [orderId.isEmpty ? 'order_id' : '', orderId.isEmpty && key.isEmpty ? ' / ' : '', key.isEmpty ? 'razorpay_key' : '', got]));
     }
     final d = maps.length > 1 ? maps[1] : j;
     final echo = d['plan'] is Map ? Map<String, dynamic>.from(d['plan']) : null;
@@ -537,13 +536,13 @@ class NearbySubscriptionService {
           'razorpay_payment_id': paymentId,
           'razorpay_signature': signature,
         });
-        if (r == null) return NearbyApiResult.fail('Server error while confirming payment.');
+        if (r == null) return NearbyApiResult.fail(tr('Server error while confirming payment.'));
         final (code, j) = r;
         if (code == 401) return _sessionExpired(j);
         final st = j['status'] ?? j['success'];
         final good = st == true || '$st'.toLowerCase() == 'true' || '$st'.toLowerCase() == 'success';
         if (!_okCode(code) || !good) {
-          return NearbyApiResult.fail(_msg(j, 'Signature verification failed.'));
+          return NearbyApiResult.fail(_msg(j, tr('Signature verification failed.')));
         }
         // Prefer dates from the backend when it sends them.
         final d = j['data'] is Map ? Map<String, dynamic>.from(j['data']) : j;
@@ -563,6 +562,6 @@ class NearbySubscriptionService {
         )
             : NearbyActiveSub.fromPlan(p, orderId: order.orderId);
         await NearbySubscriptionStore.save(sub);
-        return NearbyApiResult.ok(sub, _msg(j, 'Payment verified. Subscription activated.'));
+        return NearbyApiResult.ok(sub, _msg(j, tr('Payment verified. Subscription activated.')));
       });
 }

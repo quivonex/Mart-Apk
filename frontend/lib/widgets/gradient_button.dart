@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/design_tokens.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 /// Primary full-width button.
 /// Same API as before. Primary = indigo -> violet -> orange, accent = orange.
@@ -68,7 +69,7 @@ class GradientButton extends StatelessWidget {
                   ),
                 )
                     : Text(
-                  text,
+                  tr(text),
                   style: DT.text(
                     size: 15,
                     weight: FontWeight.w700,

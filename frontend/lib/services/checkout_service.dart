@@ -14,6 +14,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../utils/shared_preferences_helper.dart';
 import 'api_urls.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 double _d(dynamic v) => v is num ? v.toDouble() : double.tryParse('${v ?? ''}') ?? 0;
 int _i(dynamic v) => v is int ? v : int.tryParse('${v ?? ''}') ?? 0;
@@ -136,9 +137,9 @@ class CheckoutService {
 
   static String _err(Object e) {
     final s = e.toString();
-    if (s.contains('SocketException') || s.contains('ClientException')) return 'Could not reach the server.';
-    if (e is TimeoutException) return 'The server took too long to respond.';
-    return 'Something went wrong: $s';
+    if (s.contains('SocketException') || s.contains('ClientException')) return tr('Could not reach the server.');
+    if (e is TimeoutException) return tr('The server took too long to respond.');
+    return tr('Something went wrong: {0}', [s]);
   }
 
   static String _msg(Map<String, dynamic> j, String fallback) {
@@ -159,7 +160,7 @@ class CheckoutService {
   static Future<CheckoutResult<List<DeliveryAddress>>> addresses() async {
     try {
       final (code, j) = await _post('/order/address/list/', {});
-      if (!_ok(code, j)) return CheckoutResult(false, _msg(j, 'Could not load addresses'), const []);
+      if (!_ok(code, j)) return CheckoutResult(false, _msg(j, tr('Could not load addresses')), const []);
       final list = (j['data'] as List? ?? [])
           .whereType<Map>()
           .map((e) => DeliveryAddress.fromJson(Map<String, dynamic>.from(e)))
@@ -173,8 +174,8 @@ class CheckoutService {
   static Future<CheckoutResult<DeliveryAddress>> addAddress(Map<String, String> fields) async {
     try {
       final (code, j) = await _post('/order/address/create/', {...fields, 'country': 'India'});
-      if (!_ok(code, j) || j['data'] is! Map) return CheckoutResult(false, _msg(j, 'Could not save address'));
-      return CheckoutResult(true, 'Address saved', DeliveryAddress.fromJson(Map<String, dynamic>.from(j['data'])));
+      if (!_ok(code, j) || j['data'] is! Map) return CheckoutResult(false, _msg(j, tr('Could not save address')));
+      return CheckoutResult(true, tr('Address saved'), DeliveryAddress.fromJson(Map<String, dynamic>.from(j['data'])));
     } catch (e) {
       return CheckoutResult(false, _err(e));
     }
@@ -196,8 +197,8 @@ class CheckoutService {
         'payment_method': cod ? 'COD' : 'PREPAID',
         'notes': notes,
       });
-      if (!_ok(code, j) || j['data'] is! Map) return CheckoutResult(false, _msg(j, 'Could not place the order'));
-      return CheckoutResult(true, 'Order placed', PlacedOrder.fromJson(Map<String, dynamic>.from(j['data'])));
+      if (!_ok(code, j) || j['data'] is! Map) return CheckoutResult(false, _msg(j, tr('Could not place the order')));
+      return CheckoutResult(true, tr('Order placed'), PlacedOrder.fromJson(Map<String, dynamic>.from(j['data'])));
     } catch (e) {
       return CheckoutResult(false, _err(e));
     }
@@ -208,7 +209,7 @@ class CheckoutService {
     try {
       final (code, j) = await _post('/payment/razorpay/create-order/', {'ship_order_id': shipOrderId});
       if (!_ok(code, j) || j['data'] is! Map) {
-        return CheckoutResult(false, _msg(j, 'Could not start payment'),
+        return CheckoutResult(false, _msg(j, tr('Could not start payment')),
             j['data'] is Map ? Map<String, dynamic>.from(j['data']) : null);
       }
       return CheckoutResult(true, '', Map<String, dynamic>.from(j['data']));
@@ -232,7 +233,7 @@ class CheckoutService {
       });
       return _ok(code, j)
           ? CheckoutResult(true, (j['message'] ?? 'Payment verified').toString())
-          : CheckoutResult(false, _msg(j, 'Payment could not be verified'));
+          : CheckoutResult(false, _msg(j, tr('Payment could not be verified')));
     } catch (e) {
       return CheckoutResult(false, _err(e));
     }

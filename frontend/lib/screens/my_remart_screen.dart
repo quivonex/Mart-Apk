@@ -10,6 +10,7 @@ import '../constants/design_tokens.dart';
 import '../services/remart_edit_service.dart';
 import 'remart_edit_screen.dart';
 import 'remart_screens.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -45,16 +46,16 @@ String _date(String iso) {
   if (d == null) return '';
   const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   final l = d.toLocal();
-  return '${l.day} ${m[l.month - 1]} ${l.year}';
+  return '${l.day} ${tr(m[l.month - 1])} ${l.year}';
 }
 
 (Color, Color, String) _statusStyle(String s) => switch (s.toLowerCase()) {
-  'active' => (const Color(0xFF047857), const Color(0xFFECFDF5), 'Live'),
-  'pending' => (const Color(0xFFC2410C), const Color(0xFFFFF7ED), 'Pending'),
-  'draft' => (const Color(0xFF475569), const Color(0xFFF1F5F9), 'Draft'),
-  'expired' => (const Color(0xFFC62828), const Color(0xFFFEF2F2), 'Expired'),
-  'sold' => (const Color(0xFF062A50), const Color(0xFFEAF1F9), 'Sold'),
-  'rejected' => (const Color(0xFFC62828), const Color(0xFFFEF2F2), 'Rejected'),
+  'active' => (const Color(0xFF047857), const Color(0xFFECFDF5), tr('Live')),
+  'pending' => (const Color(0xFFC2410C), const Color(0xFFFFF7ED), tr('Pending')),
+  'draft' => (const Color(0xFF475569), const Color(0xFFF1F5F9), tr('Draft')),
+  'expired' => (const Color(0xFFC62828), const Color(0xFFFEF2F2), tr('Expired')),
+  'sold' => (const Color(0xFF062A50), const Color(0xFFEAF1F9), tr('Sold')),
+  'rejected' => (const Color(0xFFC62828), const Color(0xFFFEF2F2), tr('Rejected')),
   '' => (const Color(0xFF475569), const Color(0xFFF1F5F9), '—'),
   _ => (const Color(0xFF475569), const Color(0xFFF1F5F9), s[0].toUpperCase() + s.substring(1)),
 };
@@ -131,8 +132,8 @@ class _MyRemartScreenState extends State<MyRemartScreen> {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('My ReMart', style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
-              Text(_loadingItems ? 'Loading…' : '${_items.length} items · $live live',
+              Text(tr('My ReMart'), style: DT.text(size: 17, weight: FontWeight.w700, color: Colors.white)),
+              Text(_loadingItems ? tr('Loading…') : tr('{0} items · {1} live', [_items.length, live]),
                   style: DT.text(size: 11.5, color: const Color(0xCCFFFFFF))),
             ],
           ),
@@ -142,7 +143,7 @@ class _MyRemartScreenState extends State<MyRemartScreen> {
             labelColor: Colors.white,
             unselectedLabelColor: const Color(0xB3FFFFFF),
             labelStyle: DT.text(size: 13.5, weight: FontWeight.w700, color: Colors.white),
-            tabs: const [Tab(text: 'My items'), Tab(text: 'My enquiries')],
+            tabs: [Tab(text: tr('My items')), Tab(text: tr('My enquiries'))],
           ),
         ),
         floatingActionButton: FloatingActionButton.extended(
@@ -150,7 +151,7 @@ class _MyRemartScreenState extends State<MyRemartScreen> {
           backgroundColor: _kBrand, // buttons: only #093C71
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add_rounded),
-          label: Text('Sell item', style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
+          label: Text(tr('Sell item'), style: DT.text(size: 14, weight: FontWeight.w700, color: Colors.white)),
         ),
         body: TabBarView(
           children: [
@@ -166,12 +167,12 @@ class _MyRemartScreenState extends State<MyRemartScreen> {
   Widget _itemsTab() {
     if (_loadingItems) return const Center(child: CircularProgressIndicator(color: _MR.brand));
     if (_itemsError != null) {
-      return _state(Icons.cloud_off_rounded, 'Could not load your items', _itemsError!, onRetry: _loadItems);
+      return _state(Icons.cloud_off_rounded, tr('Could not load your items'), _itemsError!, onRetry: _loadItems);
     }
     if (_items.isEmpty) {
-      return _state(Icons.storefront_outlined, 'Nothing posted yet',
-          'Sell something you no longer need. Your first listing is free!',
-          actionLabel: 'Sell an item', onAction: _sell);
+      return _state(Icons.storefront_outlined, tr('Nothing posted yet'),
+          tr('Sell something you no longer need. Your first listing is free!'),
+          actionLabel: tr('Sell an item'), onAction: _sell);
     }
     return RefreshIndicator(
       color: _MR.brand,
@@ -226,7 +227,7 @@ class _MyRemartScreenState extends State<MyRemartScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-                              child: Text(label, style: DT.text(size: 10.5, weight: FontWeight.w800, color: fg)),
+                              child: Text(tr(label), style: DT.text(size: 10.5, weight: FontWeight.w800, color: fg)),
                             ),
                             const Spacer(),
                             if (l.viewsCount > 0) ...[
@@ -237,12 +238,12 @@ class _MyRemartScreenState extends State<MyRemartScreen> {
                           ],
                         ),
                         const SizedBox(height: 6),
-                        Text(l.title,
+                        Text(trData(l.title),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: DT.text(size: 14, weight: FontWeight.w700, color: _MR.ink, height: 1.3)),
                         const SizedBox(height: 4),
-                        Text(_price(l.price), style: DT.text(size: 15, weight: FontWeight.w900, color: _MR.brandDark)),
+                        Text(tr(_price(l.price)), style: DT.text(size: 15, weight: FontWeight.w900, color: _MR.brandDark)),
                         const SizedBox(height: 2),
                         Text(
                           [
@@ -283,7 +284,7 @@ class _MyRemartScreenState extends State<MyRemartScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
           icon: Icon(icon, size: 16),
-          label: Text(label, style: DT.text(size: 12.5, weight: FontWeight.w700, color: Colors.white)),
+          label: Text(tr(label), style: DT.text(size: 12.5, weight: FontWeight.w700, color: Colors.white)),
         ),
       );
 
@@ -292,11 +293,11 @@ class _MyRemartScreenState extends State<MyRemartScreen> {
     final canSell = l.status == 'active';
     return Row(
       children: [
-        Expanded(child: _smallBtn('Edit', Icons.edit_outlined, () => _edit(l))),
+        Expanded(child: _smallBtn(tr('Edit'), Icons.edit_outlined, () => _edit(l))),
         if (canSell) ...[
           const SizedBox(width: 10),
           Expanded(
-            child: _smallBtn(busy ? 'Saving…' : 'Mark as sold', Icons.sell_outlined,
+            child: _smallBtn(busy ? tr('Saving…') : tr('Mark as sold'), Icons.sell_outlined,
                 busy ? null : () => _markSold(l)),
           ),
         ],
@@ -307,7 +308,7 @@ class _MyRemartScreenState extends State<MyRemartScreen> {
   Future<void> _edit(RemartListing l) async {
     final saved = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(builder: (_) => RemartEditScreen(listingId: l.id, title: l.title)),
+      MaterialPageRoute(builder: (_) => RemartEditScreen(listingId: l.id, title: tr(l.title))),
     );
     if (saved == true) _loadItems();
   }
@@ -316,18 +317,18 @@ class _MyRemartScreenState extends State<MyRemartScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Mark as sold?', style: DT.text(size: 17, weight: FontWeight.w800, color: _MR.ink)),
-        content: Text('"${l.title}" will no longer be shown to buyers.',
+        title: Text(tr('Mark as sold?'), style: DT.text(size: 17, weight: FontWeight.w800, color: _MR.ink)),
+        content: Text(tr('"{0}" will no longer be shown to buyers.', [l.title]),
             style: DT.text(size: 13.5, color: _MR.muted, height: 1.4)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: DT.text(size: 13.5, weight: FontWeight.w700, color: _MR.muted)),
+            child: Text(tr('Cancel'), style: DT.text(size: 13.5, weight: FontWeight.w700, color: _MR.muted)),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: _kBrand),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Mark as sold'),
+            child: Text(tr('Mark as sold')),
           ),
         ],
       ),
@@ -340,7 +341,7 @@ class _MyRemartScreenState extends State<MyRemartScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
-        content: Text(r.ok ? 'Marked as sold' : r.message,
+        content: Text(r.ok ? tr('Marked as sold') : r.message,
             style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
         backgroundColor: r.ok ? const Color(0xFF047857) : const Color(0xFFC62828),
         behavior: SnackBarBehavior.floating,
@@ -354,10 +355,10 @@ class _MyRemartScreenState extends State<MyRemartScreen> {
   Widget _enquiriesTab() {
     if (_loadingEnq) return const Center(child: CircularProgressIndicator(color: _MR.brand));
     if (_enqError != null) {
-      return _state(Icons.cloud_off_rounded, 'Could not load enquiries', _enqError!, onRetry: _loadEnquiries);
+      return _state(Icons.cloud_off_rounded, tr('Could not load enquiries'), _enqError!, onRetry: _loadEnquiries);
     }
     if (_enquiries.isEmpty) {
-      return _state(Icons.forum_outlined, 'No enquiries yet', 'Enquiries you send to sellers will appear here.');
+      return _state(Icons.forum_outlined, tr('No enquiries yet'), tr('Enquiries you send to sellers will appear here.'));
     }
     return RefreshIndicator(
       color: _MR.brand,
@@ -394,7 +395,7 @@ class _MyRemartScreenState extends State<MyRemartScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-                        child: Text(label, style: DT.text(size: 10.5, weight: FontWeight.w800, color: fg)),
+                        child: Text(tr(label), style: DT.text(size: 10.5, weight: FontWeight.w800, color: fg)),
                       ),
                   ],
                 ),
@@ -425,16 +426,16 @@ class _MyRemartScreenState extends State<MyRemartScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        Text(title, textAlign: TextAlign.center, style: DT.text(size: 16, weight: FontWeight.w800, color: _MR.ink)),
+        Text(tr(title), textAlign: TextAlign.center, style: DT.text(size: 16, weight: FontWeight.w800, color: _MR.ink)),
         const SizedBox(height: 6),
-        Text(body, textAlign: TextAlign.center, style: DT.text(size: 13, color: _MR.muted, height: 1.45)),
+        Text(tr(body), textAlign: TextAlign.center, style: DT.text(size: 13, color: _MR.muted, height: 1.45)),
         if (onRetry != null || onAction != null) ...[
           const SizedBox(height: 18),
           Center(
             child: FilledButton(
               style: FilledButton.styleFrom(backgroundColor: _kBrand), // buttons: only #093C71
               onPressed: onRetry ?? onAction,
-              child: Text(onRetry != null ? 'Try again' : actionLabel ?? 'OK'),
+              child: Text(onRetry != null ? tr('Try again') : actionLabel ?? tr('OK')),
             ),
           ),
         ],

@@ -23,6 +23,7 @@ import 'ai_conversations_screen.dart';
 import 'order_detail_screen.dart';
 import 'product_detail_screen.dart';
 import 'property_detail_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 // ── QNX MART logo colours ──────────────────────────────────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
@@ -74,8 +75,8 @@ String aiTimeLabel(DateTime? d, {bool withTime = false}) {
       : diff < 7
       ? const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d.weekday - 1]
       : d.year == now.year
-      ? '${d.day} ${m[d.month - 1]}'
-      : '${d.day} ${m[d.month - 1]} ${d.year}';
+      ? '${d.day} ${tr(m[d.month - 1])}'
+      : '${d.day} ${tr(m[d.month - 1])} ${d.year}';
   return withTime ? '$date, ${hm()}' : date;
 }
 
@@ -169,7 +170,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
   Future<bool> _askLogin() async {
     if (!mounted) return false;
-    return ensureLoggedIn(context, reason: 'chat with QNX Assistant');
+    return ensureLoggedIn(context, reason: tr('chat with QNX Assistant'));
   }
 
   Future<void> _send([String? preset]) async {
@@ -212,7 +213,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
         _messages = [..._messages]..[i] = pending.copyWith(status: 'failed');
       }
     });
-    if (!r.ok) _snack(r.error ?? 'Message not sent', error: true);
+    if (!r.ok) _snack(r.error ?? tr('Message not sent'), error: true);
     _toBottom();
   }
 
@@ -238,9 +239,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
     if (!mounted) return;
     if (!r.ok) {
       _replace(m.id, (x) => x.copyWith(feedback: m.feedback, clearFeedback: m.feedback == null));
-      _snack(r.error ?? 'Could not save feedback', error: true);
+      _snack(r.error ?? tr('Could not save feedback'), error: true);
     } else if (next != null) {
-      _snack(next == 1 ? 'Thanks for your feedback!' : 'Thanks – we will use this to improve.');
+      _snack(next == 1 ? tr('Thanks for your feedback!') : tr('Thanks – we will use this to improve.'));
     }
   }
 
@@ -287,9 +288,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
     if (!mounted) return;
     if (r.ok) {
       setState(() => _conversation = c.mergedWith(r.data!));
-      _snack('Conversation renamed');
+      _snack(tr('Conversation renamed'));
     } else {
-      _snack(r.error ?? 'Could not rename', error: true);
+      _snack(r.error ?? tr('Could not rename'), error: true);
     }
   }
 
@@ -300,9 +301,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
     if (!mounted) return;
     if (r.ok) {
       setState(() => _conversation = c.mergedWith({'is_archived': !c.isArchived, ...r.data!}));
-      _snack(c.isArchived ? 'Moved back to chats' : 'Conversation archived');
+      _snack(c.isArchived ? tr('Moved back to chats') : tr('Conversation archived'));
     } else {
-      _snack(r.error ?? 'Could not update', error: true);
+      _snack(r.error ?? tr('Could not update'), error: true);
     }
   }
 
@@ -314,9 +315,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
     if (!mounted) return;
     if (r.ok) {
       _newChat();
-      _snack('Conversation deleted');
+      _snack(tr('Conversation deleted'));
     } else {
-      _snack(r.error ?? 'Could not delete', error: true);
+      _snack(r.error ?? tr('Could not delete'), error: true);
     }
   }
 
@@ -383,16 +384,16 @@ class _AiChatScreenState extends State<AiChatScreen> {
                       errorBuilder: (_, __, ___) => const SizedBox.shrink()),
                 ),
               const SizedBox(height: 12),
-              Text(c.title.isEmpty ? 'Details' : c.title,
+              Text(c.title.isEmpty ? tr('Details') : c.title,
                   style: DT.text(size: 17, weight: FontWeight.w800, color: AiColors.ink)),
               if (c.price != null) ...[
                 const SizedBox(height: 4),
-                Text(aiRupees(c.price!),
+                Text(tr(aiRupees(c.price!)),
                     style: DT.text(size: 16, weight: FontWeight.w800, color: AiColors.brand)),
               ],
               if (c.description.isNotEmpty) ...[
                 const SizedBox(height: 8),
-                Text(c.description, style: DT.text(size: 13, color: AiColors.body, height: 1.45)),
+                Text(trData(c.description), style: DT.text(size: 13, color: AiColors.body, height: 1.45)),
               ],
               if (c.extra.isNotEmpty) ...[
                 const SizedBox(height: 12),
@@ -435,7 +436,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
-        content: Text(msg, style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
+        content: Text(tr(msg), style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
         backgroundColor: error ? AiColors.red : AiColors.ink,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -486,7 +487,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(c == null ? 'QNX Assistant' : c.title,
+                Text(c == null ? tr('QNX Assistant') : c.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: DT.text(size: 16, weight: FontWeight.w700, color: Colors.white)),
@@ -504,10 +505,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
                     Flexible(
                       child: Text(
                         _sending
-                            ? 'Typing…'
+                            ? tr('Typing…')
                             : c == null
-                            ? 'AI shopping assistant'
-                            : '${service.label} · ${_count(c)} messages',
+                            ? tr('AI shopping assistant')
+                            : tr('{0} · {1} messages', [service.label, _count(c)]),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: 11.5, color: const Color(0xFFC9DBEE)),
@@ -522,18 +523,18 @@ class _AiChatScreenState extends State<AiChatScreen> {
       ),
       actions: [
         IconButton(
-          tooltip: 'Chat history',
+          tooltip: tr('Chat history'),
           onPressed: _openHistory,
           icon: const Icon(Icons.history_rounded),
         ),
         IconButton(
-          tooltip: 'New chat',
+          tooltip: tr('New chat'),
           onPressed: _sending ? null : _newChat,
           icon: const Icon(Icons.add_comment_outlined),
         ),
         if (c != null)
           PopupMenuButton<String>(
-            tooltip: 'More',
+            tooltip: tr('More'),
             onSelected: (v) => switch (v) {
               'rename' => _rename(),
               'archive' => _toggleArchive(),
@@ -541,24 +542,24 @@ class _AiChatScreenState extends State<AiChatScreen> {
               _ => null,
             },
             itemBuilder: (_) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'rename',
                 child: ListTile(
-                    leading: Icon(Icons.edit_outlined), title: Text('Rename'), contentPadding: EdgeInsets.zero),
+                    leading: Icon(Icons.edit_outlined), title: Text(tr('Rename')), contentPadding: EdgeInsets.zero),
               ),
               PopupMenuItem(
                 value: 'archive',
                 child: ListTile(
                   leading: Icon(c.isArchived ? Icons.unarchive_outlined : Icons.archive_outlined),
-                  title: Text(c.isArchived ? 'Unarchive' : 'Archive'),
+                  title: Text(c.isArchived ? tr('Unarchive') : tr('Archive')),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'delete',
                 child: ListTile(
                   leading: Icon(Icons.delete_outline_rounded, color: AiColors.red),
-                  title: Text('Delete', style: TextStyle(color: AiColors.red)),
+                  title: Text(tr('Delete'), style: TextStyle(color: AiColors.red)),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
@@ -578,13 +579,13 @@ class _AiChatScreenState extends State<AiChatScreen> {
           const Icon(Icons.archive_outlined, size: 18, color: AiColors.orangeDark),
           const SizedBox(width: 8),
           Expanded(
-            child: Text('This conversation is archived.',
+            child: Text(tr('This conversation is archived.'),
                 style: DT.text(size: 12.5, weight: FontWeight.w600, color: AiColors.orangeDark)),
           ),
           TextButton(
             onPressed: _toggleArchive,
             style: TextButton.styleFrom(foregroundColor: AiColors.brand),
-            child: const Text('Unarchive'),
+            child: Text(tr('Unarchive')),
           ),
         ],
       ),
@@ -597,7 +598,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     }
     if (_loadError != null) {
       return _ErrorState(
-        message: _loadError!,
+        message: tr(_loadError!),
         onRetry: widget.conversationId == null && _conversation == null
             ? _newChat
             : () => _load(_conversation?.id ?? widget.conversationId!),
@@ -628,7 +629,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
               onFeedback: (v) => _setFeedback(m, v),
               onCopy: () {
                 Clipboard.setData(ClipboardData(text: m.content));
-                _snack('Copied');
+                _snack(tr('Copied'));
               },
               onCard: _openCard,
             ),
@@ -651,17 +652,17 @@ class _AiChatScreenState extends State<AiChatScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        Text('Hi! I am QNX Assistant',
+        Text(tr('Hi! I am QNX Assistant'),
             textAlign: TextAlign.center,
             style: DT.text(size: 20, weight: FontWeight.w800, color: AiColors.ink)),
         const SizedBox(height: 6),
         Text(
-          'Ask me about products, your orders, properties or ReMart listings.',
+          tr('Ask me about products, your orders, properties or ReMart listings.'),
           textAlign: TextAlign.center,
           style: DT.text(size: 13.5, color: AiColors.muted, height: 1.45),
         ),
         const SizedBox(height: 24),
-        Text('Try asking',
+        Text(tr('Try asking'),
             style: DT.text(size: 12, weight: FontWeight.w700, color: AiColors.muted, letterSpacing: 0.4)),
         const SizedBox(height: 10),
         for (final (icon, text) in _suggestions)
@@ -679,7 +680,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   backgroundColor: AiColors.tint,
                   child: Icon(icon, size: 19, color: AiColors.brand),
                 ),
-                title: Text(text, style: DT.text(size: 13.5, weight: FontWeight.w600, color: AiColors.ink)),
+                title: Text(tr(text), style: DT.text(size: 13.5, weight: FontWeight.w600, color: AiColors.ink)),
                 trailing: const Icon(Icons.north_east_rounded, size: 18, color: AiColors.hint),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 onTap: () => _send(text),
@@ -714,7 +715,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   onSubmitted: (_) => _send(),
                   style: DT.text(size: 14.5, color: AiColors.ink),
                   decoration: InputDecoration(
-                    hintText: 'Ask about products, orders, property…',
+                    hintText: tr('Ask about products, orders, property…'),
                     hintStyle: DT.text(size: 14, color: AiColors.hint),
                     filled: true,
                     fillColor: AiColors.bg,
@@ -737,7 +738,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
               ),
               const SizedBox(width: 8),
               IconButton.filled(
-                tooltip: 'Send',
+                tooltip: tr('Send'),
                 onPressed: canSend ? () => _send() : null,
                 style: IconButton.styleFrom(
                   backgroundColor: AiColors.brand,
@@ -770,14 +771,14 @@ Future<String?> showAiRenameDialog(BuildContext context, String current) {
   return showDialog<String>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Rename conversation'),
+      title: Text(tr('Rename conversation')),
       content: TextField(
         controller: ctrl,
         autofocus: true,
         maxLength: 80,
         textCapitalization: TextCapitalization.sentences,
-        decoration: const InputDecoration(
-          hintText: 'Title',
+        decoration: InputDecoration(
+          hintText: tr('Title'),
           focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AiColors.brand, width: 2)),
         ),
         onSubmitted: (v) => Navigator.pop(ctx, v.trim().isEmpty ? null : v.trim()),
@@ -786,12 +787,12 @@ Future<String?> showAiRenameDialog(BuildContext context, String current) {
         TextButton(
           onPressed: () => Navigator.pop(ctx),
           style: TextButton.styleFrom(foregroundColor: AiColors.muted),
-          child: const Text('Cancel'),
+          child: Text(tr('Cancel')),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, ctrl.text.trim().isEmpty ? null : ctrl.text.trim()),
           style: FilledButton.styleFrom(backgroundColor: AiColors.brand, foregroundColor: Colors.white),
-          child: const Text('Save'),
+          child: Text(tr('Save')),
         ),
       ],
     ),
@@ -803,18 +804,18 @@ Future<bool> confirmAiDelete(BuildContext context, String title) async {
     context: context,
     builder: (ctx) => AlertDialog(
       icon: const Icon(Icons.delete_outline_rounded, color: AiColors.red),
-      title: const Text('Delete conversation?'),
-      content: Text('"$title" and all its messages will be removed. This cannot be undone.'),
+      title: Text(tr('Delete conversation?')),
+      content: Text(tr('"{0}" and all its messages will be removed. This cannot be undone.', [title])),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
           style: TextButton.styleFrom(foregroundColor: AiColors.muted),
-          child: const Text('Cancel'),
+          child: Text(tr('Cancel')),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
           style: FilledButton.styleFrom(backgroundColor: AiColors.brand, foregroundColor: Colors.white),
-          child: const Text('Delete'),
+          child: Text(tr('Delete')),
         ),
       ],
     ),
@@ -838,7 +839,7 @@ class _DateChip extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 10),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
         decoration: BoxDecoration(color: const Color(0xFFE2E8F0), borderRadius: BorderRadius.circular(999)),
-        child: Text(text, style: DT.text(size: 11, weight: FontWeight.w600, color: AiColors.muted)),
+        child: Text(tr(text), style: DT.text(size: 11, weight: FontWeight.w600, color: AiColors.muted)),
       ),
     );
   }
@@ -870,7 +871,7 @@ class _UserBubble extends StatelessWidget {
               border: failed ? Border.all(color: AiColors.redLine) : null,
             ),
             child: SelectableText(
-              message.content,
+              tr(message.content),
               style: DT.text(size: 14, color: failed ? AiColors.red : Colors.white, height: 1.4),
             ),
           ),
@@ -886,7 +887,7 @@ class _UserBubble extends StatelessWidget {
                   children: [
                     const Icon(Icons.error_outline_rounded, size: 14, color: AiColors.red),
                     const SizedBox(width: 4),
-                    Text('Not sent · Tap to retry',
+                    Text(tr('Not sent · Tap to retry'),
                         style: DT.text(size: 11.5, weight: FontWeight.w700, color: AiColors.red)),
                   ],
                 ),
@@ -896,7 +897,7 @@ class _UserBubble extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(aiTimeLabel(message.createdAt),
+                Text(tr(aiTimeLabel(message.createdAt)),
                     style: DT.text(size: 10.5, color: AiColors.hint)),
                 const SizedBox(width: 4),
                 Icon(message.isSending ? Icons.schedule_rounded : Icons.done_all_rounded,
@@ -958,7 +959,7 @@ class _AssistantBubble extends StatelessWidget {
                   ),
                   child: AiMarkdown(
                     m.content.trim().isEmpty && failed
-                        ? 'Sorry, I could not answer that. Please try again.'
+                        ? tr('Sorry, I could not answer that. Please try again.')
                         : m.content,
                     color: failed ? AiColors.red : AiColors.body,
                   ),
@@ -978,30 +979,30 @@ class _AssistantBubble extends StatelessWidget {
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    Text(aiTimeLabel(m.createdAt), style: DT.text(size: 10.5, color: AiColors.hint)),
+                    Text(tr(aiTimeLabel(m.createdAt)), style: DT.text(size: 10.5, color: AiColors.hint)),
                     if (m.service != AiService.general) ...[
                       const SizedBox(width: 6),
                       Icon(aiServiceIcon(m.service), size: 12, color: AiColors.hint),
                       const SizedBox(width: 2),
-                      Text(m.service.label, style: DT.text(size: 10.5, color: AiColors.hint)),
+                      Text(tr(m.service.label), style: DT.text(size: 10.5, color: AiColors.hint)),
                     ],
                     const Spacer(),
                     if (!m.isLocal) ...[
                       _tinyIcon(
-                        tooltip: 'Helpful',
+                        tooltip: tr('Helpful'),
                         icon: m.feedback == 1 ? Icons.thumb_up_alt_rounded : Icons.thumb_up_alt_outlined,
                         color: m.feedback == 1 ? AiColors.brand : AiColors.hint,
                         onTap: () => onFeedback(1),
                       ),
                       _tinyIcon(
-                        tooltip: 'Not helpful',
+                        tooltip: tr('Not helpful'),
                         icon: m.feedback == -1 ? Icons.thumb_down_alt_rounded : Icons.thumb_down_alt_outlined,
                         color: m.feedback == -1 ? AiColors.red : AiColors.hint,
                         onTap: () => onFeedback(-1),
                       ),
                     ],
                     _tinyIcon(
-                      tooltip: 'Copy',
+                      tooltip: tr('Copy'),
                       icon: Icons.copy_rounded,
                       color: AiColors.hint,
                       onTap: onCopy,
@@ -1023,7 +1024,7 @@ class _AssistantBubble extends StatelessWidget {
     required VoidCallback onTap,
   }) =>
       IconButton(
-        tooltip: tooltip,
+        tooltip: tr(tooltip),
         onPressed: onTap,
         icon: Icon(icon, size: 16, color: color),
         visualDensity: VisualDensity.compact,
@@ -1041,12 +1042,12 @@ class _ResultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = card;
     final (IconData icon, String kind) = c.isOrder
-        ? (Icons.receipt_long_outlined, 'Order')
+        ? (Icons.receipt_long_outlined, tr('Order'))
         : c.isProperty
-        ? (Icons.apartment_rounded, 'Property')
+        ? (Icons.apartment_rounded, tr('Property'))
         : c.isRemart
-        ? (Icons.recycling_rounded, 'ReMart')
-        : (Icons.inventory_2_outlined, 'Product');
+        ? (Icons.recycling_rounded, tr('ReMart'))
+        : (Icons.inventory_2_outlined, tr('Product'));
 
     // second line: specs for ReMart, quantity / status for orders
     final facts = <String>[
@@ -1056,7 +1057,7 @@ class _ResultCard extends StatelessWidget {
       if (c.extra['ownership'] != null) '${c.extra['ownership']} owner',
       if (c.isOrder && c.status.isNotEmpty) c.status,
       if (c.isOrder && c.paymentStatus.isNotEmpty) c.paymentStatus,
-      if (!c.isOrder && c.quantity > 0) 'Qty ${c.quantity}',
+      if (!c.isOrder && c.quantity > 0) tr('Qty {0}', [c.quantity]),
     ];
     final price = c.isOrder ? (c.totalAmount ?? c.price) : c.price;
 
@@ -1097,7 +1098,7 @@ class _ResultCard extends StatelessWidget {
                           color: Colors.white.withValues(alpha: 0.92),
                           borderRadius: BorderRadius.circular(999),
                         ),
-                        child: Text(kind, style: DT.text(size: 9.5, weight: FontWeight.w800, color: AiColors.brand)),
+                        child: Text(tr(kind), style: DT.text(size: 9.5, weight: FontWeight.w800, color: AiColors.brand)),
                       ),
                     ),
                   ],
@@ -1109,14 +1110,14 @@ class _ResultCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      c.title.isNotEmpty ? c.title : (c.isOrder ? 'Order ${c.orderId}' : kind),
+                      c.title.isNotEmpty ? c.title : (c.isOrder ? tr('Order {0}', [c.orderId]) : kind),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: DT.text(size: 12.5, weight: FontWeight.w700, color: AiColors.ink, height: 1.25),
                     ),
                     if (facts.isNotEmpty) ...[
                       const SizedBox(height: 3),
-                      Text(facts.join(' · '),
+                      Text(tr(facts.join(' · ')),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(size: 10.5, color: AiColors.muted)),
@@ -1130,7 +1131,7 @@ class _ResultCard extends StatelessWidget {
                 child: Row(
                   children: [
                     Expanded(
-                      child: Text(price == null ? 'View' : aiRupees(price),
+                      child: Text(price == null ? tr('View') : aiRupees(price),
                           style: DT.text(size: 14, weight: FontWeight.w800, color: AiColors.brand)),
                     ),
                     const Icon(Icons.chevron_right_rounded, size: 20, color: AiColors.brand),
@@ -1239,10 +1240,10 @@ class _ErrorState extends StatelessWidget {
               child: Icon(Icons.cloud_off_rounded, size: 30, color: AiColors.red),
             ),
             const SizedBox(height: 14),
-            Text('Could not open this chat',
+            Text(tr('Could not open this chat'),
                 style: DT.text(size: 16, weight: FontWeight.w800, color: AiColors.ink)),
             const SizedBox(height: 6),
-            Text(message,
+            Text(tr(message),
                 textAlign: TextAlign.center, style: DT.text(size: 13, color: AiColors.muted, height: 1.45)),
             const SizedBox(height: 18),
             Wrap(
@@ -1254,7 +1255,7 @@ class _ErrorState extends StatelessWidget {
                   onPressed: onRetry,
                   style: FilledButton.styleFrom(backgroundColor: AiColors.brand, foregroundColor: Colors.white),
                   icon: const Icon(Icons.refresh_rounded, size: 18),
-                  label: const Text('Try again'),
+                  label: Text(tr('Try again')),
                 ),
                 OutlinedButton.icon(
                   onPressed: onNewChat,
@@ -1263,7 +1264,7 @@ class _ErrorState extends StatelessWidget {
                     side: const BorderSide(color: AiColors.brand),
                   ),
                   icon: const Icon(Icons.add_comment_outlined, size: 18),
-                  label: const Text('New chat'),
+                  label: Text(tr('New chat')),
                 ),
               ],
             ),
@@ -1329,7 +1330,7 @@ class AiMarkdown extends StatelessWidget {
             children: [
               SizedBox(
                 width: number != null ? 22 : 14,
-                child: Text(number != null ? '${number.group(1)}.' : '•',
+                child: Text(tr(number != null ? '${number.group(1)}.' : '•'),
                     style: base.copyWith(fontWeight: FontWeight.w700, color: AiColors.brand)),
               ),
               Expanded(
@@ -1355,15 +1356,15 @@ class AiMarkdown extends StatelessWidget {
     final re = RegExp(r'\*\*(.+?)\*\*|__(.+?)__|`([^`]+)`|\[([^\]]+)\]\(([^)]+)\)');
     var last = 0;
     for (final m in re.allMatches(s)) {
-      if (m.start > last) spans.add(TextSpan(text: s.substring(last, m.start), style: base));
+      if (m.start > last) spans.add(TextSpan(text: tr(s.substring(last, m.start)), style: base));
       if (m.group(1) != null || m.group(2) != null) {
         spans.add(TextSpan(
-          text: m.group(1) ?? m.group(2),
+          text: trN(m.group(1) ?? m.group(2)),
           style: base.copyWith(fontWeight: FontWeight.w800, color: AiColors.ink),
         ));
       } else if (m.group(3) != null) {
         spans.add(TextSpan(
-          text: m.group(3),
+          text: trN(m.group(3)),
           style: base.copyWith(
             fontFamily: 'monospace',
             fontSize: 13,
@@ -1373,7 +1374,7 @@ class AiMarkdown extends StatelessWidget {
         ));
       } else {
         spans.add(TextSpan(
-          text: m.group(4),
+          text: trN(m.group(4)),
           style: base.copyWith(
             color: AiColors.brand,
             fontWeight: FontWeight.w700,
@@ -1383,7 +1384,7 @@ class AiMarkdown extends StatelessWidget {
       }
       last = m.end;
     }
-    if (last < s.length) spans.add(TextSpan(text: s.substring(last), style: base));
+    if (last < s.length) spans.add(TextSpan(text: tr(s.substring(last)), style: base));
     return spans;
   }
 }

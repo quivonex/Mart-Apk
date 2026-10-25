@@ -18,6 +18,7 @@ import '../models/order_model.dart';
 import '../services/cart_service.dart';
 import '../utils/shared_preferences_helper.dart';
 import 'checkout_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 // ── QNX MART logo colours (private to this screen) ──────────────
 //   #093C71 brand (all buttons) · red = errors · orange = conditions
 const _kBrand = Color(0xFF093C71);
@@ -70,7 +71,7 @@ class _ReorderScreenState extends State<ReorderScreen> {
   // ===================================================================
   Future<int?> _userId() async {
     final id = await SharedPreferencesHelper.getUserId();
-    if (id == null && mounted) _snack('Please login to re-order', error: true);
+    if (id == null && mounted) _snack(tr('Please login to re-order'), error: true);
     return id;
   }
 
@@ -120,7 +121,7 @@ class _ReorderScreenState extends State<ReorderScreen> {
       final item = cart.cartItems.where((c) => c.productId == _productId).firstOrNull;
       if (!mounted) return;
       if (item == null) {
-        _snack('Could not add this product to your cart. It may no longer be available.',
+        _snack(tr('Could not add this product to your cart. It may no longer be available.'),
             error: true);
         return;
       }
@@ -143,7 +144,7 @@ class _ReorderScreenState extends State<ReorderScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
-        content: Text(msg, style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
+        content: Text(tr(msg), style: DT.text(size: 13, weight: FontWeight.w600, color: Colors.white)),
         backgroundColor: error ? _kRed : DT.onyx900,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
@@ -163,10 +164,10 @@ class _ReorderScreenState extends State<ReorderScreen> {
           decoration: const BoxDecoration(color: DT.emerald50, shape: BoxShape.circle),
           child: const Icon(Icons.shopping_cart_checkout_rounded, color: _green, size: 28),
         ),
-        title: Text('Added to cart',
+        title: Text(tr('Added to cart'),
             textAlign: TextAlign.center, style: DT.text(size: 17, weight: FontWeight.w800)),
         content: Text(
-          '$_qty × ${_o.product.name} is in your cart. Open the Cart tab to checkout.',
+          tr('{0} × {1} is in your cart. Open the Cart tab to checkout.', [_qty, _o.product.name]),
           textAlign: TextAlign.center,
           style: DT.text(size: 13, color: DT.slate500, height: 1.45),
         ),
@@ -183,7 +184,7 @@ class _ReorderScreenState extends State<ReorderScreen> {
                     side: const BorderSide(color: DT.slate200),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Stay here'),
+                  child: Text(tr('Stay here')),
                 ),
               ),
               const SizedBox(width: 10),
@@ -196,7 +197,7 @@ class _ReorderScreenState extends State<ReorderScreen> {
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Back to orders'),
+                  child: Text(tr('Back to orders')),
                 ),
               ),
             ],
@@ -248,7 +249,7 @@ class _ReorderScreenState extends State<ReorderScreen> {
             children: [
               const SizedBox(width: 4),
               IconButton(
-                tooltip: 'Back',
+                tooltip: tr('Back'),
                 onPressed: () => Navigator.maybePop(context),
                 icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
               ),
@@ -257,9 +258,9 @@ class _ReorderScreenState extends State<ReorderScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Re-order',
+                    Text(tr('Re-order'),
                         style: DT.text(size: 18, weight: FontWeight.w700, color: Colors.white)),
-                    Text('From order ${_o.orderNumber}',
+                    Text(tr('From order {0}', [_o.orderNumber]),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: DT.text(size: 12, color: const Color(0xFFC9DBEE))),
@@ -310,7 +311,7 @@ class _ReorderScreenState extends State<ReorderScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_o.product.name,
+                Text(trData(_o.product.name),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: DT.text(size: 15.5, weight: FontWeight.w800, color: DT.onyx900, height: 1.3)),
@@ -321,7 +322,7 @@ class _ReorderScreenState extends State<ReorderScreen> {
                       const Icon(Icons.storefront_outlined, size: 14, color: DT.slate400),
                       const SizedBox(width: 4),
                       Expanded(
-                        child: Text(_o.company.name,
+                        child: Text(trData(_o.company.name),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: DT.text(size: 12, color: DT.slate500)),
@@ -354,12 +355,12 @@ class _ReorderScreenState extends State<ReorderScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Last ordered ${_o.formattedDate}',
+              Text(tr('Last ordered {0}', [_o.formattedDate]),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: DT.text(size: 13.5, weight: FontWeight.w700, color: DT.onyx900)),
               const SizedBox(height: 2),
-              Text('${_o.product.quantity} unit${_o.product.quantity == 1 ? '' : 's'} · ${_rupees(_o.totalAmount)}',
+              Text(tr('{0} unit{1} · {2}', [_o.product.quantity, _o.product.quantity == 1 ? '' : 's', _rupees(_o.totalAmount)]),
                   style: DT.text(size: 12, color: DT.slate500)),
             ],
           ),
@@ -367,7 +368,7 @@ class _ReorderScreenState extends State<ReorderScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(color: DT.slate100, borderRadius: BorderRadius.circular(999)),
-          child: Text(_o.statusLabel,
+          child: Text(tr(_o.statusLabel),
               style: DT.text(size: 10.5, weight: FontWeight.w700, color: DT.onyx700)),
         ),
       ],
@@ -384,8 +385,8 @@ class _ReorderScreenState extends State<ReorderScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Quantity', style: DT.text(size: 14.5, weight: FontWeight.w800)),
-                  Text('Same as last time, or change it',
+                  Text(tr('Quantity'), style: DT.text(size: 14.5, weight: FontWeight.w800)),
+                  Text(tr('Same as last time, or change it'),
                       style: DT.text(size: 12, color: DT.slate500)),
                 ],
               ),
@@ -400,7 +401,7 @@ class _ReorderScreenState extends State<ReorderScreen> {
           children: [
             for (final q in {_o.product.quantity < 1 ? 1 : _o.product.quantity, 5, 10, 25, 50}.toList()..sort())
               ChoiceChip(
-                label: Text(q == _o.product.quantity ? '$q (last)' : '$q'),
+                label: Text(q == _o.product.quantity ? tr('{0} (last)', [q]) : '$q'),
                 selected: _qty == q,
                 showCheckmark: false,
                 selectedColor: _brand,
@@ -459,7 +460,7 @@ class _ReorderScreenState extends State<ReorderScreen> {
         const SizedBox(width: 10),
         Expanded(
           child: Text(
-            'The estimate uses your last price. Checkout shows today\'s price, tax and delivery.',
+            tr('The estimate uses your last price. Checkout shows today\'s price, tax and delivery.'),
             style: DT.text(size: 12, color: _kOrangeDark, height: 1.45),
           ),
         ),
@@ -482,9 +483,9 @@ class _ReorderScreenState extends State<ReorderScreen> {
           children: [
             Row(
               children: [
-                Text('Estimated total', style: DT.text(size: 12, color: DT.slate500)),
+                Text(tr('Estimated total'), style: DT.text(size: 12, color: DT.slate500)),
                 const Spacer(),
-                Text(_rupees(_estimate), style: DT.text(size: 18, weight: FontWeight.w900)),
+                Text(tr(_rupees(_estimate)), style: DT.text(size: 18, weight: FontWeight.w900)),
               ],
             ),
             const SizedBox(height: 10),
@@ -501,7 +502,7 @@ class _ReorderScreenState extends State<ReorderScreen> {
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2, color: _brand))
                           : const Icon(Icons.add_shopping_cart_rounded, size: 18),
-                      label: Text(_adding ? 'Adding…' : 'Add to cart',
+                      label: Text(_adding ? tr('Adding…') : tr('Add to cart'),
                           maxLines: 1, overflow: TextOverflow.ellipsis),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _brand,
@@ -529,7 +530,7 @@ class _ReorderScreenState extends State<ReorderScreen> {
                             height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                             : const Icon(Icons.flash_on_rounded, size: 18),
-                        label: Text(_buying ? 'Please wait…' : 'Buy now',
+                        label: Text(_buying ? tr('Please wait…') : tr('Buy now'),
                             maxLines: 1, overflow: TextOverflow.ellipsis),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
@@ -566,10 +567,10 @@ class _ReorderScreenState extends State<ReorderScreen> {
             child: const Icon(Icons.remove_shopping_cart_outlined, size: 38, color: DT.slate400),
           ),
           const SizedBox(height: 16),
-          Text('Product not available',
+          Text(tr('Product not available'),
               textAlign: TextAlign.center, style: DT.text(size: 17, weight: FontWeight.w800)),
           const SizedBox(height: 6),
-          Text('This product can\'t be ordered again. It may have been removed by the seller.',
+          Text(tr('This product can\'t be ordered again. It may have been removed by the seller.'),
               textAlign: TextAlign.center,
               style: DT.text(size: 13, color: DT.slate500, height: 1.45)),
         ],

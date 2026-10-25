@@ -15,6 +15,7 @@ import '../services/communication_plan_history_service.dart';
 import '../services/qnx_api.dart';
 import '../widgets/edit_form_kit.dart';
 import 'login_screen.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 String _rs(double v) {
   final s = v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
@@ -126,7 +127,7 @@ class _CommPaymentHistoryScreenState extends State<CommPaymentHistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: EK.bg,
-      appBar: ekAppBar('Payment history', subtitle: _loading ? 'Loading…' : '$_count payment${_count == 1 ? '' : 's'}'),
+      appBar: ekAppBar(tr('Payment history'), subtitle: _loading ? tr('Loading…') : '$_count payment${_count == 1 ? '' : 's'}'),
       body: Column(
         children: [
           SizedBox(
@@ -139,7 +140,7 @@ class _CommPaymentHistoryScreenState extends State<CommPaymentHistoryScreen> {
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: ChoiceChip(
-                      label: Text(label),
+                      label: Text(tr(label)),
                       selected: _status == v,
                       showCheckmark: false,
                       selectedColor: EK.brand,
@@ -175,10 +176,10 @@ class _CommPaymentHistoryScreenState extends State<CommPaymentHistoryScreen> {
               children: [
                 const Icon(Icons.receipt_long_outlined, size: 46, color: EK.brand),
                 const SizedBox(height: 12),
-                Text('No payments yet',
+                Text(tr('No payments yet'),
                     textAlign: TextAlign.center, style: DT.text(size: 16, weight: FontWeight.w800, color: EK.ink)),
                 const SizedBox(height: 6),
-                Text('Chat plan purchases will show up here.',
+                Text(tr('Chat plan purchases will show up here.'),
                     textAlign: TextAlign.center, style: DT.text(size: 13, color: EK.muted)),
               ],
             )
@@ -236,11 +237,11 @@ class _CommPaymentHistoryScreenState extends State<CommPaymentHistoryScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(p.planName, style: DT.text(size: 14, weight: FontWeight.w800, color: EK.ink)),
+                    Text(trData(p.planName), style: DT.text(size: 14, weight: FontWeight.w800, color: EK.ink)),
                     const SizedBox(height: 2),
-                    Text(qDateLabel(p.when, time: true), style: DT.text(size: 11.5, color: EK.muted)),
+                    Text(tr(qDateLabel(p.when, time: true)), style: DT.text(size: 11.5, color: EK.muted)),
                     if (p.status == 'failed' && p.failureReason.isNotEmpty)
-                      Text(p.failureReason,
+                      Text(tr(p.failureReason),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: DT.text(size: 11.5, color: EK.red)),
@@ -250,16 +251,16 @@ class _CommPaymentHistoryScreenState extends State<CommPaymentHistoryScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(_rs(p.amount), style: DT.text(size: 14.5, weight: FontWeight.w900, color: EK.brandDark)),
+                  Text(tr(_rs(p.amount)), style: DT.text(size: 14.5, weight: FontWeight.w900, color: EK.brandDark)),
                   const SizedBox(height: 4),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-                    child: Text(p.statusLabel, style: DT.text(size: 10.5, weight: FontWeight.w800, color: fg)),
+                    child: Text(tr(p.statusLabel), style: DT.text(size: 10.5, weight: FontWeight.w800, color: fg)),
                   ),
                   if (sid != null && p.status == 'paid' && p.active) ...[
                     const SizedBox(height: 4),
-                    Text('Active', style: DT.text(size: 10.5, weight: FontWeight.w800, color: EK.green)),
+                    Text(tr('Active'), style: DT.text(size: 10.5, weight: FontWeight.w800, color: EK.green)),
                   ],
                 ],
               ),
@@ -282,9 +283,9 @@ class _CommPaymentHistoryScreenState extends State<CommPaymentHistoryScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(width: 110, child: Text(k, style: DT.text(size: 12.5, color: EK.muted))),
+                  SizedBox(width: 110, child: Text(tr(k), style: DT.text(size: 12.5, color: EK.muted))),
                   Expanded(
-                    child: SelectableText(v.isEmpty ? '—' : v,
+                    child: SelectableText(tr(v.isEmpty ? '—' : v),
                         style: DT.text(size: 13, weight: FontWeight.w700, color: EK.ink)),
                   ),
                   if (copy && v.isNotEmpty)
@@ -292,7 +293,7 @@ class _CommPaymentHistoryScreenState extends State<CommPaymentHistoryScreen> {
                       onTap: () {
                         Clipboard.setData(ClipboardData(text: v));
                         Navigator.pop(ctx);
-                        ekSnack(context, 'Copied');
+                        ekSnack(context, tr('Copied'));
                       },
                       child: const Padding(
                         padding: EdgeInsets.all(4),
@@ -318,19 +319,19 @@ class _CommPaymentHistoryScreenState extends State<CommPaymentHistoryScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                Text('Payment details', style: DT.text(size: 18, weight: FontWeight.w800, color: EK.ink)),
+                Text(tr('Payment details'), style: DT.text(size: 18, weight: FontWeight.w800, color: EK.ink)),
                 const SizedBox(height: 12),
-                row('Plan', p.planName),
-                row('Amount', '${_rs(p.amount)} ${p.currency == 'INR' ? '' : p.currency}'.trim()),
-                row('Status', p.statusLabel),
-                row('Date', qDateLabel(p.when, time: true)),
-                row('Payment ID', p.paymentId, copy: true),
-                row('Order ID', p.orderId, copy: true),
-                if (p.failureReason.isNotEmpty) row('Reason', p.failureReason),
+                row(tr('Plan'), p.planName),
+                row(tr('Amount'), '${_rs(p.amount)} ${p.currency == 'INR' ? '' : p.currency}'.trim()),
+                row(tr('Status'), p.statusLabel),
+                row(tr('Date'), qDateLabel(p.when, time: true)),
+                row(tr('Payment ID'), p.paymentId, copy: true),
+                row(tr('Order ID'), p.orderId, copy: true),
+                if (p.failureReason.isNotEmpty) row(tr('Reason'), p.failureReason),
                 if (sid != null) ...[
                   const SizedBox(height: 14),
                   EkButton(
-                    label: 'View plan details',
+                    label: tr('View plan details'),
                     icon: Icons.workspace_premium_outlined,
                     onPressed: () {
                       Navigator.pop(ctx);
@@ -400,8 +401,8 @@ class _SubscriptionSheetState extends State<_SubscriptionSheet> {
             children: [
               Icon(icon, size: 18, color: EK.brand),
               const SizedBox(width: 10),
-              SizedBox(width: 92, child: Text(k, style: DT.text(size: 12.5, color: EK.muted))),
-              Expanded(child: Text(v.isEmpty ? '—' : v, style: DT.text(size: 13, weight: FontWeight.w700, color: EK.ink))),
+              SizedBox(width: 92, child: Text(tr(k), style: DT.text(size: 12.5, color: EK.muted))),
+              Expanded(child: Text(tr(v.isEmpty ? '—' : v), style: DT.text(size: 13, weight: FontWeight.w700, color: EK.ink))),
             ],
           ),
         );
@@ -430,13 +431,13 @@ class _SubscriptionSheetState extends State<_SubscriptionSheet> {
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 child: Column(
                   children: [
-                    Text(_error ?? 'Plan details are not available.',
+                    Text(_error ?? tr('Plan details are not available.'),
                         textAlign: TextAlign.center, style: DT.text(size: 13.5, color: EK.muted)),
                     const SizedBox(height: 12),
                     FilledButton(
                       style: FilledButton.styleFrom(backgroundColor: EK.brand),
                       onPressed: _load,
-                      child: const Text('Try again'),
+                      child: Text(tr('Try again')),
                     ),
                   ],
                 ),
@@ -453,10 +454,10 @@ class _SubscriptionSheetState extends State<_SubscriptionSheet> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(s.planName, style: DT.text(size: 17, weight: FontWeight.w800, color: Colors.white)),
+                          Text(trData(s.planName), style: DT.text(size: 17, weight: FontWeight.w800, color: Colors.white)),
                           Text(
                             s.currentlyValid
-                                ? 'Active · ${s.daysLeft} ${s.daysLeft == 1 ? 'day' : 'days'} left'
+                                ? tr('Active · {0} {1} left', [s.daysLeft, s.daysLeft == 1 ? 'day' : 'days'])
                                 : s.statusLabel,
                             style: DT.text(size: 12, color: const Color(0xFFC9DBEE)),
                           ),
@@ -467,11 +468,11 @@ class _SubscriptionSheetState extends State<_SubscriptionSheet> {
                 ),
               ),
               const SizedBox(height: 12),
-              row(Icons.event_available_outlined, 'Started', qDateLabel(s.startsAt)),
-              row(Icons.event_busy_outlined, 'Valid till', qDateLabel(s.expiresAt)),
-              row(Icons.currency_rupee_rounded, 'Paid', _rs(s.pricePaid)),
-              if (s.chatLabel.isNotEmpty) row(Icons.chat_outlined, 'Chats', s.chatLabel),
-              if (s.enquiryLabel.isNotEmpty) row(Icons.forum_outlined, 'Enquiries', s.enquiryLabel),
+              row(Icons.event_available_outlined, tr('Started'), qDateLabel(s.startsAt)),
+              row(Icons.event_busy_outlined, tr('Valid till'), qDateLabel(s.expiresAt)),
+              row(Icons.currency_rupee_rounded, tr('Paid'), _rs(s.pricePaid)),
+              if (s.chatLabel.isNotEmpty) row(Icons.chat_outlined, tr('Chats'), s.chatLabel),
+              if (s.enquiryLabel.isNotEmpty) row(Icons.forum_outlined, tr('Enquiries'), s.enquiryLabel),
             ],
           ],
         ),

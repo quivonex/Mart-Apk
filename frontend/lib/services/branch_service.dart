@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'api_urls.dart';
 import '../models/branch_model.dart';
 import '../utils/shared_preferences_helper.dart';
+import 'package:qnx_mart/l10n/app_language.dart';
 
 class BranchService {
   static Future<Map<String, String>> _headers() async {
@@ -35,13 +36,13 @@ class BranchService {
     } on SocketException {
       return CompanyNamesResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
         data: [],
       );
     } catch (e) {
       return CompanyNamesResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
         data: [],
       );
     }
@@ -66,13 +67,13 @@ class BranchService {
     } on SocketException {
       return BranchListResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
         data: [],
       );
     } catch (e) {
       return BranchListResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
         data: [],
       );
     }
@@ -109,12 +110,12 @@ class BranchService {
     } on SocketException {
       return BranchActionResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
       );
     } catch (e) {
       return BranchActionResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
       );
     }
   }
@@ -152,12 +153,12 @@ class BranchService {
     } on SocketException {
       return BranchActionResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
       );
     } catch (e) {
       return BranchActionResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
       );
     }
   }
@@ -181,12 +182,12 @@ class BranchService {
     } on SocketException {
       return BranchActionResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
       );
     } catch (e) {
       return BranchActionResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
       );
     }
   }
@@ -210,12 +211,12 @@ class BranchService {
     } on SocketException {
       return BranchActionResponse(
         status: false,
-        message: 'No internet connection.',
+        message: tr('No internet connection.'),
       );
     } catch (e) {
       return BranchActionResponse(
         status: false,
-        message: 'Something went wrong: ${e.toString()}',
+        message: tr('Something went wrong: {0}', [e.toString()]),
       );
     }
   }
